@@ -1,0 +1,19 @@
+# .NET build
+bin/
+obj/
+
+# IDE
+.vs/
+.idea/
+*.user
+*.suo
+
+# Rider
+*.DotSettings.user
+
+# Godot generated
+.godot/
+
+# OS
+.DS_Store
+Thumbs.db
