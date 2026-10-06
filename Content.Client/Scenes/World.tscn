@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://dmxklxo60o5gn"]
 
 [ext_resource type="Script" uid="uid://cbm0l7xsdox8g" path="res://Scripts/PlayerController.cs" id="1_5cjrv"]
+[ext_resource type="Script" uid="uid://bklqoyyb08nt8" path="res://Scripts/Network/NetworkClient.cs" id="2_j0p05"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_7ktk5"]
 size = Vector2(30, 30)
@@ -42,3 +43,6 @@ fov = 50.0
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1506268573]
 transform = Transform3D(0.8660254, 0.43301272, -0.24999999, 0, 0.49999997, 0.86602545, 0.5, -0.75, 0.43301266, 0, 0, 0)
+
+[node name="NetworkClient" type="Node" parent="." unique_id=1462655687]
+script = ExtResource("2_j0p05")
