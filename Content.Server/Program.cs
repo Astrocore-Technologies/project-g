@@ -1,5 +1,6 @@
 ﻿using Content.Shared.Network;
 using LiteNetLib;
+using LiteNetLib.Utils;
 
 var listener = new EventBasedNetListener();
 var server = new NetManager(listener);
@@ -17,6 +18,20 @@ listener.PeerConnectedEvent += peer =>
 
     Console.WriteLine(
         $"Player connected! PlayerId={playerId}, Address={peer.Address}:{peer.Port}"
+    );
+
+    var writer = new NetDataWriter();
+
+    writer.Put((byte)NetworkMessageType.AssignPlayerId);
+    writer.Put(playerId);
+
+    peer.Send(
+        writer,
+        DeliveryMethod.ReliableOrdered
+    );
+
+    Console.WriteLine(
+        $"Sent PlayerId={playerId} to client."
     );
 };
 
