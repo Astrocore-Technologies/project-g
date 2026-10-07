@@ -5,6 +5,7 @@ using Content.Server.Configuration;
 using Content.Server.Networking;
 using Content.Server.World;
 using Content.Shared.Network;
+using Content.Shared.Navigation;
 using LiteNetLib;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -146,6 +147,41 @@ public sealed class NetworkMovementIntegrationTests
         }
     }
 
+    [Fact]
+    public async Task NetworkClientReceivesGeometryBeforeSpawnAndMovesAroundWall()
+    {
+        var port = GetFreePort();
+        var world = new ServerWorld(Options.Create(new MovementOptions()),
+            Options.Create(new InterestOptions()), Options.Create(new NavigationOptions
+            {
+                BlockedAreas = new() { new BlockedAreaOptions { X = 14, Z = 10, Width = 2, Height = 10 } }
+            }));
+        using var server = CreateServer(port, world);
+        await server.StartAsync(CancellationToken.None);
+        using var client = new TestClient(port);
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+        try
+        {
+            await PollUntilAsync(client, client, () => client.Spawns.Count == 1, timeout.Token);
+            Assert.NotNull(client.Navigation);
+            Assert.False(client.Navigation.IsWalkable(Vector2.Zero));
+            var spawn = client.LocalSpawn;
+            var target = new Vector2(8f, 0f);
+            uint sequence = 0;
+            await PollUntilAsync(client, client, () =>
+            {
+                client.Move(++sequence, target);
+                return client.IsAt(spawn.EntityId, target);
+            }, timeout.Token);
+            Assert.True(client.SawWallDetour);
+        }
+        finally
+        {
+            using var stopTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+            await server.StopAsync(stopTimeout.Token);
+        }
+    }
+
     private static GameServerService CreateServer(int port, ServerWorld world) => new(
         Options.Create(new ServerOptions
         {
@@ -185,6 +221,8 @@ public sealed class NetworkMovementIntegrationTests
         private PlayerId _playerId;
 
         public Dictionary<NetworkEntityId, PlayerSpawn> Spawns { get; } = new();
+        public NavigationGrid? Navigation { get; private set; }
+        public bool SawWallDetour { get; private set; }
         public PlayerSpawn LocalSpawn => Spawns.Values.Single(spawn => spawn.PlayerId == _playerId);
 
         public TestClient(int port)
@@ -216,10 +254,15 @@ public sealed class NetworkMovementIntegrationTests
                             _playerId = welcome.PlayerId;
                             break;
                         case NetworkMessageType.PlayerSpawn:
+                            Assert.NotNull(Navigation);
                             Assert.True(NetworkProtocol.TryReadPlayerSpawn(reader, out var spawn));
                             Spawns[spawn.EntityId] = spawn;
                             _ticks[spawn.EntityId] = spawn.ServerTick;
                             _states.Remove(spawn.EntityId);
+                            break;
+                        case NetworkMessageType.RegionNavigation:
+                            Assert.True(NetworkProtocol.TryReadRegionNavigation(reader, out var region));
+                            Navigation = new NavigationGrid(region);
                             break;
                         case NetworkMessageType.PlayerDespawn:
                             Assert.True(NetworkProtocol.TryReadPlayerDespawn(reader, out var despawn));
@@ -236,6 +279,9 @@ public sealed class NetworkMovementIntegrationTests
                                 {
                                     _ticks[state.EntityId] = snapshot.ServerTick;
                                     _states[state.EntityId] = state;
+                                    Assert.NotNull(Navigation);
+                                    Assert.True(Navigation.IsWalkable(state.Position));
+                                    SawWallDetour |= MathF.Abs(state.Position.Y) > 5f;
                                 }
                             }
                             break;

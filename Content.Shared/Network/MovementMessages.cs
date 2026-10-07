@@ -20,7 +20,8 @@ public readonly record struct MoveCommand(
 public readonly record struct EntitySnapshot(
     NetworkEntityId EntityId,
     Vector2 Position,
-    uint LastProcessedSequence);
+    uint LastProcessedSequence,
+    Vector2 Target);
 
 public readonly record struct WorldSnapshot(
     uint ServerTick,

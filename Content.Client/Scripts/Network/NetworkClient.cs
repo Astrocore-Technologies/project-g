@@ -1,5 +1,6 @@
 using System.Reflection;
 using Content.Shared.Network;
+using Content.Shared.Navigation;
 using Godot;
 using LiteNetLib;
 using LiteNetLib.Utils;
@@ -27,11 +28,13 @@ public partial class NetworkClient : Node
 
     public PlayerId LocalPlayerId { get; private set; } = PlayerId.Invalid;
     public ushort ServerTickRate { get; private set; } = NetworkConstants.ServerTickRate;
+    public NavigationGrid? Navigation { get; private set; }
 
     public event Action<ServerWelcome>? HandshakeCompleted;
     public event Action<PlayerSpawn>? PlayerSpawned;
     public event Action<PlayerDespawn>? PlayerDespawned;
     public event Action<WorldSnapshot>? SnapshotReceived;
+    public event Action<NavigationGrid>? NavigationReceived;
     public event Action? Disconnected;
 
     public override void _Ready()
@@ -109,6 +112,7 @@ public partial class NetworkClient : Node
         _serverPeer = null;
         _handshakeComplete = false;
         LocalPlayerId = PlayerId.Invalid;
+        Navigation = null;
         Disconnected?.Invoke();
 
         if (TryReadDisconnectRejection(disconnectInfo, out var rejection))
@@ -144,8 +148,19 @@ public partial class NetworkClient : Node
                     HandleReject(peer, reader);
                     break;
                 case NetworkMessageType.PlayerSpawn:
-                    if (NetworkProtocol.TryReadPlayerSpawn(reader, out var spawn))
+                    if (Navigation is not null && NetworkProtocol.TryReadPlayerSpawn(reader, out var spawn) &&
+                        Navigation.IsWalkable(spawn.Position))
                         PlayerSpawned?.Invoke(spawn);
+                    else
+                        DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.RegionNavigation:
+                    if (_handshakeComplete && Navigation is null &&
+                        NetworkProtocol.TryReadRegionNavigation(reader, out var region))
+                    {
+                        Navigation = new NavigationGrid(region);
+                        NavigationReceived?.Invoke(Navigation);
+                    }
                     else
                         DisconnectMalformed(peer);
                     break;

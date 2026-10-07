@@ -1,6 +1,8 @@
 using Content.Shared.Network;
 using Godot;
 using ProjectG.Networking;
+using Content.Shared.Navigation;
+using ProjectG.Navigation;
 
 namespace ProjectG.Gameplay;
 
@@ -11,6 +13,7 @@ public partial class WorldController : Node3D
 
     private readonly Dictionary<NetworkEntityId, PlayerController> _players = new();
     private NetworkClient _network = null!;
+    private NavigationVisual? _navigationVisual;
 
     public override void _Ready()
     {
@@ -18,7 +21,8 @@ public partial class WorldController : Node3D
         _network.PlayerSpawned += OnPlayerSpawned;
         _network.PlayerDespawned += OnPlayerDespawned;
         _network.SnapshotReceived += OnSnapshotReceived;
-        _network.Disconnected += ClearPlayers;
+        _network.NavigationReceived += OnNavigationReceived;
+        _network.Disconnected += ClearWorld;
         _network.ConnectToServer();
     }
 
@@ -30,7 +34,16 @@ public partial class WorldController : Node3D
         _network.PlayerSpawned -= OnPlayerSpawned;
         _network.PlayerDespawned -= OnPlayerDespawned;
         _network.SnapshotReceived -= OnSnapshotReceived;
-        _network.Disconnected -= ClearPlayers;
+        _network.NavigationReceived -= OnNavigationReceived;
+        _network.Disconnected -= ClearWorld;
+    }
+
+    private void OnNavigationReceived(NavigationGrid grid)
+    {
+        _navigationVisual?.QueueFree();
+        _navigationVisual = new NavigationVisual { Name = "NavigationGeometry" };
+        AddChild(_navigationVisual);
+        _navigationVisual.Build(grid);
     }
 
     private void OnPlayerSpawned(PlayerSpawn spawn)
@@ -62,11 +75,13 @@ public partial class WorldController : Node3D
         }
     }
 
-    private void ClearPlayers()
+    private void ClearWorld()
     {
         foreach (var player in _players.Values)
             player.QueueFree();
 
         _players.Clear();
+        _navigationVisual?.QueueFree();
+        _navigationVisual = null;
     }
 }

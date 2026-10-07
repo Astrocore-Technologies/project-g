@@ -42,6 +42,8 @@ builder.Services.AddOptions<InterestOptions>()
         "AOI radii must be finite, positive and ordered; cell query must be bounded.")
     .ValidateOnStart();
 builder.Services.AddSingleton<ServerWorld>();
+builder.Services.AddOptions<NavigationOptions>()
+    .Bind(builder.Configuration.GetSection(NavigationOptions.SectionName));
 builder.Services.AddHostedService<GameServerService>();
 
 await builder.Build().RunAsync();

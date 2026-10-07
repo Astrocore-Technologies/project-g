@@ -199,6 +199,8 @@ public sealed class GameServerService : BackgroundService
             DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
 
         peer.Send(NetworkProtocol.Write(welcome), DeliveryMethod.ReliableOrdered);
+        // Public collision geometry arrives before any spawn on the same reliable stream.
+        peer.Send(NetworkProtocol.Write(_world.Navigation.ToMessage()), DeliveryMethod.ReliableOrdered);
 
         var view = new InterestView();
         _views.Add(peer.Id, view);

@@ -7,9 +7,9 @@ namespace Content.Shared.Network;
 /// <summary>
 /// Defines the exact, bounded binary layout of handshake and movement messages.
 /// </summary>
-public static class NetworkProtocol
+public static partial class NetworkProtocol
 {
-    private const int EntitySnapshotBytes = sizeof(ulong) + 2 * sizeof(float) + sizeof(uint);
+    private const int EntitySnapshotBytes = sizeof(ulong) + 4 * sizeof(float) + sizeof(uint);
 
     public static NetDataWriter Write(ClientHello message)
     {
@@ -108,11 +108,13 @@ public static class NetworkProtocol
         {
             var entity = entities[i];
             if (!entity.EntityId.IsValid || !float.IsFinite(entity.Position.X) ||
-                !float.IsFinite(entity.Position.Y))
+                !float.IsFinite(entity.Position.Y) ||
+                !float.IsFinite(entity.Target.X) || !float.IsFinite(entity.Target.Y))
                 throw new ArgumentOutOfRangeException(nameof(entities));
             writer.Put(entity.EntityId.Value);
             WriteVector2(writer, entity.Position);
             writer.Put(entity.LastProcessedSequence);
+            WriteVector2(writer, entity.Target);
         }
     }
 
@@ -258,7 +260,8 @@ public static class NetworkProtocol
             if (!reader.TryGetULong(out var entityId) ||
                 entityId == 0 ||
                 !TryReadVector2(reader, out var position) ||
-                !reader.TryGetUInt(out var sequence))
+                !reader.TryGetUInt(out var sequence) ||
+                !TryReadVector2(reader, out var target))
             {
                 return false;
             }
@@ -266,7 +269,8 @@ public static class NetworkProtocol
             entities[i] = new EntitySnapshot(
                 new NetworkEntityId(entityId),
                 position,
-                sequence);
+                sequence,
+                target);
         }
 
         if (reader.AvailableBytes != 0)

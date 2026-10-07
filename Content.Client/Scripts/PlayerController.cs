@@ -1,5 +1,6 @@
 using Content.Shared.Movement;
 using Content.Shared.Network;
+using Content.Shared.Navigation;
 using Godot;
 using ProjectG.Networking;
 using NumericsVector2 = System.Numerics.Vector2;
@@ -17,6 +18,8 @@ public partial class PlayerController : CharacterBody3D
 
     private NetworkClient? _network;
     private MovementSettings _settings;
+    private NavigationGrid _navigation = null!;
+    private NavigationMover? _motion;
     private NumericsVector2 _predictedPosition;
     private NumericsVector2 _target;
     private double _tickAccumulator;
@@ -37,6 +40,10 @@ public partial class PlayerController : CharacterBody3D
         _isLocal = isLocal;
         _network = network;
         _settings = spawn.Movement;
+        _navigation = network.Navigation ?? throw new InvalidOperationException("Navigation must arrive before spawn.");
+        if (isLocal)
+            _motion = new NavigationMover(_navigation, _settings,
+                new NavigationPathfinder(_navigation), spawn.Position);
         _fixedDelta = 1f / network.ServerTickRate;
         _predictedPosition = spawn.Position;
         _target = spawn.Position;
@@ -47,6 +54,8 @@ public partial class PlayerController : CharacterBody3D
         camera.Current = isLocal;
 
         var collision = GetNode<CollisionShape3D>("CollisionShape3D");
+        var height = 2f * MathF.Max(1f, _navigation.AgentRadius);
+        collision.Shape = new CapsuleShape3D { Radius = _navigation.AgentRadius, Height = height };
         collision.Disabled = !isLocal;
 
         var material = new StandardMaterial3D
@@ -55,7 +64,9 @@ public partial class PlayerController : CharacterBody3D
                 ? new Color(0.2f, 0.8f, 0.35f)
                 : new Color(0.9f, 0.45f, 0.2f)
         };
-        GetNode<MeshInstance3D>("MeshInstance3D").MaterialOverride = material;
+        var mesh = GetNode<MeshInstance3D>("MeshInstance3D");
+        mesh.Mesh = new CapsuleMesh { Radius = _navigation.AgentRadius, Height = height };
+        mesh.MaterialOverride = material;
 
         if (!isLocal)
             _remotePoints.Add(new RemotePoint(NowSeconds(), spawn.Position));
@@ -85,16 +96,22 @@ public partial class PlayerController : CharacterBody3D
             return;
 
         var clicked = rayOrigin + rayDirection * distance;
-        _target = MovementSimulation.ClampTarget(
+        var target = MovementSimulation.ClampTarget(
             new NumericsVector2(clicked.X, clicked.Z),
             _settings);
+        if (_motion?.TrySetTarget(target) == true)
+            _target = target;
     }
 
     public override void _PhysicsProcess(double delta)
     {
         if (_isLocal)
             UpdateLocal(delta);
-        else
+    }
+
+    public override void _Process(double delta)
+    {
+        if (!_isLocal)
             UpdateRemote();
     }
 
@@ -117,6 +134,8 @@ public partial class PlayerController : CharacterBody3D
 
     private void UpdateLocal(double delta)
     {
+        if (_motion is null)
+            return;
         _tickAccumulator += delta;
         var simulatedTicks = 0;
 
@@ -129,11 +148,9 @@ public partial class PlayerController : CharacterBody3D
                 _sequence++;
 
             var command = new MoveCommand(_sequence, _clientTick, _target);
-            _predictedPosition = MovementSimulation.Step(
-                _predictedPosition,
-                command.Target,
-                _settings,
-                _fixedDelta);
+            _motion.TrySetTarget(command.Target);
+            _motion.Step(_fixedDelta);
+            _predictedPosition = _motion.Position;
 
             _predictionHistory.Add(new PredictedFrame(command));
             if (_predictionHistory.Count > MaxPredictionHistory)
@@ -144,29 +161,29 @@ public partial class PlayerController : CharacterBody3D
 
         var desired = ToGodot(_predictedPosition);
         var error = GlobalPosition.DistanceTo(desired);
-        GlobalPosition = error > 3f
+        // A correction across a corner must not visually ease through solid geometry.
+        var current = new NumericsVector2(GlobalPosition.X, GlobalPosition.Z);
+        GlobalPosition = error > 3f || !_navigation.CanTraverse(current, _predictedPosition)
             ? desired
             : GlobalPosition.Lerp(desired, 1f - Mathf.Exp((float) (-20d * delta)));
     }
 
     private void Reconcile(EntitySnapshot snapshot)
     {
+        if (_motion is null || !_motion.Reset(snapshot.Position, snapshot.Target))
+            return;
         _predictionHistory.RemoveAll(frame =>
             !MovementSimulation.IsSequenceNewer(
                 frame.Command.Sequence,
                 snapshot.LastProcessedSequence));
 
-        var replayed = snapshot.Position;
         foreach (var frame in _predictionHistory)
         {
-            replayed = MovementSimulation.Step(
-                replayed,
-                frame.Command.Target,
-                _settings,
-                _fixedDelta);
+            _motion.TrySetTarget(frame.Command.Target);
+            _motion.Step(_fixedDelta);
         }
 
-        _predictedPosition = replayed;
+        _predictedPosition = _motion.Position;
     }
 
     private void UpdateRemote()
@@ -186,6 +203,8 @@ public partial class PlayerController : CharacterBody3D
             var duration = Math.Max(0.0001, to.ReceivedAt - from.ReceivedAt);
             var amount = (float) Math.Clamp((renderTime - from.ReceivedAt) / duration, 0d, 1d);
             position = NumericsVector2.Lerp(from.Position, to.Position, amount);
+            if (!_navigation.CanTraverse(from.Position, to.Position))
+                position = from.Position;
         }
         else
         {
@@ -195,8 +214,8 @@ public partial class PlayerController : CharacterBody3D
         GlobalPosition = ToGodot(position);
     }
 
-    private static Vector3 ToGodot(NumericsVector2 position) =>
-        new(position.X, 1f, position.Y);
+    private Vector3 ToGodot(NumericsVector2 position) =>
+        new(position.X, MathF.Max(1f, _navigation.AgentRadius), position.Y);
 
     private static double NowSeconds() => Time.GetTicksMsec() / 1000d;
 

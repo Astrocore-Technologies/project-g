@@ -8,5 +8,6 @@ public enum NetworkMessageType : ushort
     PlayerSpawn = 10,
     PlayerDespawn = 11,
     MoveCommand = 12,
-    WorldSnapshot = 13
+    WorldSnapshot = 13,
+    RegionNavigation = 14
 }

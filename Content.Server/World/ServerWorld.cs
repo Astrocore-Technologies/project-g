@@ -2,6 +2,7 @@ using System.Numerics;
 using Content.Server.Configuration;
 using Content.Shared.Movement;
 using Content.Shared.Network;
+using Content.Shared.Navigation;
 using Microsoft.Extensions.Options;
 
 namespace Content.Server.World;
@@ -19,18 +20,23 @@ public sealed class ServerWorld
     private readonly MovementSettings _movement;
     private readonly InterestOptions _interest;
     private readonly SpatialIndex _spatial;
+    private readonly NavigationPathfinder _pathfinder;
     private ulong _nextEntityId = 1;
 
-    public ServerWorld(IOptions<MovementOptions> options, IOptions<InterestOptions> interest)
+    public ServerWorld(IOptions<MovementOptions> options, IOptions<InterestOptions> interest,
+        IOptions<NavigationOptions>? navigation = null)
     {
         _movement = options.Value.ToSettings();
         _interest = interest.Value;
         if (!_interest.IsValid())
             throw new ArgumentException("Invalid interest settings.", nameof(interest));
         _spatial = new SpatialIndex(_interest.CellSize);
+        Navigation = (navigation?.Value ?? new NavigationOptions()).CreateGrid(_movement);
+        _pathfinder = new NavigationPathfinder(Navigation);
     }
 
     public uint Tick { get; private set; }
+    public NavigationGrid Navigation { get; }
     public IReadOnlyCollection<ServerPlayer> Players => _playersByConnection.Values;
 
     public ServerPlayer AddPlayer(int connectionId, PlayerId playerId)
@@ -44,7 +50,10 @@ public sealed class ServerWorld
         var entityId = new NetworkEntityId(_nextEntityId++);
         var spawnIndex = (int) ((entityId.Value - 1) % 10);
         var spawn = MovementSimulation.ClampTarget(new Vector2(-9f + spawnIndex * 2f, 0f), _movement);
-        var player = new ServerPlayer(connectionId, playerId, entityId, spawn);
+        if (!Navigation.TryFindSpawn(spawn, out spawn))
+            throw new InvalidOperationException("Region has no walkable spawn.");
+        var player = new ServerPlayer(connectionId, playerId, entityId,
+            new NavigationMover(Navigation, _movement, _pathfinder, spawn));
         _playersByConnection.Add(connectionId, player);
         _playersByEntity.Add(entityId, player);
         _spatial.Add(entityId, spawn);
@@ -70,7 +79,15 @@ public sealed class ServerWorld
             return false;
         }
 
-        player.Target = command.Target;
+        if (command.Target != player.Target)
+        {
+            // Repeated intentions are cheap; a flood cannot trigger unbounded A* searches.
+            if (player.LastPathRequestTick == Tick)
+                return false;
+            player.LastPathRequestTick = Tick;
+            if (!player.Motion.TrySetTarget(command.Target))
+                return false;
+        }
         player.LastProcessedSequence = command.Sequence;
         if (player.Target != player.Position)
             _movingPlayers.Add(connectionId);
@@ -88,13 +105,9 @@ public sealed class ServerWorld
         foreach (var connectionId in _movingPlayers)
         {
             var player = _playersByConnection[connectionId];
-            player.Position = MovementSimulation.Step(
-                player.Position,
-                player.Target,
-                _movement,
-                fixedDeltaSeconds);
+            player.Motion.Step(fixedDeltaSeconds);
             _spatial.Move(player.EntityId, player.Position);
-            if (player.Position == player.Target)
+            if (!player.Motion.IsMoving)
                 _stoppedPlayers.Add(connectionId);
         }
         foreach (var connectionId in _stoppedPlayers)
@@ -134,7 +147,8 @@ public sealed class ServerWorld
             view.States.Add(new EntitySnapshot(
                 player.EntityId,
                 player.Position,
-                player.LastProcessedSequence));
+                player.LastProcessedSequence,
+                player.Target));
         }
     }
 }

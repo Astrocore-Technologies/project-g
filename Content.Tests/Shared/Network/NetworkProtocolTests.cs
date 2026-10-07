@@ -92,7 +92,8 @@ public sealed class NetworkProtocolTests
         var entity = new EntitySnapshot(
             new NetworkEntityId(9),
             new Vector2(2f, 3f),
-            14);
+            14,
+            new Vector2(5f, 6f));
         var reader = CreateReader(NetworkProtocol.Write(
             new WorldSnapshot(22, new[] { entity })));
 
@@ -109,7 +110,7 @@ public sealed class NetworkProtocolTests
     {
         var entities = new EntitySnapshot[65];
         for (var i = 0; i < entities.Length; i++)
-            entities[i] = new EntitySnapshot(new NetworkEntityId((ulong) i + 1), new Vector2(i, -i), 7);
+            entities[i] = new EntitySnapshot(new NetworkEntityId((ulong) i + 1), new Vector2(i, -i), 7, Vector2.Zero);
         var writer = new NetDataWriter();
         var received = new List<EntitySnapshot>();
         for (var offset = 0; offset < entities.Length; offset += NetworkConstants.MaxEntitiesPerSnapshot)
@@ -134,7 +135,7 @@ public sealed class NetworkProtocolTests
     public void SnapshotRejectsTruncationAndTrailingBytes(int lengthChange)
     {
         var writer = NetworkProtocol.Write(new WorldSnapshot(1,
-            new[] { new EntitySnapshot(new NetworkEntityId(1), Vector2.Zero, 1) }));
+            new[] { new EntitySnapshot(new NetworkEntityId(1), Vector2.Zero, 1, Vector2.Zero) }));
         var bytes = writer.CopyData();
         Array.Resize(ref bytes, bytes.Length + lengthChange);
         var reader = new NetDataReader(bytes);
@@ -161,6 +162,8 @@ public sealed class NetworkProtocolTests
         writer.Put(0f);
         writer.Put(0f);
         writer.Put((uint) 1);
+        writer.Put(0f);
+        writer.Put(0f);
         reader = CreateReader(writer);
         Assert.True(NetworkProtocol.TryReadMessageType(reader, out _));
         Assert.False(NetworkProtocol.TryReadWorldSnapshot(reader, out _));

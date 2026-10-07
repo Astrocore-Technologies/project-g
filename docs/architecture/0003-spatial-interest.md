@@ -2,7 +2,9 @@
 
 ## Status
 
-Implemented for development stage 2; awaiting user acceptance.
+Accepted by the user for development stage 2.
+
+The decisions below describe protocol version 3. Stage 3 navigation and protocol version 4 are documented in ADR 0004.
 
 ## Decisions
 

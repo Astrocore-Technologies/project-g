@@ -1,5 +1,6 @@
 using System.Numerics;
 using Content.Shared.Network;
+using Content.Shared.Navigation;
 
 namespace Content.Server.World;
 
@@ -8,12 +9,14 @@ public sealed class ServerPlayer(
     int connectionId,
     PlayerId playerId,
     NetworkEntityId entityId,
-    Vector2 spawnPosition)
+    NavigationMover motion)
 {
     public int ConnectionId { get; } = connectionId;
     public PlayerId PlayerId { get; } = playerId;
     public NetworkEntityId EntityId { get; } = entityId;
-    public Vector2 Position { get; internal set; } = spawnPosition;
-    public Vector2 Target { get; internal set; } = spawnPosition;
+    public Vector2 Position => Motion.Position;
+    public Vector2 Target => Motion.Target;
+    internal NavigationMover Motion { get; } = motion;
+    internal uint? LastPathRequestTick { get; set; }
     public uint LastProcessedSequence { get; internal set; }
 }
