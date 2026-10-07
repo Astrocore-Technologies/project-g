@@ -1,62 +1,29 @@
-﻿using Content.Shared.Network;
-using LiteNetLib;
-using LiteNetLib.Utils;
+using Content.Server.Configuration;
+using Content.Server.Networking;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
-var listener = new EventBasedNetListener();
-var server = new NetManager(listener);
-
-var nextPlayerId = 1;
-
-listener.ConnectionRequestEvent += request =>
+var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings
 {
-    request.AcceptIfKey(NetworkConstants.ConnectionKey);
-};
+    Args = args,
+    // appsettings files are copied beside the executable, independent of shell cwd.
+    ContentRootPath = AppContext.BaseDirectory
+});
 
-listener.PeerConnectedEvent += peer =>
-{
-    int playerId = nextPlayerId++;
+builder.Services
+    .AddOptions<ServerOptions>()
+    .Bind(builder.Configuration.GetSection(ServerOptions.SectionName))
+    .Validate(options => options.Port is > 0 and <= ushort.MaxValue,
+        "Server port must be between 1 and 65535.")
+    .Validate(options => options.TickRate is >= 1 and <= 120,
+        "Server tick rate must be between 1 and 120.")
+    .Validate(options => options.NetworkPollIntervalMilliseconds is >= 1 and <= 100,
+        "Network poll interval must be between 1 and 100 milliseconds.")
+    .Validate(options => !string.IsNullOrWhiteSpace(options.ConnectionKey),
+        "Connection key must not be empty.")
+    .ValidateOnStart();
 
-    Console.WriteLine(
-        $"Player connected! PlayerId={playerId}, Address={peer.Address}:{peer.Port}"
-    );
+builder.Services.AddSingleton<HandshakeCoordinator>();
+builder.Services.AddHostedService<GameServerService>();
 
-    var writer = new NetDataWriter();
-
-    writer.Put((byte)NetworkMessageType.AssignPlayerId);
-    writer.Put(playerId);
-
-    peer.Send(
-        writer,
-        DeliveryMethod.ReliableOrdered
-    );
-
-    Console.WriteLine(
-        $"Sent PlayerId={playerId} to client."
-    );
-};
-
-listener.PeerDisconnectedEvent += (peer, disconnectInfo) =>
-{
-    Console.WriteLine(
-        $"Player disconnected: {peer.Address}:{peer.Port}"
-    );
-};
-
-if (!server.Start(NetworkConstants.Port))
-{
-    Console.WriteLine("ERROR: Failed to start server.");
-    return;
-}
-
-Console.WriteLine(
-    $"Content.Server started on port {NetworkConstants.Port}"
-);
-
-Console.WriteLine("Waiting for players...");
-Console.WriteLine("Press Ctrl+C to stop.");
-
-while (true)
-{
-    server.PollEvents();
-    Thread.Sleep(15);
-}
+await builder.Build().RunAsync();
