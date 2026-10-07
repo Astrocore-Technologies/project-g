@@ -22,6 +22,8 @@ public sealed class GameServerService : BackgroundService
     private readonly ILogger<GameServerService> _logger;
     private readonly EventBasedNetListener _listener = new();
     private readonly Dictionary<int, NetPeer> _peers = new();
+    private readonly Dictionary<int, InterestView> _views = new();
+    private readonly NetDataWriter _snapshotWriter = new();
     private readonly NetManager _server;
 
     public GameServerService(
@@ -114,11 +116,11 @@ public sealed class GameServerService : BackgroundService
     private void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
     {
         _peers.Remove(peer.Id);
+        _views.Remove(peer.Id);
         var playerId = _handshakes.RemoveConnection(peer.Id);
-        var player = _world.RemovePlayer(peer.Id);
+        _world.RemovePlayer(peer.Id);
 
-        if (player is not null)
-            BroadcastReliable(NetworkProtocol.Write(new PlayerDespawn(player.EntityId)));
+        // Remaining observers receive the despawn through their AOI delta next tick.
 
         _logger.LogInformation(
             "Peer disconnected. ConnectionId={ConnectionId}, PlayerId={PlayerId}, Reason={Reason}",
@@ -198,20 +200,9 @@ public sealed class GameServerService : BackgroundService
 
         peer.Send(NetworkProtocol.Write(welcome), DeliveryMethod.ReliableOrdered);
 
-        // The new client receives the complete current player set in reliable order.
-        foreach (var currentPlayer in _world.Players)
-            peer.Send(NetworkProtocol.Write(_world.CreateSpawn(currentPlayer)), DeliveryMethod.ReliableOrdered);
-
-        // Existing clients only need the newly created player.
-        foreach (var (connectionId, currentPeer) in _peers)
-        {
-            if (connectionId != peer.Id && _handshakes.TryGetPlayerId(connectionId, out _))
-            {
-                currentPeer.Send(
-                    NetworkProtocol.Write(_world.CreateSpawn(player)),
-                    DeliveryMethod.ReliableOrdered);
-            }
-        }
+        var view = new InterestView();
+        _views.Add(peer.Id, view);
+        SendInterest(peer, view);
 
         _logger.LogInformation(
             "Handshake accepted. ConnectionId={ConnectionId}, PlayerId={PlayerId}, EntityId={EntityId}, Build={BuildVersion}",
@@ -226,20 +217,28 @@ public sealed class GameServerService : BackgroundService
         if (_world.Players.Count == 0)
             return;
 
-        var packet = NetworkProtocol.Write(_world.CreateSnapshot());
         foreach (var (connectionId, peer) in _peers)
         {
-            if (_handshakes.TryGetPlayerId(connectionId, out _))
-                peer.Send(packet, DeliveryMethod.Sequenced);
+            if (_views.TryGetValue(connectionId, out var view))
+                SendInterest(peer, view);
         }
     }
 
-    private void BroadcastReliable(NetDataWriter packet)
+    private void SendInterest(NetPeer peer, InterestView view)
     {
-        foreach (var (connectionId, peer) in _peers)
+        _world.UpdateInterest(peer.Id, view);
+        foreach (var id in view.Left)
+            peer.Send(NetworkProtocol.Write(new PlayerDespawn(id)), DeliveryMethod.ReliableOrdered);
+        foreach (var id in view.Entered)
+            peer.Send(NetworkProtocol.Write(_world.CreateSpawn(id)), DeliveryMethod.ReliableOrdered);
+
+        for (var offset = 0; offset < view.Snapshots.Count;
+             offset += NetworkConstants.MaxEntitiesPerSnapshot)
         {
-            if (_handshakes.TryGetPlayerId(connectionId, out _))
-                peer.Send(packet, DeliveryMethod.ReliableOrdered);
+            var count = Math.Min(NetworkConstants.MaxEntitiesPerSnapshot, view.Snapshots.Count - offset);
+            NetworkProtocol.WriteWorldSnapshot(_snapshotWriter, _world.Tick, view.Snapshots, offset, count);
+            // Sequenced would discard other chunks of this tick. Each entity filters its own tick.
+            peer.Send(_snapshotWriter, DeliveryMethod.Unreliable);
         }
     }
 

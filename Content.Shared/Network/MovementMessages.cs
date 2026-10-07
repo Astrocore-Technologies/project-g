@@ -7,7 +7,8 @@ public readonly record struct PlayerSpawn(
     PlayerId PlayerId,
     NetworkEntityId EntityId,
     Vector2 Position,
-    MovementSettings Movement);
+    MovementSettings Movement,
+    uint ServerTick);
 
 public readonly record struct PlayerDespawn(NetworkEntityId EntityId);
 

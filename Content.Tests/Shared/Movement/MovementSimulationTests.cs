@@ -2,7 +2,7 @@ using System.Numerics;
 using Content.Shared.Movement;
 using Xunit;
 
-namespace Content.Shared.Tests.Movement;
+namespace Content.Tests.Shared.Movement;
 
 public sealed class MovementSimulationTests
 {

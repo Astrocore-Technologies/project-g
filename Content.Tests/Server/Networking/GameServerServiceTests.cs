@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Xunit;
 
-namespace Content.Server.Tests.Networking;
+namespace Content.Tests.Server.Networking;
 
 public sealed class GameServerServiceTests
 {
@@ -25,7 +25,8 @@ public sealed class GameServerServiceTests
             NetworkPollIntervalMilliseconds = 1,
             ConnectionKey = NetworkConstants.ConnectionKey
         });
-        var world = new ServerWorld(Options.Create(new MovementOptions()));
+        var world = new ServerWorld(
+            Options.Create(new MovementOptions()), Options.Create(new InterestOptions()));
 
         using var server = new GameServerService(
             serverOptions,

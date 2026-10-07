@@ -5,7 +5,7 @@ using Content.Shared.Network;
 using Microsoft.Extensions.Options;
 using Xunit;
 
-namespace Content.Server.Tests.World;
+namespace Content.Tests.Server.World;
 
 public sealed class ServerWorldTests
 {
@@ -48,13 +48,18 @@ public sealed class ServerWorldTests
     {
         var world = CreateWorld();
         var player = world.AddPlayer(1, new PlayerId(1));
-        Assert.Contains(world.CreateSnapshot().Entities, state => state.EntityId == player.EntityId);
+        var observer = world.AddPlayer(2, new PlayerId(2));
+        var view = new InterestView();
+        world.UpdateInterest(observer.ConnectionId, view);
+        Assert.Contains(view.Snapshots, state => state.EntityId == player.EntityId);
 
         world.RemovePlayer(1);
 
-        Assert.DoesNotContain(world.CreateSnapshot().Entities, state => state.EntityId == player.EntityId);
+        world.UpdateInterest(observer.ConnectionId, view);
+        Assert.DoesNotContain(view.Snapshots, state => state.EntityId == player.EntityId);
+        Assert.Contains(player.EntityId, view.Left);
     }
 
     private static ServerWorld CreateWorld() =>
-        new(Options.Create(new MovementOptions()));
+        new(Options.Create(new MovementOptions()), Options.Create(new InterestOptions()));
 }

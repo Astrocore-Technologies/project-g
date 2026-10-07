@@ -1,0 +1,18 @@
+using Content.Shared.Network;
+
+namespace Content.Server.World;
+
+/// <summary>Per-observer relevance state and reusable tick output. Owned by one connection.</summary>
+public sealed class InterestView
+{
+    internal HashSet<NetworkEntityId> Candidates { get; } = new();
+    internal HashSet<NetworkEntityId> Visible { get; } = new();
+    internal List<NetworkEntityId> EnteredIds { get; } = new();
+    internal List<NetworkEntityId> LeftIds { get; } = new();
+    internal List<EntitySnapshot> States { get; } = new();
+
+    public IReadOnlyCollection<NetworkEntityId> Entities => Visible;
+    public IReadOnlyList<NetworkEntityId> Entered => EnteredIds;
+    public IReadOnlyList<NetworkEntityId> Left => LeftIds;
+    public IReadOnlyList<EntitySnapshot> Snapshots => States;
+}

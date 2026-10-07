@@ -23,6 +23,7 @@ public partial class PlayerController : CharacterBody3D
     private float _fixedDelta;
     private uint _sequence;
     private uint _clientTick;
+    private uint _lastServerTick;
     private bool _isLocal;
 
     public NetworkEntityId EntityId { get; private set; } = NetworkEntityId.Invalid;
@@ -39,6 +40,7 @@ public partial class PlayerController : CharacterBody3D
         _fixedDelta = 1f / network.ServerTickRate;
         _predictedPosition = spawn.Position;
         _target = spawn.Position;
+        _lastServerTick = spawn.ServerTick;
         GlobalPosition = ToGodot(spawn.Position);
 
         var camera = GetNode<Camera3D>("CameraRig/Camera3D");
@@ -63,7 +65,7 @@ public partial class PlayerController : CharacterBody3D
     {
         if (!_isLocal ||
             @event is not InputEventMouseButton mouseEvent ||
-            mouseEvent.ButtonIndex != MouseButton.Left ||
+            mouseEvent.ButtonIndex != MouseButton.Right ||
             !mouseEvent.Pressed)
         {
             return;
@@ -98,6 +100,10 @@ public partial class PlayerController : CharacterBody3D
 
     public void ApplySnapshot(EntitySnapshot snapshot, uint serverTick)
     {
+        // Chunks may arrive out of order, including packets from an earlier AOI visit.
+        if (!MovementSimulation.IsSequenceNewer(serverTick, _lastServerTick))
+            return;
+        _lastServerTick = serverTick;
         if (_isLocal)
         {
             Reconcile(snapshot);

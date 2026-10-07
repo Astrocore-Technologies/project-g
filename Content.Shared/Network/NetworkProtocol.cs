@@ -5,10 +5,12 @@ using System.Numerics;
 namespace Content.Shared.Network;
 
 /// <summary>
-/// Defines the exact, bounded binary layout of handshake messages.
+/// Defines the exact, bounded binary layout of handshake and movement messages.
 /// </summary>
 public static class NetworkProtocol
 {
+    private const int EntitySnapshotBytes = sizeof(ulong) + 2 * sizeof(float) + sizeof(uint);
+
     public static NetDataWriter Write(ClientHello message)
     {
         ArgumentOutOfRangeException.ThrowIfGreaterThan(
@@ -55,6 +57,7 @@ public static class NetworkProtocol
         writer.Put(message.EntityId.Value);
         WriteVector2(writer, message.Position);
         WriteMovementSettings(writer, message.Movement);
+        writer.Put(message.ServerTick);
         return writer;
     }
 
@@ -79,22 +82,38 @@ public static class NetworkProtocol
 
     public static NetDataWriter Write(WorldSnapshot message)
     {
+        var writer = new NetDataWriter();
+        WriteWorldSnapshot(writer, message.ServerTick, message.Entities, 0, message.Entities.Count);
+        return writer;
+    }
+
+    /// <summary>Writes one independent chunk into a reusable transport buffer.</summary>
+    public static void WriteWorldSnapshot(
+        NetDataWriter writer, uint serverTick, IReadOnlyList<EntitySnapshot> entities,
+        int offset, int count)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(offset);
+        ArgumentOutOfRangeException.ThrowIfNegative(count);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(
-            message.Entities.Count,
-            NetworkConstants.MaxSnapshotEntities);
+            count, NetworkConstants.MaxEntitiesPerSnapshot);
+        if (offset > entities.Count || count > entities.Count - offset)
+            throw new ArgumentOutOfRangeException(nameof(offset));
 
-        var writer = CreateWriter(NetworkMessageType.WorldSnapshot);
-        writer.Put(message.ServerTick);
-        writer.Put((byte) message.Entities.Count);
+        writer.Reset();
+        writer.Put((ushort) NetworkMessageType.WorldSnapshot);
+        writer.Put(serverTick);
+        writer.Put((byte) count);
 
-        foreach (var entity in message.Entities)
+        for (var i = offset; i < offset + count; i++)
         {
+            var entity = entities[i];
+            if (!entity.EntityId.IsValid || !float.IsFinite(entity.Position.X) ||
+                !float.IsFinite(entity.Position.Y))
+                throw new ArgumentOutOfRangeException(nameof(entities));
             writer.Put(entity.EntityId.Value);
             WriteVector2(writer, entity.Position);
             writer.Put(entity.LastProcessedSequence);
         }
-
-        return writer;
     }
 
     public static bool TryReadMessageType(
@@ -174,6 +193,7 @@ public static class NetworkProtocol
             !reader.TryGetULong(out var entityId) ||
             !TryReadVector2(reader, out var position) ||
             !TryReadMovementSettings(reader, out var movement) ||
+            !reader.TryGetUInt(out var serverTick) ||
             playerId == 0 || entityId == 0 || reader.AvailableBytes != 0)
         {
             return false;
@@ -183,7 +203,8 @@ public static class NetworkProtocol
             new PlayerId(playerId),
             new NetworkEntityId(entityId),
             position,
-            movement);
+            movement,
+            serverTick);
         return true;
     }
 
@@ -225,7 +246,8 @@ public static class NetworkProtocol
 
         if (!reader.TryGetUInt(out var serverTick) ||
             !reader.TryGetByte(out var count) ||
-            count > NetworkConstants.MaxSnapshotEntities)
+            count > NetworkConstants.MaxEntitiesPerSnapshot ||
+            reader.AvailableBytes != count * EntitySnapshotBytes)
         {
             return false;
         }

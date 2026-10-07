@@ -12,7 +12,7 @@ description: Проверка значимых Project G code changes перед
 Затем smallest relevant tests.
 
 Examples:
-- network change → `Content.Shared.Tests` + relevant `Content.Server.Tests`;
+- network change → `Content.Tests/Shared` + relevant `Content.Tests/Server`;
 - server-domain → unit tests + negative validation;
 - handshake/transport → integration test;
 - Godot change → build + affected scene launch если доступно.

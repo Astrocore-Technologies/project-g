@@ -36,6 +36,11 @@ builder.Services
     .ValidateOnStart();
 
 builder.Services.AddSingleton<HandshakeCoordinator>();
+builder.Services.AddOptions<InterestOptions>()
+    .Bind(builder.Configuration.GetSection(InterestOptions.SectionName))
+    .Validate(options => options.IsValid(),
+        "AOI radii must be finite, positive and ordered; cell query must be bounded.")
+    .ValidateOnStart();
 builder.Services.AddSingleton<ServerWorld>();
 builder.Services.AddHostedService<GameServerService>();
 

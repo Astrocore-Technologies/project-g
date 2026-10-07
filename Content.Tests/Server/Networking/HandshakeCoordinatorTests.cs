@@ -2,7 +2,7 @@ using Content.Server.Networking;
 using Content.Shared.Network;
 using Xunit;
 
-namespace Content.Server.Tests.Networking;
+namespace Content.Tests.Server.Networking;
 
 public sealed class HandshakeCoordinatorTests
 {

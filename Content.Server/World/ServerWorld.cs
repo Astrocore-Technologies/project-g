@@ -13,12 +13,21 @@ namespace Content.Server.World;
 public sealed class ServerWorld
 {
     private readonly Dictionary<int, ServerPlayer> _playersByConnection = new();
+    private readonly Dictionary<NetworkEntityId, ServerPlayer> _playersByEntity = new();
+    private readonly HashSet<int> _movingPlayers = new();
+    private readonly List<int> _stoppedPlayers = new();
     private readonly MovementSettings _movement;
+    private readonly InterestOptions _interest;
+    private readonly SpatialIndex _spatial;
     private ulong _nextEntityId = 1;
 
-    public ServerWorld(IOptions<MovementOptions> options)
+    public ServerWorld(IOptions<MovementOptions> options, IOptions<InterestOptions> interest)
     {
         _movement = options.Value.ToSettings();
+        _interest = interest.Value;
+        if (!_interest.IsValid())
+            throw new ArgumentException("Invalid interest settings.", nameof(interest));
+        _spatial = new SpatialIndex(_interest.CellSize);
     }
 
     public uint Tick { get; private set; }
@@ -26,19 +35,30 @@ public sealed class ServerWorld
 
     public ServerPlayer AddPlayer(int connectionId, PlayerId playerId)
     {
+        if (!playerId.IsValid)
+            throw new ArgumentOutOfRangeException(nameof(playerId));
+        if (_playersByConnection.ContainsKey(connectionId))
+            throw new ArgumentException("Connection already owns an entity.", nameof(connectionId));
+        if (_nextEntityId == 0)
+            throw new InvalidOperationException("Runtime entity IDs exhausted.");
         var entityId = new NetworkEntityId(_nextEntityId++);
         var spawnIndex = (int) ((entityId.Value - 1) % 10);
-        var spawn = new Vector2(-9f + spawnIndex * 2f, 0f);
+        var spawn = MovementSimulation.ClampTarget(new Vector2(-9f + spawnIndex * 2f, 0f), _movement);
         var player = new ServerPlayer(connectionId, playerId, entityId, spawn);
         _playersByConnection.Add(connectionId, player);
+        _playersByEntity.Add(entityId, player);
+        _spatial.Add(entityId, spawn);
         return player;
     }
 
     public ServerPlayer? RemovePlayer(int connectionId)
     {
-        return _playersByConnection.Remove(connectionId, out var player)
-            ? player
-            : null;
+        if (!_playersByConnection.Remove(connectionId, out var player))
+            return null;
+        _playersByEntity.Remove(player.EntityId);
+        _spatial.Remove(player.EntityId);
+        _movingPlayers.Remove(connectionId);
+        return player;
     }
 
     public bool TryApplyMove(int connectionId, MoveCommand command)
@@ -52,6 +72,10 @@ public sealed class ServerWorld
 
         player.Target = command.Target;
         player.LastProcessedSequence = command.Sequence;
+        if (player.Target != player.Position)
+            _movingPlayers.Add(connectionId);
+        else
+            _movingPlayers.Remove(connectionId);
         return true;
     }
 
@@ -59,43 +83,58 @@ public sealed class ServerWorld
     {
         Tick++;
 
-        foreach (var player in _playersByConnection.Values)
+        _stoppedPlayers.Clear();
+        // Idle players do not require movement work or spatial updates each tick.
+        foreach (var connectionId in _movingPlayers)
         {
+            var player = _playersByConnection[connectionId];
             player.Position = MovementSimulation.Step(
                 player.Position,
                 player.Target,
                 _movement,
                 fixedDeltaSeconds);
+            _spatial.Move(player.EntityId, player.Position);
+            if (player.Position == player.Target)
+                _stoppedPlayers.Add(connectionId);
         }
+        foreach (var connectionId in _stoppedPlayers)
+            _movingPlayers.Remove(connectionId);
     }
 
     public PlayerSpawn CreateSpawn(ServerPlayer player) =>
-        new(player.PlayerId, player.EntityId, player.Position, _movement);
+        new(player.PlayerId, player.EntityId, player.Position, _movement, Tick);
 
-    public WorldSnapshot CreateSnapshot()
+    public PlayerSpawn CreateSpawn(NetworkEntityId id) => CreateSpawn(_playersByEntity[id]);
+
+    public void UpdateInterest(int connectionId, InterestView view)
     {
-        var entities = _playersByConnection.Values
-            .Take(NetworkConstants.MaxSnapshotEntities)
-            .Select(player => new EntitySnapshot(
+        view.EnteredIds.Clear();
+        view.LeftIds.Clear();
+        view.States.Clear();
+        var observer = _playersByConnection[connectionId];
+        _spatial.Query(observer.Position, _interest.ExitRadius, view.Candidates);
+
+        foreach (var id in view.Visible)
+        {
+            if (!view.Candidates.Contains(id))
+                view.LeftIds.Add(id);
+        }
+        foreach (var id in view.LeftIds)
+            view.Visible.Remove(id);
+
+        var squaredEnterRadius = _interest.Radius * _interest.Radius;
+        foreach (var id in view.Candidates)
+        {
+            var player = _playersByEntity[id];
+            if (!view.Visible.Contains(id) &&
+                Vector2.DistanceSquared(observer.Position, player.Position) > squaredEnterRadius)
+                continue;
+            if (view.Visible.Add(id))
+                view.EnteredIds.Add(id);
+            view.States.Add(new EntitySnapshot(
                 player.EntityId,
                 player.Position,
-                player.LastProcessedSequence))
-            .ToArray();
-
-        return new WorldSnapshot(Tick, entities);
+                player.LastProcessedSequence));
+        }
     }
-}
-
-public sealed class ServerPlayer(
-    int connectionId,
-    PlayerId playerId,
-    NetworkEntityId entityId,
-    Vector2 spawnPosition)
-{
-    public int ConnectionId { get; } = connectionId;
-    public PlayerId PlayerId { get; } = playerId;
-    public NetworkEntityId EntityId { get; } = entityId;
-    public Vector2 Position { get; set; } = spawnPosition;
-    public Vector2 Target { get; set; } = spawnPosition;
-    public uint LastProcessedSequence { get; set; }
 }

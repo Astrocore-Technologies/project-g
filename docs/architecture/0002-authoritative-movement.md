@@ -2,7 +2,9 @@
 
 ## Status
 
-Implemented for development stage 1.
+Accepted by the user for development stage 1.
+
+The decisions below describe protocol version 2. Stage 2 changes to interest management and snapshots are documented in ADR 0003.
 
 ## Decisions
 
