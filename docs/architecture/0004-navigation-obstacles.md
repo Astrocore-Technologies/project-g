@@ -2,7 +2,7 @@
 
 ## Status
 
-Implemented for development stage 3; awaiting user acceptance.
+Accepted by the user for development stage 3.
 
 ## Scope
 

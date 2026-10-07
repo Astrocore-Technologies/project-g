@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "balanceVersion": 1,
+  "balance": {
+    "meleeAttack": { "strength": 1, "dexterity": 0.2, "luck": 0.3333333333333333 },
+    "rangedAttack": { "dexterity": 1, "strength": 0.2, "luck": 0.3333333333333333 },
+    "magicAttack": { "intelligence": 1.5, "dexterity": 0.2, "luck": 0.3333333333333333 },
+    "meleeWeapon": { "strength": 0.005 },
+    "rangedWeapon": { "dexterity": 0.005 },
+    "physicalDefense": { "vitality": 0.5, "agility": 0.2 },
+    "magicDefense": { "intelligence": 1, "vitality": 0.2, "dexterity": 0.2 },
+    "health": { "vitality": 0.01 },
+    "mana": { "intelligence": 0.01 },
+    "healthRecovery": { "vitality": 0.03333333333333333 },
+    "manaRecovery": { "intelligence": 0.027777777777777776 },
+    "healthItem": { "vitality": 0.02 },
+    "manaItem": { "intelligence": 0.01 },
+    "attackSpeed": { "agility": 0.01, "dexterity": 0.0025 },
+    "castSpeed": { "dexterity": 0.01, "intelligence": 0.005 },
+    "criticalOdds": { "luck": 0.06315789473684211 },
+    "baseCriticalChance": 0.05,
+    "defenseScale": 100
+  },
+  "weapons": [
+    { "id": "training_sword", "kind": "Melee", "attack": 10, "attackIntervalSeconds": 1, "range": 2 },
+    { "id": "training_bow", "kind": "Ranged", "attack": 10, "attackIntervalSeconds": 1.2, "range": 10 },
+    { "id": "training_staff", "kind": "Magic", "attack": 10, "attackIntervalSeconds": 1.5, "range": 8 }
+  ],
+  "abilities": [
+    { "id": "test_projectile", "kind": "Projectile", "power": 15, "manaCost": 5, "cooldownSeconds": 2, "castSeconds": 0.5, "range": 10, "radius": 0.3 },
+    { "id": "test_ground_area", "kind": "GroundArea", "power": 10, "manaCost": 10, "cooldownSeconds": 5, "castSeconds": 1, "range": 8, "radius": 2 },
+    { "id": "test_dash", "kind": "Dash", "power": 0, "manaCost": 0, "cooldownSeconds": 3, "castSeconds": 0, "range": 3, "radius": 0.45 }
+  ],
+  "creatures": [
+    {
+      "id": "test_adventurer",
+      "stats": { "strength": 10, "agility": 10, "vitality": 10, "intelligence": 10, "dexterity": 10, "luck": 10 },
+      "baseHealth": 100, "baseMana": 50, "baseHealthRecovery": 1, "baseManaRecovery": 1,
+      "weaponId": "training_sword",
+      "abilityIds": ["test_projectile", "test_ground_area", "test_dash"]
+    },
+    {
+      "id": "test_creature",
+      "stats": { "strength": 5, "agility": 5, "vitality": 5, "intelligence": 0, "dexterity": 5, "luck": 0 },
+      "baseHealth": 80, "baseMana": 20, "baseHealthRecovery": 0, "baseManaRecovery": 0,
+      "weaponId": "training_sword", "abilityIds": []
+    }
+  ]
+}

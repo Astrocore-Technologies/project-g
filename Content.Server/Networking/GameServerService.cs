@@ -150,17 +150,17 @@ public sealed class GameServerService : BackgroundService
                 return;
             }
 
-            if (messageType != NetworkMessageType.MoveCommand ||
-                !NetworkProtocol.TryReadMoveCommand(reader, out var command))
+            if (messageType == NetworkMessageType.MoveCommand &&
+                NetworkProtocol.TryReadMoveCommand(reader, out var command))
             {
-                _logger.LogWarning(
-                    "Invalid game command. ConnectionId={ConnectionId}, Type={MessageType}",
-                    peer.Id,
-                    messageType);
+                _world.TryApplyMove(peer.Id, command);
                 return;
             }
-
-            _world.TryApplyMove(peer.Id, command);
+            if (messageType == NetworkMessageType.AttackCommand &&
+                deliveryMethod == DeliveryMethod.ReliableOrdered &&
+                NetworkProtocol.TryReadAttackCommand(reader, out var attack))
+                _world.TryQueueAttack(peer.Id, attack);
+            // Invalid game intentions are discarded; avoid logging unbounded client spam.
         }
         finally
         {
@@ -224,6 +224,7 @@ public sealed class GameServerService : BackgroundService
             if (_views.TryGetValue(connectionId, out var view))
                 SendInterest(peer, view);
         }
+        _world.Combat?.ClearResults();
     }
 
     private void SendInterest(NetPeer peer, InterestView view)
@@ -232,7 +233,12 @@ public sealed class GameServerService : BackgroundService
         foreach (var id in view.Left)
             peer.Send(NetworkProtocol.Write(new PlayerDespawn(id)), DeliveryMethod.ReliableOrdered);
         foreach (var id in view.Entered)
-            peer.Send(NetworkProtocol.Write(_world.CreateSpawn(id)), DeliveryMethod.ReliableOrdered);
+        {
+            if (_world.IsPlayer(id))
+                peer.Send(NetworkProtocol.Write(_world.CreateSpawn(id)), DeliveryMethod.ReliableOrdered);
+            if (_world.Combat is { } combat)
+                peer.Send(NetworkProtocol.Write(combat.State(id, _world.Tick)), DeliveryMethod.ReliableOrdered);
+        }
 
         for (var offset = 0; offset < view.Snapshots.Count;
              offset += NetworkConstants.MaxEntitiesPerSnapshot)
@@ -242,6 +248,21 @@ public sealed class GameServerService : BackgroundService
             // Sequenced would discard other chunks of this tick. Each entity filters its own tick.
             peer.Send(_snapshotWriter, DeliveryMethod.Unreliable);
         }
+        if (_world.Combat is not { } simulation)
+            return;
+        // Spawn, action and health events share the reliable stream: no action before its entity.
+        foreach (var action in simulation.Events)
+        {
+            if (view.Entities.Contains(action.AttackerId) &&
+                (!action.TargetId.IsValid || view.Entities.Contains(action.TargetId)))
+                peer.Send(NetworkProtocol.Write(action), DeliveryMethod.ReliableOrdered);
+            else if (action.TargetId.IsValid && view.Entities.Contains(action.TargetId))
+                peer.Send(NetworkProtocol.Write(simulation.State(action.TargetId, _world.Tick)), DeliveryMethod.ReliableOrdered);
+        }
+        // Only the owner receives command rejection/acknowledgement.
+        if (_world.TryGetOwnedEntity(peer.Id, out var ownedId) &&
+            simulation.Results.TryGetValue(ownedId, out var result))
+            peer.Send(NetworkProtocol.Write(result), DeliveryMethod.ReliableOrdered);
     }
 
     private void RejectMalformed(NetPeer peer, string reason) =>

@@ -1,5 +1,7 @@
 using System.Numerics;
 using Content.Server.Configuration;
+using Content.Server.Combat;
+using Content.Server.Data;
 using Content.Shared.Movement;
 using Content.Shared.Network;
 using Content.Shared.Navigation;
@@ -24,7 +26,8 @@ public sealed class ServerWorld
     private ulong _nextEntityId = 1;
 
     public ServerWorld(IOptions<MovementOptions> options, IOptions<InterestOptions> interest,
-        IOptions<NavigationOptions>? navigation = null)
+        IOptions<NavigationOptions>? navigation = null, ContentCatalog? catalog = null,
+        IOptions<CombatOptions>? combat = null, IOptions<ServerOptions>? server = null)
     {
         _movement = options.Value.ToSettings();
         _interest = interest.Value;
@@ -33,10 +36,24 @@ public sealed class ServerWorld
         _spatial = new SpatialIndex(_interest.CellSize);
         Navigation = (navigation?.Value ?? new NavigationOptions()).CreateGrid(_movement);
         _pathfinder = new NavigationPathfinder(Navigation);
+        if (catalog is not null)
+        {
+            var settings = combat?.Value ?? new CombatOptions();
+            Combat = new CombatSimulation(catalog, _spatial, Navigation, settings,
+                server?.Value.TickRate ?? NetworkConstants.ServerTickRate, _interest.CellSize);
+            var position = new Vector2(settings.TargetX, settings.TargetZ);
+            if (!Navigation.IsWalkable(position))
+                throw new ArgumentException("Training target must have a walkable configured position.");
+            TrainingTargetId = new NetworkEntityId(_nextEntityId++);
+            Combat.Add(TrainingTargetId, position, CombatEntityKind.TrainingTarget);
+            _spatial.Add(TrainingTargetId, position);
+        }
     }
 
     public uint Tick { get; private set; }
     public NavigationGrid Navigation { get; }
+    public CombatSimulation? Combat { get; }
+    public NetworkEntityId TrainingTargetId { get; }
     public IReadOnlyCollection<ServerPlayer> Players => _playersByConnection.Values;
 
     public ServerPlayer AddPlayer(int connectionId, PlayerId playerId)
@@ -57,6 +74,7 @@ public sealed class ServerWorld
         _playersByConnection.Add(connectionId, player);
         _playersByEntity.Add(entityId, player);
         _spatial.Add(entityId, spawn);
+        Combat?.Add(entityId, spawn, CombatEntityKind.Player);
         return player;
     }
 
@@ -67,6 +85,7 @@ public sealed class ServerWorld
         _playersByEntity.Remove(player.EntityId);
         _spatial.Remove(player.EntityId);
         _movingPlayers.Remove(connectionId);
+        Combat?.Remove(player.EntityId);
         return player;
     }
 
@@ -96,6 +115,21 @@ public sealed class ServerWorld
         return true;
     }
 
+    public bool TryQueueAttack(int connectionId, AttackCommand command) =>
+        _playersByConnection.TryGetValue(connectionId, out var player) &&
+        Combat?.Queue(player.EntityId, command, Tick) == true;
+
+    public bool IsPlayer(NetworkEntityId id) => _playersByEntity.ContainsKey(id);
+
+    public bool TryGetOwnedEntity(int connectionId, out NetworkEntityId id)
+    {
+        id = NetworkEntityId.Invalid;
+        if (!_playersByConnection.TryGetValue(connectionId, out var player))
+            return false;
+        id = player.EntityId;
+        return true;
+    }
+
     public void Simulate(float fixedDeltaSeconds)
     {
         Tick++;
@@ -107,11 +141,14 @@ public sealed class ServerWorld
             var player = _playersByConnection[connectionId];
             player.Motion.Step(fixedDeltaSeconds);
             _spatial.Move(player.EntityId, player.Position);
+            Combat?.Move(player.EntityId, player.Position);
             if (!player.Motion.IsMoving)
                 _stoppedPlayers.Add(connectionId);
         }
         foreach (var connectionId in _stoppedPlayers)
             _movingPlayers.Remove(connectionId);
+        // Resolve queued attacks after movement, on current authoritative positions; no client-time rewind.
+        Combat?.Simulate(fixedDeltaSeconds, Tick);
     }
 
     public PlayerSpawn CreateSpawn(ServerPlayer player) =>
@@ -138,12 +175,15 @@ public sealed class ServerWorld
         var squaredEnterRadius = _interest.Radius * _interest.Radius;
         foreach (var id in view.Candidates)
         {
-            var player = _playersByEntity[id];
+            var position = _playersByEntity.TryGetValue(id, out var player)
+                ? player.Position : Combat!.Get(id).Position;
             if (!view.Visible.Contains(id) &&
-                Vector2.DistanceSquared(observer.Position, player.Position) > squaredEnterRadius)
+                Vector2.DistanceSquared(observer.Position, position) > squaredEnterRadius)
                 continue;
             if (view.Visible.Add(id))
                 view.EnteredIds.Add(id);
+            if (player is null)
+                continue;
             view.States.Add(new EntitySnapshot(
                 player.EntityId,
                 player.Position,

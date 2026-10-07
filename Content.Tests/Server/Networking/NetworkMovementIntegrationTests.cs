@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Numerics;
 using Content.Server.Configuration;
+using Content.Tests.Server.Data;
 using Content.Server.Networking;
 using Content.Server.World;
 using Content.Shared.Network;
@@ -191,6 +192,53 @@ public sealed class NetworkMovementIntegrationTests
             ConnectionKey = NetworkConstants.ConnectionKey
         }), new HandshakeCoordinator(), world, NullLogger<GameServerService>.Instance);
 
+    [Fact]
+    public async Task TwoLossyClientsObserveSameAttackDamageAndReentryHealth()
+    {
+        var port = GetFreePort();
+        var world = new ServerWorld(Options.Create(new MovementOptions()), Options.Create(new InterestOptions()),
+            catalog: ContentCatalogTests.Load(), combat: Options.Create(new CombatOptions { TargetX = -7, TargetZ = 1 }));
+        using var server = CreateServer(port, world);
+        await server.StartAsync(CancellationToken.None);
+        using var first = new TestClient(port);
+        using var second = new TestClient(port);
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+        try
+        {
+            await PollUntilAsync(first, second, () => first.CombatStates.Count == 3 && second.CombatStates.Count == 3, timeout.Token);
+            // Connections may complete in either order: choose the actor spawning immediately below the dummy.
+            var attacker = first.LocalSpawn.Position.X == -7 ? first : second;
+            var observer = ReferenceEquals(attacker, first) ? second : first;
+            attacker.Attack(1, Vector2.UnitY);
+            await PollUntilAsync(first, second, () => first.Attacks.Count == 1 && second.Attacks.Count == 1 && attacker.Results.Count == 1, timeout.Token);
+            Assert.Equal(first.Attacks[0], second.Attacks[0]);
+            var action = first.Attacks[0];
+            Assert.Equal(world.TrainingTargetId, action.TargetId);
+            Assert.True(action.Damage > 0);
+            Assert.Equal(AttackOutcome.Accepted, attacker.Results[0].Outcome);
+            Assert.Empty(observer.Results);
+            attacker.Attack(1, Vector2.UnitY); // Reliable application replay must not produce another swing.
+            uint movementSequence = 0;
+            await PollUntilAsync(first, second, () =>
+            {
+                observer.Move(++movementSequence, new(13, 0));
+                return !observer.CombatStates.ContainsKey(world.TrainingTargetId);
+            }, timeout.Token);
+            await PollUntilAsync(first, second, () =>
+            {
+                observer.Move(++movementSequence, new(-5, 0));
+                return observer.CombatStates.ContainsKey(world.TrainingTargetId);
+            }, timeout.Token);
+            Assert.Equal(action.TargetHealth, observer.CombatStates[world.TrainingTargetId].Health);
+            Assert.Single(attacker.Attacks);
+        }
+        finally
+        {
+            using var stopTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+            await server.StopAsync(stopTimeout.Token);
+        }
+    }
+
     private static int GetFreePort()
     {
         using var socket = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
@@ -221,6 +269,9 @@ public sealed class NetworkMovementIntegrationTests
         private PlayerId _playerId;
 
         public Dictionary<NetworkEntityId, PlayerSpawn> Spawns { get; } = new();
+        public Dictionary<NetworkEntityId, CombatState> CombatStates { get; } = new();
+        public List<AttackEvent> Attacks { get; } = new();
+        public List<AttackResult> Results { get; } = new();
         public NavigationGrid? Navigation { get; private set; }
         public bool SawWallDetour { get; private set; }
         public PlayerSpawn LocalSpawn => Spawns.Values.Single(spawn => spawn.PlayerId == _playerId);
@@ -269,6 +320,26 @@ public sealed class NetworkMovementIntegrationTests
                             Spawns.Remove(despawn.EntityId);
                             _states.Remove(despawn.EntityId);
                             _ticks.Remove(despawn.EntityId);
+                            CombatStates.Remove(despawn.EntityId);
+                            break;
+                        case NetworkMessageType.CombatState:
+                            Assert.True(NetworkProtocol.TryReadCombatState(reader, out var combat));
+                            if (combat.Kind == CombatEntityKind.Player) Assert.Contains(combat.EntityId, Spawns.Keys);
+                            CombatStates[combat.EntityId] = combat;
+                            break;
+                        case NetworkMessageType.AttackEvent:
+                            Assert.True(NetworkProtocol.TryReadAttackEvent(reader, out var attack));
+                            Assert.Contains(attack.AttackerId, CombatStates.Keys);
+                            Attacks.Add(attack);
+                            if (attack.TargetId.IsValid)
+                            {
+                                var health = CombatStates[attack.TargetId];
+                                CombatStates[attack.TargetId] = health with { Health = attack.TargetHealth };
+                            }
+                            break;
+                        case NetworkMessageType.AttackResult:
+                            Assert.True(NetworkProtocol.TryReadAttackResult(reader, out var result));
+                            Results.Add(result);
                             break;
                         case NetworkMessageType.WorldSnapshot:
                             Assert.True(NetworkProtocol.TryReadWorldSnapshot(reader, out var snapshot));
@@ -301,6 +372,8 @@ public sealed class NetworkMovementIntegrationTests
             _states.Count == count && _ticks.Values.GroupBy(tick => tick).Any(group => group.Count() == count);
         public void Move(uint sequence, Vector2 target) => _peer?.Send(
             NetworkProtocol.Write(new MoveCommand(sequence, sequence, target)), DeliveryMethod.Sequenced);
+        public void Attack(uint sequence, Vector2 direction) => _peer?.Send(
+            NetworkProtocol.Write(new AttackCommand(sequence, uint.MaxValue, direction)), DeliveryMethod.ReliableOrdered);
         public bool IsAt(NetworkEntityId id, Vector2 target) =>
             _states.TryGetValue(id, out var state) && Vector2.Distance(state.Position, target) < 0.05f;
         public void Disconnect()

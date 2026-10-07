@@ -1,12 +1,16 @@
 using Content.Server.Configuration;
+using Content.Server.Data;
 using Content.Server.Networking;
+using Content.Server.Stats;
 using Content.Server.World;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
+var validateContentOnly = args.Contains("--validate-content", StringComparer.Ordinal);
 var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings
 {
-    Args = args,
+    Args = args.Where(argument => argument != "--validate-content").ToArray(),
     // appsettings files are copied beside the executable, independent of shell cwd.
     ContentRootPath = AppContext.BaseDirectory
 });
@@ -44,6 +48,21 @@ builder.Services.AddOptions<InterestOptions>()
 builder.Services.AddSingleton<ServerWorld>();
 builder.Services.AddOptions<NavigationOptions>()
     .Bind(builder.Configuration.GetSection(NavigationOptions.SectionName));
+builder.Services.AddOptions<CombatOptions>()
+    .Bind(builder.Configuration.GetSection(CombatOptions.SectionName));
 builder.Services.AddHostedService<GameServerService>();
 
-await builder.Build().RunAsync();
+// Parse once before opening the UDP port. Definitions remain server-only and immutable.
+var catalog = ContentCatalog.LoadFile(Path.Combine(AppContext.BaseDirectory, "Data", "prototype.json"));
+builder.Services.AddSingleton(catalog);
+builder.Services.AddSingleton(new StatCalculator(catalog.Balance));
+using var host = builder.Build();
+// Resolve the world during validation too: combat profile references/ranges must fail before UDP startup.
+host.Services.GetRequiredService<ServerWorld>();
+host.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Content").LogInformation(
+    "Content loaded. Schema={Schema}, Balance={Balance}, Weapons={Weapons}, Abilities={Abilities}, Creatures={Creatures}",
+    ContentCatalog.SchemaVersion, catalog.BalanceVersion, catalog.Weapons.Count,
+    catalog.Abilities.Count, catalog.Creatures.Count);
+if (validateContentOnly)
+    return;
+await host.RunAsync();

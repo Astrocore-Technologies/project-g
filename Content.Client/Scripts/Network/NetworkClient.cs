@@ -35,6 +35,9 @@ public partial class NetworkClient : Node
     public event Action<PlayerDespawn>? PlayerDespawned;
     public event Action<WorldSnapshot>? SnapshotReceived;
     public event Action<NavigationGrid>? NavigationReceived;
+    public event Action<CombatState>? CombatStateReceived;
+    public event Action<AttackEvent>? AttackReceived;
+    public event Action<AttackResult>? AttackResultReceived;
     public event Action? Disconnected;
 
     public override void _Ready()
@@ -81,6 +84,12 @@ public partial class NetworkClient : Node
             return;
 
         _serverPeer.Send(NetworkProtocol.Write(command), DeliveryMethod.Sequenced);
+    }
+
+    public void SendAttack(AttackCommand command)
+    {
+        if (_handshakeComplete && _serverPeer is not null)
+            _serverPeer.Send(NetworkProtocol.Write(command), DeliveryMethod.ReliableOrdered);
     }
 
     public override void _ExitTree()
@@ -173,6 +182,25 @@ public partial class NetworkClient : Node
                 case NetworkMessageType.WorldSnapshot:
                     if (NetworkProtocol.TryReadWorldSnapshot(reader, out var snapshot))
                         SnapshotReceived?.Invoke(snapshot);
+                    else
+                        DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.CombatState:
+                    if (_handshakeComplete && Navigation is not null &&
+                        NetworkProtocol.TryReadCombatState(reader, out var combat))
+                        CombatStateReceived?.Invoke(combat);
+                    else
+                        DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.AttackEvent:
+                    if (_handshakeComplete && NetworkProtocol.TryReadAttackEvent(reader, out var attack))
+                        AttackReceived?.Invoke(attack);
+                    else
+                        DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.AttackResult:
+                    if (_handshakeComplete && NetworkProtocol.TryReadAttackResult(reader, out var result))
+                        AttackResultReceived?.Invoke(result);
                     else
                         DisconnectMalformed(peer);
                     break;

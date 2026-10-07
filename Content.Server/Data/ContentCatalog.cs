@@ -1,0 +1,171 @@
+using System.Collections.Frozen;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Content.Server.Stats;
+
+namespace Content.Server.Data;
+
+/// <summary>Validated server-only snapshot; never send the catalog to clients.</summary>
+public sealed class ContentCatalog
+{
+    public const int SchemaVersion = 1;
+    public const int MaxFileBytes = 4 * 1024 * 1024;
+    private const int MaxDefinitions = 4096;
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
+        RespectRequiredConstructorParameters = true,
+        MaxDepth = 16,
+        Converters = { new JsonStringEnumConverter(namingPolicy: null, allowIntegerValues: false) }
+    };
+
+    private ContentCatalog(ContentDocument document)
+    {
+        if (document.SchemaVersion != SchemaVersion || document.BalanceVersion <= 0)
+            throw new ArgumentException("Unsupported schemaVersion or invalid balanceVersion.");
+        ArgumentNullException.ThrowIfNull(document.Balance);
+        document.Balance.Validate();
+        Balance = document.Balance;
+        BalanceVersion = document.BalanceVersion;
+        Weapons = Index(document.Weapons, item => item.Id, "weapons");
+        Abilities = Index(document.Abilities, item => item.Id, "abilities");
+        Creatures = Index(document.Creatures, item => item.Id, "creatures");
+
+        foreach (var weapon in Weapons.Values)
+        {
+            Check(Enum.IsDefined(weapon.Kind), $"weapon {weapon.Id}: unknown kind");
+            NonNegative(weapon.Attack, $"weapon {weapon.Id}.attack");
+            Positive(weapon.Range, $"weapon {weapon.Id}.range");
+            Positive(weapon.AttackIntervalSeconds, $"weapon {weapon.Id}.attackIntervalSeconds");
+        }
+        foreach (var ability in Abilities.Values)
+        {
+            Check(Enum.IsDefined(ability.Kind), $"ability {ability.Id}: unknown kind");
+            NonNegative(ability.Power, $"ability {ability.Id}.power");
+            NonNegative(ability.ManaCost, $"ability {ability.Id}.manaCost");
+            NonNegative(ability.CastSeconds, $"ability {ability.Id}.castSeconds");
+            Positive(ability.CooldownSeconds, $"ability {ability.Id}.cooldownSeconds");
+            Positive(ability.Range, $"ability {ability.Id}.range");
+            Positive(ability.Radius, $"ability {ability.Id}.radius");
+        }
+        foreach (var creature in Creatures.Values)
+        {
+            Check(creature.Modifiers is not null && creature.Modifiers.IsValid(),
+                $"creature {creature.Id}: derived modifiers must be finite");
+            Positive(creature.BaseHealth, $"creature {creature.Id}.baseHealth");
+            Positive(creature.BaseMana, $"creature {creature.Id}.baseMana");
+            NonNegative(creature.BaseHealthRecovery, $"creature {creature.Id}.baseHealthRecovery");
+            NonNegative(creature.BaseManaRecovery, $"creature {creature.Id}.baseManaRecovery");
+            Check(creature.WeaponId is not null && Weapons.ContainsKey(creature.WeaponId),
+                $"creature {creature.Id}: unknown weaponId {creature.WeaponId}");
+            Check(!creature.AbilityIds.IsDefault && creature.AbilityIds.Length <= MaxDefinitions,
+                $"creature {creature.Id}: invalid abilityIds count");
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var id in creature.AbilityIds)
+                Check(id is not null && Abilities.ContainsKey(id) && seen.Add(id),
+                    $"creature {creature.Id}: unknown or duplicate abilityId {id}");
+        }
+    }
+
+    public int BalanceVersion { get; }
+    public StatBalance Balance { get; }
+    public FrozenDictionary<string, WeaponDefinition> Weapons { get; }
+    public FrozenDictionary<string, AbilityDefinition> Abilities { get; }
+    public FrozenDictionary<string, CreatureDefinition> Creatures { get; }
+
+    public static ContentCatalog LoadFile(string path)
+    {
+        try
+        {
+            using var file = File.OpenRead(path);
+            Check(file.Length is > 0 and <= MaxFileBytes, "content file exceeds size budget or is empty");
+            var bytes = new byte[(int)file.Length];
+            file.ReadExactly(bytes);
+            return Parse(bytes);
+        }
+        catch (IOException exception)
+        {
+            throw new InvalidDataException($"Cannot read content '{path}': {exception.Message}", exception);
+        }
+        catch (InvalidDataException exception)
+        {
+            throw new InvalidDataException($"Invalid content '{path}': {exception.Message}", exception);
+        }
+        catch (ArgumentException exception)
+        {
+            throw new InvalidDataException($"Invalid content '{path}': {exception.Message}", exception);
+        }
+    }
+
+    public static ContentCatalog Parse(ReadOnlySpan<byte> utf8)
+    {
+        try
+        {
+            Check(utf8.Length is > 0 and <= MaxFileBytes, "content file exceeds size budget or is empty");
+            // Duplicate JSON keys otherwise silently overwrite earlier values.
+            using var json = JsonDocument.Parse(utf8.ToArray(), new JsonDocumentOptions { MaxDepth = 16 });
+            RejectDuplicateProperties(json.RootElement);
+            var document = JsonSerializer.Deserialize<ContentDocument>(utf8, JsonOptions)
+                ?? throw new ArgumentException("Content document must not be null.");
+            return new ContentCatalog(document);
+        }
+        catch (Exception exception) when (exception is JsonException or ArgumentException)
+        {
+            throw new InvalidDataException($"Invalid content: {exception.Message}", exception);
+        }
+    }
+
+    private static FrozenDictionary<string, T> Index<T>(T[]? values, Func<T, string> getId, string kind)
+        where T : class
+    {
+        Check(values is { Length: > 0 and <= MaxDefinitions }, $"{kind}: invalid definition count");
+        var result = new Dictionary<string, T>(StringComparer.Ordinal);
+        foreach (var item in values!)
+        {
+            Check(item is not null, $"{kind}: null definition");
+            var id = getId(item!);
+            Check(IsValidId(id), $"{kind}: invalid ID '{id}'");
+            Check(result.TryAdd(id, item!), $"{kind}: duplicate ID '{id}'");
+        }
+        return result.ToFrozenDictionary(StringComparer.Ordinal);
+    }
+
+    private static bool IsValidId(string? id)
+    {
+        if (id is not { Length: > 0 and <= 64 })
+            return false;
+        foreach (var value in id)
+            if (!(value is >= 'a' and <= 'z' or >= '0' and <= '9' or '_' or '-' or '.'))
+                return false;
+        return true;
+    }
+
+    private static void RejectDuplicateProperties(JsonElement element)
+    {
+        if (element.ValueKind == JsonValueKind.Object)
+        {
+            var names = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var property in element.EnumerateObject())
+            {
+                Check(names.Add(property.Name), $"duplicate JSON property '{property.Name}'");
+                RejectDuplicateProperties(property.Value);
+            }
+        }
+        else if (element.ValueKind == JsonValueKind.Array)
+            foreach (var child in element.EnumerateArray())
+                RejectDuplicateProperties(child);
+    }
+
+    private static void Positive(double value, string name) =>
+        Check(double.IsFinite(value) && value > 0, $"{name}: expected finite positive value");
+
+    private static void NonNegative(double value, string name) =>
+        Check(double.IsFinite(value) && value >= 0, $"{name}: expected finite non-negative value");
+
+    private static void Check(bool condition, string message)
+    {
+        if (!condition)
+            throw new ArgumentException(message);
+    }
+}

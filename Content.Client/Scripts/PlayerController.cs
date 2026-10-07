@@ -30,6 +30,7 @@ public partial class PlayerController : CharacterBody3D
     private bool _isLocal;
 
     public NetworkEntityId EntityId { get; private set; } = NetworkEntityId.Invalid;
+    public uint ClientTick => _clientTick;
 
     public void Initialize(
         PlayerSpawn spawn,
