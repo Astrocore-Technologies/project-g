@@ -1,81 +1,202 @@
+using Content.Shared.Movement;
+using Content.Shared.Network;
 using Godot;
+using ProjectG.Networking;
+using NumericsVector2 = System.Numerics.Vector2;
+
+namespace ProjectG.Gameplay;
 
 public partial class PlayerController : CharacterBody3D
 {
-	[Export]
-	public float MoveSpeed { get; set; } = 5.0f;
+    private const double RemoteInterpolationDelaySeconds = 0.1;
+    private const int MaxPredictionHistory = 128;
+    private const int MaxRemoteSnapshots = 20;
 
-	[Export]
-	public float StopDistance { get; set; } = 0.1f;
+    private readonly List<PredictedFrame> _predictionHistory = new();
+    private readonly List<RemotePoint> _remotePoints = new();
 
-	private Vector3 _targetPosition;
-	private bool _hasTarget = false;
+    private NetworkClient? _network;
+    private MovementSettings _settings;
+    private NumericsVector2 _predictedPosition;
+    private NumericsVector2 _target;
+    private double _tickAccumulator;
+    private float _fixedDelta;
+    private uint _sequence;
+    private uint _clientTick;
+    private bool _isLocal;
 
-	public override void _UnhandledInput(InputEvent @event)
-	{
-		if (@event is not InputEventMouseButton mouseEvent)
-			return;
+    public NetworkEntityId EntityId { get; private set; } = NetworkEntityId.Invalid;
 
-		if (mouseEvent.ButtonIndex != MouseButton.Left ||
-			!mouseEvent.Pressed)
-			return;
+    public void Initialize(
+        PlayerSpawn spawn,
+        bool isLocal,
+        NetworkClient network)
+    {
+        EntityId = spawn.EntityId;
+        _isLocal = isLocal;
+        _network = network;
+        _settings = spawn.Movement;
+        _fixedDelta = 1f / network.ServerTickRate;
+        _predictedPosition = spawn.Position;
+        _target = spawn.Position;
+        GlobalPosition = ToGodot(spawn.Position);
 
-		Camera3D camera = GetViewport().GetCamera3D();
+        var camera = GetNode<Camera3D>("CameraRig/Camera3D");
+        camera.Current = isLocal;
 
-		if (camera == null)
-			return;
+        var collision = GetNode<CollisionShape3D>("CollisionShape3D");
+        collision.Disabled = !isLocal;
 
-		Vector3 rayOrigin =
-			camera.ProjectRayOrigin(mouseEvent.Position);
+        var material = new StandardMaterial3D
+        {
+            AlbedoColor = isLocal
+                ? new Color(0.2f, 0.8f, 0.35f)
+                : new Color(0.9f, 0.45f, 0.2f)
+        };
+        GetNode<MeshInstance3D>("MeshInstance3D").MaterialOverride = material;
 
-		Vector3 rayDirection =
-			camera.ProjectRayNormal(mouseEvent.Position);
+        if (!isLocal)
+            _remotePoints.Add(new RemotePoint(NowSeconds(), spawn.Position));
+    }
 
-		// Пока считаем, что земля находится на высоте Y = 0.
-		if (Mathf.Abs(rayDirection.Y) < 0.0001f)
-			return;
+    public override void _UnhandledInput(InputEvent @event)
+    {
+        if (!_isLocal ||
+            @event is not InputEventMouseButton mouseEvent ||
+            mouseEvent.ButtonIndex != MouseButton.Left ||
+            !mouseEvent.Pressed)
+        {
+            return;
+        }
 
-		float distance =
-			-rayOrigin.Y / rayDirection.Y;
+        var camera = GetViewport().GetCamera3D();
+        if (camera is null)
+            return;
 
-		if (distance <= 0.0f)
-			return;
+        var rayOrigin = camera.ProjectRayOrigin(mouseEvent.Position);
+        var rayDirection = camera.ProjectRayNormal(mouseEvent.Position);
+        if (Mathf.Abs(rayDirection.Y) < 0.0001f)
+            return;
 
-		Vector3 clickedPosition =
-			rayOrigin + rayDirection * distance;
+        var distance = -rayOrigin.Y / rayDirection.Y;
+        if (distance <= 0f)
+            return;
 
-		_targetPosition = new Vector3(
-			clickedPosition.X,
-			GlobalPosition.Y,
-			clickedPosition.Z
-		);
+        var clicked = rayOrigin + rayDirection * distance;
+        _target = MovementSimulation.ClampTarget(
+            new NumericsVector2(clicked.X, clicked.Z),
+            _settings);
+    }
 
-		_hasTarget = true;
-	}
+    public override void _PhysicsProcess(double delta)
+    {
+        if (_isLocal)
+            UpdateLocal(delta);
+        else
+            UpdateRemote();
+    }
 
-	public override void _PhysicsProcess(double delta)
-	{
-		if (!_hasTarget)
-		{
-			Velocity = Vector3.Zero;
-			return;
-		}
+    public void ApplySnapshot(EntitySnapshot snapshot, uint serverTick)
+    {
+        if (_isLocal)
+        {
+            Reconcile(snapshot);
+            return;
+        }
 
-		Vector3 direction =
-			_targetPosition - GlobalPosition;
+        _remotePoints.Add(new RemotePoint(NowSeconds(), snapshot.Position));
+        if (_remotePoints.Count > MaxRemoteSnapshots)
+            _remotePoints.RemoveAt(0);
+    }
 
-		direction.Y = 0.0f;
+    private void UpdateLocal(double delta)
+    {
+        _tickAccumulator += delta;
+        var simulatedTicks = 0;
 
-		if (direction.Length() <= StopDistance)
-		{
-			Velocity = Vector3.Zero;
-			_hasTarget = false;
-			return;
-		}
+        while (_tickAccumulator >= _fixedDelta && simulatedTicks++ < 4)
+        {
+            _tickAccumulator -= _fixedDelta;
+            _clientTick++;
+            _sequence++;
+            if (_sequence == 0)
+                _sequence++;
 
-		Velocity =
-			direction.Normalized() * MoveSpeed;
+            var command = new MoveCommand(_sequence, _clientTick, _target);
+            _predictedPosition = MovementSimulation.Step(
+                _predictedPosition,
+                command.Target,
+                _settings,
+                _fixedDelta);
 
-		MoveAndSlide();
-	}
+            _predictionHistory.Add(new PredictedFrame(command));
+            if (_predictionHistory.Count > MaxPredictionHistory)
+                _predictionHistory.RemoveAt(0);
+
+            _network?.SendMove(command);
+        }
+
+        var desired = ToGodot(_predictedPosition);
+        var error = GlobalPosition.DistanceTo(desired);
+        GlobalPosition = error > 3f
+            ? desired
+            : GlobalPosition.Lerp(desired, 1f - Mathf.Exp((float) (-20d * delta)));
+    }
+
+    private void Reconcile(EntitySnapshot snapshot)
+    {
+        _predictionHistory.RemoveAll(frame =>
+            !MovementSimulation.IsSequenceNewer(
+                frame.Command.Sequence,
+                snapshot.LastProcessedSequence));
+
+        var replayed = snapshot.Position;
+        foreach (var frame in _predictionHistory)
+        {
+            replayed = MovementSimulation.Step(
+                replayed,
+                frame.Command.Target,
+                _settings,
+                _fixedDelta);
+        }
+
+        _predictedPosition = replayed;
+    }
+
+    private void UpdateRemote()
+    {
+        if (_remotePoints.Count == 0)
+            return;
+
+        var renderTime = NowSeconds() - RemoteInterpolationDelaySeconds;
+        while (_remotePoints.Count >= 2 && _remotePoints[1].ReceivedAt <= renderTime)
+            _remotePoints.RemoveAt(0);
+
+        NumericsVector2 position;
+        if (_remotePoints.Count >= 2)
+        {
+            var from = _remotePoints[0];
+            var to = _remotePoints[1];
+            var duration = Math.Max(0.0001, to.ReceivedAt - from.ReceivedAt);
+            var amount = (float) Math.Clamp((renderTime - from.ReceivedAt) / duration, 0d, 1d);
+            position = NumericsVector2.Lerp(from.Position, to.Position, amount);
+        }
+        else
+        {
+            position = _remotePoints[0].Position;
+        }
+
+        GlobalPosition = ToGodot(position);
+    }
+
+    private static Vector3 ToGodot(NumericsVector2 position) =>
+        new(position.X, 1f, position.Y);
+
+    private static double NowSeconds() => Time.GetTicksMsec() / 1000d;
+
+    private readonly record struct PredictedFrame(MoveCommand Command);
+
+    private readonly record struct RemotePoint(
+        double ReceivedAt,
+        NumericsVector2 Position);
 }

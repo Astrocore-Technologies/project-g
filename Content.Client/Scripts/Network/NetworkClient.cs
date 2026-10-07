@@ -8,11 +8,31 @@ namespace ProjectG.Networking;
 
 public partial class NetworkClient : Node
 {
+    [Export]
+    public bool SimulateNetworkConditions { get; set; }
+
+    [Export(PropertyHint.Range, "0,500,1")]
+    public int SimulatedMinLatencyMs { get; set; } = 100;
+
+    [Export(PropertyHint.Range, "0,500,1")]
+    public int SimulatedMaxLatencyMs { get; set; } = 150;
+
+    [Export(PropertyHint.Range, "0,100,1")]
+    public int SimulatedPacketLossPercent { get; set; }
+
     private EventBasedNetListener _listener = null!;
     private NetManager _client = null!;
+    private NetPeer? _serverPeer;
     private bool _handshakeComplete;
 
     public PlayerId LocalPlayerId { get; private set; } = PlayerId.Invalid;
+    public ushort ServerTickRate { get; private set; } = NetworkConstants.ServerTickRate;
+
+    public event Action<ServerWelcome>? HandshakeCompleted;
+    public event Action<PlayerSpawn>? PlayerSpawned;
+    public event Action<PlayerDespawn>? PlayerDespawned;
+    public event Action<WorldSnapshot>? SnapshotReceived;
+    public event Action? Disconnected;
 
     public override void _Ready()
     {
@@ -24,22 +44,40 @@ public partial class NetworkClient : Node
         _listener.NetworkReceiveEvent += OnNetworkReceive;
         _listener.NetworkErrorEvent += OnNetworkError;
 
+        if (SimulateNetworkConditions)
+        {
+            _client.SimulateLatency = true;
+            _client.SimulationMinLatency = SimulatedMinLatencyMs;
+            _client.SimulationMaxLatency = Math.Max(SimulatedMinLatencyMs, SimulatedMaxLatencyMs);
+            _client.SimulatePacketLoss = SimulatedPacketLossPercent > 0;
+            _client.SimulationPacketLossChance = SimulatedPacketLossPercent;
+        }
+
         if (!_client.Start())
         {
             GD.PushError("Failed to start the network client.");
             return;
         }
 
-        GD.Print("Connecting to server...");
-        _client.Connect(
-            "127.0.0.1",
-            NetworkConstants.Port,
-            NetworkConstants.ConnectionKey);
     }
 
-    public override void _Process(double delta)
+    public override void _Process(double delta) => _client?.PollEvents();
+
+    public void ConnectToServer()
     {
-        _client?.PollEvents();
+        if (_client is null || _client.FirstPeer is not null)
+            return;
+
+        GD.Print("Connecting to server...");
+        _client.Connect("127.0.0.1", NetworkConstants.Port, NetworkConstants.ConnectionKey);
+    }
+
+    public void SendMove(MoveCommand command)
+    {
+        if (!_handshakeComplete || _serverPeer is null)
+            return;
+
+        _serverPeer.Send(NetworkProtocol.Write(command), DeliveryMethod.Sequenced);
     }
 
     public override void _ExitTree()
@@ -57,24 +95,25 @@ public partial class NetworkClient : Node
 
     private void OnPeerConnected(NetPeer peer)
     {
+        _serverPeer = peer;
         var buildVersion =
-            Assembly.GetExecutingAssembly().GetName().Version?.ToString() ??
-            "unknown";
-
+            Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown";
         var hello = new ClientHello(NetworkConstants.ProtocolVersion, buildVersion);
+
         peer.Send(NetworkProtocol.Write(hello), DeliveryMethod.ReliableOrdered);
         GD.Print("Connected. Sending protocol handshake...");
     }
 
     private void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
     {
+        _serverPeer = null;
         _handshakeComplete = false;
         LocalPlayerId = PlayerId.Invalid;
+        Disconnected?.Invoke();
 
         if (TryReadDisconnectRejection(disconnectInfo, out var rejection))
         {
-            GD.PushError(
-                $"Server rejected the connection ({rejection.Code}): {rejection.Reason}");
+            GD.PushError($"Server rejected connection ({rejection.Code}): {rejection.Reason}");
             return;
         }
 
@@ -89,11 +128,10 @@ public partial class NetworkClient : Node
     {
         try
         {
-            if (reader.AvailableBytes > NetworkConstants.MaxHandshakePacketBytes ||
+            if (reader.AvailableBytes > NetworkConstants.MaxGamePacketBytes ||
                 !NetworkProtocol.TryReadMessageType(reader, out var messageType))
             {
-                GD.PushError("Received a malformed handshake packet.");
-                _client.DisconnectPeer(peer);
+                DisconnectMalformed(peer);
                 return;
             }
 
@@ -102,14 +140,29 @@ public partial class NetworkClient : Node
                 case NetworkMessageType.ServerWelcome:
                     HandleWelcome(peer, reader);
                     break;
-
                 case NetworkMessageType.ServerReject:
                     HandleReject(peer, reader);
                     break;
-
+                case NetworkMessageType.PlayerSpawn:
+                    if (NetworkProtocol.TryReadPlayerSpawn(reader, out var spawn))
+                        PlayerSpawned?.Invoke(spawn);
+                    else
+                        DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.PlayerDespawn:
+                    if (NetworkProtocol.TryReadPlayerDespawn(reader, out var despawn))
+                        PlayerDespawned?.Invoke(despawn);
+                    else
+                        DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.WorldSnapshot:
+                    if (NetworkProtocol.TryReadWorldSnapshot(reader, out var snapshot))
+                        SnapshotReceived?.Invoke(snapshot);
+                    else
+                        DisconnectMalformed(peer);
+                    break;
                 default:
-                    GD.PushError($"Unexpected server message: {messageType}.");
-                    _client.DisconnectPeer(peer);
+                    DisconnectMalformed(peer);
                     break;
             }
         }
@@ -124,13 +177,14 @@ public partial class NetworkClient : Node
         if (_handshakeComplete ||
             !NetworkProtocol.TryReadServerWelcome(reader, out var welcome))
         {
-            GD.PushError("Received an invalid ServerWelcome message.");
-            _client.DisconnectPeer(peer);
+            DisconnectMalformed(peer);
             return;
         }
 
         _handshakeComplete = true;
         LocalPlayerId = welcome.PlayerId;
+        ServerTickRate = welcome.TickRate;
+        HandshakeCompleted?.Invoke(welcome);
 
         GD.Print(
             $"Handshake complete. PlayerId={LocalPlayerId.Value}, " +
@@ -140,15 +194,16 @@ public partial class NetworkClient : Node
     private void HandleReject(NetPeer peer, NetDataReader reader)
     {
         if (NetworkProtocol.TryReadServerReject(reader, out var rejection))
-        {
-            GD.PushError(
-                $"Server rejected the connection ({rejection.Code}): {rejection.Reason}");
-        }
+            GD.PushError($"Server rejected connection ({rejection.Code}): {rejection.Reason}");
         else
-        {
-            GD.PushError("Server rejected the connection with malformed details.");
-        }
+            GD.PushError("Server rejected connection with malformed details.");
 
+        _client.DisconnectPeer(peer);
+    }
+
+    private void DisconnectMalformed(NetPeer peer)
+    {
+        GD.PushError("Received a malformed or unexpected server packet.");
         _client.DisconnectPeer(peer);
     }
 
@@ -159,15 +214,11 @@ public partial class NetworkClient : Node
         rejection = default;
         var reader = disconnectInfo.AdditionalData;
 
-        if (reader.AvailableBytes <= 0 ||
-            reader.AvailableBytes > NetworkConstants.MaxHandshakePacketBytes ||
-            !NetworkProtocol.TryReadMessageType(reader, out var messageType) ||
-            messageType != NetworkMessageType.ServerReject)
-        {
-            return false;
-        }
-
-        return NetworkProtocol.TryReadServerReject(reader, out rejection);
+        return reader.AvailableBytes > 0 &&
+               reader.AvailableBytes <= NetworkConstants.MaxHandshakePacketBytes &&
+               NetworkProtocol.TryReadMessageType(reader, out var messageType) &&
+               messageType == NetworkMessageType.ServerReject &&
+               NetworkProtocol.TryReadServerReject(reader, out rejection);
     }
 
     private static void OnNetworkError(

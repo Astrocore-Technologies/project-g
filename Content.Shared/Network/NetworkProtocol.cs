@@ -1,4 +1,6 @@
 using LiteNetLib.Utils;
+using Content.Shared.Movement;
+using System.Numerics;
 
 namespace Content.Shared.Network;
 
@@ -40,6 +42,58 @@ public static class NetworkProtocol
         var writer = CreateWriter(NetworkMessageType.ServerReject);
         writer.Put((ushort) message.Code);
         writer.Put(message.Reason);
+        return writer;
+    }
+
+    public static NetDataWriter Write(PlayerSpawn message)
+    {
+        if (!message.PlayerId.IsValid || !message.EntityId.IsValid)
+            throw new ArgumentOutOfRangeException(nameof(message));
+
+        var writer = CreateWriter(NetworkMessageType.PlayerSpawn);
+        writer.Put(message.PlayerId.Value);
+        writer.Put(message.EntityId.Value);
+        WriteVector2(writer, message.Position);
+        WriteMovementSettings(writer, message.Movement);
+        return writer;
+    }
+
+    public static NetDataWriter Write(PlayerDespawn message)
+    {
+        if (!message.EntityId.IsValid)
+            throw new ArgumentOutOfRangeException(nameof(message));
+
+        var writer = CreateWriter(NetworkMessageType.PlayerDespawn);
+        writer.Put(message.EntityId.Value);
+        return writer;
+    }
+
+    public static NetDataWriter Write(MoveCommand message)
+    {
+        var writer = CreateWriter(NetworkMessageType.MoveCommand);
+        writer.Put(message.Sequence);
+        writer.Put(message.ClientTick);
+        WriteVector2(writer, message.Target);
+        return writer;
+    }
+
+    public static NetDataWriter Write(WorldSnapshot message)
+    {
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(
+            message.Entities.Count,
+            NetworkConstants.MaxSnapshotEntities);
+
+        var writer = CreateWriter(NetworkMessageType.WorldSnapshot);
+        writer.Put(message.ServerTick);
+        writer.Put((byte) message.Entities.Count);
+
+        foreach (var entity in message.Entities)
+        {
+            writer.Put(entity.EntityId.Value);
+            WriteVector2(writer, entity.Position);
+            writer.Put(entity.LastProcessedSequence);
+        }
+
         return writer;
     }
 
@@ -112,10 +166,164 @@ public static class NetworkProtocol
         return true;
     }
 
+    public static bool TryReadPlayerSpawn(NetDataReader reader, out PlayerSpawn message)
+    {
+        message = default;
+
+        if (!reader.TryGetULong(out var playerId) ||
+            !reader.TryGetULong(out var entityId) ||
+            !TryReadVector2(reader, out var position) ||
+            !TryReadMovementSettings(reader, out var movement) ||
+            playerId == 0 || entityId == 0 || reader.AvailableBytes != 0)
+        {
+            return false;
+        }
+
+        message = new PlayerSpawn(
+            new PlayerId(playerId),
+            new NetworkEntityId(entityId),
+            position,
+            movement);
+        return true;
+    }
+
+    public static bool TryReadPlayerDespawn(NetDataReader reader, out PlayerDespawn message)
+    {
+        message = default;
+
+        if (!reader.TryGetULong(out var entityId) ||
+            entityId == 0 ||
+            reader.AvailableBytes != 0)
+        {
+            return false;
+        }
+
+        message = new PlayerDespawn(new NetworkEntityId(entityId));
+        return true;
+    }
+
+    public static bool TryReadMoveCommand(NetDataReader reader, out MoveCommand message)
+    {
+        message = default;
+
+        if (!reader.TryGetUInt(out var sequence) ||
+            !reader.TryGetUInt(out var clientTick) ||
+            !TryReadVector2(reader, out var target) ||
+            sequence == 0 ||
+            reader.AvailableBytes != 0)
+        {
+            return false;
+        }
+
+        message = new MoveCommand(sequence, clientTick, target);
+        return true;
+    }
+
+    public static bool TryReadWorldSnapshot(NetDataReader reader, out WorldSnapshot message)
+    {
+        message = default;
+
+        if (!reader.TryGetUInt(out var serverTick) ||
+            !reader.TryGetByte(out var count) ||
+            count > NetworkConstants.MaxSnapshotEntities)
+        {
+            return false;
+        }
+
+        var entities = new EntitySnapshot[count];
+        for (var i = 0; i < count; i++)
+        {
+            if (!reader.TryGetULong(out var entityId) ||
+                entityId == 0 ||
+                !TryReadVector2(reader, out var position) ||
+                !reader.TryGetUInt(out var sequence))
+            {
+                return false;
+            }
+
+            entities[i] = new EntitySnapshot(
+                new NetworkEntityId(entityId),
+                position,
+                sequence);
+        }
+
+        if (reader.AvailableBytes != 0)
+            return false;
+
+        message = new WorldSnapshot(serverTick, entities);
+        return true;
+    }
+
     private static NetDataWriter CreateWriter(NetworkMessageType messageType)
     {
         var writer = new NetDataWriter();
         writer.Put((ushort) messageType);
         return writer;
+    }
+
+    private static void WriteVector2(NetDataWriter writer, Vector2 value)
+    {
+        writer.Put(value.X);
+        writer.Put(value.Y);
+    }
+
+    private static bool TryReadVector2(NetDataReader reader, out Vector2 value)
+    {
+        value = default;
+        if (!reader.TryGetFloat(out var x) ||
+            !reader.TryGetFloat(out var y) ||
+            !float.IsFinite(x) ||
+            !float.IsFinite(y))
+        {
+            return false;
+        }
+
+        value = new Vector2(x, y);
+        return true;
+    }
+
+    private static void WriteMovementSettings(
+        NetDataWriter writer,
+        MovementSettings settings)
+    {
+        writer.Put(settings.Speed);
+        writer.Put(settings.StopDistance);
+        writer.Put(settings.MinX);
+        writer.Put(settings.MaxX);
+        writer.Put(settings.MinZ);
+        writer.Put(settings.MaxZ);
+    }
+
+    private static bool TryReadMovementSettings(
+        NetDataReader reader,
+        out MovementSettings settings)
+    {
+        settings = default;
+
+        if (!reader.TryGetFloat(out var speed) ||
+            !reader.TryGetFloat(out var stopDistance) ||
+            !reader.TryGetFloat(out var minX) ||
+            !reader.TryGetFloat(out var maxX) ||
+            !reader.TryGetFloat(out var minZ) ||
+            !reader.TryGetFloat(out var maxZ) ||
+            !float.IsFinite(speed) ||
+            !float.IsFinite(stopDistance) ||
+            !float.IsFinite(minX) ||
+            !float.IsFinite(maxX) ||
+            !float.IsFinite(minZ) ||
+            !float.IsFinite(maxZ) ||
+            speed <= 0f || stopDistance < 0f || minX >= maxX || minZ >= maxZ)
+        {
+            return false;
+        }
+
+        settings = new MovementSettings(
+            speed,
+            stopDistance,
+            minX,
+            maxX,
+            minZ,
+            maxZ);
+        return true;
     }
 }

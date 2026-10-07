@@ -1,5 +1,6 @@
 using Content.Server.Configuration;
 using Content.Server.Networking;
+using Content.Server.World;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -23,7 +24,19 @@ builder.Services
         "Connection key must not be empty.")
     .ValidateOnStart();
 
+builder.Services
+    .AddOptions<MovementOptions>()
+    .Bind(builder.Configuration.GetSection(MovementOptions.SectionName))
+    .Validate(options => options.Speed > 0f && float.IsFinite(options.Speed),
+        "Movement speed must be finite and positive.")
+    .Validate(options => options.StopDistance >= 0f && float.IsFinite(options.StopDistance),
+        "Stop distance must be finite and non-negative.")
+    .Validate(options => options.MinX < options.MaxX && options.MinZ < options.MaxZ,
+        "Movement bounds must be ordered.")
+    .ValidateOnStart();
+
 builder.Services.AddSingleton<HandshakeCoordinator>();
+builder.Services.AddSingleton<ServerWorld>();
 builder.Services.AddHostedService<GameServerService>();
 
 await builder.Build().RunAsync();
