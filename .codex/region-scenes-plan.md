@@ -1,6 +1,6 @@
 # Project G — от вертикального среза к полноценной игре
 
-Статус: **предложенный план; реализация новых этапов не начата**.
+Статус: **направление R0 принято; R1 реализован, ожидает проверки пользователя**.
 Подготовлен 2026-10-09 по [концепту регионов](https://app.notion.com/p/3f38867306b181b59c0cf8aa6df42dca).
 Архитектура: [ADR 0012](../docs/architecture/0012-scene-authored-regions.md).
 Gameplay: [зафиксированный контракт](../docs/design/gameplay-contract.md).
@@ -344,6 +344,26 @@ runtime map editor, новая monetization или замена engine/network/d
 
 ## Текущая точка
 
-Подготовлены архитектура и roadmap. Следующая работа — R0: принять границы и D1/D2,
-затем R1. Код новых этапов не изменён; автоматические и ручные проверки их реализации
-ещё не выполнялись. D3 нужен только перед loading protocol, не блокирует подготовку сцен.
+2026-10-09: пользователь разрешил продолжить после подготовки архитектуры. D1 и
+демонстрационные рамки D2 приняты для R1/R2. D3/D4 остаются открытыми.
+
+R1 реализован: offline GameRoot, две independently editable demo scenes, пять типов
+markers, stable UUID/структура/bounds/transform validation, preview switching и smoke.
+Authoring contract и ручная проверка: [region-authoring.md](../docs/design/region-authoring.md).
+Сцены пока примеры каркаса, не эквивалент нынешних server maps; перенос содержимого R3.
+Существующая main scene продолжает обслуживать сетевой игровой цикл.
+
+Проверено: `dotnet build Game.slnx -m:1`, затем после добавления smoke
+`dotnet build Game.slnx --no-restore -m:1` — 0 ошибок. Остались NU1900 (NuGet audit
+недоступен) и существующий NU1903 для SQLitePCLRaw.lib.e_sqlite3 2.1.11.
+Godot 4.7.1 .NET headless smoke — exit 0 и `REGION_AUTHORING_SMOKE_OK`: 20 switches,
+PackedScene round-trip, duplicate/malformed IDs, bounds/transform, invalid replacement
+и освобождение subtree. Запуск через `Start-Process -Wait -WindowStyle Hidden`,
+`--headless --path D:/projects/project-g/Content.Client --log-file
+D:/projects/project-g/.artifacts/r1-smoke-final.log
+res://Tests/Regions/RegionAuthoringSmoke.tscn --quit-after 240`.
+Для штатного cache Godot потребовался запуск вне песочницы. Editor import запускался;
+при раннем выходе editor дал scan-aborted / HotReloadAssemblyWatcher timer diagnostic,
+поэтому его не объявляем полностью чистой проверкой UI. Runtime smoke без ошибок.
+`git diff --check` выполнен. Server/Shared tests не запускались: их код и wire/SQL не менялись.
+Визуальная приёмка R1 ожидается; R2 не начат.
