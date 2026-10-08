@@ -29,6 +29,7 @@ public partial class NetworkClient : Node
     public PlayerId LocalPlayerId { get; private set; } = PlayerId.Invalid;
     public ushort ServerTickRate { get; private set; } = NetworkConstants.ServerTickRate;
     public NavigationGrid? Navigation { get; private set; }
+    public uint LatestServerTick { get; private set; }
 
     public event Action<ServerWelcome>? HandshakeCompleted;
     public event Action<PlayerSpawn>? PlayerSpawned;
@@ -38,6 +39,10 @@ public partial class NetworkClient : Node
     public event Action<CombatState>? CombatStateReceived;
     public event Action<AttackEvent>? AttackReceived;
     public event Action<AttackResult>? AttackResultReceived;
+    public event Action<AbilityLoadout>? AbilityLoadoutReceived;
+    public event Action<AbilityResult>? AbilityResultReceived;
+    public event Action<AbilityEffectState>? AbilityEffectReceived;
+    public event Action<AbilityHit>? AbilityHitReceived;
     public event Action? Disconnected;
 
     public override void _Ready()
@@ -92,6 +97,12 @@ public partial class NetworkClient : Node
             _serverPeer.Send(NetworkProtocol.Write(command), DeliveryMethod.ReliableOrdered);
     }
 
+    public void SendAbility(AbilityCommand command)
+    {
+        if (_handshakeComplete && _serverPeer is not null)
+            _serverPeer.Send(NetworkProtocol.Write(command), DeliveryMethod.ReliableOrdered);
+    }
+
     public override void _ExitTree()
     {
         if (_listener is not null)
@@ -122,6 +133,7 @@ public partial class NetworkClient : Node
         _handshakeComplete = false;
         LocalPlayerId = PlayerId.Invalid;
         Navigation = null;
+        LatestServerTick = 0;
         Disconnected?.Invoke();
 
         if (TryReadDisconnectRejection(disconnectInfo, out var rejection))
@@ -159,7 +171,11 @@ public partial class NetworkClient : Node
                 case NetworkMessageType.PlayerSpawn:
                     if (Navigation is not null && NetworkProtocol.TryReadPlayerSpawn(reader, out var spawn) &&
                         Navigation.IsWalkable(spawn.Position))
+                    {
+                        if (Content.Shared.Movement.MovementSimulation.IsSequenceNewer(spawn.ServerTick, LatestServerTick))
+                            LatestServerTick = spawn.ServerTick;
                         PlayerSpawned?.Invoke(spawn);
+                    }
                     else
                         DisconnectMalformed(peer);
                     break;
@@ -181,7 +197,11 @@ public partial class NetworkClient : Node
                     break;
                 case NetworkMessageType.WorldSnapshot:
                     if (NetworkProtocol.TryReadWorldSnapshot(reader, out var snapshot))
+                    {
+                        if (Content.Shared.Movement.MovementSimulation.IsSequenceNewer(snapshot.ServerTick, LatestServerTick))
+                            LatestServerTick = snapshot.ServerTick;
                         SnapshotReceived?.Invoke(snapshot);
+                    }
                     else
                         DisconnectMalformed(peer);
                     break;
@@ -203,6 +223,26 @@ public partial class NetworkClient : Node
                         AttackResultReceived?.Invoke(result);
                     else
                         DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.AbilityLoadout:
+                    if (_handshakeComplete && NetworkProtocol.TryReadAbilityLoadout(reader, out var loadout))
+                        AbilityLoadoutReceived?.Invoke(loadout);
+                    else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.AbilityResult:
+                    if (_handshakeComplete && NetworkProtocol.TryReadAbilityResult(reader, out var abilityResult))
+                        AbilityResultReceived?.Invoke(abilityResult);
+                    else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.AbilityEffectState:
+                    if (_handshakeComplete && NetworkProtocol.TryReadAbilityEffectState(reader, out var effect))
+                        AbilityEffectReceived?.Invoke(effect);
+                    else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.AbilityHit:
+                    if (_handshakeComplete && NetworkProtocol.TryReadAbilityHit(reader, out var hit))
+                        AbilityHitReceived?.Invoke(hit);
+                    else DisconnectMalformed(peer);
                     break;
                 default:
                     DisconnectMalformed(peer);

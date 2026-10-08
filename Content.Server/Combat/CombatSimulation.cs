@@ -58,6 +58,17 @@ public sealed class CombatSimulation
     public IReadOnlyList<AttackEvent> Events => _events;
     public IReadOnlyDictionary<NetworkEntityId, AttackResult> Results => _results;
     public Combatant Get(NetworkEntityId id) => _actors[id];
+    public bool TryGet(NetworkEntityId id, out Combatant actor) => _actors.TryGetValue(id, out actor!);
+
+    /// <summary>Authoritative spell damage; the training policy remains separate from geometry.</summary>
+    public double ApplyAbilityDamage(NetworkEntityId targetId, double power)
+    {
+        var target = _actors[targetId];
+        if (target.Kind != CombatEntityKind.TrainingTarget || target.Health <= 0) return 0;
+        var damage = Math.Min(target.Health, _calculator.ApplyDefense(Math.Max(0, power), target.Stats.MagicDefense));
+        target.Health = Math.Max(0, target.Health - damage);
+        return damage;
+    }
 
     public void Add(NetworkEntityId id, Vector2 position, CombatEntityKind kind)
     {
@@ -107,7 +118,7 @@ public sealed class CombatSimulation
         foreach (var (id, command) in _pending)
         {
             var actor = _actors[id];
-            var outcome = actor.Health <= 0 ? AttackOutcome.InvalidState
+            var outcome = actor.Health <= 0 || actor.IsCasting ? AttackOutcome.InvalidState
                 : _time < actor.ReadyAt ? AttackOutcome.Cooldown : AttackOutcome.Accepted;
             _results[id] = new(command.Sequence, tick, outcome);
             if (outcome != AttackOutcome.Accepted)

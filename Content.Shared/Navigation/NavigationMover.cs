@@ -14,7 +14,10 @@ public sealed class NavigationMover
     private int _waypoint;
     public Vector2 Position { get; private set; }
     public Vector2 Target { get; private set; }
-    public bool IsMoving => _waypoint < _route.Count;
+    public bool IsMoving => IsDashing || _waypoint < _route.Count;
+    public bool IsDashing => DashSpeed > 0;
+    public Vector2 DashDestination { get; private set; }
+    public float DashSpeed { get; private set; }
 
     public NavigationMover(NavigationGrid grid, MovementSettings settings,
         NavigationPathfinder pathfinder, Vector2 spawn)
@@ -29,6 +32,8 @@ public sealed class NavigationMover
 
     public bool TrySetTarget(Vector2 target)
     {
+        if (IsDashing)
+            return MovementSimulation.IsValidTarget(target, _settings) && _grid.IsWalkable(target);
         if (target == Target)
             return true;
         if (!MovementSimulation.IsValidTarget(target, _settings) ||
@@ -44,6 +49,7 @@ public sealed class NavigationMover
             !_pathfinder.TryFindPath(position, target, _candidate))
             return false;
         Position = position;
+        DashSpeed = 0;
         SetRoute(target);
         return true;
     }
@@ -59,6 +65,26 @@ public sealed class NavigationMover
     {
         if (!float.IsFinite(deltaSeconds) || deltaSeconds <= 0f)
             return;
+        if (IsDashing)
+        {
+            var offset = DashDestination - Position;
+            var distance = offset.Length();
+            var next = distance <= DashSpeed * deltaSeconds ? DashDestination
+                : Position + offset / distance * DashSpeed * deltaSeconds;
+            if (!_grid.CanTraverse(Position, next))
+            {
+                DashSpeed = 0;
+                Reset(Position, Position);
+                return;
+            }
+            Position = next;
+            if (Position == DashDestination)
+            {
+                DashSpeed = 0;
+                if (!Reset(Position, Target)) Reset(Position, Position);
+            }
+            return; // No extra ordinary movement budget on the final dash tick.
+        }
         var budget = _settings.Speed * deltaSeconds;
         while (IsMoving && budget > 0f)
         {
@@ -79,4 +105,20 @@ public sealed class NavigationMover
             _waypoint++;
         }
     }
+
+    public bool TryStartDash(Vector2 destination, float speed)
+    {
+        if (IsDashing || !float.IsFinite(speed) || speed <= 0 || destination == Position ||
+            !_grid.CanTraverse(Position, destination))
+            return false;
+        DashDestination = destination;
+        DashSpeed = speed;
+        Target = destination;
+        _route.Clear();
+        _waypoint = 0;
+        return true;
+    }
+
+    public bool Restore(Vector2 position, Vector2 target, Vector2 dashDestination, float dashSpeed) =>
+        Reset(position, target) && (dashSpeed == 0 || TryStartDash(dashDestination, dashSpeed));
 }

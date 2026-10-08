@@ -22,6 +22,8 @@ public sealed class Combatant
     public DerivedStats Stats { get; }
     public WeaponDefinition Weapon { get; }
     public double AttackInterval { get; }
+    public bool IsCasting { get; internal set; }
+    public uint LastAbilitySequence { get; internal set; }
     internal uint LastSequence { get; set; }
     internal uint? LastRequestTick { get; set; }
     internal double ReadyAt { get; set; }

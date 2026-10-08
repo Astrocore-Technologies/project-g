@@ -2,7 +2,7 @@
 
 ## Status
 
-Implemented for stage 5; awaiting user acceptance. Stage 4 has been accepted.
+Stage 5 accepted by the user. Stage 6 extends this baseline; see ADR 0006.
 
 ## Scope and explicit prototype assumptions
 

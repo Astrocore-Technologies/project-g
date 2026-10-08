@@ -1,9 +1,10 @@
 namespace Content.Server.Data;
 
-/// <summary>Prototype skill metadata; execution and resource validation arrive in stage 6.</summary>
+/// <summary>Server-only skill definition; a public profile reveals only an owned ability's execution parameters.</summary>
 public sealed record AbilityDefinition
 {
     public required string Id { get; init; }
+    public required ushort NetworkId { get; init; }
     public required AbilityKind Kind { get; init; }
     public required double Power { get; init; }
     public required double ManaCost { get; init; }
@@ -11,4 +12,6 @@ public sealed record AbilityDefinition
     public required double CastSeconds { get; init; }
     public required double Range { get; init; }
     public required double Radius { get; init; }
+    public required double Speed { get; init; }
+    public required double MagicAttackScale { get; init; }
 }

@@ -28,9 +28,12 @@ public partial class PlayerController : CharacterBody3D
     private uint _clientTick;
     private uint _lastServerTick;
     private bool _isLocal;
+    private EntitySnapshot _authoritative;
+    private DashPrediction? _dash;
 
     public NetworkEntityId EntityId { get; private set; } = NetworkEntityId.Invalid;
     public uint ClientTick => _clientTick;
+    public NumericsVector2 PredictedPosition => _predictedPosition;
 
     public void Initialize(
         PlayerSpawn spawn,
@@ -49,6 +52,7 @@ public partial class PlayerController : CharacterBody3D
         _predictedPosition = spawn.Position;
         _target = spawn.Position;
         _lastServerTick = spawn.ServerTick;
+        _authoritative = new(spawn.EntityId, spawn.Position, 0, spawn.Position);
         GlobalPosition = ToGodot(spawn.Position);
 
         var camera = GetNode<Camera3D>("CameraRig/Camera3D");
@@ -137,6 +141,8 @@ public partial class PlayerController : CharacterBody3D
     {
         if (_motion is null)
             return;
+        if (_dash is { } expired && NowSeconds() - expired.StartedAt > 2)
+            RejectDash(expired.Sequence);
         _tickAccumulator += delta;
         var simulatedTicks = 0;
 
@@ -148,8 +154,15 @@ public partial class PlayerController : CharacterBody3D
             if (_sequence == 0)
                 _sequence++;
 
-            var command = new MoveCommand(_sequence, _clientTick, _target);
-            _motion.TrySetTarget(command.Target);
+            // A predicted dash endpoint must never become an ordinary server movement intention.
+            var commandTarget = _dash is { } dash && _target == dash.Destination ? dash.PreviousTarget : _target;
+            var command = new MoveCommand(_sequence, _clientTick, commandTarget);
+            if (_dash is { Applied: false } pending && _clientTick >= pending.ClientTick)
+            {
+                StartPredictedDash(pending);
+                _dash = pending with { Applied = true };
+            }
+            ApplyMovementFrame(command);
             _motion.Step(_fixedDelta);
             _predictedPosition = _motion.Position;
 
@@ -171,20 +184,70 @@ public partial class PlayerController : CharacterBody3D
 
     private void Reconcile(EntitySnapshot snapshot)
     {
-        if (_motion is null || !_motion.Reset(snapshot.Position, snapshot.Target))
+        _authoritative = snapshot;
+        if (_dash is { } pending && !MovementSimulation.IsSequenceNewer(pending.Sequence, snapshot.LastAbilitySequence))
+        {
+            if (_target == pending.Destination) _target = snapshot.Target;
+            _dash = null;
+        }
+        Replay(snapshot);
+    }
+
+    private void Replay(EntitySnapshot snapshot)
+    {
+        if (_motion is null || !_motion.Restore(snapshot.Position, snapshot.Target, snapshot.DashDestination, snapshot.DashSpeed))
             return;
         _predictionHistory.RemoveAll(frame =>
             !MovementSimulation.IsSequenceNewer(
                 frame.Command.Sequence,
                 snapshot.LastProcessedSequence));
 
+        var injected = false;
         foreach (var frame in _predictionHistory)
         {
-            _motion.TrySetTarget(frame.Command.Target);
+            // Replay an unacknowledged dash once, at its original client tick, never once per frame.
+            if (!injected && _dash is { } pending && frame.Command.ClientTick >= pending.ClientTick)
+            {
+                StartPredictedDash(pending);
+                injected = true;
+            }
+            ApplyMovementFrame(frame.Command);
             _motion.Step(_fixedDelta);
         }
 
         _predictedPosition = _motion.Position;
+    }
+
+    public bool PredictDash(uint sequence, NumericsVector2 direction, float range, float speed)
+    {
+        if (!_isLocal || _motion is null || _dash is not null || _motion.IsDashing ||
+            !DashGeometry.TryDestination(_navigation, _predictedPosition, direction, range, out var destination)) return false;
+        _dash = new(sequence, _clientTick + 1, direction, range, speed, destination, _target, NowSeconds(), false);
+        _target = destination;
+        return true;
+    }
+
+    public void RejectDash(uint sequence)
+    {
+        if (_dash is not { } pending || pending.Sequence != sequence) return;
+        if (_target == pending.Destination) _target = pending.PreviousTarget;
+        _dash = null;
+        Replay(_authoritative);
+    }
+
+    private void StartPredictedDash(DashPrediction prediction)
+    {
+        if (_motion is not null && DashGeometry.TryDestination(_navigation, _motion.Position,
+            prediction.Direction, prediction.Range, out var destination))
+            _motion.TryStartDash(destination, prediction.Speed);
+    }
+
+    private void ApplyMovementFrame(MoveCommand command)
+    {
+        // Hold at the predicted endpoint until authority acknowledges it; a new RMB still queues normally.
+        if (_dash is { } dash && command.ClientTick >= dash.ClientTick && command.Target == dash.PreviousTarget &&
+            _target == dash.Destination) return;
+        _motion?.TrySetTarget(command.Target);
     }
 
     private void UpdateRemote()
@@ -221,6 +284,8 @@ public partial class PlayerController : CharacterBody3D
     private static double NowSeconds() => Time.GetTicksMsec() / 1000d;
 
     private readonly record struct PredictedFrame(MoveCommand Command);
+    private readonly record struct DashPrediction(uint Sequence, uint ClientTick, NumericsVector2 Direction,
+        float Range, float Speed, NumericsVector2 Destination, NumericsVector2 PreviousTarget, double StartedAt, bool Applied);
 
     private readonly record struct RemotePoint(
         double ReceivedAt,

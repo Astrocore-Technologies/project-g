@@ -23,6 +23,7 @@ public sealed class ServerWorld
     private readonly InterestOptions _interest;
     private readonly SpatialIndex _spatial;
     private readonly NavigationPathfinder _pathfinder;
+    private readonly CreatureDefinition? _playerDefinition;
     private ulong _nextEntityId = 1;
 
     public ServerWorld(IOptions<MovementOptions> options, IOptions<InterestOptions> interest,
@@ -39,6 +40,7 @@ public sealed class ServerWorld
         if (catalog is not null)
         {
             var settings = combat?.Value ?? new CombatOptions();
+            _playerDefinition = catalog.Creatures[settings.PlayerDefinitionId];
             Combat = new CombatSimulation(catalog, _spatial, Navigation, settings,
                 server?.Value.TickRate ?? NetworkConstants.ServerTickRate, _interest.CellSize);
             var position = new Vector2(settings.TargetX, settings.TargetZ);
@@ -47,12 +49,14 @@ public sealed class ServerWorld
             TrainingTargetId = new NetworkEntityId(_nextEntityId++);
             Combat.Add(TrainingTargetId, position, CombatEntityKind.TrainingTarget);
             _spatial.Add(TrainingTargetId, position);
+            Abilities = new AbilitySimulation(catalog, Combat, _spatial, Navigation, settings, _interest.CellSize, StartDash);
         }
     }
 
     public uint Tick { get; private set; }
     public NavigationGrid Navigation { get; }
     public CombatSimulation? Combat { get; }
+    public AbilitySimulation? Abilities { get; }
     public NetworkEntityId TrainingTargetId { get; }
     public IReadOnlyCollection<ServerPlayer> Players => _playersByConnection.Values;
 
@@ -75,6 +79,8 @@ public sealed class ServerWorld
         _playersByEntity.Add(entityId, player);
         _spatial.Add(entityId, spawn);
         Combat?.Add(entityId, spawn, CombatEntityKind.Player);
+        if (Abilities is not null && _playerDefinition is { } definition)
+            Abilities.AddPlayer(entityId, definition);
         return player;
     }
 
@@ -86,6 +92,7 @@ public sealed class ServerWorld
         _spatial.Remove(player.EntityId);
         _movingPlayers.Remove(connectionId);
         Combat?.Remove(player.EntityId);
+        Abilities?.Remove(player.EntityId);
         return player;
     }
 
@@ -100,6 +107,11 @@ public sealed class ServerWorld
 
         if (command.Target != player.Target)
         {
+            if (player.Motion.IsDashing)
+            {
+                player.LastProcessedSequence = command.Sequence;
+                return true;
+            }
             // Repeated intentions are cheap; a flood cannot trigger unbounded A* searches.
             if (player.LastPathRequestTick == Tick)
                 return false;
@@ -108,7 +120,7 @@ public sealed class ServerWorld
                 return false;
         }
         player.LastProcessedSequence = command.Sequence;
-        if (player.Target != player.Position)
+        if (player.Motion.IsMoving)
             _movingPlayers.Add(connectionId);
         else
             _movingPlayers.Remove(connectionId);
@@ -118,6 +130,21 @@ public sealed class ServerWorld
     public bool TryQueueAttack(int connectionId, AttackCommand command) =>
         _playersByConnection.TryGetValue(connectionId, out var player) &&
         Combat?.Queue(player.EntityId, command, Tick) == true;
+
+    public bool TryQueueAbility(int connectionId, AbilityCommand command, int measuredRttMilliseconds) =>
+        _playersByConnection.TryGetValue(connectionId, out var player) &&
+        Abilities?.Queue(player.EntityId, command, Tick, measuredRttMilliseconds) == true;
+
+    private bool StartDash(NetworkEntityId id, Vector2 destination, float speed)
+    {
+        if (!_playersByEntity.TryGetValue(id, out var player) || !player.Motion.TryStartDash(destination, speed)) return false;
+        _movingPlayers.Add(player.ConnectionId);
+        return true;
+    }
+
+    public void UpdateAbilityInterest(int connectionId, InterestView entities, AbilityInterestView effects) =>
+        Abilities?.UpdateInterest(effects, entities.Entities, _playersByConnection[connectionId].Position,
+            _interest.Radius, _interest.ExitRadius, Tick);
 
     public bool IsPlayer(NetworkEntityId id) => _playersByEntity.ContainsKey(id);
 
@@ -149,6 +176,7 @@ public sealed class ServerWorld
             _movingPlayers.Remove(connectionId);
         // Resolve queued attacks after movement, on current authoritative positions; no client-time rewind.
         Combat?.Simulate(fixedDeltaSeconds, Tick);
+        Abilities?.Simulate(fixedDeltaSeconds, Tick);
     }
 
     public PlayerSpawn CreateSpawn(ServerPlayer player) =>
@@ -188,7 +216,10 @@ public sealed class ServerWorld
                 player.EntityId,
                 player.Position,
                 player.LastProcessedSequence,
-                player.Target));
+                player.Target,
+                Combat?.Get(player.EntityId).LastAbilitySequence ?? 0,
+                player.Motion.IsDashing ? player.Motion.DashDestination : default,
+                player.Motion.DashSpeed));
         }
     }
 }

@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "balanceVersion": 1,
   "balance": {
     "meleeAttack": { "strength": 1, "dexterity": 0.2, "luck": 0.3333333333333333 },
@@ -27,9 +27,9 @@
     { "id": "training_staff", "kind": "Magic", "attack": 10, "attackIntervalSeconds": 1.5, "range": 8 }
   ],
   "abilities": [
-    { "id": "test_projectile", "kind": "Projectile", "power": 15, "manaCost": 5, "cooldownSeconds": 2, "castSeconds": 0.5, "range": 10, "radius": 0.3 },
-    { "id": "test_ground_area", "kind": "GroundArea", "power": 10, "manaCost": 10, "cooldownSeconds": 5, "castSeconds": 1, "range": 8, "radius": 2 },
-    { "id": "test_dash", "kind": "Dash", "power": 0, "manaCost": 0, "cooldownSeconds": 3, "castSeconds": 0, "range": 3, "radius": 0.45 }
+    { "id": "test_projectile", "networkId": 1, "kind": "Projectile", "power": 15, "manaCost": 5, "cooldownSeconds": 2, "castSeconds": 0.5, "range": 10, "radius": 0.3, "speed": 8, "magicAttackScale": 1 },
+    { "id": "test_ground_area", "networkId": 2, "kind": "GroundArea", "power": 10, "manaCost": 10, "cooldownSeconds": 5, "castSeconds": 1, "range": 8, "radius": 2, "speed": 0, "magicAttackScale": 1 },
+    { "id": "test_dash", "networkId": 3, "kind": "Dash", "power": 0, "manaCost": 0, "cooldownSeconds": 3, "castSeconds": 0, "range": 3, "radius": 0.45, "speed": 15, "magicAttackScale": 0 }
   ],
   "creatures": [
     {

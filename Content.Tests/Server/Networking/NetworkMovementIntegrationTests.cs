@@ -239,6 +239,47 @@ public sealed class NetworkMovementIntegrationTests
         }
     }
 
+    [Fact]
+    public async Task TwoLossyClientsObserveProjectileAreaAndDashWithPrivateResources()
+    {
+        var port = GetFreePort();
+        var world = new ServerWorld(Options.Create(new MovementOptions()), Options.Create(new InterestOptions()),
+            catalog: ContentCatalogTests.Load());
+        using var server = CreateServer(port, world);
+        await server.StartAsync(CancellationToken.None);
+        using var first = new TestClient(port); using var second = new TestClient(port);
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+        try
+        {
+            await PollUntilAsync(first, second, () => first.Loadouts.Count == 1 && second.Loadouts.Count == 1 &&
+                first.CombatStates.Count == 3 && second.CombatStates.Count == 3, timeout.Token);
+            var caster = first.LocalSpawn.Position.X == -7 ? first : second;
+            var observer = ReferenceEquals(caster, first) ? second : first;
+            var id = caster.LocalSpawn.EntityId;
+            caster.Ability(1, 1, Vector2.UnitY);
+            await PollUntilAsync(first, second, () => first.AbilityHits.Count == 1 && second.AbilityHits.Count == 1, timeout.Token);
+            Assert.Equal(first.AbilityHits[0], second.AbilityHits[0]);
+            Assert.Contains(caster.Effects, effect => effect.Phase == AbilityPhase.Telegraph);
+            Assert.Equal(50, caster.Loadouts[id].Mana, 8);
+            caster.Ability(2, 2, new(-7, 3));
+            await PollUntilAsync(first, second, () => first.AbilityHits.Count == 2 && second.AbilityHits.Count == 2, timeout.Token);
+            Assert.Equal(first.AbilityHits[1], second.AbilityHits[1]);
+            caster.Ability(3, 3, Vector2.UnitX);
+            await PollUntilAsync(first, second, () => first.IsAt(id, new(-4, 0)) && second.IsAt(id, new(-4, 0)), timeout.Token);
+            Assert.Equal(40, caster.Loadouts[id].Mana, 8);
+            Assert.Single(observer.Loadouts);
+            Assert.DoesNotContain(id, observer.Loadouts.Keys);
+            Assert.Empty(observer.AbilityResults);
+            Assert.Contains(caster.AbilityResults, result => result.Sequence == 3 && result.Outcome == AbilityOutcome.Accepted);
+            Assert.Equal(3u, caster.LastAbilitySequence(id));
+        }
+        finally
+        {
+            using var stop = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+            await server.StopAsync(stop.Token);
+        }
+    }
+
     private static int GetFreePort()
     {
         using var socket = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
@@ -265,6 +306,7 @@ public sealed class NetworkMovementIntegrationTests
         private readonly NetManager _manager;
         private readonly Dictionary<NetworkEntityId, EntitySnapshot> _states = new();
         private readonly Dictionary<NetworkEntityId, uint> _ticks = new();
+        private readonly Dictionary<uint, HashSet<NetworkEntityId>> _snapshotCoverage = new();
         private NetPeer? _peer;
         private PlayerId _playerId;
 
@@ -272,6 +314,10 @@ public sealed class NetworkMovementIntegrationTests
         public Dictionary<NetworkEntityId, CombatState> CombatStates { get; } = new();
         public List<AttackEvent> Attacks { get; } = new();
         public List<AttackResult> Results { get; } = new();
+        public Dictionary<NetworkEntityId, AbilityLoadout> Loadouts { get; } = new();
+        public List<AbilityResult> AbilityResults { get; } = new();
+        public List<AbilityEffectState> Effects { get; } = new();
+        public List<AbilityHit> AbilityHits { get; } = new();
         public NavigationGrid? Navigation { get; private set; }
         public bool SawWallDetour { get; private set; }
         public PlayerSpawn LocalSpawn => Spawns.Values.Single(spawn => spawn.PlayerId == _playerId);
@@ -341,10 +387,37 @@ public sealed class NetworkMovementIntegrationTests
                             Assert.True(NetworkProtocol.TryReadAttackResult(reader, out var result));
                             Results.Add(result);
                             break;
+                        case NetworkMessageType.AbilityLoadout:
+                            Assert.True(NetworkProtocol.TryReadAbilityLoadout(reader, out var loadout));
+                            Assert.Equal(LocalSpawn.EntityId, loadout.EntityId);
+                            Loadouts[loadout.EntityId] = loadout;
+                            break;
+                        case NetworkMessageType.AbilityResult:
+                            Assert.True(NetworkProtocol.TryReadAbilityResult(reader, out var abilityResult));
+                            AbilityResults.Add(abilityResult);
+                            break;
+                        case NetworkMessageType.AbilityEffectState:
+                            Assert.True(NetworkProtocol.TryReadAbilityEffectState(reader, out var effect));
+                            Effects.Add(effect);
+                            break;
+                        case NetworkMessageType.AbilityHit:
+                            Assert.True(NetworkProtocol.TryReadAbilityHit(reader, out var hit));
+                            AbilityHits.Add(hit);
+                            var previous = CombatStates[hit.TargetId];
+                            CombatStates[hit.TargetId] = previous with { Health = hit.TargetHealth };
+                            break;
                         case NetworkMessageType.WorldSnapshot:
                             Assert.True(NetworkProtocol.TryReadWorldSnapshot(reader, out var snapshot));
+                            // Independently delayed chunks need not be the latest tick simultaneously.
+                            if (!_snapshotCoverage.TryGetValue(snapshot.ServerTick, out var coverage))
+                            {
+                                coverage = new HashSet<NetworkEntityId>();
+                                _snapshotCoverage.Add(snapshot.ServerTick, coverage);
+                                if (_snapshotCoverage.Count > 32) _snapshotCoverage.Remove(_snapshotCoverage.Keys.First());
+                            }
                             foreach (var state in snapshot.Entities)
                             {
+                                coverage.Add(state.EntityId);
                                 if (_ticks.TryGetValue(state.EntityId, out var tick) &&
                                     Content.Shared.Movement.MovementSimulation.IsSequenceNewer(snapshot.ServerTick, tick))
                                 {
@@ -369,11 +442,14 @@ public sealed class NetworkMovementIntegrationTests
 
         public void Poll() => _manager.PollEvents();
         public bool HasFullSnapshotAtOneTick(int count) =>
-            _states.Count == count && _ticks.Values.GroupBy(tick => tick).Any(group => group.Count() == count);
+            _states.Count == count && _snapshotCoverage.Values.Any(ids => ids.Count == count);
         public void Move(uint sequence, Vector2 target) => _peer?.Send(
             NetworkProtocol.Write(new MoveCommand(sequence, sequence, target)), DeliveryMethod.Sequenced);
         public void Attack(uint sequence, Vector2 direction) => _peer?.Send(
             NetworkProtocol.Write(new AttackCommand(sequence, uint.MaxValue, direction)), DeliveryMethod.ReliableOrdered);
+        public void Ability(uint sequence, ushort id, Vector2 aim) => _peer?.Send(
+            NetworkProtocol.Write(new AbilityCommand(sequence, _ticks.GetValueOrDefault(LocalSpawn.EntityId), id, aim)), DeliveryMethod.ReliableOrdered);
+        public uint LastAbilitySequence(NetworkEntityId id) => _states[id].LastAbilitySequence;
         public bool IsAt(NetworkEntityId id, Vector2 target) =>
             _states.TryGetValue(id, out var state) && Vector2.Distance(state.Position, target) < 0.05f;
         public void Disconnect()

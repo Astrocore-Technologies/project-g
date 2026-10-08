@@ -21,7 +21,10 @@ public readonly record struct EntitySnapshot(
     NetworkEntityId EntityId,
     Vector2 Position,
     uint LastProcessedSequence,
-    Vector2 Target);
+    Vector2 Target,
+    uint LastAbilitySequence = 0,
+    Vector2 DashDestination = default,
+    float DashSpeed = 0);
 
 public readonly record struct WorldSnapshot(
     uint ServerTick,

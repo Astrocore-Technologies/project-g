@@ -8,7 +8,7 @@ namespace Content.Server.Data;
 /// <summary>Validated server-only snapshot; never send the catalog to clients.</summary>
 public sealed class ContentCatalog
 {
-    public const int SchemaVersion = 1;
+    public const int SchemaVersion = 2;
     public const int MaxFileBytes = 4 * 1024 * 1024;
     private const int MaxDefinitions = 4096;
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -39,8 +39,10 @@ public sealed class ContentCatalog
             Positive(weapon.Range, $"weapon {weapon.Id}.range");
             Positive(weapon.AttackIntervalSeconds, $"weapon {weapon.Id}.attackIntervalSeconds");
         }
+        var abilityIds = new HashSet<ushort>();
         foreach (var ability in Abilities.Values)
         {
+            Check(ability.NetworkId != 0 && abilityIds.Add(ability.NetworkId), $"ability {ability.Id}: duplicate/zero networkId");
             Check(Enum.IsDefined(ability.Kind), $"ability {ability.Id}: unknown kind");
             NonNegative(ability.Power, $"ability {ability.Id}.power");
             NonNegative(ability.ManaCost, $"ability {ability.Id}.manaCost");
@@ -48,6 +50,9 @@ public sealed class ContentCatalog
             Positive(ability.CooldownSeconds, $"ability {ability.Id}.cooldownSeconds");
             Positive(ability.Range, $"ability {ability.Id}.range");
             Positive(ability.Radius, $"ability {ability.Id}.radius");
+            NonNegative(ability.Speed, $"ability {ability.Id}.speed");
+            Check(ability.Kind == AbilityKind.GroundArea || ability.Speed > 0, $"ability {ability.Id}: speed must be positive");
+            NonNegative(ability.MagicAttackScale, $"ability {ability.Id}.magicAttackScale");
         }
         foreach (var creature in Creatures.Values)
         {

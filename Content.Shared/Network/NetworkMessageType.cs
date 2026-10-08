@@ -13,5 +13,10 @@ public enum NetworkMessageType : ushort
     AttackCommand = 15,
     AttackResult = 16,
     AttackEvent = 17,
-    CombatState = 18
+    CombatState = 18,
+    AbilityCommand = 19,
+    AbilityResult = 20,
+    AbilityLoadout = 21,
+    AbilityEffectState = 22,
+    AbilityHit = 23
 }

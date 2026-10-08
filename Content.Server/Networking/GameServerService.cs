@@ -160,6 +160,10 @@ public sealed class GameServerService : BackgroundService
                 deliveryMethod == DeliveryMethod.ReliableOrdered &&
                 NetworkProtocol.TryReadAttackCommand(reader, out var attack))
                 _world.TryQueueAttack(peer.Id, attack);
+            if (messageType == NetworkMessageType.AbilityCommand &&
+                deliveryMethod == DeliveryMethod.ReliableOrdered &&
+                NetworkProtocol.TryReadAbilityCommand(reader, out var ability))
+                _world.TryQueueAbility(peer.Id, ability, peer.Ping);
             // Invalid game intentions are discarded; avoid logging unbounded client spam.
         }
         finally
@@ -225,6 +229,7 @@ public sealed class GameServerService : BackgroundService
                 SendInterest(peer, view);
         }
         _world.Combat?.ClearResults();
+        _world.Abilities?.ClearResults();
     }
 
     private void SendInterest(NetPeer peer, InterestView view)
@@ -240,10 +245,33 @@ public sealed class GameServerService : BackgroundService
                 peer.Send(NetworkProtocol.Write(combat.State(id, _world.Tick)), DeliveryMethod.ReliableOrdered);
         }
 
-        for (var offset = 0; offset < view.Snapshots.Count;
-             offset += NetworkConstants.MaxEntitiesPerSnapshot)
+        if (_world.Abilities is { } abilities)
         {
-            var count = Math.Min(NetworkConstants.MaxEntitiesPerSnapshot, view.Snapshots.Count - offset);
+            _world.UpdateAbilityInterest(peer.Id, view, view.Abilities);
+            foreach (var effect in view.Abilities.Changes)
+                peer.Send(NetworkProtocol.Write(effect), DeliveryMethod.ReliableOrdered);
+            foreach (var hit in abilities.Hits)
+            {
+                if (view.Entities.Contains(hit.ActorId) && view.Entities.Contains(hit.TargetId))
+                    peer.Send(NetworkProtocol.Write(hit), DeliveryMethod.ReliableOrdered);
+                else if (view.Entities.Contains(hit.TargetId))
+                    peer.Send(NetworkProtocol.Write(_world.Combat!.State(hit.TargetId, _world.Tick)), DeliveryMethod.ReliableOrdered);
+            }
+            // Resource state and unlocked slots are private, including rejection updates.
+            if (_world.TryGetOwnedEntity(peer.Id, out var owner))
+            {
+                if (view.Entered.Contains(owner) || abilities.IsDirty(owner))
+                    peer.Send(NetworkProtocol.Write(abilities.Loadout(owner, _world.Tick)), DeliveryMethod.ReliableOrdered);
+                if (abilities.Results.TryGetValue(owner, out var abilityResult))
+                    peer.Send(NetworkProtocol.Write(abilityResult), DeliveryMethod.ReliableOrdered);
+            }
+        }
+
+        var chunkCapacity = NetworkProtocol.SnapshotCapacity(peer.GetMaxSinglePacketSize(DeliveryMethod.Unreliable));
+        if (chunkCapacity == 0) throw new InvalidOperationException("Peer MTU cannot hold an entity snapshot.");
+        for (var offset = 0; offset < view.Snapshots.Count; offset += chunkCapacity)
+        {
+            var count = Math.Min(chunkCapacity, view.Snapshots.Count - offset);
             NetworkProtocol.WriteWorldSnapshot(_snapshotWriter, _world.Tick, view.Snapshots, offset, count);
             // Sequenced would discard other chunks of this tick. Each entity filters its own tick.
             peer.Send(_snapshotWriter, DeliveryMethod.Unreliable);

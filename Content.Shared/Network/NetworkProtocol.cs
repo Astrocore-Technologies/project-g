@@ -9,7 +9,12 @@ namespace Content.Shared.Network;
 /// </summary>
 public static partial class NetworkProtocol
 {
-    private const int EntitySnapshotBytes = sizeof(ulong) + 4 * sizeof(float) + sizeof(uint);
+    private const int EntitySnapshotBytes = sizeof(ulong) + 7 * sizeof(float) + 2 * sizeof(uint);
+
+    /// <summary>Unreliable messages cannot fragment; respect the peer's current transport payload budget.</summary>
+    public static int SnapshotCapacity(int payloadBudget) => payloadBudget <= 7 ? 0 : Math.Clamp(
+        (Math.Min(payloadBudget, NetworkConstants.MaxGamePacketBytes) - 7) / EntitySnapshotBytes,
+        0, NetworkConstants.MaxEntitiesPerSnapshot);
 
     public static NetDataWriter Write(ClientHello message)
     {
@@ -109,12 +114,17 @@ public static partial class NetworkProtocol
             var entity = entities[i];
             if (!entity.EntityId.IsValid || !float.IsFinite(entity.Position.X) ||
                 !float.IsFinite(entity.Position.Y) ||
-                !float.IsFinite(entity.Target.X) || !float.IsFinite(entity.Target.Y))
+                !float.IsFinite(entity.Target.X) || !float.IsFinite(entity.Target.Y) ||
+                !float.IsFinite(entity.DashDestination.X) || !float.IsFinite(entity.DashDestination.Y) ||
+                !float.IsFinite(entity.DashSpeed) || entity.DashSpeed < 0)
                 throw new ArgumentOutOfRangeException(nameof(entities));
             writer.Put(entity.EntityId.Value);
             WriteVector2(writer, entity.Position);
             writer.Put(entity.LastProcessedSequence);
             WriteVector2(writer, entity.Target);
+            writer.Put(entity.LastAbilitySequence);
+            WriteVector2(writer, entity.DashDestination);
+            writer.Put(entity.DashSpeed);
         }
     }
 
@@ -261,7 +271,10 @@ public static partial class NetworkProtocol
                 entityId == 0 ||
                 !TryReadVector2(reader, out var position) ||
                 !reader.TryGetUInt(out var sequence) ||
-                !TryReadVector2(reader, out var target))
+                !TryReadVector2(reader, out var target) ||
+                !reader.TryGetUInt(out var abilitySequence) ||
+                !TryReadVector2(reader, out var dashDestination) ||
+                !reader.TryGetFloat(out var dashSpeed) || !float.IsFinite(dashSpeed) || dashSpeed < 0)
             {
                 return false;
             }
@@ -270,7 +283,7 @@ public static partial class NetworkProtocol
                 new NetworkEntityId(entityId),
                 position,
                 sequence,
-                target);
+                target, abilitySequence, dashDestination, dashSpeed);
         }
 
         if (reader.AvailableBytes != 0)

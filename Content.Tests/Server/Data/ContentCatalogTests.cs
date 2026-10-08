@@ -42,6 +42,10 @@ public sealed class ContentCatalogTests
     [InlineData("negativeAttack")]
     [InlineData("zeroInterval")]
     [InlineData("negativeManaCost")]
+    [InlineData("duplicateNetworkId")]
+    [InlineData("zeroNetworkId")]
+    [InlineData("zeroProjectileSpeed")]
+    [InlineData("negativeMagicScale")]
     [InlineData("zeroRange")]
     [InlineData("unknownWeapon")]
     [InlineData("unknownAbility")]
@@ -64,7 +68,7 @@ public sealed class ContentCatalogTests
         var creature = json["creatures"]![0]!.AsObject();
         switch (scenario)
         {
-            case "schema": json["schemaVersion"] = 2; break;
+            case "schema": json["schemaVersion"] = ContentCatalog.SchemaVersion + 1; break;
             case "balanceVersion": json["balanceVersion"] = 0; break;
             case "missingBalance": json.Remove("balance"); break;
             case "nullBalance": json["balance"] = null; break;
@@ -81,6 +85,10 @@ public sealed class ContentCatalogTests
             case "negativeAttack": weapon["attack"] = -1; break;
             case "zeroInterval": weapon["attackIntervalSeconds"] = 0; break;
             case "negativeManaCost": ability["manaCost"] = -1; break;
+            case "duplicateNetworkId": json["abilities"]![1]!["networkId"] = ability["networkId"]!.DeepClone(); break;
+            case "zeroNetworkId": ability["networkId"] = 0; break;
+            case "zeroProjectileSpeed": ability["speed"] = 0; break;
+            case "negativeMagicScale": ability["magicAttackScale"] = -1; break;
             case "zeroRange": ability["range"] = 0; break;
             case "unknownWeapon": creature["weaponId"] = "missing"; break;
             case "unknownAbility": creature["abilityIds"]![0] = "missing"; break;

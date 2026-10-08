@@ -18,6 +18,8 @@ public partial class WorldController : Node3D
     private NetworkEntityId _localEntityId;
     private NetworkClient _network = null!;
     private NavigationVisual? _navigationVisual;
+    private AbilityPresentation? _abilities;
+    private readonly Dictionary<ulong, AbilityEffectVisual> _effects = new();
 
     public override void _Ready()
     {
@@ -29,6 +31,10 @@ public partial class WorldController : Node3D
         _network.CombatStateReceived += OnCombatState;
         _network.AttackReceived += OnAttack;
         _network.AttackResultReceived += OnAttackResult;
+        _network.AbilityLoadoutReceived += OnAbilityLoadout;
+        _network.AbilityResultReceived += OnAbilityResult;
+        _network.AbilityEffectReceived += OnAbilityEffect;
+        _network.AbilityHitReceived += OnAbilityHit;
         _network.Disconnected += ClearWorld;
         _network.ConnectToServer();
     }
@@ -45,6 +51,10 @@ public partial class WorldController : Node3D
         _network.CombatStateReceived -= OnCombatState;
         _network.AttackReceived -= OnAttack;
         _network.AttackResultReceived -= OnAttackResult;
+        _network.AbilityLoadoutReceived -= OnAbilityLoadout;
+        _network.AbilityResultReceived -= OnAbilityResult;
+        _network.AbilityEffectReceived -= OnAbilityEffect;
+        _network.AbilityHitReceived -= OnAbilityHit;
         _network.Disconnected -= ClearWorld;
     }
 
@@ -67,7 +77,12 @@ public partial class WorldController : Node3D
         player.Initialize(spawn, spawn.PlayerId == _network.LocalPlayerId, _network);
         _players.Add(spawn.EntityId, player);
         if (spawn.PlayerId == _network.LocalPlayerId)
+        {
             _localEntityId = spawn.EntityId;
+            _abilities = new AbilityPresentation();
+            player.AddChild(_abilities);
+            _abilities.Initialize(player, _network);
+        }
     }
 
     private void OnPlayerDespawned(PlayerDespawn despawn)
@@ -125,6 +140,32 @@ public partial class WorldController : Node3D
             local.ApplyResult(result);
     }
 
+    private void OnAbilityLoadout(AbilityLoadout value) => _abilities?.ApplyLoadout(value);
+    private void OnAbilityResult(AbilityResult value) => _abilities?.ApplyResult(value);
+    private void OnAbilityHit(AbilityHit value)
+    {
+        if (_combat.TryGetValue(value.TargetId, out var target)) target.ApplyAbilityDamage(value);
+    }
+
+    private void OnAbilityEffect(AbilityEffectState value)
+    {
+        _abilities?.Confirm(value);
+        if (value.Phase == AbilityPhase.Finished)
+        {
+            if (_effects.Remove(value.EffectId, out var old) && GodotObject.IsInstanceValid(old)) old.QueueFree();
+            return;
+        }
+        if (!_players.ContainsKey(value.ActorId)) return;
+        if (!_effects.TryGetValue(value.EffectId, out var visual) || !GodotObject.IsInstanceValid(visual))
+        {
+            // Bounded presentation cache; reliable lifecycle plus TTL provides cleanup.
+            if (_effects.Count >= 1024) return;
+            visual = new AbilityEffectVisual(); AddChild(visual);
+            _effects[value.EffectId] = visual;
+        }
+        visual.Apply(value);
+    }
+
     private void OnSnapshotReceived(WorldSnapshot snapshot)
     {
         foreach (var entity in snapshot.Entities)
@@ -144,6 +185,8 @@ public partial class WorldController : Node3D
             target.QueueFree();
         _targets.Clear();
         _combat.Clear();
+        foreach (var effect in _effects.Values) if (GodotObject.IsInstanceValid(effect)) effect.QueueFree();
+        _effects.Clear(); _abilities = null;
         _localEntityId = NetworkEntityId.Invalid;
         _navigationVisual?.QueueFree();
         _navigationVisual = null;

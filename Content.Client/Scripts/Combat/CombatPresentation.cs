@@ -124,6 +124,15 @@ public partial class CombatPresentation : Node3D
         UpdateLabel();
     }
 
+    public void ApplyAbilityDamage(AbilityHit hit)
+    {
+        if (hit.ServerTick != _state.ServerTick && !MovementSimulation.IsSequenceNewer(hit.ServerTick, _state.ServerTick)) return;
+        if (hit.TargetHealth > _state.MaxHealth) return;
+        _state = _state with { Health = hit.TargetHealth, ServerTick = hit.ServerTick };
+        _damageText = $"-{hit.Damage:0.0}"; _damageRemaining = 0.6;
+        UpdateLabel();
+    }
+
     public override void _Process(double delta)
     {
         if (_slashRemaining > 0 && (_slashRemaining -= delta) <= 0)

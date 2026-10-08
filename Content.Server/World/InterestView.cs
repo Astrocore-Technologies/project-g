@@ -10,6 +10,7 @@ public sealed class InterestView
     internal List<NetworkEntityId> EnteredIds { get; } = new();
     internal List<NetworkEntityId> LeftIds { get; } = new();
     internal List<EntitySnapshot> States { get; } = new();
+    internal AbilityInterestView Abilities { get; } = new();
 
     public IReadOnlyCollection<NetworkEntityId> Entities => Visible;
     public IReadOnlyList<NetworkEntityId> Entered => EnteredIds;
