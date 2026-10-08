@@ -8,7 +8,7 @@ public sealed partial class InventorySimulation
     internal CraftOutcome ValidateOffer(NetworkEntityId id,ExchangeOffer offer)
     {
         if(!_actors.TryGetValue(id,out var actor) || offer.Items.Count>8 || offer.Materials.Count>16 || offer.Items.Any(h=>h==0) || offer.Items.Distinct().Count()!=offer.Items.Count || offer.Materials.Any(m=>m.Id==0 || m.Quantity is 0 or >999) || offer.Materials.Select(m=>m.Id).Distinct().Count()!=offer.Materials.Count) return CraftOutcome.InvalidOperation;
-        foreach(var handle in offer.Items) if(!actor.Items.Any(i=>i.Handle==handle && i.Saved.EquippedSlot==EquipmentSlot.None)) return CraftOutcome.Unavailable;
+        foreach(var handle in offer.Items) if(!actor.Items.Any(i=>i.Handle==handle && i.Saved.EquippedSlot==EquipmentSlot.None&&!i.Saved.Bound&&!i.Definition.Bound)) return CraftOutcome.Unavailable;
         var materials=actor.Crafting?.Materials ?? [];
         foreach(var amount in offer.Materials) if(!materials.Any(m=>m.Id==amount.Id && m.Quantity>=amount.Quantity)) return CraftOutcome.MissingMaterials;
         return CraftOutcome.Accepted;

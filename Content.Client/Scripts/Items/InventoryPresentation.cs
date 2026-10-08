@@ -81,8 +81,14 @@ public partial class InventoryPresentation : CanvasLayer
         _waiting = false; SetButtons(false);
         _status.Text = result.Outcome == InventoryOutcome.Accepted ? "Подтверждено сервером" : $"Отклонено: {result.Outcome}";
     }
-    public void PickupResult(PickupResult result) => _status.Text = result.Outcome == PickupOutcome.Accepted
-        ? "Предмет подобран" : $"Подбор отклонён: {result.Outcome}";
+    public void PickupResult(PickupResult result) => _status.Text = result.Outcome switch
+    {
+        PickupOutcome.Accepted => "Предмет подобран",
+        PickupOutcome.Channeling => "Подбор: стойте 5 секунд с активным PvP-тегом",
+        PickupOutcome.Interrupted => "Подбор прерван действием или уроном",
+        PickupOutcome.InvalidState => "Для PvP-вещи нужен активный тег; остановитесь и завершите другие действия",
+        _ => $"Подбор отклонён: {result.Outcome}"
+    };
     private void SetButtons(bool disabled)
     {
         foreach (var row in _rows.GetChildren())

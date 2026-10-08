@@ -33,6 +33,9 @@ public partial class WorldController : Node3D
     private ProjectG.Crafting.CraftingPresentation? _crafting;
     private ProjectG.Trading.TradePresentation? _trade;
     private ProjectG.Economy.EconomyPresentation? _economy;
+    private ProjectG.Pvp.PvpPresentation? _pvp;
+    private readonly Dictionary<NetworkEntityId,Label3D> _pvpLabels=new();
+    private Node3D? _safeVisual;
 
     public override void _Ready()
     {
@@ -43,6 +46,7 @@ public partial class WorldController : Node3D
         _network.NavigationReceived += OnNavigationReceived;
         _network.CombatStateReceived += OnCombatState;
         _network.AttackReceived += OnAttack;
+        _network.PvpPublicReceived+=OnPvpPublic;
         _network.AttackResultReceived += OnAttackResult;
         _network.AbilityLoadoutReceived += OnAbilityLoadout;
         _network.AbilityResultReceived += OnAbilityResult;
@@ -79,6 +83,7 @@ public partial class WorldController : Node3D
         _network.NavigationReceived -= OnNavigationReceived;
         _network.CombatStateReceived -= OnCombatState;
         _network.AttackReceived -= OnAttack;
+        _network.PvpPublicReceived-=OnPvpPublic;
         _network.AttackResultReceived -= OnAttackResult;
         _network.AbilityLoadoutReceived -= OnAbilityLoadout;
         _network.AbilityResultReceived -= OnAbilityResult;
@@ -125,6 +130,7 @@ public partial class WorldController : Node3D
         if (spawn.PlayerId == _network.LocalPlayerId)
         {
             _localEntityId = spawn.EntityId;
+            if(_network.LatestPvpZone is {} pvpZone){_pvp=new();AddChild(_pvp);_pvp.Initialize(_network,player);DrawSafeZone(pvpZone);}
             if(_network.CraftRecipes.Count!=0) { _crafting=new(); AddChild(_crafting); _crafting.Initialize(_network,player); _trade=new(); AddChild(_trade); _trade.Initialize(_network,player); _economy=new(); AddChild(_economy); _economy.Initialize(_network,player); }
             if (_network.LatestStarterZone is { } zone) { _starter=new(); AddChild(_starter); _starter.Initialize(_network,player,zone); }
             _abilities = new AbilityPresentation();
@@ -141,6 +147,7 @@ public partial class WorldController : Node3D
     private void OnPlayerDespawned(PlayerDespawn despawn)
     {
         _combat.Remove(despawn.EntityId);
+        _pvpLabels.Remove(despawn.EntityId);
         if (_echoes.Remove(despawn.EntityId, out var echo)) echo.QueueFree();
         if (_players.Remove(despawn.EntityId, out var player))
             player.QueueFree();
@@ -187,6 +194,18 @@ public partial class WorldController : Node3D
         RefreshAlive(state.EntityId);
     }
 
+    private void OnPvpPublic(PvpPublicState s)
+    {
+        if(!_players.TryGetValue(s.EntityId,out var player))return;
+        if(!_pvpLabels.TryGetValue(s.EntityId,out var label)){label=new Label3D(){Position=new Vector3(0,2.7f,0),Billboard=BaseMaterial3D.BillboardModeEnum.Enabled,FontSize=24};player.AddChild(label);_pvpLabels[s.EntityId]=label;}
+        label.Text=s.Dead?"Погиб":s.Aggressor?"Агрессор":s.Protected?"Защита":s.Tagged?"PvP-тег":s.Mode==PvpMode.Peaceful?"":"PvP";label.Modulate=s.Aggressor?Colors.Red:s.Tagged?Colors.Orange:Colors.LightGreen;
+    }
+    private void DrawSafeZone(PvpZoneState z)
+    {
+        _safeVisual?.QueueFree();_safeVisual=new Node3D();AddChild(_safeVisual);var material=new StandardMaterial3D(){AlbedoColor=new Color(.2f,.9f,.5f)};
+        var width=z.MaxX-z.MinX;var depth=z.MaxZ-z.MinZ;
+        foreach(var edge in new[]{(new Vector3((z.MinX+z.MaxX)/2,.06f,z.MinZ),new Vector3(width,.06f,.08f)),(new Vector3((z.MinX+z.MaxX)/2,.06f,z.MaxZ),new Vector3(width,.06f,.08f)),(new Vector3(z.MinX,.06f,(z.MinZ+z.MaxZ)/2),new Vector3(.08f,.06f,depth)),(new Vector3(z.MaxX,.06f,(z.MinZ+z.MaxZ)/2),new Vector3(.08f,.06f,depth))})_safeVisual.AddChild(new MeshInstance3D(){Position=edge.Item1,Mesh=new BoxMesh(){Size=edge.Item2},MaterialOverride=material});
+    }
     private void OnAttack(AttackEvent action)
     {
         if (_combat.TryGetValue(action.AttackerId, out var actor))
@@ -290,6 +309,7 @@ public partial class WorldController : Node3D
         _crafting?.QueueFree(); _crafting=null;
         _trade?.QueueFree(); _trade=null;
         _economy?.QueueFree(); _economy=null;
+        _pvp?.QueueFree();_pvp=null;_pvpLabels.Clear();_safeVisual?.QueueFree();_safeVisual=null;
         _groundItems?.QueueFree(); _groundItems = null;
         foreach (var echo in _echoes.Values) echo.QueueFree();
         _echoes.Clear(); _echoControls?.QueueFree(); _echoControls = null;

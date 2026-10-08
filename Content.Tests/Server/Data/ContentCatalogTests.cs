@@ -15,7 +15,7 @@ public sealed class ContentCatalogTests
     public void ShippedContentLoadsAndReferencesResolve()
     {
         var catalog = Load();
-        Assert.Equal(2, catalog.BalanceVersion);
+        Assert.Equal(3, catalog.BalanceVersion);
         Assert.Equal(4, catalog.Weapons.Count);
         Assert.Equal(6, catalog.Abilities.Count);
         var actor = catalog.Creatures["test_adventurer"];

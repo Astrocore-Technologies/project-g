@@ -81,6 +81,14 @@ public sealed class EchoSimulation
         Wake(owner); _dirty.Add(owner); _loadoutDirty.Add(owner);
     }
     public bool TryGet(NetworkEntityId id, out Actor actor) => _actors.TryGetValue(id,out actor!);
+    internal void ResetSession(NetworkEntityId owner){if(_owners.TryGetValue(owner,out var s)){s.Sequence=0;s.RequestTick=null;}_pending.Remove(owner);_results.Remove(owner);}
+    internal void Respawn(NetworkEntityId owner)
+    {
+        if(!_owners.TryGetValue(owner,out var state))return;var position=_ownerState(owner).Position;
+        state.Target=default;state.AssistUntil=0;
+        foreach(var actor in state.Actors){if(!_grid.TryFindSpawn(MovementSimulation.ClampTarget(position+Offset(actor.Saved.Slot),_movement),out var spawn))throw new InvalidOperationException("No Echo respawn.");actor.Motion.Reset(spawn,spawn);_spatial.Move(actor.Id,spawn);}
+        _dirty.Add(owner);Wake(owner);
+    }
     public void Wake(NetworkEntityId owner) { if (_owners.ContainsKey(owner)) _active.Add(owner); }
     public void Remove(NetworkEntityId owner)
     {
@@ -96,7 +104,7 @@ public sealed class EchoSimulation
         new EchoSlot(actor.Saved.Slot,actor.Id,_options.SignatureRange,_options.SignatureRadius,(float)Math.Max(0,actor.SignatureReady-_time))).ToArray());
     public void Alert(NetworkEntityId owner, NetworkEntityId target)
     {
-        if (!_owners.TryGetValue(owner,out var state) || !_combat.TryGet(target,out var enemy) || !CombatSimulation.IsHostileTarget(enemy.Kind) || enemy.Health <= 0) return;
+        if (!_owners.TryGetValue(owner,out var state) || !_combat.TryGet(target,out var enemy) || !_combat.CanTarget(owner,target) || enemy.Health <= 0) return;
         state.Target = target; state.AssistUntil = _time+_options.AssistSeconds; Wake(owner);
     }
     public bool Queue(NetworkEntityId owner, EchoSignatureCommand command, uint tick)
@@ -157,16 +165,17 @@ public sealed class EchoSimulation
         if (command.ClientTick != tick && MovementSimulation.IsSequenceNewer(command.ClientTick,tick)) outcome = EchoCommandOutcome.InvalidState;
         if (outcome == EchoCommandOutcome.Accepted)
         {
+            _combat.PlayerAction?.Invoke(owner);
             actor!.SignatureReady = _time+_options.SignatureCooldownSeconds; _dirty.Add(owner); _loadoutDirty.Add(owner);
             _actions.Add(new(actor.Id,tick,EchoActionKind.Signature,default,command.Aim,_options.SignatureRadius,0,0));
             _spatial.Query(command.Aim,_options.SignatureRadius,_candidates);
             foreach (var id in _candidates)
-                if (_combat.TryGet(id,out var target) && CombatSimulation.IsHostileTarget(target.Kind) && target.Health > 0 && _grid.CanTraverse(command.Aim,target.Position))
+                if (_combat.TryGet(id,out var target) && _combat.CanTarget(owner,target.Id) && target.Health > 0 && _grid.CanTraverse(command.Aim,target.Position))
                     Hit(actor,target,EchoActionKind.Signature,command.Aim,_options.SignatureRadius,_options.SignaturePower,tick);
         }
         _results[owner] = new(command.Sequence,tick,command.Slot,outcome,actor is null ? 0 : (float)Math.Max(0,actor.SignatureReady-_time));
     }
     private void Hit(Actor actor, Combatant target, EchoActionKind kind, Vector2 position, float radius, double power, uint tick)
-    { var damage = _combat.ApplyEchoDamage(target.Id,power); _actions.Add(new(actor.Id,tick,kind,target.Id,position,radius,damage,target.Health)); }
+    { var damage = _combat.ApplyEchoDamage(target.Id,power,actor.OwnerId,actor.Motion.Position); _actions.Add(new(actor.Id,tick,kind,target.Id,position,radius,damage,target.Health)); }
     public void ClearResults() { _actions.Clear(); _results.Clear(); _dirty.Clear(); _loadoutDirty.Clear(); }
 }

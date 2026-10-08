@@ -19,7 +19,7 @@ public sealed partial class ServerWorld
     {
         if(!HasEconomy || !_playersByConnection.TryGetValue(connection,out var player)||!NetworkProtocol.ValidEconomyCommand(command))return false;
         if(_economyRequestTicks.GetValueOrDefault(connection,uint.MaxValue)==Tick){_economyPending.Remove(connection);_economyResults[player.EntityId]=new(command.Operation,Tick+1,CraftOutcome.RateLimited,EconomyEffect.None);return false;}
-        _economyRequestTicks[connection]=Tick;_economyPending[connection]=command;return true;
+        GroundItems?.CancelChannel(player.EntityId,Tick); _economyRequestTicks[connection]=Tick;_economyPending[connection]=command;return true;
     }
     private void ValidateMarketContent()
     {
@@ -99,6 +99,9 @@ public sealed partial class ServerWorld
                             }
                             else if(command.Action==EconomyAction.Claim)next=market with {Credits=market.Credits.Where(c=>c.Seller!=owner).ToArray()};
                             next.Validate();
+                            // Market and death loot share the bounded world document. Reject before moving ownership.
+                            if(System.Text.Encoding.UTF8.GetByteCount((_nodeState with {Market=next}).Serialize())>8192)
+                            { _economyResults[id]=new(command.Operation,Tick,CraftOutcome.InventoryFull,EconomyEffect.None); continue; }
                             effect=Inventory.ApplyEconomy(id,command,quote,command.Action is EconomyAction.Buy or EconomyAction.Cancel?listing!.Item:null);
                             if(command.Action is EconomyAction.List or EconomyAction.Buy or EconomyAction.Cancel or EconomyAction.Claim){_nodeState=_nodeState with {Market=next};MarketDirty=true;}
                             MarkPersistent(id);Audit(_persistentActors.GetValueOrDefault(connection,"runtime-"+connection),"Economy",$"{command.Action}, operation {command.Operation}, effect {effect}");_economyQuotes.Remove(connection);

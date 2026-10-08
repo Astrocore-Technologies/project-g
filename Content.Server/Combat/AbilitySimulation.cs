@@ -87,6 +87,9 @@ public sealed class AbilitySimulation
         return saved;
     }
 
+    internal void ResetSession(NetworkEntityId id){var a=_actors[id];a.LastSeenSequence=0;a.LastRequestTick=null;_pending.Remove(id);_results.Remove(id);}
+    internal void Respawn(NetworkEntityId id){var a=_actors[id];a.Mana=a.MaxMana*.5;_dirty.Add(id);}
+    internal void StopDead(NetworkEntityId id){_combat.Get(id).IsCasting=false;_pending.Remove(id);}
     internal double Mana(NetworkEntityId id) => _actors[id].Mana;
 
     internal void Restore(NetworkEntityId id, CharacterState state, double offlineSeconds)
@@ -245,6 +248,7 @@ public sealed class AbilitySimulation
         {
             _results[id] = new(command.Sequence, tick, AbilityOutcome.InvalidAim); return;
         }
+        if(profile.Form!=AbilityForm.Dash)_combat.PlayerAction?.Invoke(id);
         actor.Mana = Math.Max(0, actor.Mana - profile.ManaCost);
         actor.ReadyAt[index] = StatMath.Add(_time, profile.CooldownSeconds);
         combatant.IsCasting = true;
@@ -311,7 +315,7 @@ public sealed class AbilitySimulation
         Combatant? target = null; var first = float.MaxValue;
         foreach (var id in _candidates)
         {
-            if (!_combat.TryGet(id, out var candidate) || !CombatSimulation.IsHostileTarget(candidate.Kind) || candidate.Health <= 0 ||
+            if (!_combat.TryGet(id, out var candidate) || !_combat.CanTarget(effect.ActorId,candidate.Id) || candidate.Health <= 0 ||
                 !SweptCircle.TryHit(from, to, candidate.Position, effect.Profile.Radius + _grid.AgentRadius, out var fraction) ||
                 !_grid.CanTraverse(from, candidate.Position)) continue;
             if (fraction < first || (fraction == first && (target is null || id.Value < target.Id.Value))) { first = fraction; target = candidate; }
@@ -327,7 +331,7 @@ public sealed class AbilitySimulation
     {
         _spatial.Query(effect.Position, effect.Profile.Radius, _candidates);
         foreach (var id in _candidates)
-            if (_combat.TryGet(id, out var target) && CombatSimulation.IsHostileTarget(target.Kind) && target.Health > 0 &&
+            if (_combat.TryGet(id, out var target) && _combat.CanTarget(effect.ActorId,target.Id) && target.Health > 0 &&
                 _grid.CanTraverse(effect.Position, target.Position)) Hit(effect, target, tick);
     }
 
@@ -335,9 +339,9 @@ public sealed class AbilitySimulation
     {
         var power = Math.Max(0, StatMath.Add(effect.Definition.Power,
             StatMath.Multiply(_combat.Get(effect.ActorId).Stats.MagicAttack, effect.Definition.MagicAttackScale)));
-        var damage = _combat.ApplyAbilityDamage(target.Id, power);
+        var damage = _combat.ApplyAbilityDamage(target.Id, power,effect.ActorId);
         _hits.Add(new(effect.Id, effect.ActorId, target.Id, tick, damage, target.Health));
-        if (damage > 0 && _practiced.Add(effect.Id)) _practice.Add((effect.ActorId,effect.Profile.Id));
+        if (damage > 0 && target.Kind!=CombatEntityKind.Player && _practiced.Add(effect.Id)) _practice.Add((effect.ActorId,effect.Profile.Id));
     }
 
     private double PowerFactor(AbilityActor actor, ushort id) => 1 + (actor.Levels.GetValueOrDefault(id,1) - 1) * _catalog.Progression.PowerPerSkillLevel;

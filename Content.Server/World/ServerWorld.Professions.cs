@@ -67,7 +67,7 @@ public sealed partial class ServerWorld
                 _professionResults[id]=new(command.Sequence,Tick,ProfessionOutcome.RateLimited,0); return false;
             }
         }
-        _professionSequences[id]=(command.Sequence,Tick); _professionPending[id]=command; return true;
+        GroundItems?.CancelChannel(id,Tick); _professionSequences[id]=(command.Sequence,Tick); _professionPending[id]=command; return true;
     }
     private void SimulateProfessions()
     {

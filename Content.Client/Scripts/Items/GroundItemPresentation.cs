@@ -13,7 +13,9 @@ public partial class GroundItemPresentation : Node3D
     private uint? _pending;
     private readonly BoxMesh _mesh = new() { Size = new(.45f, .25f, .45f) };
     private readonly StandardMaterial3D _material = new() { AlbedoColor = new Color(1, .8f, .2f) };
-    public void Initialize(NetworkClient network) => _network = network;
+    public void Initialize(NetworkClient network){_network=network;network.PvpLootReceived+=Loot;}
+    public override void _ExitTree(){if(_network is not null)_network.PvpLootReceived-=Loot;}
+    private void Loot(PvpLootState s){if(_items.TryGetValue(s.Handle,out var n)&&n.GetChild(1) is Label3D label)label.Text+="\nPvP-тег • G: 5 секунд • исчезнет через "+Math.Ceiling(s.RemainingSeconds/60)+" мин";}
     public void Spawn(GroundItemSpawn state)
     {
         if (_items.ContainsKey(state.Handle)) return;

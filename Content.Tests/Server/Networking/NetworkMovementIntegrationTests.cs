@@ -381,6 +381,13 @@ public sealed class NetworkMovementIntegrationTests
         public Dictionary<NetworkEntityId,ItemConditionState> Conditions { get; }=new();
         public List<RepairQuote> RepairQuotes { get; }=new();
         public List<RepairResult> RepairResults { get; }=new();
+        public Dictionary<NetworkEntityId,PvpState> PvpStates {get;}=new();
+        public Dictionary<NetworkEntityId,PvpPublicState> PvpFlags {get;}=new();
+        public List<PvpResult> PvpResults {get;}=new();
+        public List<PickupChannelState> PickupChannels {get;}=new();
+        public Dictionary<ulong,PvpLootState> PvpLoot {get;}=new();
+        public PvpZoneState? PvpZone {get;private set;}
+        public void Pvp(PvpCommand command)=>_peer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
         public Dictionary<NetworkEntityId,EconomyState> EconomyStates {get;}=new();
         public Dictionary<NetworkEntityId,MarketState> Markets {get;}=new();
         public List<EconomyQuote> EconomyQuotes {get;}=new();
@@ -463,6 +470,18 @@ public sealed class NetworkMovementIntegrationTests
                     Assert.True(NetworkProtocol.TryReadMessageType(reader, out var type));
                     switch (type)
                     {
+                        case NetworkMessageType.PvpState:
+                            Assert.True(NetworkProtocol.TryReadPvpState(reader,out var pvpState));Assert.Equal(LocalSpawn.EntityId,pvpState.OwnerId);PvpStates[pvpState.OwnerId]=pvpState;break;
+                        case NetworkMessageType.PvpPublicState:
+                            Assert.True(NetworkProtocol.TryReadPvpPublicState(reader,out var pvpFlags));Assert.Contains(pvpFlags.EntityId,Spawns.Keys);PvpFlags[pvpFlags.EntityId]=pvpFlags;break;
+                        case NetworkMessageType.PvpResult:
+                            Assert.True(NetworkProtocol.TryReadPvpResult(reader,out var pvpResult));PvpResults.Add(pvpResult);break;
+                        case NetworkMessageType.PickupChannelState:
+                            Assert.True(NetworkProtocol.TryReadPickupChannelState(reader,out var pickupChannel));Assert.Equal(LocalSpawn.EntityId,pickupChannel.OwnerId);PickupChannels.Add(pickupChannel);break;
+                        case NetworkMessageType.PvpZoneState:
+                            Assert.True(NetworkProtocol.TryReadPvpZoneState(reader,out var pvpZone));PvpZone=pvpZone;break;
+                        case NetworkMessageType.PvpLootState:
+                            Assert.True(NetworkProtocol.TryReadPvpLootState(reader,out var pvpLoot));Assert.Contains(pvpLoot.Handle,GroundItems.Keys);PvpLoot[pvpLoot.Handle]=pvpLoot;break;
                         case NetworkMessageType.ItemConditionState:
                             Assert.True(NetworkProtocol.TryReadItemConditionState(reader,out var condition)); Assert.Equal(LocalSpawn.EntityId,condition.OwnerId); Conditions[condition.OwnerId]=condition; break;
                         case NetworkMessageType.EconomyState:

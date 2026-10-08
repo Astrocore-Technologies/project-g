@@ -63,7 +63,7 @@ public sealed partial class ServerWorld
                 _progressionResults[id] = new(command.Sequence,Tick,ProgressionOutcome.RateLimited); return false;
             }
         }
-        _progressionSequences[id] = (command.Sequence,Tick); _progressionPending[id] = command; return true;
+        GroundItems?.CancelChannel(id,Tick); _progressionSequences[id] = (command.Sequence,Tick); _progressionPending[id] = command; return true;
     }
     private void GrantExperience(NetworkEntityId id, int amount)
     {
@@ -96,8 +96,8 @@ public sealed partial class ServerWorld
     {
         if (_progressionCatalog is not { } catalog) return;
         // Combat events are created exactly once by the authoritative simulation; no client reward RPC.
-        foreach (var action in Combat!.Events) if (action.Damage > 0 && IsPlayer(action.AttackerId)) GrantExperience(action.AttackerId,1);
-        foreach (var hit in Abilities!.Hits) if (hit.Damage > 0 && IsPlayer(hit.ActorId)) GrantExperience(hit.ActorId,1);
+        foreach (var action in Combat!.Events) if (action.Damage > 0 && IsPlayer(action.AttackerId) && !IsPlayer(action.TargetId)) GrantExperience(action.AttackerId,1);
+        foreach (var hit in Abilities!.Hits) if (hit.Damage > 0 && IsPlayer(hit.ActorId) && !IsPlayer(hit.TargetId)) GrantExperience(hit.ActorId,1);
         foreach (var use in Abilities.Practice)
         {
             RecordProfessionUse(use.ActorId);

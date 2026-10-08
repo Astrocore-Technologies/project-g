@@ -55,6 +55,22 @@ public sealed class CombatSimulation
         ValidateProfile(catalog.Creatures[_targetDefinition]);
     }
 
+    internal Func<Vector2,bool>? DamageOriginPermission {get;set;}
+    internal Func<NetworkEntityId,NetworkEntityId,bool>? DamagePermission {get;set;}
+    internal Action<NetworkEntityId,NetworkEntityId,double>? DamageApplied {get;set;}
+    internal Action<NetworkEntityId>? PlayerAction {get;set;}
+    private readonly Dictionary<NetworkEntityId,ulong> _damageSerial=new();
+    internal ulong DamageSerial(NetworkEntityId id)=>_damageSerial.GetValueOrDefault(id);
+    internal bool CanTarget(NetworkEntityId source,NetworkEntityId target,Vector2? origin=null)
+    {
+        if(source==target||!_actors.TryGetValue(target,out var victim)||victim.Health<=0)return false;
+        if(origin is {} position&&victim.Kind==CombatEntityKind.Player&&DamageOriginPermission?.Invoke(position)==false)return false;
+        if(DamagePermission is not null)return DamagePermission(source,target);
+        return _actors.TryGetValue(source,out var owner)&&IsNpc(owner.Kind)?victim.Kind==CombatEntityKind.Player:IsHostileTarget(victim.Kind);
+    }
+    private void NotifyDamage(NetworkEntityId source,NetworkEntityId target,double amount){if(amount<=0)return;_damageSerial[target]=checked(DamageSerial(target)+1);DamageApplied?.Invoke(source,target,amount);}
+    internal void ResetSession(NetworkEntityId id){var a=_actors[id];a.LastSequence=0;a.LastAbilitySequence=0;a.LastRequestTick=null;_pending.Remove(id);_results.Remove(id);}
+    internal void Respawn(NetworkEntityId id){var a=_actors[id];a.Health=a.Stats.MaxHealth;a.IsCasting=false;_equipmentDirty.Add(id);}
     internal Func<NetworkEntityId,bool>? WeaponUsable { get; set; }
     public IReadOnlyList<AttackEvent> Events => _events;
     public IReadOnlyDictionary<NetworkEntityId, AttackResult> Results => _results;
@@ -96,20 +112,20 @@ public sealed class CombatSimulation
     }
 
     /// <summary>Authoritative spell damage; the training policy remains separate from geometry.</summary>
-    public double ApplyAbilityDamage(NetworkEntityId targetId, double power)
+    public double ApplyAbilityDamage(NetworkEntityId targetId, double power, NetworkEntityId source=default)
     {
         var target = _actors[targetId];
-        if (!IsHostileTarget(target.Kind) || target.Health <= 0) return 0;
+        if (!CanTarget(source,targetId)) return 0;
         var damage = Math.Min(target.Health, _calculator.ApplyDefense(Math.Max(0, power), target.Stats.MagicDefense));
         target.Health = Math.Max(0, target.Health - damage);
-        return damage;
+        NotifyDamage(source,targetId,damage); return damage;
     }
-    internal double ApplyEchoDamage(NetworkEntityId targetId, double power)
+    internal double ApplyEchoDamage(NetworkEntityId targetId, double power, NetworkEntityId source=default, Vector2? origin=null)
     {
         var target = _actors[targetId];
-        if (!IsHostileTarget(target.Kind) || target.Health <= 0) return 0;
+        if (!CanTarget(source,targetId,origin)) return 0;
         var damage = Math.Min(target.Health,_calculator.ApplyDefense(power,target.Stats.PhysicalDefense));
-        target.Health = Math.Max(0,target.Health-damage); return damage;
+        target.Health = Math.Max(0,target.Health-damage); NotifyDamage(source,targetId,damage); return damage;
     }
 
     public static bool IsHostileTarget(CombatEntityKind kind) => kind is CombatEntityKind.TrainingTarget or CombatEntityKind.Monster or CombatEntityKind.Boss;
@@ -130,7 +146,7 @@ public sealed class CombatSimulation
 
     public void Remove(NetworkEntityId id)
     {
-        _actors.Remove(id); _pending.Remove(id); _results.Remove(id); _equipmentDirty.Remove(id);
+        _actors.Remove(id); _damageSerial.Remove(id); _pending.Remove(id); _results.Remove(id); _equipmentDirty.Remove(id);
     }
 
     public void Move(NetworkEntityId id, Vector2 position) => _actors[id].Position = position;
@@ -171,7 +187,7 @@ public sealed class CombatSimulation
             if (outcome != AttackOutcome.Accepted)
                 continue;
             actor.ReadyAt = StatMath.Add(_time, actor.AttackInterval);
-            Resolve(actor, command, tick);
+            PlayerAction?.Invoke(id); Resolve(actor, command, tick);
         }
         _pending.Clear();
     }
@@ -214,6 +230,7 @@ public sealed class CombatSimulation
                 !_navigation.CanTraverse(center, target.Position)) continue;
             var damage = Math.Min(target.Health, _calculator.ApplyDefense(power, target.Stats.MagicDefense));
             target.Health = Math.Max(0, target.Health - damage);
+            NotifyDamage(id,target.Id,damage);
             _events.Add(new(id, sequence, tick, center, Vector2.UnitY, (float)ability.Radius, target.Id, damage, target.Health, false));
         }
         return true;
@@ -229,7 +246,7 @@ public sealed class CombatSimulation
         foreach (var id in _candidates)
         {
             if (!_actors.TryGetValue(id, out var candidate) ||
-                !(IsNpc(actor.Kind) ? candidate.Kind == CombatEntityKind.Player : IsHostileTarget(candidate.Kind)) ||
+                !CanTarget(actor.Id,candidate.Id) ||
                 candidate.Health <= 0 || !BasicAttackShape.Contains(actor.Position, direction, candidate.Position, range, _halfAngle) ||
                 !_navigation.CanTraverse(actor.Position, candidate.Position))
                 continue;
@@ -250,6 +267,7 @@ public sealed class CombatSimulation
                 power = StatMath.Multiply(power, _criticalMultiplier);
             damage = Math.Min(target.Health, _calculator.ApplyDefense(power, target.Stats.PhysicalDefense));
             target.Health = Math.Max(0, target.Health - damage);
+            NotifyDamage(actor.Id,target.Id,damage);
         }
         _events.Add(new(actor.Id, command.Sequence, tick, actor.Position, direction, range,
             target?.Id ?? NetworkEntityId.Invalid, damage, target?.Health ?? 0, critical));

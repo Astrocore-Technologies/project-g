@@ -12,8 +12,8 @@ public sealed class ServerPlayer(
     NetworkEntityId entityId,
     NavigationMover motion)
 {
-    public int ConnectionId { get; } = connectionId;
-    public PlayerId PlayerId { get; } = playerId;
+    public int ConnectionId { get; internal set; } = connectionId;
+    public PlayerId PlayerId { get; internal set; } = playerId;
     public NetworkEntityId EntityId { get; } = entityId;
     public Vector2 Position => Motion.Position;
     public Vector2 Target => Motion.Target;

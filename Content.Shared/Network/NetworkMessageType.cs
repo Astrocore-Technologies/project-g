@@ -53,4 +53,11 @@ public enum NetworkMessageType : ushort
     EconomyResult = 66,
     EconomyState = 67,
     MarketState = 68,
+    PvpCommand = 69,
+    PvpResult = 70,
+    PvpPublicState = 71,
+    PvpState = 72,
+    PickupChannelState = 73,
+    PvpZoneState = 74,
+    PvpLootState = 75,
 }

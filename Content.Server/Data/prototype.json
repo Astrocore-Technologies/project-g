@@ -1,6 +1,6 @@
 {
   "schemaVersion": 3,
-  "balanceVersion": 2,
+  "balanceVersion": 3,
   "balance": {
     "meleeAttack": {
       "strength": 1,
@@ -457,5 +457,13 @@
     "listingsPerSeller": 2,
     "listingLimit": 8,
     "refillSeconds": 600
+  },
+  "pvp": {
+    "safeMinX": -12,
+    "safeMaxX": -7,
+    "safeMinZ": -4,
+    "safeMaxZ": 4,
+    "respawnX": -9,
+    "respawnZ": 0
   }
 }

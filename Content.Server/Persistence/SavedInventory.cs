@@ -6,6 +6,7 @@ namespace Content.Server.Persistence;
 
 public sealed record SavedItem(Guid InstanceId, string DefinitionId, EquipmentSlot EquippedSlot)
 {
+    [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingDefault)] public bool Bound {get;init;}
     [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)] public SavedItemCondition? Condition { get; init; }
     [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingDefault)] public byte Enhancement {get;init;}
 }

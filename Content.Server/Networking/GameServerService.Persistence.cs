@@ -25,6 +25,7 @@ public sealed partial class GameServerService
         CancellationTokenSource Deadline);
     private sealed class Intentions
     {
+        public PvpCommand? Pvp;
         public CraftCommand? Craft;
         public RepairCommand? Repair;
         public TradeCommand? Trade;
@@ -51,6 +52,7 @@ public sealed partial class GameServerService
             Reject(peer, HandshakeRejectCode.DevelopmentOnly, "Development identity is restricted to localhost.");
             return;
         }
+        if(TryResumeCombat(peer,hello,player))return;
         if (_sessions.Count + _logins.Count + _closing.Count >= _maxSessions)
         {
             Reject(peer, HandshakeRejectCode.ServerBusy, "Development session budget is full.");
@@ -63,6 +65,7 @@ public sealed partial class GameServerService
 
     private void CompleteLogins()
     {
+        CompleteCombatResumes();
         if (_logins.Count == 0) return;
         foreach (var (connection, login) in _logins.ToArray())
         {
@@ -81,6 +84,7 @@ public sealed partial class GameServerService
                 }
                 AcceptPlayer(login.Peer, login.Hello, login.Player, session);
                 _sessions.Add(connection, session);
+                _sessionCredentialHashes[connection]=CredentialHash(login.Hello.DevelopmentToken.Length>0?login.Hello.DevelopmentToken:session.IssuedToken);
                 _logger.LogInformation("Character restored. CharacterId={CharacterId}, Revision={Revision}",
                     session.CharacterId, session.Revision);
             }
@@ -105,6 +109,7 @@ public sealed partial class GameServerService
         // Bounded one intention per type/session while waiting for disk; no growing packet queue.
         foreach (var (connection, intentions) in _intentions)
         {
+            if(intentions.Pvp is {} pvp)_world.TryQueuePvp(connection,pvp);
             if(intentions.Economy is { } economy) _world.TryQueueEconomy(connection,economy);
             if(intentions.Trade is { } trade) _world.TryQueueTrade(connection,trade);
             if(intentions.Repair is { } repair) _world.TryQueueRepair(connection,repair);
@@ -178,9 +183,11 @@ public sealed partial class GameServerService
     }
     private void CloseDepartedPlayers()
     {
+        ExpireDetachedCombatants();
         foreach (var connection in _departed)
         {
             if (!_sessions.Remove(connection, out var session)) continue;
+            _sessionCredentialHashes.Remove(connection);
             var state = _world.CaptureCharacter(connection);
             _world.RemovePlayer(connection);
             _closing.Add(SaveAndCloseAsync(session, state));

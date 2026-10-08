@@ -158,7 +158,7 @@ public sealed partial class GameServerService : BackgroundService
         _views.Remove(peer.Id);
         var playerId = _handshakes.RemoveConnection(peer.Id);
         _intentions.Remove(peer.Id);
-        if (_sessions.ContainsKey(peer.Id)) _departed.Add(peer.Id);
+        if (_sessions.ContainsKey(peer.Id)) {if(!DetachCombatPlayer(peer.Id))_departed.Add(peer.Id);}
         else _world.RemovePlayer(peer.Id);
 
         // Remaining observers receive the despawn through their AOI delta next tick.
@@ -278,6 +278,8 @@ public sealed partial class GameServerService : BackgroundService
             { if(_characters is null) _world.TryQueueRepair(peer.Id,repair); else BufferIntentions(peer.Id).Repair ??= repair; }
             if(messageType==NetworkMessageType.TradeCommand && deliveryMethod==DeliveryMethod.ReliableOrdered && NetworkProtocol.TryReadTradeCommand(reader,out var trade))
             { if(_characters is null) _world.TryQueueTrade(peer.Id,trade); else BufferIntentions(peer.Id).Trade ??= trade; }
+            if(messageType==NetworkMessageType.PvpCommand&&deliveryMethod==DeliveryMethod.ReliableOrdered&&NetworkProtocol.TryReadPvpCommand(reader,out var pvp))
+            {if(_characters is null)_world.TryQueuePvp(peer.Id,pvp);else BufferIntentions(peer.Id).Pvp??=pvp;}
             // Invalid game intentions are discarded; avoid logging unbounded client spam.
         }
         finally
@@ -321,9 +323,9 @@ public sealed partial class GameServerService : BackgroundService
         AcceptPlayer(peer, hello, decision.PlayerId);
     }
 
-    private void AcceptPlayer(NetPeer peer, ClientHello hello, PlayerId playerId, CharacterSession? session = null)
+    private void AcceptPlayer(NetPeer peer, ClientHello hello, PlayerId playerId, CharacterSession? session = null, bool reattached=false)
     {
-        var player = _world.AddPlayer(peer.Id, playerId, session?.State);
+        var player = reattached?_world.GetPlayer(peer.Id):_world.AddPlayer(peer.Id, playerId, session?.State);
         if(session is not null) _world.BindWorldActor(peer.Id,session.CharacterId);
         var welcome = new ServerWelcome(
             playerId,
@@ -335,6 +337,7 @@ public sealed partial class GameServerService : BackgroundService
         // Public collision geometry arrives before any spawn on the same reliable stream.
         peer.Send(NetworkProtocol.Write(_world.Navigation.ToMessage()), DeliveryMethod.ReliableOrdered);
 
+        if(_world.HasPvp)peer.Send(NetworkProtocol.Write(_world.PublicPvpZone()),DeliveryMethod.ReliableOrdered);
         if (_world.HasStarterZone) peer.Send(NetworkProtocol.Write(_world.PublicStarterZone()),DeliveryMethod.ReliableOrdered);
         if (_world.HasCrafting) foreach(var recipe in _world.PublicCraftRecipes()) peer.Send(NetworkProtocol.Write(recipe),DeliveryMethod.ReliableOrdered);
         var view = new InterestView { BridgeNavigationSent=_world.HasWorldNode && (_world.PublicWorldNode().Consequences&1)!=0 };
@@ -368,6 +371,7 @@ public sealed partial class GameServerService : BackgroundService
         _world.ClearRepairResults();
         _world.ClearTradeResults();
         _world.ClearEconomyResults();
+        _world.ClearPvpResults();
         _world.ClearExplorationResults();
         _world.ClearProgressionResults();
         _world.ClearProfessionResults();
@@ -396,7 +400,7 @@ public sealed partial class GameServerService : BackgroundService
             foreach (var id in view.GroundLeft)
                 peer.Send(NetworkProtocol.Write(new GroundItemDespawn(id.Value, _world.Tick)), DeliveryMethod.ReliableOrdered);
             foreach (var id in view.GroundEntered)
-                peer.Send(NetworkProtocol.Write(ground.State(id.Value, _world.Tick)), DeliveryMethod.ReliableOrdered);
+            {peer.Send(NetworkProtocol.Write(ground.State(id.Value, _world.Tick)), DeliveryMethod.ReliableOrdered);if(ground.IsDeathLoot(id.Value))peer.Send(NetworkProtocol.Write(ground.LootState(id.Value)),DeliveryMethod.ReliableOrdered);}
         }
         foreach (var id in view.Left)
             peer.Send(NetworkProtocol.Write(new PlayerDespawn(id)), DeliveryMethod.ReliableOrdered);
@@ -417,6 +421,21 @@ public sealed partial class GameServerService : BackgroundService
             foreach (var id in equipmentCombat.EquipmentDirty)
                 if (view.Entities.Contains(id) && !view.Entered.Contains(id))
                     peer.Send(NetworkProtocol.Write(equipmentCombat.State(id, _world.Tick)), DeliveryMethod.ReliableOrdered);
+        if(_world.HasPvp)
+        {
+            foreach(var id in view.Entities)if(_world.IsPlayer(id))
+            {
+                var flags=_world.PublicPvp(id);
+                if(!view.PvpFlags.TryGetValue(id,out var previous)||previous with {ServerTick=flags.ServerTick}!=flags){peer.Send(NetworkProtocol.Write(flags),DeliveryMethod.ReliableOrdered);view.PvpFlags[id]=flags;}
+            }
+            foreach(var id in view.Left)view.PvpFlags.Remove(id);
+            if(_world.TryGetOwnedEntity(peer.Id,out var owner))
+            {
+                if(view.Entered.Contains(owner)||_world.IsPvpDirty(owner))peer.Send(NetworkProtocol.Write(_world.PrivatePvp(owner)),DeliveryMethod.ReliableOrdered);
+                if(_world.PvpResults.TryGetValue(owner,out var pvpResult))peer.Send(NetworkProtocol.Write(pvpResult),DeliveryMethod.ReliableOrdered);
+                if(view.Entered.Contains(owner)||_world.GroundItems!.ChannelDirty(owner))peer.Send(NetworkProtocol.Write(_world.GroundItems!.ChannelState(owner,_world.Tick)),DeliveryMethod.ReliableOrdered);
+            }
+        }
         if (_world.Inventory is { } inventory && _world.TryGetOwnedEntity(peer.Id, out var inventoryOwner))
         {
             if (view.Entered.Contains(inventoryOwner) || inventory.IsDirty(inventoryOwner))

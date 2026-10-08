@@ -56,7 +56,7 @@ public sealed class DatabaseCharacterStore(ICharacterDatabase database) : IChara
         if (world is not null)
         {
             if (world.Session is not WorldSession owner) throw new ArgumentException("Foreign world session.");
-            worldWrite=new(owner.Lease,owner.Revision,world.State.Serialize(),world.Audit,world.State.Market?.Listings.Select(l=>l.Item.InstanceId).ToArray() ?? []);
+            worldWrite=new(owner.Lease,owner.Revision,world.State.Serialize(),world.Audit,(world.State.Market?.Listings.Select(l=>l.Item.InstanceId) ?? []).Concat(world.State.DeathLoot?.Select(l=>l.Item.InstanceId) ?? []).ToArray());
         }
         return database.SaveWithWorldAsync(writes,worldWrite,token);
     }

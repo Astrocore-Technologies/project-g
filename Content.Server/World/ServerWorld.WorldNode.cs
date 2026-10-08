@@ -35,12 +35,13 @@ public sealed partial class ServerWorld
     {
         if (!HasWorldNode || WorldNodeDirty || _appliedConsequences!=0 || revision<=0) throw new InvalidOperationException("World restore is startup-only.");
         state.Validate(); if(state.Repairs>_node!.ContributionsRequired || state.Patrols>_node.ContributionsRequired) throw new InvalidDataException("World content migration required.");
-        _nodeState=state; _nodeRevision=revision; RestoreCraftResources(); ValidateMarketContent(); ApplyWorldConsequences();
+        _nodeState=state; _nodeRevision=revision; RestoreCraftResources(); ValidateMarketContent(); RestoreDeathLoot(); ApplyWorldConsequences();
     }
     public void BindWorldActor(int connection,Guid character)
     {
         if(character==Guid.Empty || !_playersByConnection.ContainsKey(connection)) throw new ArgumentException("Invalid persistent actor.");
         _persistentActors[connection]=character.ToString("N");
+        if(HasPvp)_pvpIdentities[_playersByConnection[connection].EntityId]=character;
     }
     public WorldNodeState PublicWorldNode() => new((ulong)_nodeRevision,Tick,_node!.Position,Consequences,_node.KeeperName,_node.KeeperLines[Consequences],_node.Rumors[_nodeState.StormRumor ? 4 : Consequences]);
     public bool TryQueueWorldNode(int connection,WorldNodeCommand command)
@@ -51,7 +52,7 @@ public sealed partial class ServerWorld
             if(!MovementSimulation.IsSequenceNewer(command.Sequence,previous.Sequence)) return false;
             if(previous.Tick==Tick) { _nodeSequences[connection]=(command.Sequence,Tick); _nodePending.Remove(connection); _nodeResults[p.EntityId]=new(command.Sequence,Tick+1,WorldNodeOutcome.RateLimited); return false; }
         }
-        _nodeSequences[connection]=(command.Sequence,Tick); _nodePending[connection]=command; return true;
+        GroundItems?.CancelChannel(p.EntityId,Tick); _nodeSequences[connection]=(command.Sequence,Tick); _nodePending[connection]=command; return true;
     }
     private void SimulateWorldNode()
     {

@@ -5,6 +5,7 @@ namespace Content.Server.World;
 /// <summary>Per-observer relevance state and reusable tick output. Owned by one connection.</summary>
 public sealed class InterestView
 {
+    public Dictionary<NetworkEntityId,PvpPublicState> PvpFlags {get;}=new();
     public bool MarketVisible;
     public int MarketCreditSent=-1;
     public HashSet<ushort> ResourceVisible { get; }=new();

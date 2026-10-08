@@ -30,7 +30,7 @@ public partial class StarterZonePresentation : Node3D
         var column=new VBoxContainer { MouseFilter=Control.MouseFilterEnum.Ignore }; _mapPanel.AddChild(column);
         _location=new Label { Text=zone.RegionName+"\nС ↑  В →  Ю ↓  З ←",MouseFilter=Control.MouseFilterEnum.Ignore }; column.AddChild(_location);
         _map=new StarterMap { CustomMinimumSize=new(220,220),MouseFilter=Control.MouseFilterEnum.Ignore }; column.AddChild(_map);
-        column.AddChild(new Label { Text="M — карта   F1 — обучение",MouseFilter=Control.MouseFilterEnum.Ignore });
+        column.AddChild(new Label { Text="M — карта   V — PvP/смерть; F1 — обучение",MouseFilter=Control.MouseFilterEnum.Ignore });
         _guide=new PanelContainer { AnchorLeft=0.5f,AnchorRight=0.5f,OffsetLeft=-260,OffsetRight=260,OffsetTop=100,MouseFilter=Control.MouseFilterEnum.Stop,Visible=false }; canvas.AddChild(_guide);
         var guideColumn=new VBoxContainer(); _guide.AddChild(guideColumn);
         _guideText=new Label { AutowrapMode=TextServer.AutowrapMode.WordSmart,CustomMinimumSize=new(500,0) }; guideColumn.AddChild(_guideText);
@@ -43,7 +43,7 @@ public partial class StarterZonePresentation : Node3D
         var text=_zone.GuideName+"\nДобро пожаловать в "+_zone.TownName+"!\n\n";
         var flags=_exploration?.Tutorial ?? 0;
         for(var i=0;i<Steps.Length;i++) text+=((flags&(1<<i))!=0 ? "✓ " : "○ ")+Steps[i]+"\n";
-        _guideText.Text=text+"\nI — вещи, K — характеристики и навыки, C — добыча, крафт и ремонт.\nB — обмен, J — кузница, монеты и местный рынок.\nИсследуй мир и пробуй разные действия: новые возможности\nпоявляются по мере твоего пути. Подсказки не дают наград.\nF1 — открыть или закрыть эту памятку.";
+        _guideText.Text=text+"\nI — вещи, K — характеристики и навыки, C — добыча, крафт и ремонт.\nB — обмен, J — кузница, монеты и местный рынок.\nИсследуй мир и пробуй разные действия: новые возможности\nпоявляются по мере твоего пути. Подсказки не дают наград.\nV — PvP/смерть; F1 — открыть или закрыть эту памятку.";
     }
     public override void _UnhandledInput(InputEvent input)
     {

@@ -6,6 +6,7 @@ namespace Content.Server.Persistence;
 public sealed record SavedSkill(string DefinitionId, int Level, int Practice, byte Slot);
 public sealed record SavedProgression
 {
+    [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)] public SavedPvp? Pvp {get;init;}
     [JsonRequired] public int Version { get; init; } = 1;
     public required int Level { get; init; }
     public required int Experience { get; init; }
@@ -30,7 +31,7 @@ public sealed record SavedProgression
             StatPoints is < 0 or > 100000 || Discoveries > 3 || Skills is null || Skills.Length > NetworkConstants.MaxLearnedSkills)
             throw new InvalidDataException("Invalid progression model.");
         if (Profession is null) throw new InvalidDataException("Missing profession history.");
-        Profession.Validate(); Exploration?.Validate();
+        Profession.Validate(); Exploration?.Validate(); Pvp?.Validate();
         if (WorldParticipation is null) throw new InvalidDataException("Missing world participation."); WorldParticipation.Validate();
         var ids = new HashSet<string>(); var slots = new HashSet<byte>();
         foreach (var skill in Skills)
@@ -55,6 +56,7 @@ public sealed record SavedProgression
         if (System.Text.Encoding.UTF8.GetByteCount(json) > 8192) throw new InvalidDataException("Progression exceeds size budget.");
         using var document = JsonDocument.Parse(json,new JsonDocumentOptions { MaxDepth = 8 });
         RejectDuplicates(document.RootElement);
+        if(document.RootElement.TryGetProperty("Pvp",out var pvp)&&pvp.ValueKind==JsonValueKind.Null)throw new InvalidDataException("Null PvP component.");
         if(document.RootElement.TryGetProperty("Exploration",out var exploration) && exploration.ValueKind==JsonValueKind.Null) throw new InvalidDataException("Null exploration component.");
         var value = JsonSerializer.Deserialize<SavedProgression>(json,Json) ?? throw new InvalidDataException("Missing progression.");
         value.Validate(); return value;

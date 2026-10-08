@@ -22,7 +22,8 @@ public sealed partial class ServerWorld
         {
             var player = _playersByConnection[connection];
             if (Combat!.Get(player.EntityId).Health > 0) continue;
-            Combat.DevelopmentRevive(player.EntityId); _persistenceDirty.Add(connection);
+            Combat.DevelopmentRevive(player.EntityId);
+            if(HasPvp&&_pvp.TryGetValue(player.EntityId,out var state)){_pvp[player.EntityId]=state with {Dead=false};DirtyPvp(player.EntityId);_lethal.Remove(player.EntityId);} _persistenceDirty.Add(connection);
             Echoes?.Wake(player.EntityId);
         }
         _developmentRevives.Clear();

@@ -42,7 +42,7 @@ public sealed partial class ServerWorld
         if(!HasCrafting || !_playersByConnection.TryGetValue(connection,out var player) || command.Operation is 0 or > long.MaxValue || command.Target==0 || !Enum.IsDefined(command.Action)) return false;
         if(_craftRequestTicks.TryGetValue(connection,out var tick) && tick==Tick)
         { _craftPending.Remove(connection); _craftResults[player.EntityId]=new(command.Operation,Tick+1,CraftOutcome.RateLimited); return false; }
-        _craftRequestTicks[connection]=Tick; _craftPending[connection]=command; return true;
+        GroundItems?.CancelChannel(player.EntityId,Tick); _craftRequestTicks[connection]=Tick; _craftPending[connection]=command; return true;
     }
     private void SimulateCrafting()
     {

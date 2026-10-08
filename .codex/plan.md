@@ -153,7 +153,7 @@ SQLite tombstone/restart, batch rollback, sync/async failure без публик
 `dotnet .artifacts/stage9-pickup/bin/Content.Server/debug/Content.Server.dll --validate-content` и `git diff --check` — успешно.
 Godot 4.7.1 console headless (`--quit-after 900 -- --identity=stage92check`) прошёл handshake v11 и создание сцены без runtime errors,
 собственный сервер использовал отдельную SQLite в .artifacts и остановлен штатно. Рабочая БД не затронута.
-Визуальная приёмка G/UI остаётся за пользователем; live PostgreSQL не запускался. AGENTS.md/scenes/.uid не менялись.
+Визуальная приёмка G/UI остаётся за пользователем; Live PostgreSQL 16 проверен на отдельном временном Docker-контейнере: full instance/restart/pickup, stale world fence rollback и terminal expiry. AGENTS.md/scenes/.uid не менялись.
 
 **10. Первое Эхо — принят пользователем**
 
@@ -177,7 +177,7 @@ Commit gate не допускает публикации действий до S
 Godot 4.7.1 headless main scene (`--max-fps 60 --quit-after 900 -- --identity=stage10-smoke`):
 handshake v13 и сцена без runtime errors на отдельной `.artifacts/stage10/godot-smoke.db`;
 тестовый сервер штатно остановлен. Sandbox сначала дал native crash/ConnectionFailed; успешный прогон — вне sandbox.
-Рабочая SQLite не затронута, live PostgreSQL не запускался. AGENTS.md/scenes/.uid не менялись.
+Рабочая SQLite не затронута, Live PostgreSQL 16 проверен на отдельном временном Docker-контейнере: full instance/restart/pickup, stale world fence rollback и terminal expiry. AGENTS.md/scenes/.uid не менялись.
 
 **11. Уровни и развитие навыков — реализован, визуальная проверка отложена пользователем**
 
@@ -261,15 +261,17 @@ Godot недоступен в Codespace, main scene не запускалась;
 
 Protocol v21, BalanceVersion 2, SQL schema 7: unique ownership registry с terminal UUID. SavedInventory/WorldNode v1 совместимы через optional-компоненты, нет reset. Эволюция сохраняет экземпляр/уровень/прочность; провал заточки снижает maximum и может уничтожить предмет. Server RNG, материалы, wallet, receipts, escrow/credits/stock и audit сохраняются атомарно до публикации. Повторы не тратят и не бросают шанс снова. Offline proceeds получаются отдельной идемпотентной операцией. Trade reservations/offer revision/двустороннее подтверждение; рыночные карточки только у станции.
 
-Проверка: заключительный полный набор 351/351 (включая SQLite rollback/restart, lossy UDP commit gate, market AOI и гонки). Content validation: Schema 3 / Balance 2, успешно. git diff --check и whitespace validation новых файлов успешны. C# client/server/tests собираются; существующая SQLite dependency выдаёт NU1903. Godot executable не найден, визуальная приёмка ожидается; live PostgreSQL не запускался. Рабочая .data/процессы не менялись; commit/push не выполнены.
+Проверка: заключительный полный набор 351/351 (включая SQLite rollback/restart, lossy UDP commit gate, market AOI и гонки). Content validation: Schema 3 / Balance 2, успешно. git diff --check и whitespace validation новых файлов успешны. C# client/server/tests собираются; существующая SQLite dependency выдаёт NU1903. Godot executable не найден, визуальная приёмка ожидается; Live PostgreSQL 16 проверен на отдельном временном Docker-контейнере: full instance/restart/pickup, stale world fence rollback и terminal expiry. Рабочая .data/процессы не менялись; commit/push не выполнены.
 
-Архитектура: docs/architecture/stage15-economy-plan.md. Реализация/лимиты/домашняя приёмка: docs/design/economy-stage15-progress.md. Это bounded прототип: один last receipt/actor (старые ID не исполняются, полный history retrieval отсутствует), до 8 listings/2 на продавца, 16 offline credit owners; full inventory/wallet/credit отклоняет всю операцию. Этап 16 не начат.
+Архитектура: docs/architecture/stage15-economy-plan.md. Реализация/лимиты/домашняя приёмка: docs/design/economy-stage15-progress.md. Это bounded прототип: один last receipt/actor (старые ID не исполняются, полный history retrieval отсутствует), до 8 listings/2 на продавца, 16 offline credit owners; full inventory/wallet/credit отклоняет всю операцию. Этап 16 реализован; приёмка ожидается.
 
-**16. PvP, смерть и репутация**
+**16. PvP, смерть и репутация — реализован, ожидает приёмки**
 
-PvP-tag, safe zones, PK, последствия нападений и выпадение предметов.
+Временный пакет явно утверждён пользователем 2026-10-08, включая дополнение: подбор только с активным PvP-тегом на старте и завершении. До одного equipped unbound item, legendary без bound допускается; подбор сразу доступен, канал5с, expiry30мин без возврата. В город можно войти с тегом, PvP запрещён.
 
-Проверка: все переходы состояния и потери воспроизводимы. До реализации согласуем respawn, права на лут и судьбу bound/legendary предметов.
+Реализованы mode/tag/safe policy для melee/projectile/AoE/Echo, civilian episodes/PK/rep, PvE/mixed/PvP death/EXP/receipt, full-instance world loot, explicit respawn, combat disconnect/same actor reconnect, V UI/flags/city boundary/G channel/TTL. Protocol v22 / balance3, SQL schema7: optional SavedPvp/DeathLoot JSON + unique registry, без reset/recovery. Death/EXP/PK/ownership/audit фиксируются до публикации. Детали: docs/architecture/stage16-pvp-death-plan.md; правила: docs/design/stage16-rules-proposal.md.
+
+Проверено: C# client/server/tests build без ошибок, suite375/375 (24 новых PvP теста), content schema3/balance3 validation и tracked/untracked whitespace. Real SQLite rollback/restart/expiry/one owner, lossy UDP commit gate/reconnect/shutdown, настоящие projectile/AoE/Echo policy. Существующие NU1903 SQLite dependency. Godot отсутствует, сцена/UI не запускались; Live PostgreSQL 16 проверен на отдельном временном Docker-контейнере: full instance/restart/pickup, stale world fence rollback и terminal expiry. Домашняя приёмка/команды: docs/design/pvp-stage16-progress.md. Рабочая .data/процессы не менялись; commit/push не выполнены. Этап17 не начат.
 
 **17. Группы и гильдии**
 
@@ -299,7 +301,7 @@ PvP-tag, safe zones, PK, последствия нападений и выпад
 
 **Позже отдельными этапами:** мобильные клиенты, корабли, владение объектами мира, уникальные артефакты и профессии, Tournament Server. Официальная RMT-площадка — только после отдельного решения, не часть ближайшего плана.
 
-**Текущий checkpoint — этап 15 полностью реализован как прототип; домашняя визуальная приёмка ожидается. Этапы 11–14 также ждут приёмки. Переходы разрешены пользователем; этап 16 ещё не начат.**
+**Текущий checkpoint — этап 16 реализован как прототип; визуальная приёмка ожидается. Этапы11–15 также ждут приёмки. Переходы разрешены пользователем; этап17 не начат.**
 
 По запросу пользователя добавлен Development-only инструмент «Оживить» в I: восстановление HP=0 → текущий Max HP
 на fixed tick, server ownership + localhost + Development, без изменения позиции/маны/cooldown/предметов.

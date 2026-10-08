@@ -9,6 +9,8 @@ public sealed record ItemDefinition
     public required string Id { get; init; }
     public required string Name { get; init; }
     public required EquipmentSlot Slot { get; init; }
+    public bool Bound {get;init;}
+    public bool Legendary {get;init;}
     public string? WeaponId { get; init; }
     public Content.Server.Items.ItemConditionDefinition? Condition { get; init; }
     public DerivedStatModifiers Modifiers { get; init; } = new();

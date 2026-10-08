@@ -67,6 +67,13 @@ public partial class NetworkClient : Node
     public event Action<EconomyQuote>? EconomyQuoteReceived;
     public event Action<EconomyResult>? EconomyResultReceived;
     public event Action<MarketState>? MarketStateReceived;
+    public event Action<PvpState>? PvpStateReceived;
+    public event Action<PvpPublicState>? PvpPublicReceived;
+    public event Action<PvpResult>? PvpResultReceived;
+    public event Action<PickupChannelState>? PickupChannelReceived;
+    public event Action<PvpLootState>? PvpLootReceived;
+    public PvpZoneState? LatestPvpZone {get;private set;}
+    public void SendPvp(PvpCommand command){if(_handshakeComplete)_serverPeer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);}
     public void SendEconomy(EconomyCommand command) {if(_handshakeComplete)_serverPeer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);}
     public event Action<TradeState>? TradeStateReceived;
     public event Action<TradeResult>? TradeResultReceived;
@@ -228,7 +235,7 @@ public partial class NetworkClient : Node
         LocalPlayerId = PlayerId.Invalid;
         KnownPlayers.Clear();
         CanDevelopmentRevive = false;
-        Navigation = null; LatestWorldNode=null; LatestStarterZone=null; CraftRecipes.Clear(); ResourceNodes.Clear();
+        Navigation = null; LatestWorldNode=null; LatestStarterZone=null; LatestPvpZone=null;CraftRecipes.Clear(); ResourceNodes.Clear();
         LatestServerTick = 0;
         Disconnected?.Invoke();
 
@@ -258,6 +265,18 @@ public partial class NetworkClient : Node
 
             switch (messageType)
             {
+                case NetworkMessageType.PvpState:
+                    if(_handshakeComplete&&NetworkProtocol.TryReadPvpState(reader,out var pvpState))PvpStateReceived?.Invoke(pvpState);else DisconnectMalformed(peer);break;
+                case NetworkMessageType.PvpPublicState:
+                    if(_handshakeComplete&&NetworkProtocol.TryReadPvpPublicState(reader,out var pvpPublic))PvpPublicReceived?.Invoke(pvpPublic);else DisconnectMalformed(peer);break;
+                case NetworkMessageType.PvpResult:
+                    if(_handshakeComplete&&NetworkProtocol.TryReadPvpResult(reader,out var pvpResult))PvpResultReceived?.Invoke(pvpResult);else DisconnectMalformed(peer);break;
+                case NetworkMessageType.PickupChannelState:
+                    if(_handshakeComplete&&NetworkProtocol.TryReadPickupChannelState(reader,out var channel))PickupChannelReceived?.Invoke(channel);else DisconnectMalformed(peer);break;
+                case NetworkMessageType.PvpZoneState:
+                    if(_handshakeComplete&&NetworkProtocol.TryReadPvpZoneState(reader,out var pvpZone))LatestPvpZone=pvpZone;else DisconnectMalformed(peer);break;
+                case NetworkMessageType.PvpLootState:
+                    if(_handshakeComplete&&NetworkProtocol.TryReadPvpLootState(reader,out var pvpLoot))PvpLootReceived?.Invoke(pvpLoot);else DisconnectMalformed(peer);break;
                 case NetworkMessageType.ItemConditionState:
                     if(_handshakeComplete && NetworkProtocol.TryReadItemConditionState(reader,out var condition)) ItemConditionReceived?.Invoke(condition); else DisconnectMalformed(peer);
                     break;

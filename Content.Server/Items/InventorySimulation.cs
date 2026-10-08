@@ -46,7 +46,7 @@ public sealed partial class InventorySimulation(ContentCatalog catalog, CombatSi
         foreach (var item in actor.Items) if (item.Saved.InstanceId == saved.InstanceId) return false;
         if (_nextHandle == 0) throw new InvalidOperationException("Runtime item handles exhausted.");
         var next = new Item[actor.Items.Length + 1]; Array.Copy(actor.Items, next, actor.Items.Length);
-        next[^1] = new(_nextHandle++, NormalizeCondition(saved,definition), definition); actor.Items = next; _dirty.Add(id); return true;
+        next[^1] = new(_nextHandle++, NormalizeCondition(saved with {Bound=saved.Bound||definition.Bound},definition), definition); actor.Items = next; _dirty.Add(id); return true;
     }
     public static SavedInventory CreateStarter(CreatureDefinition definition) => new()
     {
@@ -62,7 +62,7 @@ public sealed partial class InventorySimulation(ContentCatalog catalog, CombatSi
                 (source.EquippedSlot != EquipmentSlot.None && source.EquippedSlot != definition.Slot))
                 throw new InvalidDataException("Saved item definition/equipment slot is incompatible with content.");
             if (_nextHandle == 0) throw new InvalidOperationException("Runtime item handles exhausted.");
-            items[i] = new(_nextHandle++, NormalizeCondition(source,definition), definition);
+            items[i] = new(_nextHandle++, NormalizeCondition(source with {Bound=source.Bound||definition.Bound},definition), definition);
         }
         ValidateCrafting(saved.Crafting);
         if(saved.Economy is {} economy && (catalog.Economy is null || economy.Coins>catalog.Economy.CoinLimit))throw new InvalidDataException("Economy migration required.");
@@ -81,7 +81,7 @@ public sealed partial class InventorySimulation(ContentCatalog catalog, CombatSi
     {
         if (!_actors.TryGetValue(id, out var actor) || command.Sequence == 0 || command.ItemHandle == 0 ||
             !Enum.IsDefined(command.Action) || !MovementSimulation.IsSequenceNewer(command.Sequence, actor.Sequence)) return false;
-        actor.Sequence = command.Sequence;
+        ActionStarted?.Invoke(id);actor.Sequence = command.Sequence;
         if (actor.RequestTick == tick)
         {
             _pending.Remove(id); _results[id] = new(command.Sequence, tick, InventoryOutcome.RateLimited); return false;
@@ -131,6 +131,9 @@ public sealed partial class InventorySimulation(ContentCatalog catalog, CombatSi
         var resource = abilities.PrepareEquipment(id, profile.Stats);
         combat.ApplyEquipment(id, profile); abilities.ApplyEquipment(id, resource);
     }
+    internal void ResetSession(NetworkEntityId id){var a=_actors[id];a.Sequence=0;a.RequestTick=null;_pending.Remove(id);_results.Remove(id);}
+    internal bool IsTrading(NetworkEntityId id)=>_actors[id].TradeSession!=0;
+    internal Action<NetworkEntityId>? ActionStarted {get;set;}
     internal void RefreshStats(NetworkEntityId id) => Apply(id, _actors[id], null, EquipmentSlot.None);
     public void ClearResults() { _dirty.Clear(); _results.Clear(); }
 }

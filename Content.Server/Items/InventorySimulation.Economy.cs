@@ -27,7 +27,7 @@ public sealed partial class InventorySimulation
         if(c.Action is EconomyAction.List or EconomyAction.Evolve or EconomyAction.Enhance)
         {
             if(item is null||(item.Saved.Condition?.Revision??1)!=c.ItemRevision)return CraftOutcome.Unavailable;
-            if(c.Action==EconomyAction.List){if(item.Saved.EquippedSlot!=EquipmentSlot.None)return CraftOutcome.Busy;quote=quote with {OutputName=item.Definition.Name};}
+            if(c.Action==EconomyAction.List){if(item.Saved.Bound||item.Definition.Bound)return CraftOutcome.Unavailable;if(item.Saved.EquippedSlot!=EquipmentSlot.None)return CraftOutcome.Busy;quote=quote with {OutputName=item.Definition.Name};}
             else
             {
                 if(item.Saved.Condition is not {} condition||condition.Revision==long.MaxValue||item.Definition.Id!=balance.BaseWeapon&&item.Definition.Id!=balance.EvolvedWeapon)return CraftOutcome.Unavailable;

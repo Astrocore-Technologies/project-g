@@ -132,7 +132,7 @@ PvP with active tag:
 
 No autoloot. Dropped items существуют в мире и потенциально могут быть подняты third parties.
 
-Точные drop/ownership rules ещё unresolved.
+Утверждённый временный прототип этапа 16 (2026-10-08): PvP/mixed смерть теряет 10% EXP внутри уровня, PvE 5%; уровень/навыки не теряются. До одного случайного экипированного непривязанного предмета, legendary без bound допускается. Подбор доступен сразу только живому игроку с активным PvP-тегом; канал 5 секунд, без exclusive reservation. Через 30 минут уничтожение, без возврата. В город можно входить с тегом, PvP там запрещён. Explicit respawn через 15/60 секунд в городе, full HP/half mana/cooldowns preserved. Tag 120 секунд, aggressor 600; −10 за civilian episode, −100 и PK+1 за civilian kill. Полный пакет и ограничения: stage16-rules-proposal.md.
 
 ## Travel / map / cartography
 - **Fast travel отсутствует**.
@@ -184,11 +184,8 @@ No autoloot. Dropped items существуют в мире и потенциа�
 - Equal technical conditions != identical characters.
 
 ## Intentionally unresolved — не решать молча
-- exact PvP loot/drop ownership;
-- legendary transfer through PvP death;
 - boss loot/contribution rules;
-- exact respawn rules;
-- exact PK thresholds;
+- дальнейшие PK thresholds/искупление за пределами временного прототипа этапа 16;
 - exact guild ownership/taxes;
 - exact crafting modifier counts / enhancement probabilities;
 - official RMT model;

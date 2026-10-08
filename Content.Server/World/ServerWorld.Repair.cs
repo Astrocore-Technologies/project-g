@@ -14,7 +14,7 @@ public sealed partial class ServerWorld
     {
         if(!HasCrafting || !_playersByConnection.TryGetValue(connection,out var player) || command.Operation is 0 or >long.MaxValue || command.ItemHandle==0 || command.ItemRevision is 0 or >long.MaxValue || command.QuoteId>long.MaxValue) return false;
         if(_repairRequestTicks.TryGetValue(connection,out var tick) && tick==Tick) { _repairPending.Remove(connection); _repairResults[player.EntityId]=new(command.Operation,Tick+1,CraftOutcome.RateLimited); return false; }
-        _repairRequestTicks[connection]=Tick; _repairPending[connection]=command; return true;
+        GroundItems?.CancelChannel(player.EntityId,Tick); _repairRequestTicks[connection]=Tick; _repairPending[connection]=command; return true;
     }
     private void SimulateRepair()
     {

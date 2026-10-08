@@ -94,7 +94,7 @@ public sealed partial class ServerWorld
         }
         InitializeWorldNode(worldStory?.Value,catalog?.WorldNode);
         InitializeStarterZone(starterZone?.Value,catalog?.StarterZone);
-        InitializeCrafting(crafting?.Value,catalog?.Crafting);
+        InitializeCrafting(crafting?.Value,catalog?.Crafting); InitializePvp();
     }
 
     public uint Tick { get; private set; }
@@ -154,6 +154,7 @@ public sealed partial class ServerWorld
                 actor.ReadyAt = Combat.Time + Math.Max(0, saved.AttackCooldownSeconds - offline);
                 Abilities!.Restore(entityId, saved, offline);
             }
+            AddPvp(entityId,saved?.Progression?.Pvp);
             Echoes?.Add(entityId,saved?.Echoes ?? Echoes.CreateStarter(),saved?.OfflineSeconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()) ?? 0,AllocateEntityId);
         }
         catch { RemovePlayer(connectionId); throw; }
@@ -187,7 +188,7 @@ public sealed partial class ServerWorld
             RegionId = "prototype", ProfileId = _playerDefinition!.Id, Stats = player.BaseStats,
             Inventory = Inventory?.Capture(player.EntityId),
             Echoes = Echoes?.Capture(player.EntityId),
-            Progression = _progression.GetValueOrDefault(player.EntityId),
+            Progression = CaptureProgression(player.EntityId),
             X = player.Position.X, Z = player.Position.Y, Health = actor.Health,
             Mana = Abilities!.Mana(player.EntityId), Cooldowns = Abilities.CaptureCooldowns(player.EntityId),
             AttackCooldownSeconds = Math.Max(0, actor.ReadyAt - Combat.Time),
@@ -207,7 +208,7 @@ public sealed partial class ServerWorld
         RemoveEconomyPlayer(connectionId,player.EntityId);
         RemoveTradePlayer(connectionId,player.EntityId);
         RemoveExploration(player.EntityId);
-        RemoveProgression(player.EntityId);
+        RemovePvp(connectionId,player.EntityId); RemoveProgression(player.EntityId);
         _playersByConnection.Remove(connectionId);
         _developmentRevives.Remove(connectionId); _developmentReviveSequences.Remove(connectionId);
         _playersByEntity.Remove(player.EntityId);
@@ -300,6 +301,7 @@ public sealed partial class ServerWorld
     {
         Tick++;
         _persistenceDirty.Clear();
+        SimulatePvpIntentions();
 
         _stoppedPlayers.Clear();
         // Idle players do not require movement work or spatial updates each tick.
@@ -329,6 +331,17 @@ public sealed partial class ServerWorld
         Abilities?.Simulate(fixedDeltaSeconds, Tick);
         Npc?.Resolve(fixedDeltaSeconds, Tick);
         Boss?.Resolve(fixedDeltaSeconds, Tick);
+        if (Echoes is { } echoes)
+        {
+            foreach (var action in Combat!.Events)
+            {
+                if (action.TargetId.IsValid) { echoes.Alert(action.AttackerId,action.TargetId); echoes.Alert(action.TargetId,action.AttackerId); }
+            }
+            foreach (var hit in Abilities!.Hits) { echoes.Alert(hit.ActorId,hit.TargetId); echoes.Alert(hit.TargetId,hit.ActorId); }
+            echoes.Simulate(fixedDeltaSeconds,Tick);
+            foreach (var owner in echoes.DirtyOwners) MarkPersistent(owner);
+        }
+        SimulateDeaths();
         Inventory?.Simulate(Tick);
         GroundItems?.Simulate(Tick);
         ApplyDevelopmentRevives();
@@ -340,16 +353,6 @@ public sealed partial class ServerWorld
         SimulateRepair();
         SimulateTrade();
         SimulateEconomy();
-        if (Echoes is { } echoes)
-        {
-            foreach (var action in Combat!.Events)
-            {
-                if (action.TargetId.IsValid) { echoes.Alert(action.AttackerId,action.TargetId); echoes.Alert(action.TargetId,action.AttackerId); }
-            }
-            foreach (var hit in Abilities!.Hits) { echoes.Alert(hit.ActorId,hit.TargetId); echoes.Alert(hit.TargetId,hit.ActorId); }
-            echoes.Simulate(fixedDeltaSeconds,Tick);
-            foreach (var owner in echoes.DirtyOwners) MarkPersistent(owner);
-        }
         SimulateStarterZone();
         if (Inventory is { } inventory) foreach (var id in inventory.Dirty) MarkPersistent(id);
         if (Combat is { } combat)
