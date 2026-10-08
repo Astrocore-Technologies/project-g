@@ -29,6 +29,7 @@ public sealed partial class GameServerService
         public InventoryCommand? Inventory;
         public PickupCommand? Pickup;
         public DevelopmentReviveCommand? Revive;
+        public EchoSignatureCommand? Echo;
     }
 
     private void BeginLogin(NetPeer peer, ClientHello hello, PlayerId player)
@@ -97,6 +98,7 @@ public sealed partial class GameServerService
             if (intentions.Ability is { } ability) _world.TryQueueAbility(connection, ability, _peers[connection].Ping);
             if (intentions.Inventory is { } inventory) _world.TryQueueInventory(connection, inventory);
             if (intentions.Pickup is { } pickup) _world.TryQueuePickup(connection, pickup);
+            if (intentions.Echo is { } echo) _world.TryQueueEchoSignature(connection,echo);
             if (intentions.Revive is { } revive && CanDevelopmentRevive(_peers[connection]))
                 _world.TryQueueDevelopmentRevive(connection, revive, authorized: true);
             intentions.Move = null; intentions.Attack = null; intentions.Ability = null;

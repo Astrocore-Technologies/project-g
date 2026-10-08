@@ -10,7 +10,7 @@ dotnet run --project Content.Server
 ```
 
 PostgreSQL и Docker не нужны. Development использует SQLite: `.data/project-g-development.db`.
-Миграция schema v3 выполняется до открытия UDP; character model v1 и inventory model v1 хранятся отдельно.
+Миграция schema v4 выполняется до открытия UDP; character, inventory и Echo model v1 хранятся отдельно.
 SQL/providers/migrations находятся в `Content.Database`, игровые модели и adapter — в `Content.Server/Persistence`.
 WAL + FULL commits сохраняют подтверждённое состояние;
 БД, WAL/SHM и lock-файлы исключены из Git. Пересборка `bin`/`.artifacts` их не удаляет.
@@ -22,7 +22,7 @@ Staging/Production пока не запускают Development-вход. Кон
 
 ## Два клиента
 
-Перезапустите сервер и Godot-клиенты на протоколе v12.
+Перезапустите сервер и Godot-клиенты на протоколе v13.
 Для независимых персонажей задайте user arguments: `--identity=alice` / `--identity=bob`.
 В командной строке Godot user arguments идут после `--`, например `... -- --identity=alice`.
 Из editor можно задать `DevelopmentIdentityProfile` на NetworkClient или аргументы запуска.
@@ -59,6 +59,8 @@ Claim и inventory сохраняются атомарно; забранный �
 Offline время уменьшает cooldown, но не восстанавливает HP/ману. HP=0 сохраняется; respawn не добавлен.
 Прерванные casts/effects/routes не восстанавливаются; оплаченная мана/cooldown не возвращаются.
 NPC и босс перезапускаются вместе с ареной: их persistence пока нет.
+Этап 10: Мира следует за персонажем и помогает в бою; T — ручная Signature в точку под курсором.
+UUID, слот, координаты и cooldown Эхо сохраняются без повторной выдачи. См. `docs/design/first-echo-prototype.md`.
 
 ## Автотесты
 

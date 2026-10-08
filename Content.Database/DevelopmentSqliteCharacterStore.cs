@@ -45,7 +45,7 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
         command.ExecuteNonQuery();
         command.CommandText = "SELECT COALESCE(max(version), 0) FROM schema_version";
         var version = (long)command.ExecuteScalar()!;
-        if (version is < 0 or > 3) throw new InvalidDataException("Unsupported SQLite schema version.");
+        if (version is < 0 or > 4) throw new InvalidDataException("Unsupported SQLite schema version.");
         if (version == 0)
         {
             using var resource = typeof(DevelopmentSqliteCharacterStore).Assembly.GetManifestResourceStream(
@@ -70,14 +70,22 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
             command.CommandText = reader.ReadToEnd(); command.ExecuteNonQuery();
             command.CommandText = "INSERT INTO schema_version VALUES (3)"; command.ExecuteNonQuery();
         }
+        if (version < 4)
+        {
+            using var resource = typeof(DevelopmentSqliteCharacterStore).Assembly.GetManifestResourceStream(
+                "Content.Database.Migrations.0004_echoes.sqlite.sql") ?? throw new InvalidOperationException("Migration is missing.");
+            using var reader = new StreamReader(resource);
+            command.CommandText = reader.ReadToEnd(); command.ExecuteNonQuery();
+            command.CommandText = "INSERT INTO schema_version VALUES (4)"; command.ExecuteNonQuery();
+        }
         cancellationToken.ThrowIfCancellationRequested();
         transaction.Commit();
     }, cancellationToken);
 
-    public Task<DatabaseSession> OpenAsync(string token, string initialCharacter, string initialInventory, CancellationToken cancellationToken) => Task.Run<DatabaseSession>(() =>
+    public Task<DatabaseSession> OpenAsync(string token, string initialCharacter, string initialInventory, string initialEchoes, CancellationToken cancellationToken) => Task.Run<DatabaseSession>(() =>
     {
         if (!StorageBounds.ValidToken(token)) throw new DatabaseInvalidIdentityException();
-        StorageBounds.Document(initialCharacter); StorageBounds.Document(initialInventory);
+        StorageBounds.Document(initialCharacter); StorageBounds.Document(initialInventory); StorageBounds.Document(initialEchoes);
         var issued = token.Length == 0 ? Convert.ToHexString(RandomNumberGenerator.GetBytes(32)) : "";
         var hash = SHA256.HashData(Convert.FromHexString(issued.Length == 0 ? token : issued));
         using var connection = Connect();
@@ -121,7 +129,15 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
             if (!items.Read() || items.GetInt32(0) != 1) throw new InvalidDataException("Unsupported inventory model.");
             var inventoryState = items.GetString(1);
             StorageBounds.Document(state); StorageBounds.Document(inventoryState);
-            return new Session(id, owner, revision, state, inventoryState, issued, held);
+            items.Dispose();
+            using var echoes = connection.CreateCommand();
+            echoes.CommandText = "INSERT INTO character_echoes VALUES ($id,1,$state) ON CONFLICT(character_id) DO NOTHING";
+            echoes.Parameters.AddWithValue("$id", id.ToString()); echoes.Parameters.AddWithValue("$state", initialEchoes); echoes.ExecuteNonQuery();
+            echoes.CommandText = "SELECT model_version,state FROM character_echoes WHERE character_id = $id";
+            using var echoReader = echoes.ExecuteReader();
+            if (!echoReader.Read() || echoReader.GetInt32(0) != 1) throw new InvalidDataException("Unsupported Echo model.");
+            var echoState = echoReader.GetString(1); StorageBounds.Document(echoState);
+            return new Session(id, owner, revision, state, inventoryState, echoState, issued, held);
         }
         catch { held.Dispose(); throw; }
     }, cancellationToken);
@@ -145,6 +161,14 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
             command.Parameters.AddWithValue("$owner", session.OwnerId.ToString());
             command.Parameters.AddWithValue("$revision", change.ExpectedRevision);
             if (command.ExecuteNonQuery() != 1) throw new InvalidOperationException("Ownership/revision conflict; SQLite checkpoint aborted.");
+            if (change.Echoes is { } echoState)
+            {
+                StorageBounds.Document(echoState);
+                using var echoes = connection.CreateCommand(); echoes.Transaction = transaction;
+                echoes.CommandText = "UPDATE character_echoes SET state = $state WHERE character_id = $id AND model_version = 1";
+                echoes.Parameters.AddWithValue("$state", echoState); echoes.Parameters.AddWithValue("$id", session.CharacterId.ToString());
+                if (echoes.ExecuteNonQuery() != 1) throw new InvalidDataException("Echo row is missing.");
+            }
             if (change.GroundClaims is { Count: > 0 } claims)
             {
                 if (claims.Count > 8 || change.Inventory is null) throw new InvalidDataException("Invalid pickup batch.");
@@ -170,8 +194,8 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
     }, cancellationToken);
 
     private string LockPath(Guid id) => _databasePath + "." + id.ToString("N") + ".lock";
-    private sealed class Session(Guid id, Guid owner, long revision, string state, string inventory, string issued, FileStream held)
-        : DatabaseSession(id, owner, revision, state, inventory, issued)
+    private sealed class Session(Guid id, Guid owner, long revision, string state, string inventory, string echoes, string issued, FileStream held)
+        : DatabaseSession(id, owner, revision, state, inventory, echoes, issued)
     {
         internal bool Closed { get; private set; }
         public override ValueTask DisposeAsync() { Closed = true; held.Dispose(); return ValueTask.CompletedTask; }

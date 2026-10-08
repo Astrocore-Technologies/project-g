@@ -118,7 +118,7 @@ Checkpoint 7.2: отдельный оранжевый босс X=7, Z=-8, 242 HP
 
 Приёмка: из корня проекта задать `DOTNET_ENVIRONMENT=Development`, запустить сервер без PostgreSQL/Docker, перезапустить клиенты v9. Два клиента — разные `--identity=alice` / `--identity=bob`; после disconnect/рестарта сервера профиль возвращает позицию/HP/ману из SQLite. Двойной вход Alice отклоняется; Bob продолжает играть. Сбой БД не подтверждает незаписанное состояние. Визуальная приёмка остаётся за пользователем; следующий этап 9 — только после подтверждения. PostgreSQL-specific проверки отложены.
 
-**9. Предметы и экипировка — 9.1 принят; 9.2 реализован, ожидает приёмки**
+**9. Предметы и экипировка — принят пользователем**
 
 Определение предмета отдельно от его экземпляра, инвентарь, экипировка, модификаторы и ручной подбор объектов.
 
@@ -155,11 +155,29 @@ Godot 4.7.1 console headless (`--quit-after 900 -- --identity=stage92check`) п�
 собственный сервер использовал отдельную SQLite в .artifacts и остановлен штатно. Рабочая БД не затронута.
 Визуальная приёмка G/UI остаётся за пользователем; live PostgreSQL не запускался. AGENTS.md/scenes/.uid не менялись.
 
-**10. Первое Эхо**
+**10. Первое Эхо — реализован целиком, ожидает приёмки**
 
 Один проработанный персонаж: следование, базовый AI, самостоятельные действия, ручная Signature Ability и простая реакция на мир. Ядро сразу допускает до трёх активных Эхо.
 
 Проверка: Эхо помогает, но не играет вместо пользователя; его состояние сохраняется.
+
+Мира: следование с обходом препятствий, помощь по боевым действиям/полученным ударам хозяина,
+ручная Signature T (курсором выбрать точку), реплики готовности/Signature/смерти/восстановления.
+Основа до трёх активных слотов T/Y/U, выдаётся один экземпляр. AOI + interpolation, server-only AI/урон.
+UUID/слот/позиция/оба cooldown сохраняются атомарно; schema v4, Echo model v1, protocol v13.
+Временное prototype assumption: Эхо не получает урон; судьба Эхо при смерти не становится постоянным правилом.
+Подробности и ручная проверка: `docs/design/first-echo-prototype.md`.
+
+Проверено: `dotnet build Game.slnx --artifacts-path .artifacts/stage10 -m:1 -p:NuGetAudit=false`
+— 0 warnings/errors; `dotnet test Content.Tests/Content.Tests.csproj --artifacts-path .artifacts/stage10 --no-build`
+— 253 passed. Проверены wire bounds, replay/flood/state/cooldown/LOS, AI/idle/навигация, три слота,
+SQLite schema 3→4 без reset, reconnect/stable UUID/cooldown и два UDP-клиента (100–150 мс, loss 10%).
+Commit gate не допускает публикации действий до SQLite commit; same-tick HP учитывает удар Эхо последним.
+`dotnet .artifacts/stage10/bin/Content.Server/debug/Content.Server.dll --validate-content` и `git diff --check` — успешно.
+Godot 4.7.1 headless main scene (`--max-fps 60 --quit-after 900 -- --identity=stage10-smoke`):
+handshake v13 и сцена без runtime errors на отдельной `.artifacts/stage10/godot-smoke.db`;
+тестовый сервер штатно остановлен. Sandbox сначала дал native crash/ConnectionFailed; успешный прогон — вне sandbox.
+Рабочая SQLite не затронута, live PostgreSQL не запускался. AGENTS.md/scenes/.uid не менялись.
 
 **11. Уровни и развитие навыков**
 
@@ -227,7 +245,8 @@ PvP-tag, safe zones, PK, последствия нападений и выпад
 
 **Позже отдельными этапами:** мобильные клиенты, корабли, владение объектами мира, уникальные артефакты и профессии, Tournament Server. Официальная RMT-площадка — только после отдельного решения, не часть ближайшего плана.
 
-**Текущий checkpoint — 9.2: приёмка пользователем. Этап 10 начинается только после подтверждения.**
+**Текущий checkpoint — 10: приёмка пользователем. Этап 9.2 и Development-оживление приняты.
+Этап 11 начинается только после подтверждения этапа 10.**
 
 По запросу пользователя добавлен Development-only инструмент «Оживить» в I: восстановление HP=0 → текущий Max HP
 на fixed tick, server ownership + localhost + Development, без изменения позиции/маны/cooldown/предметов.
@@ -239,4 +258,4 @@ capability 34 (bool byte), оба ReliableOrdered. Persistent models/schema не
 запрет команд в Staging/Production. `git diff --check` — успешно.
 Godot headless main scene запущена (`--quit-after 600 -- --identity=revive-smoke`); текущий пользовательский сервер v11
 правильно отклонил клиент v12. Пользовательский процесс не остановлен, визуальный тест кнопки требует restart сервера v12.
-AGENTS.md/scenes/.uid не менялись; этап 10 не начат.
+AGENTS.md/scenes/.uid не менялись; это историческая проверка Development-инструмента до этапа 10.

@@ -59,6 +59,7 @@ builder.Services.AddOptions<BossOptions>()
     .Bind(builder.Configuration.GetSection(BossOptions.SectionName));
 builder.Services.AddOptions<InventoryOptions>().Bind(builder.Configuration.GetSection(InventoryOptions.SectionName));
 builder.Services.AddOptions<GroundItemOptions>().Bind(builder.Configuration.GetSection(GroundItemOptions.SectionName));
+builder.Services.AddOptions<EchoOptions>().Bind(builder.Configuration.GetSection(EchoOptions.SectionName));
 builder.Services.AddHostedService<GameServerService>();
 
 // Development uses SQLite by explicit user decision; neither provider has an ephemeral fallback.

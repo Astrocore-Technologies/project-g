@@ -13,10 +13,12 @@ public partial class NpcPresentation : Node3D
     private NavigationGrid _grid = null!;
     private uint _tick;
     public void Initialize(CombatState state, NavigationGrid grid)
+        => Initialize(state.Position, state.ServerTick, grid);
+    public void Initialize(NumericsVector2 position, uint tick, NavigationGrid grid)
     {
-        _grid = grid; _tick = state.ServerTick;
-        Position = new(state.Position.X, 1, state.Position.Y);
-        _points.Add(new(Now(), state.Position));
+        _grid = grid; _tick = tick;
+        Position = new(position.X, 1, position.Y);
+        _points.Add(new(Now(), position));
     }
     public void Apply(EntitySnapshot state, uint tick)
     {

@@ -57,6 +57,15 @@ public partial class NetworkClient : Node
     public event Action<GroundItemDespawn>? GroundItemDespawned;
     public event Action<PickupResult>? PickupResultReceived;
     public event Action? Disconnected;
+    public event Action<EchoSpawn>? EchoSpawned;
+    public event Action<EchoLoadout>? EchoLoadoutReceived;
+    public event Action<EchoAction>? EchoActionReceived;
+    public event Action<EchoSignatureResult>? EchoSignatureResultReceived;
+
+    public void SendEchoSignature(EchoSignatureCommand command)
+    {
+        if (_handshakeComplete) _serverPeer?.Send(NetworkProtocol.Write(command), DeliveryMethod.ReliableOrdered);
+    }
 
     public override void _Ready()
     {
@@ -213,6 +222,22 @@ public partial class NetworkClient : Node
 
             switch (messageType)
             {
+                case NetworkMessageType.EchoSpawn:
+                    if (_handshakeComplete && Navigation is not null && NetworkProtocol.TryReadEchoSpawn(reader, out var echoSpawn) && Navigation.IsWalkable(echoSpawn.Position)) EchoSpawned?.Invoke(echoSpawn);
+                    else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.EchoLoadout:
+                    if (_handshakeComplete && NetworkProtocol.TryReadEchoLoadout(reader, out var echoLoadout)) EchoLoadoutReceived?.Invoke(echoLoadout);
+                    else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.EchoAction:
+                    if (_handshakeComplete && NetworkProtocol.TryReadEchoAction(reader, out var echoAction)) EchoActionReceived?.Invoke(echoAction);
+                    else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.EchoSignatureResult:
+                    if (_handshakeComplete && NetworkProtocol.TryReadEchoSignatureResult(reader, out var echoResult)) EchoSignatureResultReceived?.Invoke(echoResult);
+                    else DisconnectMalformed(peer);
+                    break;
                 case NetworkMessageType.ServerWelcome:
                     HandleWelcome(peer, reader);
                     break;

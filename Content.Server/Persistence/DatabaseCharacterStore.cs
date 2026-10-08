@@ -15,12 +15,13 @@ public sealed class DatabaseCharacterStore(ICharacterDatabase database) : IChara
     public async Task<CharacterSession> OpenAsync(string credential, CharacterState initial, CancellationToken token)
     {
         DatabaseSession lease;
-        try { lease = await database.OpenAsync(credential, initial.Serialize(), (initial.Inventory ?? SavedInventory.Empty).Serialize(), token); }
+        try { lease = await database.OpenAsync(credential, initial.Serialize(), (initial.Inventory ?? SavedInventory.Empty).Serialize(),
+            (initial.Echoes ?? SavedEchoes.Empty).Serialize(), token); }
         catch (DatabaseInvalidIdentityException) { throw new InvalidIdentityException(); }
         catch (DatabaseCharacterInUseException) { throw new CharacterInUseException(); }
         try
         {
-            var state = CharacterState.Deserialize(lease.State) with { Inventory = SavedInventory.Deserialize(lease.Inventory) };
+            var state = CharacterState.Deserialize(lease.State) with { Inventory = SavedInventory.Deserialize(lease.Inventory), Echoes = SavedEchoes.Deserialize(lease.Echoes) };
             return new Session(lease, state);
         }
         catch { await lease.DisposeAsync(); throw; }
@@ -36,7 +37,7 @@ public sealed class DatabaseCharacterStore(ICharacterDatabase database) : IChara
                 foreach (var instance in claims)
                     if (change.State.Inventory is null || !change.State.Inventory.Items.Any(item => item.InstanceId == instance && item.EquippedSlot == Content.Shared.Network.EquipmentSlot.None))
                         throw new InvalidDataException("Picked instance missing from inventory.");
-            writes[i] = new(session.Lease, session.Revision, change.State.Serialize(), change.State.Inventory?.Serialize(), change.GroundClaims);
+            writes[i] = new(session.Lease, session.Revision, change.State.Serialize(), change.State.Inventory?.Serialize(), change.GroundClaims, change.State.Echoes?.Serialize());
         }
         return database.SaveAsync(writes, token);
     }

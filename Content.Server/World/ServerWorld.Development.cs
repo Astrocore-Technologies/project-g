@@ -23,6 +23,7 @@ public sealed partial class ServerWorld
             var player = _playersByConnection[connection];
             if (Combat!.Get(player.EntityId).Health > 0) continue;
             Combat.DevelopmentRevive(player.EntityId); _persistenceDirty.Add(connection);
+            Echoes?.Wake(player.EntityId);
         }
         _developmentRevives.Clear();
     }

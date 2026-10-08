@@ -4,22 +4,23 @@ namespace Content.Database;
 public interface ICharacterDatabase
 {
     Task InitializeAsync(CancellationToken cancellationToken);
-    Task<DatabaseSession> OpenAsync(string token, string initialCharacter, string initialInventory, CancellationToken cancellationToken);
+    Task<DatabaseSession> OpenAsync(string token, string initialCharacter, string initialInventory, string initialEchoes, CancellationToken cancellationToken);
     Task SaveAsync(IReadOnlyList<DatabaseSave> changes, CancellationToken cancellationToken);
     Task<IReadOnlyList<DatabaseGroundItem>> LoadGroundItemsAsync(IReadOnlyList<DatabaseGroundItem> seeds, CancellationToken cancellationToken);
 }
-public abstract class DatabaseSession(Guid characterId, Guid ownerId, long revision, string state, string inventory, string issuedToken) : IAsyncDisposable
+public abstract class DatabaseSession(Guid characterId, Guid ownerId, long revision, string state, string inventory, string echoes, string issuedToken) : IAsyncDisposable
 {
     public Guid CharacterId { get; } = characterId;
     public Guid OwnerId { get; } = ownerId;
     public long Revision { get; } = revision;
     public string State { get; } = state;
     public string Inventory { get; } = inventory;
+    public string Echoes { get; } = echoes;
     public string IssuedToken { get; } = issuedToken;
     public abstract ValueTask DisposeAsync();
 }
 public sealed record DatabaseSave(DatabaseSession Session, long ExpectedRevision, string State, string? Inventory,
-    IReadOnlyList<Guid>? GroundClaims = null);
+    IReadOnlyList<Guid>? GroundClaims = null, string? Echoes = null);
 public sealed class DatabaseInvalidIdentityException : Exception;
 public sealed class DatabaseCharacterInUseException : Exception;
 internal static class StorageBounds

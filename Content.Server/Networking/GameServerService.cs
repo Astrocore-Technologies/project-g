@@ -223,6 +223,12 @@ public sealed partial class GameServerService : BackgroundService
                 if (_characters is null) _world.TryQueueDevelopmentRevive(peer.Id, revive, authorized: true);
                 else BufferIntentions(peer.Id).Revive ??= revive;
             }
+            if (messageType == NetworkMessageType.EchoSignatureCommand && deliveryMethod == DeliveryMethod.ReliableOrdered &&
+                NetworkProtocol.TryReadEchoSignatureCommand(reader,out var echo))
+            {
+                if (_characters is null) _world.TryQueueEchoSignature(peer.Id,echo);
+                else BufferIntentions(peer.Id).Echo ??= echo;
+            }
             // Invalid game intentions are discarded; avoid logging unbounded client spam.
         }
         finally
@@ -305,6 +311,7 @@ public sealed partial class GameServerService : BackgroundService
         _world.Abilities?.ClearResults();
         _world.Inventory?.ClearResults();
         _world.GroundItems?.ClearResults();
+        _world.Echoes?.ClearResults();
         if (_characters is null) _world.GroundItems?.CommitClaims();
     }
 
@@ -323,6 +330,11 @@ public sealed partial class GameServerService : BackgroundService
             peer.Send(NetworkProtocol.Write(new PlayerDespawn(id)), DeliveryMethod.ReliableOrdered);
         foreach (var id in view.Entered)
         {
+            if (_world.Echoes?.TryGet(id,out _) == true)
+            {
+                peer.Send(NetworkProtocol.Write(_world.Echoes.Spawn(id,_world.Tick)),DeliveryMethod.ReliableOrdered);
+                continue;
+            }
             if (_world.IsPlayer(id))
                 peer.Send(NetworkProtocol.Write(_world.CreateSpawn(id)), DeliveryMethod.ReliableOrdered);
             if (_world.Combat is { } combat)
@@ -343,6 +355,16 @@ public sealed partial class GameServerService : BackgroundService
         if (_world.GroundItems is { } pickups && _world.TryGetOwnedEntity(peer.Id, out var pickupOwner) &&
             pickups.Results.TryGetValue(pickupOwner, out var pickupResult))
             peer.Send(NetworkProtocol.Write(pickupResult), DeliveryMethod.ReliableOrdered);
+        if (_world.Echoes is { } echoes)
+        {
+            if (_world.TryGetOwnedEntity(peer.Id,out var owner))
+            {
+                if (view.Entered.Contains(owner) || echoes.IsLoadoutDirty(owner))
+                    peer.Send(NetworkProtocol.Write(echoes.Loadout(owner,_world.Tick)),DeliveryMethod.ReliableOrdered);
+                if (echoes.Results.TryGetValue(owner,out var echoResult))
+                    peer.Send(NetworkProtocol.Write(echoResult),DeliveryMethod.ReliableOrdered);
+            }
+        }
         if (_world.Abilities is { } abilities)
         {
             _world.UpdateAbilityInterest(peer.Id, view, view.Abilities);
@@ -403,6 +425,15 @@ public sealed partial class GameServerService : BackgroundService
             else if (action.TargetId.IsValid && view.Entities.Contains(action.TargetId))
                 peer.Send(NetworkProtocol.Write(simulation.State(action.TargetId, _world.Tick)), DeliveryMethod.ReliableOrdered);
         }
+        // Echo damage resolves last in the tick: publish it last, so earlier attacks cannot restore stale HP.
+        if (_world.Echoes is { } echoSimulation)
+            foreach (var action in echoSimulation.Actions)
+            {
+                if (view.Entities.Contains(action.EntityId) && (!action.TargetId.IsValid || view.Entities.Contains(action.TargetId)))
+                    peer.Send(NetworkProtocol.Write(action), DeliveryMethod.ReliableOrdered);
+                else if (action.TargetId.IsValid && view.Entities.Contains(action.TargetId))
+                    peer.Send(NetworkProtocol.Write(simulation.State(action.TargetId, _world.Tick)), DeliveryMethod.ReliableOrdered);
+            }
         // Only the owner receives command rejection/acknowledgement.
         if (_world.TryGetOwnedEntity(peer.Id, out var ownedId) &&
             simulation.Results.TryGetValue(ownedId, out var result))

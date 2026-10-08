@@ -35,7 +35,7 @@ public sealed partial class ServerWorld
         IOptions<NavigationOptions>? navigation = null, ContentCatalog? catalog = null,
         IOptions<CombatOptions>? combat = null, IOptions<ServerOptions>? server = null, IOptions<NpcOptions>? npc = null,
         IOptions<BossOptions>? boss = null, IOptions<InventoryOptions>? inventory = null,
-        IOptions<GroundItemOptions>? groundItems = null)
+        IOptions<GroundItemOptions>? groundItems = null, IOptions<EchoOptions>? echoes = null)
     {
         _movement = options.Value.ToSettings();
         _interest = interest.Value;
@@ -57,6 +57,9 @@ public sealed partial class ServerWorld
             Combat.Add(TrainingTargetId, position, CombatEntityKind.TrainingTarget);
             _spatial.Add(TrainingTargetId, position);
             Abilities = new AbilitySimulation(catalog, Combat, _spatial, Navigation, settings, _interest.CellSize, StartDash);
+            if (echoes?.Value.Enabled == true)
+                Echoes = new EchoSimulation(echoes.Value,Navigation,_movement,Combat,_spatial,id =>
+                { var owner = _playersByEntity[id]; return (owner.Position,Combat.Get(id).Health > 0,owner.Motion.IsMoving); });
             if (inventory?.Value.Enabled == true)
                 Inventory = new InventorySimulation(catalog, Combat, Abilities, id => _playersByEntity[id].BaseStats);
             if (groundItems?.Value.Enabled == true)
@@ -98,6 +101,7 @@ public sealed partial class ServerWorld
     public NpcSimulation? Boss { get; }
     public InventorySimulation? Inventory { get; }
     public GroundItemSimulation? GroundItems { get; }
+    public EchoSimulation? Echoes { get; }
     public IReadOnlyCollection<ServerPlayer> Players => _playersByConnection.Values;
 
     public ServerPlayer AddPlayer(int connectionId, PlayerId playerId, CharacterState? saved = null)
@@ -143,6 +147,7 @@ public sealed partial class ServerWorld
                 actor.ReadyAt = Combat.Time + Math.Max(0, saved.AttackCooldownSeconds - offline);
                 Abilities!.Restore(entityId, saved, offline);
             }
+            Echoes?.Add(entityId,saved?.Echoes ?? Echoes.CreateStarter(),saved?.OfflineSeconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()) ?? 0,AllocateEntityId);
         }
         catch { RemovePlayer(connectionId); throw; }
         return player;
@@ -158,6 +163,7 @@ public sealed partial class ServerWorld
         {
             RegionId = "prototype", ProfileId = definition.Id, Stats = definition.Stats,
             Inventory = Inventory is not null ? InventorySimulation.CreateStarter(definition) : null,
+            Echoes = Echoes?.CreateStarter(),
             X = spawn.X, Z = spawn.Y, Health = stats.MaxHealth, Mana = Math.Max(0, stats.MaxMana),
             AttackCooldownSeconds = 0, Cooldowns = definition.AbilityIds.Select(id => new SavedCooldown(id, 0)).ToArray(),
             SavedAtUnixMilliseconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
@@ -172,6 +178,7 @@ public sealed partial class ServerWorld
         {
             RegionId = "prototype", ProfileId = _playerDefinition!.Id, Stats = player.BaseStats,
             Inventory = Inventory?.Capture(player.EntityId),
+            Echoes = Echoes?.Capture(player.EntityId),
             X = player.Position.X, Z = player.Position.Y, Health = actor.Health,
             Mana = Abilities!.Mana(player.EntityId), Cooldowns = Abilities.CaptureCooldowns(player.EntityId),
             AttackCooldownSeconds = Math.Max(0, actor.ReadyAt - Combat.Time),
@@ -184,6 +191,7 @@ public sealed partial class ServerWorld
         if (!_playersByConnection.TryGetValue(connectionId, out var player))
             return null;
         GroundItems?.RemovePlayer(player.EntityId);
+        Echoes?.Remove(player.EntityId);
         _playersByConnection.Remove(connectionId);
         _developmentRevives.Remove(connectionId); _developmentReviveSequences.Remove(connectionId);
         _playersByEntity.Remove(player.EntityId);
@@ -239,6 +247,13 @@ public sealed partial class ServerWorld
         _playersByConnection.TryGetValue(connectionId, out var player) && Inventory?.Queue(player.EntityId, command, Tick) == true;
     public bool TryQueuePickup(int connectionId, PickupCommand command) =>
         _playersByConnection.TryGetValue(connectionId, out var player) && GroundItems?.Queue(player.EntityId, command, Tick) == true;
+    public bool TryQueueEchoSignature(int connectionId, EchoSignatureCommand command) =>
+        _playersByConnection.TryGetValue(connectionId,out var player) && Echoes?.Queue(player.EntityId,command,Tick) == true;
+    private NetworkEntityId AllocateEntityId()
+    {
+        if (_nextEntityId == 0) throw new InvalidOperationException("Runtime IDs exhausted.");
+        return new(_nextEntityId++);
+    }
     public IReadOnlyList<Guid> PickupClaims(int connectionId) =>
         _playersByConnection.TryGetValue(connectionId, out var player) ? GroundItems?.Claims(player.EntityId) ?? [] : [];
 
@@ -281,6 +296,7 @@ public sealed partial class ServerWorld
             player.Motion.Step(fixedDeltaSeconds);
             _spatial.Move(player.EntityId, player.Position);
             Combat?.Move(player.EntityId, player.Position);
+            Echoes?.Wake(player.EntityId);
             if (!player.Motion.IsMoving)
                 _stoppedPlayers.Add(connectionId);
         }
@@ -296,6 +312,16 @@ public sealed partial class ServerWorld
         Inventory?.Simulate(Tick);
         GroundItems?.Simulate(Tick);
         ApplyDevelopmentRevives();
+        if (Echoes is { } echoes)
+        {
+            foreach (var action in Combat!.Events)
+            {
+                if (action.TargetId.IsValid) { echoes.Alert(action.AttackerId,action.TargetId); echoes.Alert(action.TargetId,action.AttackerId); }
+            }
+            foreach (var hit in Abilities!.Hits) { echoes.Alert(hit.ActorId,hit.TargetId); echoes.Alert(hit.TargetId,hit.ActorId); }
+            echoes.Simulate(fixedDeltaSeconds,Tick);
+            foreach (var owner in echoes.DirtyOwners) MarkPersistent(owner);
+        }
         if (Inventory is { } inventory) foreach (var id in inventory.Dirty) MarkPersistent(id);
         if (Combat is { } combat)
         {
@@ -358,7 +384,7 @@ public sealed partial class ServerWorld
         foreach (var id in view.Candidates)
         {
             var position = _playersByEntity.TryGetValue(id, out var player)
-                ? player.Position : Combat!.Get(id).Position;
+                ? player.Position : Echoes?.TryGet(id,out var echo) == true ? echo.Motion.Position : Combat!.Get(id).Position;
             if (!view.Visible.Contains(id) &&
                 Vector2.DistanceSquared(observer.Position, position) > squaredEnterRadius)
                 continue;
@@ -366,7 +392,9 @@ public sealed partial class ServerWorld
                 view.EnteredIds.Add(id);
             if (player is null)
             {
-                if (Npc is { } npcActor && id == npcActor.Id)
+                if (Echoes?.TryGet(id,out var echoActor) == true)
+                    view.States.Add(new(id,echoActor.Motion.Position,0,echoActor.Motion.Target));
+                else if (Npc is { } npcActor && id == npcActor.Id)
                     view.States.Add(new(id, npcActor.Motion.Position, 0, npcActor.Motion.Target));
                 else if (Boss is { } bossActor && id == bossActor.Id)
                     view.States.Add(new(id, bossActor.Motion.Position, 0, bossActor.Motion.Target));

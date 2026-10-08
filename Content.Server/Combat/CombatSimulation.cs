@@ -103,6 +103,13 @@ public sealed class CombatSimulation
         target.Health = Math.Max(0, target.Health - damage);
         return damage;
     }
+    internal double ApplyEchoDamage(NetworkEntityId targetId, double power)
+    {
+        var target = _actors[targetId];
+        if (!IsHostileTarget(target.Kind) || target.Health <= 0) return 0;
+        var damage = Math.Min(target.Health,_calculator.ApplyDefense(power,target.Stats.PhysicalDefense));
+        target.Health = Math.Max(0,target.Health-damage); return damage;
+    }
 
     public static bool IsHostileTarget(CombatEntityKind kind) => kind is CombatEntityKind.TrainingTarget or CombatEntityKind.Monster or CombatEntityKind.Boss;
     public static bool IsNpc(CombatEntityKind kind) => kind is CombatEntityKind.Monster or CombatEntityKind.Boss;

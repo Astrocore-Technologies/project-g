@@ -378,6 +378,10 @@ public sealed class NetworkMovementIntegrationTests
         private PlayerId _playerId;
 
         public Dictionary<NetworkEntityId, PlayerSpawn> Spawns { get; } = new();
+        public Dictionary<NetworkEntityId, EchoSpawn> Echoes { get; } = new();
+        public Dictionary<NetworkEntityId, EchoLoadout> EchoLoadouts { get; } = new();
+        public List<EchoAction> EchoActions { get; } = new();
+        public List<EchoSignatureResult> EchoResults { get; } = new();
         public Dictionary<NetworkEntityId, CombatState> CombatStates { get; } = new();
         public List<AttackEvent> Attacks { get; } = new();
         public List<AttackResult> Results { get; } = new();
@@ -431,6 +435,21 @@ public sealed class NetworkMovementIntegrationTests
                     Assert.True(NetworkProtocol.TryReadMessageType(reader, out var type));
                     switch (type)
                     {
+                        case NetworkMessageType.EchoSpawn:
+                            Assert.True(NetworkProtocol.TryReadEchoSpawn(reader, out var echoSpawn));
+                            Echoes[echoSpawn.EntityId] = echoSpawn; _ticks[echoSpawn.EntityId] = echoSpawn.ServerTick;
+                            break;
+                        case NetworkMessageType.EchoLoadout:
+                            Assert.True(NetworkProtocol.TryReadEchoLoadout(reader, out var echoLoadout));
+                            Assert.Equal(LocalSpawn.EntityId, echoLoadout.OwnerId); EchoLoadouts[echoLoadout.OwnerId] = echoLoadout;
+                            break;
+                        case NetworkMessageType.EchoAction:
+                            Assert.True(NetworkProtocol.TryReadEchoAction(reader, out var echoAction)); EchoActions.Add(echoAction);
+                            if (echoAction.TargetId.IsValid) CombatStates[echoAction.TargetId] = CombatStates[echoAction.TargetId] with { Health = echoAction.TargetHealth };
+                            break;
+                        case NetworkMessageType.EchoSignatureResult:
+                            Assert.True(NetworkProtocol.TryReadEchoSignatureResult(reader, out var echoResult)); EchoResults.Add(echoResult);
+                            break;
                         case NetworkMessageType.ServerWelcome:
                             Assert.True(NetworkProtocol.TryReadServerWelcome(reader, out var welcome));
                             _playerId = welcome.PlayerId;
@@ -450,6 +469,7 @@ public sealed class NetworkMovementIntegrationTests
                         case NetworkMessageType.PlayerDespawn:
                             Assert.True(NetworkProtocol.TryReadPlayerDespawn(reader, out var despawn));
                             Spawns.Remove(despawn.EntityId);
+                            Echoes.Remove(despawn.EntityId);
                             _states.Remove(despawn.EntityId);
                             _ticks.Remove(despawn.EntityId);
                             CombatStates.Remove(despawn.EntityId);
@@ -564,6 +584,7 @@ public sealed class NetworkMovementIntegrationTests
         }
 
         public void Poll() => _manager.PollEvents();
+        public void EchoSignature(uint sequence, byte slot, Vector2 aim) => _peer?.Send(NetworkProtocol.Write(new EchoSignatureCommand(sequence, 0, slot, aim)), DeliveryMethod.ReliableOrdered);
         public void Revive(uint sequence) => _peer?.Send(NetworkProtocol.Write(new DevelopmentReviveCommand(sequence)), DeliveryMethod.ReliableOrdered);
         public void Pickup(uint sequence, ulong handle) => _peer?.Send(NetworkProtocol.Write(new PickupCommand(sequence, handle)), DeliveryMethod.ReliableOrdered);
         public void Inventory(uint sequence, InventoryAction action, ulong handle) => _peer?.Send(

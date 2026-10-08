@@ -5,6 +5,7 @@ using Content.Shared.Navigation;
 using ProjectG.Navigation;
 using ProjectG.Combat;
 using ProjectG.Items;
+using ProjectG.Echoes;
 
 namespace ProjectG.Gameplay;
 
@@ -23,6 +24,8 @@ public partial class WorldController : Node3D
     private readonly Dictionary<ulong, AbilityEffectVisual> _effects = new();
     private InventoryPresentation? _inventory;
     private GroundItemPresentation? _groundItems;
+    private readonly Dictionary<NetworkEntityId, EchoPresentation> _echoes = new();
+    private EchoControls? _echoControls;
 
     public override void _Ready()
     {
@@ -46,6 +49,10 @@ public partial class WorldController : Node3D
         _network.GroundItemDespawned += OnGroundDespawn;
         _network.PickupResultReceived += OnPickupResult;
         _network.Disconnected += ClearWorld;
+        _network.EchoSpawned += OnEchoSpawn;
+        _network.EchoLoadoutReceived += OnEchoLoadout;
+        _network.EchoActionReceived += OnEchoAction;
+        _network.EchoSignatureResultReceived += OnEchoResult;
         _network.ConnectToServer();
     }
 
@@ -73,6 +80,10 @@ public partial class WorldController : Node3D
         _network.GroundItemDespawned -= OnGroundDespawn;
         _network.PickupResultReceived -= OnPickupResult;
         _network.Disconnected -= ClearWorld;
+        _network.EchoSpawned -= OnEchoSpawn;
+        _network.EchoLoadoutReceived -= OnEchoLoadout;
+        _network.EchoActionReceived -= OnEchoAction;
+        _network.EchoSignatureResultReceived -= OnEchoResult;
     }
 
     private void OnNavigationReceived(NavigationGrid grid)
@@ -100,12 +111,14 @@ public partial class WorldController : Node3D
             player.AddChild(_abilities);
             _abilities.Initialize(player, _network);
             _inventory = new InventoryPresentation(); AddChild(_inventory); _inventory.Initialize(_network);
+            _echoControls = new(); AddChild(_echoControls); _echoControls.Initialize(_network);
         }
     }
 
     private void OnPlayerDespawned(PlayerDespawn despawn)
     {
         _combat.Remove(despawn.EntityId);
+        if (_echoes.Remove(despawn.EntityId, out var echo)) echo.QueueFree();
         if (_players.Remove(despawn.EntityId, out var player))
             player.QueueFree();
         if (_targets.Remove(despawn.EntityId, out var target))
@@ -190,6 +203,7 @@ public partial class WorldController : Node3D
     {
         if (id == _localEntityId && _combat.TryGetValue(id, out var local))
             _inventory?.ApplyAlive(local.IsAlive);
+        if (id == _localEntityId && _combat.TryGetValue(id, out var owner)) _echoControls?.ApplyAlive(owner.IsAlive);
         if (_players.TryGetValue(id, out var player) && _combat.TryGetValue(id, out var presentation))
             player.SetAlive(presentation.IsAlive);
     }
@@ -229,6 +243,7 @@ public partial class WorldController : Node3D
                 player.ApplySnapshot(entity, snapshot.ServerTick);
             else if (_targets.TryGetValue(entity.EntityId, out var actor) && actor is NpcPresentation npc)
                 npc.Apply(entity, snapshot.ServerTick);
+            else if (_echoes.TryGetValue(entity.EntityId, out var echo)) echo.Apply(entity, snapshot.ServerTick);
         }
     }
 
@@ -246,8 +261,24 @@ public partial class WorldController : Node3D
         _effects.Clear(); _abilities = null;
         _inventory?.QueueFree(); _inventory = null;
         _groundItems?.QueueFree(); _groundItems = null;
+        foreach (var echo in _echoes.Values) echo.QueueFree();
+        _echoes.Clear(); _echoControls?.QueueFree(); _echoControls = null;
         _localEntityId = NetworkEntityId.Invalid;
         _navigationVisual?.QueueFree();
         _navigationVisual = null;
+    }
+    private void OnEchoSpawn(EchoSpawn value)
+    {
+        if (_echoes.ContainsKey(value.EntityId)) return;
+        var echo = new EchoPresentation(); AddChild(echo); echo.Initialize(value, _network.Navigation!); _echoes.Add(value.EntityId, echo);
+    }
+    private void OnEchoLoadout(EchoLoadout value) { if (value.OwnerId == _localEntityId) _echoControls?.Apply(value); }
+    private void OnEchoResult(EchoSignatureResult value) => _echoControls?.Result(value);
+    private void OnEchoAction(EchoAction value)
+    {
+        if (_echoes.TryGetValue(value.EntityId, out var echo)) echo.Show(value);
+        if (value.TargetId.IsValid && _combat.TryGetValue(value.TargetId, out var target))
+            target.ApplyDamage(new(value.EntityId, 0, value.ServerTick, value.Position, default, value.Radius, value.TargetId, value.Damage, value.TargetHealth, false));
+        RefreshAlive(value.TargetId);
     }
 }

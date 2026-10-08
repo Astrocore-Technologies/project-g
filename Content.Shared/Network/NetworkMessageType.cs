@@ -29,5 +29,10 @@ public enum NetworkMessageType : ushort
     GroundItemSpawn = 31,
     GroundItemDespawn = 32,
     DevelopmentRevive = 33,
-    DevelopmentTools = 34
+    DevelopmentTools = 34,
+    EchoSpawn = 35,
+    EchoSignatureCommand = 36,
+    EchoSignatureResult = 37,
+    EchoAction = 38,
+    EchoLoadout = 39
 }
