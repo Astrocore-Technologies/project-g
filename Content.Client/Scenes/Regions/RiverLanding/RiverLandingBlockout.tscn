@@ -1,0 +1,998 @@
+[gd_scene load_steps=85 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Editor/Regions/RegionRoot.cs" id="Root"]
+[ext_resource type="Script" path="res://Scripts/Regions/BlockoutPreview.cs" id="Preview"]
+[ext_resource type="PackedScene" path="res://Scenes/Blockout/House.tscn" id="House"]
+[ext_resource type="PackedScene" path="res://Scenes/Blockout/Tree.tscn" id="Tree"]
+[ext_resource type="Script" path="res://Scripts/Editor/Regions/EntryMarker.cs" id="EntryMarker"]
+[ext_resource type="Script" path="res://Scripts/Editor/Regions/GateMarker.cs" id="GateMarker"]
+[ext_resource type="Script" path="res://Scripts/Editor/Regions/ActorSpawnMarker.cs" id="ActorSpawnMarker"]
+[ext_resource type="Script" path="res://Scripts/Editor/Regions/InteractionMarker.cs" id="InteractionMarker"]
+[ext_resource type="Script" path="res://Scripts/Editor/Regions/NavigationPatchMarker.cs" id="NavigationPatchMarker"]
+
+[sub_resource type="StandardMaterial3D" id="Ground"]
+albedo_color = Color(0.4, 0.43, 0.4, 1)
+roughness = 1.0
+
+[sub_resource type="StandardMaterial3D" id="Road"]
+albedo_color = Color(0.62, 0.6, 0.54, 1)
+roughness = 1.0
+
+[sub_resource type="StandardMaterial3D" id="Stone"]
+albedo_color = Color(0.43, 0.45, 0.47, 1)
+roughness = 1.0
+
+[sub_resource type="StandardMaterial3D" id="Water"]
+albedo_color = Color(0.28, 0.38, 0.43, 1)
+roughness = 1.0
+
+[sub_resource type="StandardMaterial3D" id="Wood"]
+albedo_color = Color(0.43, 0.4, 0.35, 1)
+roughness = 1.0
+
+[sub_resource type="StandardMaterial3D" id="Light"]
+albedo_color = Color(0.68, 0.68, 0.63, 1)
+roughness = 1.0
+
+[sub_resource type="StandardMaterial3D" id="Marker"]
+albedo_color = Color(0.74, 0.55, 0.31, 1)
+roughness = 1.0
+
+[sub_resource type="Environment" id="Sky"]
+background_mode = 1
+background_color = Color(0.19, 0.22, 0.24, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.75, 0.81, 0.88, 1)
+ambient_light_energy = 0.65
+reflected_light_source = 2
+tonemap_mode = 2
+
+[sub_resource type="BoxMesh" id="Mesh0"]
+material = SubResource("Ground")
+size = Vector3(60, 0.6, 64)
+
+[sub_resource type="BoxShape3D" id="Shape0"]
+size = Vector3(60, 0.6, 64)
+
+[sub_resource type="BoxMesh" id="Mesh1"]
+material = SubResource("Ground")
+size = Vector3(12, 0.6, 64)
+
+[sub_resource type="BoxShape3D" id="Shape1"]
+size = Vector3(12, 0.6, 64)
+
+[sub_resource type="BoxMesh" id="Mesh2"]
+material = SubResource("Water")
+size = Vector3(8, 0.12, 64)
+
+[sub_resource type="BoxMesh" id="Mesh3"]
+material = SubResource("Water")
+size = Vector3(8, 0.1, 18)
+
+[sub_resource type="BoxShape3D" id="Shape2"]
+size = Vector3(8, 0.1, 18)
+
+[sub_resource type="BoxMesh" id="Mesh4"]
+material = SubResource("Water")
+size = Vector3(8, 0.1, 40)
+
+[sub_resource type="BoxShape3D" id="Shape3"]
+size = Vector3(8, 0.1, 40)
+
+[sub_resource type="BoxMesh" id="Mesh5"]
+material = SubResource("Stone")
+size = Vector3(0.4, 1.6, 64)
+
+[sub_resource type="BoxMesh" id="Mesh6"]
+material = SubResource("Road")
+size = Vector3(5.5, 0.04, 14)
+
+[sub_resource type="BoxMesh" id="Mesh7"]
+material = SubResource("Road")
+size = Vector3(5.5, 0.04, 10.848857801796104)
+
+[sub_resource type="BoxMesh" id="Mesh8"]
+material = SubResource("Road")
+size = Vector3(5.5, 0.04, 10.219544457292889)
+
+[sub_resource type="BoxMesh" id="Mesh9"]
+material = SubResource("Road")
+size = Vector3(4, 0.04, 21.591260281974)
+
+[sub_resource type="BoxMesh" id="Mesh10"]
+material = SubResource("Road")
+size = Vector3(3, 0.04, 14.892443989449806)
+
+[sub_resource type="BoxMesh" id="Mesh11"]
+material = SubResource("Road")
+size = Vector3(3, 0.04, 16.03329637837291)
+
+[sub_resource type="BoxMesh" id="Mesh12"]
+material = SubResource("Road")
+size = Vector3(3, 0.04, 19.027756377319946)
+
+[sub_resource type="BoxMesh" id="Mesh13"]
+material = SubResource("Road")
+size = Vector3(3.5, 0.04, 14.416407864998739)
+
+[sub_resource type="BoxMesh" id="Mesh14"]
+material = SubResource("Road")
+size = Vector3(3.5, 0.04, 11.44030650891055)
+
+[sub_resource type="BoxMesh" id="Mesh15"]
+material = SubResource("Road")
+size = Vector3(3.5, 0.04, 7.708203932499369)
+
+[sub_resource type="BoxMesh" id="Mesh16"]
+material = SubResource("Road")
+size = Vector3(3.5, 0.04, 14.152946437965904)
+
+[sub_resource type="BoxMesh" id="Mesh17"]
+material = SubResource("Road")
+size = Vector3(3.5, 0.04, 16.811388300841898)
+
+[sub_resource type="BoxMesh" id="Mesh18"]
+material = SubResource("Road")
+size = Vector3(5, 0.04, 23.360679774997898)
+
+[sub_resource type="BoxMesh" id="Mesh19"]
+material = SubResource("Road")
+size = Vector3(5, 0.04, 7)
+
+[sub_resource type="BoxMesh" id="Mesh20"]
+material = SubResource("Road")
+size = Vector3(5, 0.04, 12)
+
+[sub_resource type="BoxMesh" id="Mesh21"]
+material = SubResource("Road")
+size = Vector3(2.5, 0.04, 23.090722034374522)
+
+[sub_resource type="BoxMesh" id="Mesh22"]
+material = SubResource("Road")
+size = Vector3(2.5, 0.04, 11.63014581273465)
+
+[sub_resource type="BoxMesh" id="Mesh23"]
+material = SubResource("Road")
+size = Vector3(15, 0.03, 13)
+
+[sub_resource type="BoxMesh" id="Mesh24"]
+material = SubResource("Road")
+size = Vector3(8, 0.03, 7)
+
+[sub_resource type="BoxMesh" id="Mesh25"]
+material = SubResource("Road")
+size = Vector3(11, 0.03, 12)
+
+[sub_resource type="BoxMesh" id="Mesh26"]
+material = SubResource("Light")
+size = Vector3(8, 0.03, 7)
+
+[sub_resource type="BoxMesh" id="Mesh27"]
+material = SubResource("Ground")
+size = Vector3(9, 0.03, 8)
+
+[sub_resource type="BoxMesh" id="Mesh28"]
+material = SubResource("Stone")
+size = Vector3(9, 3, 0.5)
+
+[sub_resource type="BoxShape3D" id="Shape4"]
+size = Vector3(9, 3, 0.5)
+
+[sub_resource type="BoxMesh" id="Mesh29"]
+material = SubResource("Wood")
+size = Vector3(10, 0.5, 9)
+
+[sub_resource type="BoxMesh" id="Mesh30"]
+material = SubResource("Wood")
+size = Vector3(0.35, 3.4, 0.35)
+
+[sub_resource type="BoxShape3D" id="Shape5"]
+size = Vector3(0.35, 3.4, 0.35)
+
+[sub_resource type="BoxMesh" id="Mesh31"]
+material = SubResource("Light")
+size = Vector3(3, 1.3, 1.2)
+
+[sub_resource type="BoxShape3D" id="Shape6"]
+size = Vector3(3, 1.3, 1.2)
+
+[sub_resource type="BoxMesh" id="Mesh32"]
+material = SubResource("Stone")
+size = Vector3(5, 3, 7)
+
+[sub_resource type="BoxShape3D" id="Shape7"]
+size = Vector3(5, 3, 7)
+
+[sub_resource type="BoxMesh" id="Mesh33"]
+material = SubResource("Stone")
+size = Vector3(4, 2, 6)
+
+[sub_resource type="BoxShape3D" id="Shape8"]
+size = Vector3(4, 2, 6)
+
+[sub_resource type="BoxMesh" id="Mesh34"]
+material = SubResource("Stone")
+size = Vector3(4, 2, 4)
+
+[sub_resource type="BoxShape3D" id="Shape9"]
+size = Vector3(4, 2, 4)
+
+[sub_resource type="BoxMesh" id="Mesh35"]
+material = SubResource("Stone")
+size = Vector3(3, 1.4, 3)
+
+[sub_resource type="BoxShape3D" id="Shape10"]
+size = Vector3(3, 1.4, 3)
+
+[sub_resource type="BoxMesh" id="Mesh36"]
+material = SubResource("Stone")
+size = Vector3(5, 2, 3)
+
+[sub_resource type="BoxShape3D" id="Shape11"]
+size = Vector3(5, 2, 3)
+
+[sub_resource type="BoxMesh" id="Mesh37"]
+material = SubResource("Stone")
+size = Vector3(3, 2, 4)
+
+[sub_resource type="BoxShape3D" id="Shape12"]
+size = Vector3(3, 2, 4)
+
+[sub_resource type="BoxMesh" id="Mesh38"]
+material = SubResource("Stone")
+size = Vector3(5, 3, 4)
+
+[sub_resource type="BoxShape3D" id="Shape13"]
+size = Vector3(5, 3, 4)
+
+[sub_resource type="BoxMesh" id="Mesh39"]
+material = SubResource("Wood")
+size = Vector3(7, 1.2, 0.25)
+
+[sub_resource type="BoxShape3D" id="Shape14"]
+size = Vector3(7, 1.2, 0.25)
+
+[sub_resource type="BoxMesh" id="Mesh40"]
+material = SubResource("Wood")
+size = Vector3(0.25, 1.2, 8)
+
+[sub_resource type="BoxShape3D" id="Shape15"]
+size = Vector3(0.25, 1.2, 8)
+
+[sub_resource type="BoxMesh" id="Mesh41"]
+material = SubResource("Wood")
+size = Vector3(8, 0.4, 5)
+
+[sub_resource type="BoxShape3D" id="Shape16"]
+size = Vector3(8, 0.4, 5)
+
+[sub_resource type="BoxMesh" id="Mesh42"]
+material = SubResource("Wood")
+size = Vector3(9, 0.25, 0.25)
+
+[sub_resource type="BoxShape3D" id="Shape17"]
+size = Vector3(9, 0.25, 0.25)
+
+[sub_resource type="BoxMesh" id="Mesh43"]
+material = SubResource("Stone")
+size = Vector3(0.55, 2, 0.55)
+
+[sub_resource type="BoxShape3D" id="Shape18"]
+size = Vector3(0.55, 2, 0.55)
+
+[sub_resource type="BoxMesh" id="Mesh44"]
+material = SubResource("Wood")
+size = Vector3(0.5, 5, 0.5)
+
+[sub_resource type="BoxShape3D" id="Shape19"]
+size = Vector3(0.5, 5, 0.5)
+
+[sub_resource type="BoxMesh" id="Mesh45"]
+material = SubResource("Marker")
+size = Vector3(2, 0.8, 0.12)
+
+[sub_resource type="CapsuleMesh" id="Person"]
+material = SubResource("Marker")
+radius = 0.4
+height = 2.0
+radial_segments = 8
+rings = 4
+
+[node name="RiverLandingBlockout" type="Node3D"]
+script = ExtResource("Root")
+RegionId = "prototype"
+MovementBounds = Rect2(-40, -32, 80, 64)
+
+[node name="Environment" type="Node3D" parent="."]
+
+
+[node name="Terrain" type="Node3D" parent="."]
+
+
+[node name="Decorations" type="Node3D" parent="."]
+
+
+[node name="PublicStateBindings" type="Node3D" parent="."]
+
+
+[node name="AuthoringAnchors" type="Node3D" parent="."]
+
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="Environment"]
+environment = SubResource("Sky")
+
+[node name="Sun" type="DirectionalLight3D" parent="Environment"]
+rotation_degrees = Vector3(-55, -30, 0)
+light_color = Color(1, 0.94, 0.83, 1)
+light_energy = 1.1
+shadow_enabled = true
+directional_shadow_max_distance = 100.0
+
+[node name="WestBank" type="StaticBody3D" parent="Terrain" groups=["region_walkable"]]
+position = Vector3(-10, -0.3, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Mesh" type="MeshInstance3D" parent="Terrain/WestBank"]
+mesh = SubResource("Mesh0")
+
+[node name="Collision" type="CollisionShape3D" parent="Terrain/WestBank"]
+shape = SubResource("Shape0")
+
+[node name="EastBank" type="StaticBody3D" parent="Terrain" groups=["region_walkable"]]
+position = Vector3(34, -0.3, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Mesh" type="MeshInstance3D" parent="Terrain/EastBank"]
+mesh = SubResource("Mesh1")
+
+[node name="Collision" type="CollisionShape3D" parent="Terrain/EastBank"]
+shape = SubResource("Shape1")
+
+[node name="River" type="MeshInstance3D" parent="Terrain"]
+position = Vector3(24, -1.3, 0)
+mesh = SubResource("Mesh2")
+
+[node name="WaterNorthBoundary" type="StaticBody3D" parent="Terrain" groups=["region_movement_blocker"]]
+position = Vector3(24, -0.05, -23)
+collision_layer = 2
+collision_mask = 0
+
+[node name="Collision" type="CollisionShape3D" parent="Terrain/WaterNorthBoundary"]
+shape = SubResource("Shape2")
+
+[node name="WaterSouthBoundary" type="StaticBody3D" parent="Terrain" groups=["region_movement_blocker"]]
+position = Vector3(24, -0.05, 12)
+collision_layer = 2
+collision_mask = 0
+
+[node name="Collision" type="CollisionShape3D" parent="Terrain/WaterSouthBoundary"]
+shape = SubResource("Shape3")
+
+[node name="WestBankFace" type="MeshInstance3D" parent="Terrain"]
+position = Vector3(19.8, -0.8, 0)
+mesh = SubResource("Mesh5")
+
+[node name="EastBankFace" type="MeshInstance3D" parent="Terrain"]
+position = Vector3(28.2, -0.8, 0)
+mesh = SubResource("Mesh5")
+
+[node name="Roads" type="Node3D" parent="Terrain"]
+
+
+[node name="FromTown" type="MeshInstance3D" parent="Terrain/Roads"]
+position = Vector3(-12, 0.025, 24.5)
+rotation = Vector3(0, 3.141592653589793, 0)
+mesh = SubResource("Mesh6")
+
+[node name="MainSouth" type="MeshInstance3D" parent="Terrain/Roads"]
+position = Vector3(-10, 0.025, 13.5)
+rotation = Vector3(0, 2.723368324010564, 0)
+mesh = SubResource("Mesh7")
+
+[node name="MainNorth" type="MeshInstance3D" parent="Terrain/Roads"]
+position = Vector3(-7, 0.025, 4.5)
+rotation = Vector3(0, 2.922923707715851, 0)
+mesh = SubResource("Mesh8")
+
+[node name="GroveApproach" type="MeshInstance3D" parent="Terrain/Roads"]
+position = Vector3(-15, 0.025, -5)
+rotation = Vector3(0, -2.0778948311872334, 0)
+mesh = SubResource("Mesh9")
+
+[node name="GroveWest" type="MeshInstance3D" parent="Terrain/Roads"]
+position = Vector3(-27.5, 0.025, -4)
+rotation = Vector3(0, -0.5280744484263596, 0)
+mesh = SubResource("Mesh10")
+
+[node name="ReturnLane" type="MeshInstance3D" parent="Terrain/Roads"]
+position = Vector3(-30.5, 0.025, 9.5)
+rotation = Vector3(0, 0.06656816377582381, 0)
+mesh = SubResource("Mesh11")
+
+[node name="BackToTown" type="MeshInstance3D" parent="Terrain/Roads"]
+position = Vector3(-21, 0.025, 17.5)
+rotation = Vector3(0, 1.5152978215491797, 0)
+mesh = SubResource("Mesh12")
+
+[node name="ForestWest" type="MeshInstance3D" parent="Terrain/Roads"]
+position = Vector3(-21, 0.025, -16)
+rotation = Vector3(0, 2.677945044588987, 0)
+mesh = SubResource("Mesh13")
+
+[node name="ForestTop" type="MeshInstance3D" parent="Terrain/Roads"]
+position = Vector3(-13, 0.025, -23.5)
+rotation = Vector3(0, 1.8622531212727638, 0)
+mesh = SubResource("Mesh14")
+
+[node name="ForestExit" type="MeshInstance3D" parent="Terrain/Roads"]
+position = Vector3(-6.5, 0.025, -28)
+rotation = Vector3(0, 2.677945044588987, 0)
+mesh = SubResource("Mesh15")
+
+[node name="ForestEast" type="MeshInstance3D" parent="Terrain/Roads"]
+position = Vector3(-1.5, 0.025, -24)
+rotation = Vector3(0, 1.4181469983996315, 0)
+mesh = SubResource("Mesh16")
+
+[node name="MeadowToBridge" type="MeshInstance3D" parent="Terrain/Roads"]
+position = Vector3(9.5, 0.025, -16.5)
+rotation = Vector3(0, 0.6055446636049701, 0)
+mesh = SubResource("Mesh17")
+
+[node name="BridgeRoad" type="MeshInstance3D" parent="Terrain/Roads"]
+position = Vector3(4, 0.025, -5)
+rotation = Vector3(0, 2.0344439357957027, 0)
+mesh = SubResource("Mesh18")
+
+[node name="BridgeApproach" type="MeshInstance3D" parent="Terrain/Roads"]
+position = Vector3(17, 0.025, -10)
+rotation = Vector3(0, 1.5707963267948966, 0)
+mesh = SubResource("Mesh19")
+
+[node name="BridgeExit" type="MeshInstance3D" parent="Terrain/Roads"]
+position = Vector3(33.5, 0.025, -10)
+rotation = Vector3(0, 1.5707963267948966, 0)
+mesh = SubResource("Mesh20")
+
+[node name="ShoreLane" type="MeshInstance3D" parent="Terrain/Roads"]
+position = Vector3(-1, 0.025, 19)
+rotation = Vector3(0, 1.4801364395941514, 0)
+mesh = SubResource("Mesh21")
+
+[node name="ShoreLookout" type="MeshInstance3D" parent="Terrain/Roads"]
+position = Vector3(13.5, 0.025, 16)
+rotation = Vector3(0, 2.4227626539681686, 0)
+mesh = SubResource("Mesh22")
+
+[node name="TownYard" type="MeshInstance3D" parent="Terrain/Roads"]
+position = Vector3(-12, 0.04, 18)
+mesh = SubResource("Mesh23")
+
+[node name="ForkApron" type="MeshInstance3D" parent="Terrain/Roads"]
+position = Vector3(-6, 0.04, 0)
+mesh = SubResource("Mesh24")
+
+[node name="BridgeApron" type="MeshInstance3D" parent="Terrain/Roads"]
+position = Vector3(14, 0.04, -10)
+mesh = SubResource("Mesh25")
+
+[node name="GatheringClearing" type="MeshInstance3D" parent="Terrain/Roads"]
+position = Vector3(-26, 0.06, -7)
+mesh = SubResource("Mesh26")
+
+[node name="EncounterClearing" type="MeshInstance3D" parent="Terrain/Roads"]
+position = Vector3(-23, 0.03, -22)
+mesh = SubResource("Mesh27")
+
+[node name="Buildings" type="Node3D" parent="Decorations"]
+
+
+[node name="WestHouse" parent="Decorations/Buildings" instance=ExtResource("House")]
+position = Vector3(-22, 0, 8)
+
+[node name="EastHouse" parent="Decorations/Buildings" instance=ExtResource("House")]
+position = Vector3(-1, 0, 11)
+
+[node name="Workshop" type="Node3D" parent="Decorations/Buildings"]
+
+
+[node name="BackWall" type="StaticBody3D" parent="Decorations/Buildings/Workshop" groups=["region_movement_blocker"]]
+position = Vector3(0, 1.5, 27)
+collision_layer = 2
+collision_mask = 0
+
+[node name="Mesh" type="MeshInstance3D" parent="Decorations/Buildings/Workshop/BackWall"]
+mesh = SubResource("Mesh28")
+
+[node name="Collision" type="CollisionShape3D" parent="Decorations/Buildings/Workshop/BackWall"]
+shape = SubResource("Shape4")
+
+[node name="Canopy" type="MeshInstance3D" parent="Decorations/Buildings/Workshop"]
+position = Vector3(0, 3.6, 23)
+mesh = SubResource("Mesh29")
+
+[node name="Post1" type="StaticBody3D" parent="Decorations/Buildings/Workshop" groups=["region_movement_blocker"]]
+position = Vector3(-4, 1.7, 19)
+collision_layer = 2
+collision_mask = 0
+
+[node name="Mesh" type="MeshInstance3D" parent="Decorations/Buildings/Workshop/Post1"]
+mesh = SubResource("Mesh30")
+
+[node name="Collision" type="CollisionShape3D" parent="Decorations/Buildings/Workshop/Post1"]
+shape = SubResource("Shape5")
+
+[node name="Post2" type="StaticBody3D" parent="Decorations/Buildings/Workshop" groups=["region_movement_blocker"]]
+position = Vector3(4, 1.7, 19)
+collision_layer = 2
+collision_mask = 0
+
+[node name="Mesh" type="MeshInstance3D" parent="Decorations/Buildings/Workshop/Post2"]
+mesh = SubResource("Mesh30")
+
+[node name="Collision" type="CollisionShape3D" parent="Decorations/Buildings/Workshop/Post2"]
+shape = SubResource("Shape5")
+
+[node name="Post3" type="StaticBody3D" parent="Decorations/Buildings/Workshop" groups=["region_movement_blocker"]]
+position = Vector3(-4, 1.7, 27)
+collision_layer = 2
+collision_mask = 0
+
+[node name="Mesh" type="MeshInstance3D" parent="Decorations/Buildings/Workshop/Post3"]
+mesh = SubResource("Mesh30")
+
+[node name="Collision" type="CollisionShape3D" parent="Decorations/Buildings/Workshop/Post3"]
+shape = SubResource("Shape5")
+
+[node name="Post4" type="StaticBody3D" parent="Decorations/Buildings/Workshop" groups=["region_movement_blocker"]]
+position = Vector3(4, 1.7, 27)
+collision_layer = 2
+collision_mask = 0
+
+[node name="Mesh" type="MeshInstance3D" parent="Decorations/Buildings/Workshop/Post4"]
+mesh = SubResource("Mesh30")
+
+[node name="Collision" type="CollisionShape3D" parent="Decorations/Buildings/Workshop/Post4"]
+shape = SubResource("Shape5")
+
+[node name="Worktable" type="StaticBody3D" parent="Decorations/Buildings/Workshop" groups=["region_movement_blocker"]]
+position = Vector3(0, 0.65, 24)
+collision_layer = 2
+collision_mask = 0
+
+[node name="Mesh" type="MeshInstance3D" parent="Decorations/Buildings/Workshop/Worktable"]
+mesh = SubResource("Mesh31")
+
+[node name="Collision" type="CollisionShape3D" parent="Decorations/Buildings/Workshop/Worktable"]
+shape = SubResource("Shape6")
+
+[node name="Trees" type="Node3D" parent="Decorations"]
+
+
+[node name="Tree1" parent="Decorations/Trees" instance=ExtResource("Tree")]
+position = Vector3(-34, 0, -24)
+
+[node name="Tree2" parent="Decorations/Trees" instance=ExtResource("Tree")]
+position = Vector3(-29, 0, -28)
+
+[node name="Tree3" parent="Decorations/Trees" instance=ExtResource("Tree")]
+position = Vector3(-33, 0, -14)
+
+[node name="Tree4" parent="Decorations/Trees" instance=ExtResource("Tree")]
+position = Vector3(-31, 0, -6)
+
+[node name="Tree5" parent="Decorations/Trees" instance=ExtResource("Tree")]
+position = Vector3(-18, 0, -5)
+
+[node name="Tree6" parent="Decorations/Trees" instance=ExtResource("Tree")]
+position = Vector3(-15, 0, -11)
+
+[node name="Tree7" parent="Decorations/Trees" instance=ExtResource("Tree")]
+position = Vector3(-10, 0, -16)
+
+[node name="Tree8" parent="Decorations/Trees" instance=ExtResource("Tree")]
+position = Vector3(-3, 0, -29)
+
+[node name="Tree9" parent="Decorations/Trees" instance=ExtResource("Tree")]
+position = Vector3(4, 0, -28)
+
+[node name="Tree10" parent="Decorations/Trees" instance=ExtResource("Tree")]
+position = Vector3(10, 0, -26)
+
+[node name="Tree11" parent="Decorations/Trees" instance=ExtResource("Tree")]
+position = Vector3(-36, 0, 5)
+
+[node name="Tree12" parent="Decorations/Trees" instance=ExtResource("Tree")]
+position = Vector3(-35, 0, 12)
+
+[node name="Tree13" parent="Decorations/Trees" instance=ExtResource("Tree")]
+position = Vector3(-33, 0, 25)
+
+[node name="Tree14" parent="Decorations/Trees" instance=ExtResource("Tree")]
+position = Vector3(12, 0, 26)
+
+[node name="Tree15" parent="Decorations/Trees" instance=ExtResource("Tree")]
+position = Vector3(17, 0, 24)
+
+[node name="Rocks" type="Node3D" parent="Decorations"]
+
+
+[node name="Rock1" type="StaticBody3D" parent="Decorations/Rocks" groups=["region_movement_blocker"]]
+position = Vector3(-37, 1.5, -19)
+collision_layer = 2
+collision_mask = 0
+
+[node name="Mesh" type="MeshInstance3D" parent="Decorations/Rocks/Rock1"]
+mesh = SubResource("Mesh32")
+
+[node name="Collision" type="CollisionShape3D" parent="Decorations/Rocks/Rock1"]
+shape = SubResource("Shape7")
+
+[node name="Rock2" type="StaticBody3D" parent="Decorations/Rocks" groups=["region_movement_blocker"]]
+position = Vector3(-37, 1, -5)
+collision_layer = 2
+collision_mask = 0
+
+[node name="Mesh" type="MeshInstance3D" parent="Decorations/Rocks/Rock2"]
+mesh = SubResource("Mesh33")
+
+[node name="Collision" type="CollisionShape3D" parent="Decorations/Rocks/Rock2"]
+shape = SubResource("Shape8")
+
+[node name="Rock3" type="StaticBody3D" parent="Decorations/Rocks" groups=["region_movement_blocker"]]
+position = Vector3(-35, 1, 20)
+collision_layer = 2
+collision_mask = 0
+
+[node name="Mesh" type="MeshInstance3D" parent="Decorations/Rocks/Rock3"]
+mesh = SubResource("Mesh34")
+
+[node name="Collision" type="CollisionShape3D" parent="Decorations/Rocks/Rock3"]
+shape = SubResource("Shape9")
+
+[node name="Rock4" type="StaticBody3D" parent="Decorations/Rocks" groups=["region_movement_blocker"]]
+position = Vector3(-27, 0.7, -29)
+collision_layer = 2
+collision_mask = 0
+
+[node name="Mesh" type="MeshInstance3D" parent="Decorations/Rocks/Rock4"]
+mesh = SubResource("Mesh35")
+
+[node name="Collision" type="CollisionShape3D" parent="Decorations/Rocks/Rock4"]
+shape = SubResource("Shape10")
+
+[node name="Rock5" type="StaticBody3D" parent="Decorations/Rocks" groups=["region_movement_blocker"]]
+position = Vector3(10, 1, -30)
+collision_layer = 2
+collision_mask = 0
+
+[node name="Mesh" type="MeshInstance3D" parent="Decorations/Rocks/Rock5"]
+mesh = SubResource("Mesh36")
+
+[node name="Collision" type="CollisionShape3D" parent="Decorations/Rocks/Rock5"]
+shape = SubResource("Shape11")
+
+[node name="Rock6" type="StaticBody3D" parent="Decorations/Rocks" groups=["region_movement_blocker"]]
+position = Vector3(17, 1, -25)
+collision_layer = 2
+collision_mask = 0
+
+[node name="Mesh" type="MeshInstance3D" parent="Decorations/Rocks/Rock6"]
+mesh = SubResource("Mesh37")
+
+[node name="Collision" type="CollisionShape3D" parent="Decorations/Rocks/Rock6"]
+shape = SubResource("Shape12")
+
+[node name="Rock7" type="StaticBody3D" parent="Decorations/Rocks" groups=["region_movement_blocker"]]
+position = Vector3(16, 0.7, 3)
+collision_layer = 2
+collision_mask = 0
+
+[node name="Mesh" type="MeshInstance3D" parent="Decorations/Rocks/Rock7"]
+mesh = SubResource("Mesh35")
+
+[node name="Collision" type="CollisionShape3D" parent="Decorations/Rocks/Rock7"]
+shape = SubResource("Shape10")
+
+[node name="Rock8" type="StaticBody3D" parent="Decorations/Rocks" groups=["region_movement_blocker"]]
+position = Vector3(-36, 1.5, 29)
+collision_layer = 2
+collision_mask = 0
+
+[node name="Mesh" type="MeshInstance3D" parent="Decorations/Rocks/Rock8"]
+mesh = SubResource("Mesh38")
+
+[node name="Collision" type="CollisionShape3D" parent="Decorations/Rocks/Rock8"]
+shape = SubResource("Shape13")
+
+[node name="Fences" type="Node3D" parent="Decorations"]
+
+
+[node name="TownWest" type="StaticBody3D" parent="Decorations/Fences" groups=["region_movement_blocker"]]
+position = Vector3(-18, 0.6, 27)
+collision_layer = 2
+collision_mask = 0
+
+[node name="Mesh" type="MeshInstance3D" parent="Decorations/Fences/TownWest"]
+mesh = SubResource("Mesh39")
+
+[node name="Collision" type="CollisionShape3D" parent="Decorations/Fences/TownWest"]
+shape = SubResource("Shape14")
+
+[node name="WorkshopEast" type="StaticBody3D" parent="Decorations/Fences" groups=["region_movement_blocker"]]
+position = Vector3(7, 0.6, 25)
+collision_layer = 2
+collision_mask = 0
+
+[node name="Mesh" type="MeshInstance3D" parent="Decorations/Fences/WorkshopEast"]
+mesh = SubResource("Mesh40")
+
+[node name="Collision" type="CollisionShape3D" parent="Decorations/Fences/WorkshopEast"]
+shape = SubResource("Shape15")
+
+[node name="Bridge" type="Node3D" parent="PublicStateBindings"]
+
+
+[node name="Deck" type="StaticBody3D" parent="PublicStateBindings/Bridge" groups=["region_walkable"]]
+position = Vector3(24, -0.2, -10)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Mesh" type="MeshInstance3D" parent="PublicStateBindings/Bridge/Deck"]
+mesh = SubResource("Mesh41")
+
+[node name="Collision" type="CollisionShape3D" parent="PublicStateBindings/Bridge/Deck"]
+shape = SubResource("Shape16")
+
+[node name="FarRail" type="StaticBody3D" parent="PublicStateBindings/Bridge" groups=["region_movement_blocker"]]
+position = Vector3(24, 0.6, -13)
+collision_layer = 2
+collision_mask = 0
+
+[node name="Mesh" type="MeshInstance3D" parent="PublicStateBindings/Bridge/FarRail"]
+mesh = SubResource("Mesh42")
+
+[node name="Collision" type="CollisionShape3D" parent="PublicStateBindings/Bridge/FarRail"]
+shape = SubResource("Shape17")
+
+[node name="NearRail" type="StaticBody3D" parent="PublicStateBindings/Bridge" groups=["region_movement_blocker"]]
+position = Vector3(24, 0.6, -7)
+collision_layer = 2
+collision_mask = 0
+
+[node name="Mesh" type="MeshInstance3D" parent="PublicStateBindings/Bridge/NearRail"]
+mesh = SubResource("Mesh42")
+
+[node name="Collision" type="CollisionShape3D" parent="PublicStateBindings/Bridge/NearRail"]
+shape = SubResource("Shape17")
+
+[node name="Post19_13" type="StaticBody3D" parent="PublicStateBindings/Bridge" groups=["region_movement_blocker"]]
+position = Vector3(19, 1, -13)
+collision_layer = 2
+collision_mask = 0
+
+[node name="Mesh" type="MeshInstance3D" parent="PublicStateBindings/Bridge/Post19_13"]
+mesh = SubResource("Mesh43")
+
+[node name="Collision" type="CollisionShape3D" parent="PublicStateBindings/Bridge/Post19_13"]
+shape = SubResource("Shape18")
+
+[node name="Post19_7" type="StaticBody3D" parent="PublicStateBindings/Bridge" groups=["region_movement_blocker"]]
+position = Vector3(19, 1, -7)
+collision_layer = 2
+collision_mask = 0
+
+[node name="Mesh" type="MeshInstance3D" parent="PublicStateBindings/Bridge/Post19_7"]
+mesh = SubResource("Mesh43")
+
+[node name="Collision" type="CollisionShape3D" parent="PublicStateBindings/Bridge/Post19_7"]
+shape = SubResource("Shape18")
+
+[node name="Post29_13" type="StaticBody3D" parent="PublicStateBindings/Bridge" groups=["region_movement_blocker"]]
+position = Vector3(29, 1, -13)
+collision_layer = 2
+collision_mask = 0
+
+[node name="Mesh" type="MeshInstance3D" parent="PublicStateBindings/Bridge/Post29_13"]
+mesh = SubResource("Mesh43")
+
+[node name="Collision" type="CollisionShape3D" parent="PublicStateBindings/Bridge/Post29_13"]
+shape = SubResource("Shape18")
+
+[node name="Post29_7" type="StaticBody3D" parent="PublicStateBindings/Bridge" groups=["region_movement_blocker"]]
+position = Vector3(29, 1, -7)
+collision_layer = 2
+collision_mask = 0
+
+[node name="Mesh" type="MeshInstance3D" parent="PublicStateBindings/Bridge/Post29_7"]
+mesh = SubResource("Mesh43")
+
+[node name="Collision" type="CollisionShape3D" parent="PublicStateBindings/Bridge/Post29_7"]
+shape = SubResource("Shape18")
+
+[node name="LandmarkPost" type="StaticBody3D" parent="PublicStateBindings/Bridge" groups=["region_movement_blocker"]]
+position = Vector3(17, 2.5, -15)
+collision_layer = 2
+collision_mask = 0
+
+[node name="Mesh" type="MeshInstance3D" parent="PublicStateBindings/Bridge/LandmarkPost"]
+mesh = SubResource("Mesh44")
+
+[node name="Collision" type="CollisionShape3D" parent="PublicStateBindings/Bridge/LandmarkPost"]
+shape = SubResource("Shape19")
+
+[node name="LandmarkBanner" type="MeshInstance3D" parent="PublicStateBindings/Bridge"]
+position = Vector3(18.1, 4, -15)
+mesh = SubResource("Mesh45")
+
+[node name="ScaleReferences" type="Node3D" parent="Decorations"]
+
+
+[node name="Person1" type="MeshInstance3D" parent="Decorations/ScaleReferences"]
+position = Vector3(-12, 1, 18)
+mesh = SubResource("Person")
+
+[node name="Person2" type="MeshInstance3D" parent="Decorations/ScaleReferences"]
+position = Vector3(-8, 1, 7)
+mesh = SubResource("Person")
+
+[node name="Person3" type="MeshInstance3D" parent="Decorations/ScaleReferences"]
+position = Vector3(-6, 1, 0)
+mesh = SubResource("Person")
+
+[node name="Person4" type="MeshInstance3D" parent="Decorations/ScaleReferences"]
+position = Vector3(-24, 1, -10)
+mesh = SubResource("Person")
+
+[node name="Person5" type="MeshInstance3D" parent="Decorations/ScaleReferences"]
+position = Vector3(14, 1, -10)
+mesh = SubResource("Person")
+
+[node name="Person6" type="MeshInstance3D" parent="Decorations/ScaleReferences"]
+position = Vector3(-8, 1, -25)
+mesh = SubResource("Person")
+
+[node name="Preview" type="Node3D" parent="." node_paths=PackedStringArray("Camera", "Status", "Viewpoints", "OverviewLabels")]
+script = ExtResource("Preview")
+Camera = NodePath("Camera")
+Status = NodePath("UI/Panel/Margin/Status")
+Viewpoints = NodePath("Points")
+OverviewLabels = NodePath("Labels")
+
+[node name="Camera" type="Camera3D" parent="Preview"]
+current = true
+far = 180.0
+
+[node name="Points" type="Node3D" parent="Preview"]
+
+
+[node name="Point1" type="Marker3D" parent="Preview/Points"]
+position = Vector3(-12, 0, 18)
+
+[node name="Point2" type="Marker3D" parent="Preview/Points"]
+position = Vector3(-8, 0, 7)
+
+[node name="Point3" type="Marker3D" parent="Preview/Points"]
+position = Vector3(-6, 0, 0)
+
+[node name="Point4" type="Marker3D" parent="Preview/Points"]
+position = Vector3(-24, 0, -10)
+
+[node name="Point5" type="Marker3D" parent="Preview/Points"]
+position = Vector3(14, 0, -10)
+
+[node name="Point6" type="Marker3D" parent="Preview/Points"]
+position = Vector3(-8, 0, -25)
+
+[node name="Labels" type="Node3D" parent="Preview"]
+
+
+[node name="Label1" type="Label3D" parent="Preview/Labels"]
+position = Vector3(-12, 2.4, 16)
+billboard = 1
+text = "1 — Двор"
+font_size = 42
+pixel_size = 0.025
+outline_size = 8
+modulate = Color(0.95, 0.94, 0.87, 1)
+
+[node name="Label2" type="Label3D" parent="Preview/Labels"]
+position = Vector3(-8, 2.4, 5)
+billboard = 1
+text = "2 — Дорога"
+font_size = 42
+pixel_size = 0.025
+outline_size = 8
+modulate = Color(0.95, 0.94, 0.87, 1)
+
+[node name="Label3" type="Label3D" parent="Preview/Labels"]
+position = Vector3(-6, 2.4, -2)
+billboard = 1
+text = "3 — Развилка"
+font_size = 42
+pixel_size = 0.025
+outline_size = 8
+modulate = Color(0.95, 0.94, 0.87, 1)
+
+[node name="Label4" type="Label3D" parent="Preview/Labels"]
+position = Vector3(-24, 2.4, -12)
+billboard = 1
+text = "4 — Роща"
+font_size = 42
+pixel_size = 0.025
+outline_size = 8
+modulate = Color(0.95, 0.94, 0.87, 1)
+
+[node name="Label5" type="Label3D" parent="Preview/Labels"]
+position = Vector3(14, 2.4, -12)
+billboard = 1
+text = "5 — Мост"
+font_size = 42
+pixel_size = 0.025
+outline_size = 8
+modulate = Color(0.95, 0.94, 0.87, 1)
+
+[node name="Label6" type="Label3D" parent="Preview/Labels"]
+position = Vector3(-8, 2.4, -27)
+billboard = 1
+text = "6 — Лесная тропа"
+font_size = 42
+pixel_size = 0.025
+outline_size = 8
+modulate = Color(0.95, 0.94, 0.87, 1)
+
+[node name="UI" type="CanvasLayer" parent="Preview"]
+
+
+[node name="Panel" type="PanelContainer" parent="Preview/UI"]
+offset_left = 12.0
+offset_top = 12.0
+offset_right = 750.0
+offset_bottom = 106.0
+
+[node name="Margin" type="MarginContainer" parent="Preview/UI/Panel"]
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="Status" type="Label" parent="Preview/UI/Panel/Margin"]
+text = "Blockout"
+
+[node name="TownEntry" type="Marker3D" parent="AuthoringAnchors"]
+position = Vector3(-12, 0, 28)
+script = ExtResource("EntryMarker")
+AuthoredObjectId = "31000000-0000-4000-8000-000000000001"
+
+[node name="ForestContinuation" type="Marker3D" parent="AuthoringAnchors"]
+position = Vector3(-5, 0, -30)
+script = ExtResource("GateMarker")
+AuthoredObjectId = "31000000-0000-4000-8000-000000000002"
+
+[node name="BridgeContinuation" type="Marker3D" parent="AuthoringAnchors"]
+position = Vector3(37, 0, -10)
+script = ExtResource("GateMarker")
+AuthoredObjectId = "31000000-0000-4000-8000-000000000003"
+
+[node name="Workshop" type="Marker3D" parent="AuthoringAnchors"]
+position = Vector3(-5, 0, 23)
+script = ExtResource("InteractionMarker")
+AuthoredObjectId = "31000000-0000-4000-8000-000000000004"
+
+[node name="ResourceSite" type="Marker3D" parent="AuthoringAnchors"]
+position = Vector3(-26, 0, -7)
+script = ExtResource("InteractionMarker")
+AuthoredObjectId = "31000000-0000-4000-8000-000000000005"
+
+[node name="EncounterSite" type="Marker3D" parent="AuthoringAnchors"]
+position = Vector3(-23, 0, -22)
+script = ExtResource("ActorSpawnMarker")
+AuthoredObjectId = "31000000-0000-4000-8000-000000000006"
+
+[node name="BridgeState" type="Marker3D" parent="AuthoringAnchors"]
+position = Vector3(24, 0, -10)
+script = ExtResource("NavigationPatchMarker")
+AuthoredObjectId = "31000000-0000-4000-8000-000000000007"
+Footprint = Vector2(8, 5)
