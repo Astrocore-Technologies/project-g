@@ -44,6 +44,7 @@ public partial class NetworkClient : Node
     public event Action<AbilityEffectState>? AbilityEffectReceived;
     public event Action<AbilityHit>? AbilityHitReceived;
     public event Action<NpcWindup>? NpcWindupReceived;
+    public event Action<NpcArea>? NpcAreaReceived;
     public event Action? Disconnected;
 
     public override void _Ready()
@@ -248,6 +249,11 @@ public partial class NetworkClient : Node
                 case NetworkMessageType.NpcWindup:
                     if (_handshakeComplete && NetworkProtocol.TryReadNpcWindup(reader, out var windup))
                         NpcWindupReceived?.Invoke(windup);
+                    else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.NpcArea:
+                    if (_handshakeComplete && NetworkProtocol.TryReadNpcArea(reader, out var npcArea))
+                        NpcAreaReceived?.Invoke(npcArea);
                     else DisconnectMalformed(peer);
                     break;
                 default:

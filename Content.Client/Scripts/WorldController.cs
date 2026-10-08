@@ -36,6 +36,7 @@ public partial class WorldController : Node3D
         _network.AbilityEffectReceived += OnAbilityEffect;
         _network.AbilityHitReceived += OnAbilityHit;
         _network.NpcWindupReceived += OnNpcWindup;
+        _network.NpcAreaReceived += OnNpcArea;
         _network.Disconnected += ClearWorld;
         _network.ConnectToServer();
     }
@@ -57,6 +58,7 @@ public partial class WorldController : Node3D
         _network.AbilityEffectReceived -= OnAbilityEffect;
         _network.AbilityHitReceived -= OnAbilityHit;
         _network.NpcWindupReceived -= OnNpcWindup;
+        _network.NpcAreaReceived -= OnNpcArea;
         _network.Disconnected -= ClearWorld;
     }
 
@@ -113,16 +115,18 @@ public partial class WorldController : Node3D
         }
         else
         {
-            actor = state.Kind == CombatEntityKind.Monster ? new NpcPresentation() : new Node3D();
+            actor = state.Kind is CombatEntityKind.Monster or CombatEntityKind.Boss ? new NpcPresentation() : new Node3D();
             actor.Name = $"{state.Kind}-{state.EntityId.Value}";
             AddChild(actor);
             actor.Position = new Vector3(state.Position.X, 1, state.Position.Y);
             if (actor is NpcPresentation npc) npc.Initialize(state, _network.Navigation!);
             actor.AddChild(new MeshInstance3D
             {
-                Mesh = new CylinderMesh { TopRadius = 0.4f, BottomRadius = 0.4f, Height = 2 },
+                Mesh = new CylinderMesh { TopRadius = state.Kind == CombatEntityKind.Boss ? 0.7f : 0.4f,
+                    BottomRadius = state.Kind == CombatEntityKind.Boss ? 0.7f : 0.4f, Height = 2 },
                 MaterialOverride = new StandardMaterial3D { AlbedoColor = state.Kind == CombatEntityKind.Monster
-                    ? new Color(0.9f, 0.15f, 0.1f) : new Color(0.65f, 0.3f, 0.8f) }
+                    ? new Color(0.9f, 0.15f, 0.1f) : state.Kind == CombatEntityKind.Boss
+                        ? new Color(1, 0.5f, 0.05f) : new Color(0.65f, 0.3f, 0.8f) }
             });
             _targets.Add(state.EntityId, actor);
         }
@@ -163,6 +167,10 @@ public partial class WorldController : Node3D
     private void OnNpcWindup(NpcWindup windup)
     {
         if (_combat.TryGetValue(windup.ActorId, out var presentation)) presentation.ShowWindup(windup);
+    }
+    private void OnNpcArea(NpcArea value)
+    {
+        if (_combat.TryGetValue(value.ActorId, out var presentation)) presentation.ShowArea(value);
     }
 
     private void OnAbilityEffect(AbilityEffectState value)

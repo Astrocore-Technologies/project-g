@@ -1,6 +1,8 @@
 using System.Numerics;
 using Content.Server.Combat;
 using Content.Server.Configuration;
+using Content.Server.Data;
+using Content.Server.Stats;
 using Content.Shared.Movement;
 using Content.Shared.Navigation;
 using Content.Shared.Network;
@@ -22,9 +24,15 @@ public sealed class NpcSimulation
     private Vector2 _direction;
     private uint _sequence;
     private double _time;
+    private readonly AbilityDefinition? _area;
+    private readonly BossOptions? _boss;
+    private readonly float _areaCastSeconds;
+    private bool _nextArea;
+    private bool _castingArea;
 
     public NpcSimulation(NetworkEntityId id, CombatSimulation combat, SpatialIndex spatial, NavigationGrid grid,
-        MovementSettings movement, NpcOptions options, float cellSize)
+        MovementSettings movement, NpcOptions options, float cellSize, AbilityDefinition? area = null,
+        BossOptions? boss = null, StatCalculator? calculator = null)
     {
         if (!float.IsFinite(options.Speed) || options.Speed is <= 0 or > 30 ||
             !float.IsFinite(options.AggroRadius) || options.AggroRadius <= 0 ||
@@ -35,6 +43,18 @@ public sealed class NpcSimulation
         Id = id; _combat = combat; _spatial = spatial; _grid = grid; _options = options;
         Home = combat.Get(id).Position;
         Motion = new NavigationMover(grid, movement with { Speed = options.Speed }, new NavigationPathfinder(grid), Home);
+        _area = area; _boss = boss;
+        if (boss is not null)
+        {
+            if (area is null || calculator is null || area.Kind != AbilityKind.GroundArea || area.ManaCost != 0 ||
+                !float.IsFinite((float)area.Range) || (float)area.Range <= 0 ||
+                !float.IsFinite((float)area.Radius) || (float)area.Radius <= 0 || area.Range + area.Radius > cellSize * 32 ||
+                !float.IsFinite(boss.ImpactSeconds) || boss.ImpactSeconds is <= 0 or > 10)
+                throw new ArgumentException("Invalid bounded boss area profile.");
+            _areaCastSeconds = (float)calculator.CastDuration(area.CastSeconds, combat.Get(id).Stats);
+            if (!float.IsFinite(_areaCastSeconds) || _areaCastSeconds is < 0.2f or > 10)
+                throw new ArgumentException("Boss area cast must fit the telegraph lifetime budget.");
+        }
     }
 
     public NetworkEntityId Id { get; }
@@ -44,6 +64,8 @@ public sealed class NpcSimulation
     public NpcBehavior Behavior { get; private set; }
     public uint WindupVersion { get; private set; }
     public NpcWindup? Telegraph { get; private set; }
+    public NpcArea? Area { get; private set; }
+    public uint AreaVersion { get; private set; }
 
     public void Move(float delta, uint tick)
     {
@@ -66,16 +88,33 @@ public sealed class NpcSimulation
     {
         // Player attacks/casts resolve first: killing a winding-up NPC cancels its strike.
         if (_combat.Get(Id).Health <= 0) { Defeat(tick); return; }
+        if (Area is { Phase: NpcAreaPhase.Impact } impact)
+        {
+            var remaining = Math.Max(0, impact.RemainingSeconds - delta);
+            Area = impact with { RemainingSeconds = remaining, ServerTick = tick };
+            if (remaining == 0) EndArea(tick);
+        }
         if (Behavior != NpcBehavior.Windup) return;
         if (!ValidTarget(out _)) { Return(tick); return; }
         _windupRemaining -= delta;
         if (_windupRemaining > 0)
         {
-            Telegraph = Telegraph!.Value with { RemainingSeconds = _windupRemaining, ServerTick = tick };
+            if (_castingArea) Area = Area!.Value with { RemainingSeconds = _windupRemaining, ServerTick = tick };
+            else Telegraph = Telegraph!.Value with { RemainingSeconds = _windupRemaining, ServerTick = tick };
             return;
         }
-        _combat.ExecuteNpcAttack(Id, _sequence, _direction, tick);
-        EndTelegraph(tick);
+        if (_castingArea)
+        {
+            var zone = Area!.Value;
+            if (_combat.ExecuteNpcArea(Id, _sequence, zone.Center, _area!, tick))
+            {
+                Area = zone with { Phase = NpcAreaPhase.Impact, RemainingSeconds = _boss!.ImpactSeconds, ServerTick = tick };
+                AreaVersion++;
+            }
+            else EndArea(tick);
+        }
+        else { _combat.ExecuteNpcAttack(Id, _sequence, _direction, tick); EndTelegraph(tick); }
+        _castingArea = false;
         Behavior = NpcBehavior.Chasing;
     }
 
@@ -102,7 +141,9 @@ public sealed class NpcSimulation
         }
         var target = _combat.Get(TargetId);
         var actor = _combat.Get(Id);
-        if (Vector2.DistanceSquared(Motion.Position, target.Position) <= actor.Weapon.Range * actor.Weapon.Range &&
+        var areaAttack = _area is not null && _nextArea;
+        var attackRange = areaAttack ? _area!.Range : actor.Weapon.Range;
+        if (Vector2.DistanceSquared(Motion.Position, target.Position) <= attackRange * attackRange &&
             _grid.CanTraverse(Motion.Position, target.Position))
         {
             Motion.Reset(Motion.Position, Motion.Position);
@@ -110,10 +151,21 @@ public sealed class NpcSimulation
             var offset = target.Position - Motion.Position;
             _direction = offset.LengthSquared() < 0.000001f ? Vector2.UnitY : Vector2.Normalize(offset);
             if (++_sequence == 0) ++_sequence;
-            _windupRemaining = _options.WindupSeconds;
+            _castingArea = areaAttack;
+            _windupRemaining = areaAttack ? _areaCastSeconds : _options.WindupSeconds;
             Behavior = NpcBehavior.Windup;
-            Telegraph = new(Id, _sequence, tick, Motion.Position, _direction, (float)actor.Weapon.Range, _windupRemaining);
-            WindupVersion++;
+            if (areaAttack)
+            {
+                Area = new(Id, _sequence, tick, target.Position, (float)_area!.Radius, _windupRemaining, NpcAreaPhase.Telegraph);
+                AreaVersion++;
+            }
+            else
+            {
+                Telegraph = new(Id, _sequence, tick, Motion.Position, _direction, (float)actor.Weapon.Range, _windupRemaining);
+                WindupVersion++;
+            }
+            // Only the boss alternates; player count and client commands never select its next attack.
+            if (_area is not null) _nextArea = !areaAttack;
         }
         else
         {
@@ -128,14 +180,14 @@ public sealed class NpcSimulation
 
     private void Return(uint tick)
     {
-        EndTelegraph(tick); TargetId = default; Behavior = NpcBehavior.Returning;
+        EndTelegraph(tick); EndArea(tick); _castingArea = false; TargetId = default; Behavior = NpcBehavior.Returning;
         Motion.Reset(Motion.Position, Home);
     }
 
     private void Defeat(uint tick)
     {
         if (Behavior == NpcBehavior.Defeated) return;
-        EndTelegraph(tick); TargetId = default; Behavior = NpcBehavior.Defeated;
+        EndTelegraph(tick); EndArea(tick); _castingArea = false; TargetId = default; Behavior = NpcBehavior.Defeated;
         Motion.Reset(Motion.Position, Motion.Position);
     }
 
@@ -143,5 +195,12 @@ public sealed class NpcSimulation
     {
         if (Telegraph is not { RemainingSeconds: > 0 } previous) return;
         Telegraph = previous with { RemainingSeconds = 0, ServerTick = tick }; WindupVersion++;
+    }
+
+    private void EndArea(uint tick)
+    {
+        if (Area is not { } previous || previous.Phase == NpcAreaPhase.Finished) return;
+        Area = previous with { Phase = NpcAreaPhase.Finished, RemainingSeconds = 0, ServerTick = tick };
+        AreaVersion++;
     }
 }

@@ -12,6 +12,9 @@ public partial class CombatPresentation : Node3D
 {
     private readonly Label3D _healthLabel = new() { Position = new Vector3(0, 1.5f, 0), Billboard = BaseMaterial3D.BillboardModeEnum.Enabled };
     private readonly MeshInstance3D _slash = new() { Visible = false };
+    private readonly MeshInstance3D _areaVisual = new() { Visible = false };
+    private double _areaRemaining;
+    private uint _areaSequence;
     private readonly StandardMaterial3D _slashMaterial = new()
     {
         ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
@@ -41,6 +44,7 @@ public partial class CombatPresentation : Node3D
         _spawnTick = state.ServerTick;
         AddChild(_healthLabel);
         AddChild(_slash);
+        AddChild(_areaVisual);
         _slash.MaterialOverride = _slashMaterial;
         ApplyState(state);
     }
@@ -91,6 +95,7 @@ public partial class CombatPresentation : Node3D
             !MovementSimulation.IsSequenceNewer(action.Sequence, _lastAttackSequence))
             return;
         _lastAttackSequence = action.Sequence;
+        if (action.Sequence == _areaSequence && _state.Kind == CombatEntityKind.Boss) return;
         if (_local && _pending == action.Sequence)
             _pending = 0;
         // Replace/restart the same visual with authoritative origin; do not apply damage twice.
@@ -143,8 +148,26 @@ public partial class CombatPresentation : Node3D
         _slashRemaining = value.RemainingSeconds;
     }
 
+    public void ShowArea(NpcArea value)
+    {
+        if (_state.Kind != CombatEntityKind.Boss || !IsAlive ||
+            (value.ServerTick != _spawnTick && !MovementSimulation.IsSequenceNewer(value.ServerTick, _spawnTick))) return;
+        _areaSequence = value.Sequence;
+        if (value.Phase == NpcAreaPhase.Finished) { _areaVisual.Visible = false; _areaRemaining = 0; return; }
+        _areaVisual.Mesh = new CylinderMesh { TopRadius = value.Radius, BottomRadius = value.Radius, Height = 0.035f };
+        _areaVisual.MaterialOverride = new StandardMaterial3D
+        {
+            ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+            Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
+            AlbedoColor = value.Phase == NpcAreaPhase.Telegraph ? new Color(1, 0.45f, 0.1f, 0.4f) : new Color(1, 0.1f, 0.05f, 0.8f)
+        };
+        _areaVisual.GlobalPosition = new(value.Center.X, 0.12f, value.Center.Y);
+        _areaVisual.Visible = true; _areaRemaining = value.RemainingSeconds;
+    }
+
     public override void _Process(double delta)
     {
+        if (_areaRemaining > 0 && (_areaRemaining -= delta) <= 0) _areaVisual.Visible = false;
         if (_slashRemaining > 0 && (_slashRemaining -= delta) <= 0)
             _slash.Visible = false;
         if (_damageRemaining > 0 && (_damageRemaining -= delta) <= 0)
@@ -171,8 +194,8 @@ public partial class CombatPresentation : Node3D
 
     private void UpdateLabel()
     {
-        if (!IsAlive) { _slash.Visible = false; _slashRemaining = 0; }
-        _healthLabel.Text = $"HP {_state.Health:0.0}/{_state.MaxHealth:0.0}\n{(IsAlive ? _damageText : "Defeated")}";
+        if (!IsAlive) { _slash.Visible = false; _slashRemaining = 0; _areaVisual.Visible = false; _areaRemaining = 0; }
+        _healthLabel.Text = $"{(_state.Kind == CombatEntityKind.Boss ? "BOSS " : "")}HP {_state.Health:0.0}/{_state.MaxHealth:0.0}\n{(IsAlive ? _damageText : "Defeated")}";
     }
     private static double Now() => Time.GetTicksMsec() / 1000d;
 

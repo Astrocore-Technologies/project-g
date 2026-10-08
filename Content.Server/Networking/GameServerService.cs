@@ -273,6 +273,18 @@ public sealed class GameServerService : BackgroundService
                 peer.Send(NetworkProtocol.Write(telegraph with { ServerTick = _world.Tick }), DeliveryMethod.ReliableOrdered);
             view.NpcWindupVersion = npc.WindupVersion;
         }
+        if (_world.Boss is { } boss)
+        {
+            if (view.Entities.Contains(boss.Id))
+            {
+                if (boss.Telegraph is { } cone && (view.Entered.Contains(boss.Id) || view.BossWindupVersion != boss.WindupVersion))
+                    peer.Send(NetworkProtocol.Write(cone with { ServerTick = _world.Tick }), DeliveryMethod.ReliableOrdered);
+                if (boss.Area is { } area && (view.Entered.Contains(boss.Id) || view.BossAreaVersion != boss.AreaVersion))
+                    peer.Send(NetworkProtocol.Write(area with { ServerTick = _world.Tick }), DeliveryMethod.ReliableOrdered);
+            }
+            view.BossWindupVersion = boss.WindupVersion;
+            view.BossAreaVersion = boss.AreaVersion;
+        }
         var chunkCapacity = NetworkProtocol.SnapshotCapacity(peer.GetMaxSinglePacketSize(DeliveryMethod.Unreliable));
         if (chunkCapacity == 0) throw new InvalidOperationException("Peer MTU cannot hold an entity snapshot.");
         for (var offset = 0; offset < view.Snapshots.Count; offset += chunkCapacity)

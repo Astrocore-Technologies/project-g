@@ -52,6 +52,8 @@ builder.Services.AddOptions<CombatOptions>()
     .Bind(builder.Configuration.GetSection(CombatOptions.SectionName));
 builder.Services.AddOptions<NpcOptions>()
     .Bind(builder.Configuration.GetSection(NpcOptions.SectionName));
+builder.Services.AddOptions<BossOptions>()
+    .Bind(builder.Configuration.GetSection(BossOptions.SectionName));
 builder.Services.AddHostedService<GameServerService>();
 
 // Parse once before opening the UDP port. Definitions remain server-only and immutable.

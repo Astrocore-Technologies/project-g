@@ -2,7 +2,7 @@
 
 ## Status / scope
 
-Stage 6 accepted. Checkpoint 7.1 implemented, awaiting user acceptance. The boss portion of stage 7 remains unimplemented and must follow this checkpoint's review. No persistence, engine, shard or service-boundary change.
+Stage 6 and checkpoint 7.1 accepted. Checkpoint 7.2 extends this baseline with a separate boss; see `0007-boss-encounter.md`. No persistence, engine, shard or service-boundary change.
 
 Temporary assumptions: one nonblocking monster, proximity aggro and sticky nearest target rather than a threat table; no loot, EXP, invulnerability, regeneration, respawn or encounter reset. Returning home does not heal. HP=0 stops actions; restarting a client creates the existing fresh session, restarting the server resets the prototype arena. These are not permanent death/respawn rules.
 

@@ -311,6 +311,42 @@ public sealed class NetworkMovementIntegrationTests
         }
     }
 
+    [Fact]
+    public async Task TwoLossyClientsObserveBossConeAreaAndSameConfirmedDamage()
+    {
+        var port = GetFreePort();
+        var world = new ServerWorld(Options.Create(new MovementOptions()), Options.Create(new InterestOptions()),
+            catalog: ContentCatalogTests.Load(), boss: Options.Create(new BossOptions
+            {
+                Actor = new NpcOptions { Enabled = true, DefinitionId = "test_boss", X = -3, Z = 1 }
+            }));
+        using var server = CreateServer(port, world); await server.StartAsync(CancellationToken.None);
+        using var first = new TestClient(port); using var second = new TestClient(port);
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+        try
+        {
+            await PollUntilAsync(first, second, () => first.Areas.Any(value => value.Phase == NpcAreaPhase.Impact) &&
+                second.Areas.Any(value => value.Phase == NpcAreaPhase.Impact), timeout.Token);
+            var impact = first.Areas.First(value => value.Phase == NpcAreaPhase.Impact);
+            await PollUntilAsync(first, second, () => first.Attacks.Count(value => value.AttackerId == world.Boss!.Id && value.Sequence == impact.Sequence) == 2 &&
+                second.Attacks.Count(value => value.AttackerId == world.Boss!.Id && value.Sequence == impact.Sequence) == 2, timeout.Token);
+            var hits = first.Attacks.Where(value => value.AttackerId == world.Boss!.Id && value.Sequence == impact.Sequence).ToArray();
+            foreach (var hit in hits) Assert.Contains(hit, second.Attacks);
+            Assert.Contains(first.Windups, value => value.ActorId == world.Boss!.Id && value.RemainingSeconds > 0);
+            Assert.Contains(second.Windups, value => value.ActorId == world.Boss!.Id && value.RemainingSeconds > 0);
+            var telegraph = first.Areas.First(value => value.Phase == NpcAreaPhase.Telegraph && value.Sequence == impact.Sequence);
+            Assert.Contains(telegraph, second.Areas);
+            Assert.Equal(telegraph.Center, impact.Center);
+            Assert.Equal(242, first.CombatStates[world.Boss!.Id].MaxHealth, 8);
+            Assert.Empty(first.Results); Assert.Empty(second.Results);
+            Assert.True(first.HasSnapshot(world.Boss.Id)); Assert.True(second.HasSnapshot(world.Boss.Id));
+        }
+        finally
+        {
+            using var stop = new CancellationTokenSource(TimeSpan.FromSeconds(3)); await server.StopAsync(stop.Token);
+        }
+    }
+
     private static int GetFreePort()
     {
         using var socket = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
@@ -350,6 +386,7 @@ public sealed class NetworkMovementIntegrationTests
         public List<AbilityEffectState> Effects { get; } = new();
         public List<AbilityHit> AbilityHits { get; } = new();
         public List<NpcWindup> Windups { get; } = new();
+        public List<NpcArea> Areas { get; } = new();
         public NavigationGrid? Navigation { get; private set; }
         public bool SawWallDetour { get; private set; }
         public PlayerSpawn LocalSpawn => Spawns.Values.Single(spawn => spawn.PlayerId == _playerId);
@@ -404,7 +441,7 @@ public sealed class NetworkMovementIntegrationTests
                             Assert.True(NetworkProtocol.TryReadCombatState(reader, out var combat));
                             if (combat.Kind == CombatEntityKind.Player) Assert.Contains(combat.EntityId, Spawns.Keys);
                             CombatStates[combat.EntityId] = combat;
-                            if (combat.Kind == CombatEntityKind.Monster && !_ticks.ContainsKey(combat.EntityId))
+                            if (combat.Kind is CombatEntityKind.Monster or CombatEntityKind.Boss && !_ticks.ContainsKey(combat.EntityId))
                                 _ticks[combat.EntityId] = combat.ServerTick;
                             break;
                         case NetworkMessageType.AttackEvent:
@@ -444,6 +481,11 @@ public sealed class NetworkMovementIntegrationTests
                             Assert.True(NetworkProtocol.TryReadNpcWindup(reader, out var windup));
                             Assert.Contains(windup.ActorId, CombatStates.Keys);
                             Windups.Add(windup);
+                            break;
+                        case NetworkMessageType.NpcArea:
+                            Assert.True(NetworkProtocol.TryReadNpcArea(reader, out var area));
+                            Assert.Contains(area.ActorId, CombatStates.Keys);
+                            Areas.Add(area);
                             break;
                         case NetworkMessageType.WorldSnapshot:
                             Assert.True(NetworkProtocol.TryReadWorldSnapshot(reader, out var snapshot));

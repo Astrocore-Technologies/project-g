@@ -2,6 +2,7 @@ using System.Numerics;
 using Content.Server.Configuration;
 using Content.Server.Combat;
 using Content.Server.Data;
+using Content.Server.Stats;
 using Content.Shared.Movement;
 using Content.Shared.Network;
 using Content.Shared.Navigation;
@@ -28,7 +29,8 @@ public sealed class ServerWorld
 
     public ServerWorld(IOptions<MovementOptions> options, IOptions<InterestOptions> interest,
         IOptions<NavigationOptions>? navigation = null, ContentCatalog? catalog = null,
-        IOptions<CombatOptions>? combat = null, IOptions<ServerOptions>? server = null, IOptions<NpcOptions>? npc = null)
+        IOptions<CombatOptions>? combat = null, IOptions<ServerOptions>? server = null, IOptions<NpcOptions>? npc = null,
+        IOptions<BossOptions>? boss = null)
     {
         _movement = options.Value.ToSettings();
         _interest = interest.Value;
@@ -60,6 +62,20 @@ public sealed class ServerWorld
                 _spatial.Add(id, home);
                 Npc = new NpcSimulation(id, Combat, _spatial, Navigation, _movement, npcSettings, _interest.CellSize);
             }
+            if (boss?.Value is { Actor.Enabled: true } bossSettings)
+            {
+                var actor = bossSettings.Actor;
+                if (!catalog.Creatures.TryGetValue(actor.DefinitionId, out var definition) ||
+                    !definition.AbilityIds.Contains(bossSettings.AreaAbilityId) ||
+                    !catalog.Abilities.TryGetValue(bossSettings.AreaAbilityId, out var area))
+                    throw new ArgumentException("Boss must own a known area ability and creature profile.");
+                var id = new NetworkEntityId(_nextEntityId++);
+                var home = new Vector2(actor.X, actor.Z);
+                Combat.Add(id, home, CombatEntityKind.Boss, actor.DefinitionId);
+                _spatial.Add(id, home);
+                Boss = new NpcSimulation(id, Combat, _spatial, Navigation, _movement, actor, _interest.CellSize,
+                    area, bossSettings, new StatCalculator(catalog.Balance));
+            }
         }
     }
 
@@ -69,6 +85,7 @@ public sealed class ServerWorld
     public AbilitySimulation? Abilities { get; }
     public NetworkEntityId TrainingTargetId { get; }
     public NpcSimulation? Npc { get; }
+    public NpcSimulation? Boss { get; }
     public IReadOnlyCollection<ServerPlayer> Players => _playersByConnection.Values;
 
     public ServerPlayer AddPlayer(int connectionId, PlayerId playerId)
@@ -191,9 +208,11 @@ public sealed class ServerWorld
             _movingPlayers.Remove(connectionId);
         // Resolve queued attacks after movement, on current authoritative positions; no client-time rewind.
         Npc?.Move(fixedDeltaSeconds, Tick);
+        Boss?.Move(fixedDeltaSeconds, Tick);
         Combat?.Simulate(fixedDeltaSeconds, Tick);
         Abilities?.Simulate(fixedDeltaSeconds, Tick);
         Npc?.Resolve(fixedDeltaSeconds, Tick);
+        Boss?.Resolve(fixedDeltaSeconds, Tick);
     }
 
     public PlayerSpawn CreateSpawn(ServerPlayer player) =>
@@ -231,6 +250,8 @@ public sealed class ServerWorld
             {
                 if (Npc is { } npcActor && id == npcActor.Id)
                     view.States.Add(new(id, npcActor.Motion.Position, 0, npcActor.Motion.Target));
+                else if (Boss is { } bossActor && id == bossActor.Id)
+                    view.States.Add(new(id, bossActor.Motion.Position, 0, bossActor.Motion.Target));
                 continue;
             }
             view.States.Add(new EntitySnapshot(

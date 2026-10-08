@@ -70,7 +70,8 @@ public sealed class CombatSimulation
         return damage;
     }
 
-    public static bool IsHostileTarget(CombatEntityKind kind) => kind is CombatEntityKind.TrainingTarget or CombatEntityKind.Monster;
+    public static bool IsHostileTarget(CombatEntityKind kind) => kind is CombatEntityKind.TrainingTarget or CombatEntityKind.Monster or CombatEntityKind.Boss;
+    public static bool IsNpc(CombatEntityKind kind) => kind is CombatEntityKind.Monster or CombatEntityKind.Boss;
 
     public void Add(NetworkEntityId id, Vector2 position, CombatEntityKind kind, string? definitionId = null)
     {
@@ -137,7 +138,7 @@ public sealed class CombatSimulation
     /// <summary>Server AI only; no client command can select a monster actor.</summary>
     public bool ExecuteNpcAttack(NetworkEntityId id, uint sequence, Vector2 direction, uint tick)
     {
-        if (!_actors.TryGetValue(id, out var actor) || actor.Kind != CombatEntityKind.Monster || actor.Health <= 0 ||
+        if (!_actors.TryGetValue(id, out var actor) || !IsNpc(actor.Kind) || actor.Health <= 0 ||
             !BasicAttackShape.IsValidDirection(direction) || !MovementSimulation.IsSequenceNewer(sequence, actor.LastSequence) ||
             _time < actor.ReadyAt) return false;
         actor.LastSequence = sequence;
@@ -153,6 +154,28 @@ public sealed class CombatSimulation
             actor.AttackInterval, (float)actor.Weapon.Range, _halfAngle);
     }
 
+    /// <summary>One server-only area strike; each living player in the spatial query is hit at most once.</summary>
+    public bool ExecuteNpcArea(NetworkEntityId id, uint sequence, Vector2 center, AbilityDefinition ability, uint tick)
+    {
+        if (!_actors.TryGetValue(id, out var actor) || actor.Kind != CombatEntityKind.Boss || actor.Health <= 0 ||
+            !MovementSimulation.IsSequenceNewer(sequence, actor.LastSequence) || _time < actor.ReadyAt ||
+            Vector2.DistanceSquared(actor.Position, center) > ability.Range * ability.Range ||
+            !_navigation.CanTraverse(actor.Position, center)) return false;
+        actor.LastSequence = sequence;
+        actor.ReadyAt = StatMath.Add(_time, ability.CooldownSeconds);
+        _spatial.Query(center, (float)ability.Radius, _candidates);
+        var power = Math.Max(0, StatMath.Add(ability.Power, StatMath.Multiply(actor.Stats.MagicAttack, ability.MagicAttackScale)));
+        foreach (var candidateId in _candidates)
+        {
+            if (!_actors.TryGetValue(candidateId, out var target) || target.Kind != CombatEntityKind.Player || target.Health <= 0 ||
+                !_navigation.CanTraverse(center, target.Position)) continue;
+            var damage = Math.Min(target.Health, _calculator.ApplyDefense(power, target.Stats.MagicDefense));
+            target.Health = Math.Max(0, target.Health - damage);
+            _events.Add(new(id, sequence, tick, center, Vector2.UnitY, (float)ability.Radius, target.Id, damage, target.Health, false));
+        }
+        return true;
+    }
+
     private void Resolve(Combatant actor, AttackCommand command, uint tick)
     {
         var direction = Vector2.Normalize(command.Direction);
@@ -163,7 +186,7 @@ public sealed class CombatSimulation
         foreach (var id in _candidates)
         {
             if (!_actors.TryGetValue(id, out var candidate) ||
-                !(actor.Kind == CombatEntityKind.Monster ? candidate.Kind == CombatEntityKind.Player : IsHostileTarget(candidate.Kind)) ||
+                !(IsNpc(actor.Kind) ? candidate.Kind == CombatEntityKind.Player : IsHostileTarget(candidate.Kind)) ||
                 candidate.Health <= 0 || !BasicAttackShape.Contains(actor.Position, direction, candidate.Position, range, _halfAngle) ||
                 !_navigation.CanTraverse(actor.Position, candidate.Position))
                 continue;

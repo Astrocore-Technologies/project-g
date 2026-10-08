@@ -1,3 +1,3 @@
 namespace Content.Shared.Network;
 
-public enum CombatEntityKind : byte { Player, TrainingTarget, Monster }
+public enum CombatEntityKind : byte { Player, TrainingTarget, Monster, Boss }

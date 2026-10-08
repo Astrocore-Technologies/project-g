@@ -24,12 +24,14 @@
   "weapons": [
     { "id": "training_sword", "kind": "Melee", "attack": 10, "attackIntervalSeconds": 1, "range": 2 },
     { "id": "training_bow", "kind": "Ranged", "attack": 10, "attackIntervalSeconds": 1.2, "range": 10 },
-    { "id": "training_staff", "kind": "Magic", "attack": 10, "attackIntervalSeconds": 1.5, "range": 8 }
+    { "id": "training_staff", "kind": "Magic", "attack": 10, "attackIntervalSeconds": 1.5, "range": 8 },
+    { "id": "boss_claw", "kind": "Melee", "attack": 12, "attackIntervalSeconds": 1.5, "range": 2.5 }
   ],
   "abilities": [
     { "id": "test_projectile", "networkId": 1, "kind": "Projectile", "power": 15, "manaCost": 5, "cooldownSeconds": 2, "castSeconds": 0.5, "range": 10, "radius": 0.3, "speed": 8, "magicAttackScale": 1 },
     { "id": "test_ground_area", "networkId": 2, "kind": "GroundArea", "power": 10, "manaCost": 10, "cooldownSeconds": 5, "castSeconds": 1, "range": 8, "radius": 2, "speed": 0, "magicAttackScale": 1 },
-    { "id": "test_dash", "networkId": 3, "kind": "Dash", "power": 0, "manaCost": 0, "cooldownSeconds": 3, "castSeconds": 0, "range": 3, "radius": 0.45, "speed": 15, "magicAttackScale": 0 }
+    { "id": "test_dash", "networkId": 3, "kind": "Dash", "power": 0, "manaCost": 0, "cooldownSeconds": 3, "castSeconds": 0, "range": 3, "radius": 0.45, "speed": 15, "magicAttackScale": 0 },
+    { "id": "boss_ground_area", "networkId": 4, "kind": "GroundArea", "power": 12, "manaCost": 0, "cooldownSeconds": 3, "castSeconds": 1.5, "range": 8, "radius": 2, "speed": 0, "magicAttackScale": 0.5 }
   ],
   "creatures": [
     {
@@ -44,6 +46,12 @@
       "stats": { "strength": 5, "agility": 5, "vitality": 5, "intelligence": 0, "dexterity": 5, "luck": 0 },
       "baseHealth": 80, "baseMana": 20, "baseHealthRecovery": 0, "baseManaRecovery": 0,
       "weaponId": "training_sword", "abilityIds": []
+    },
+    {
+      "id": "test_boss",
+      "stats": { "strength": 8, "agility": 0, "vitality": 10, "intelligence": 5, "dexterity": 5, "luck": 0 },
+      "baseHealth": 220, "baseMana": 20, "baseHealthRecovery": 0, "baseManaRecovery": 0,
+      "weaponId": "boss_claw", "abilityIds": ["boss_ground_area"]
     }
   ]
 }
