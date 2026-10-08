@@ -14,6 +14,7 @@ public sealed record SavedProgression
     public required byte Discoveries { get; init; }
     public required SavedSkill[] Skills { get; init; }
     [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)] public SavedExploration? Exploration { get; init; }
+    [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)] public SavedExploration[]? OtherExplorations { get; init; }
     public SavedWorldParticipation WorldParticipation { get; init; } = new();
     public SavedProfession Profession { get; init; } = new();
     public static SavedProgression Starter(CreatureDefinition definition, ContentCatalog catalog)
@@ -32,6 +33,15 @@ public sealed record SavedProgression
             throw new InvalidDataException("Invalid progression model.");
         if (Profession is null) throw new InvalidDataException("Missing profession history.");
         Profession.Validate(); Exploration?.Validate(); Pvp?.Validate();
+        if (OtherExplorations is { } maps)
+        {
+            if (maps.Length > 1) throw new InvalidDataException("Regional map archive exceeds the two-region budget.");
+            foreach (var map in maps)
+            {
+                if (map is null || map.RegionKey == Exploration?.RegionKey) throw new InvalidDataException("Duplicate or null regional map.");
+                map.Validate();
+            }
+        }
         if (WorldParticipation is null) throw new InvalidDataException("Missing world participation."); WorldParticipation.Validate();
         var ids = new HashSet<string>(); var slots = new HashSet<byte>();
         foreach (var skill in Skills)
@@ -58,6 +68,7 @@ public sealed record SavedProgression
         RejectDuplicates(document.RootElement);
         if(document.RootElement.TryGetProperty("Pvp",out var pvp)&&pvp.ValueKind==JsonValueKind.Null)throw new InvalidDataException("Null PvP component.");
         if(document.RootElement.TryGetProperty("Exploration",out var exploration) && exploration.ValueKind==JsonValueKind.Null) throw new InvalidDataException("Null exploration component.");
+        if(document.RootElement.TryGetProperty("OtherExplorations",out var maps) && maps.ValueKind==JsonValueKind.Null) throw new InvalidDataException("Null regional map archive.");
         var value = JsonSerializer.Deserialize<SavedProgression>(json,Json) ?? throw new InvalidDataException("Missing progression.");
         value.Validate(); return value;
     }

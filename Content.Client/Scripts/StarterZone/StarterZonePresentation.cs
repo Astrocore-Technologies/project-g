@@ -123,6 +123,8 @@ public partial class StarterMap : Control
             DrawRect(new(offset+new Vector2(x,z)*scale,new(scale+0.2f,scale+0.2f)),grid.IsBlocked(x,z) ? new(0.25f,0.25f,0.28f) : new Color(0.2f,0.32f,0.26f)); }
         if(Explored(_zone.TownPosition)) DrawCircle(Point(_zone.TownPosition),4,new(0.85f,0.72f,0.38f));
         foreach(var place in state.Places) DrawCircle(Point(place.Position),3,new(0.2f,0.9f,0.7f));
+        if (_network.CurrentRegion is { } region && Explored(region.Exit))
+            DrawCircle(Point(region.Exit), 4, new(0.15f, 0.65f, 0.95f));
         if(_network.LatestWorldNode is { } node && Explored(node.Position)) DrawCircle(Point(node.Position),3,new(0.5f,0.65f,1));
         DrawCircle(Point(_position),4,new(1,1,1));
         DrawLine(Point(_position),Point(_position)+Vector2.Up*9,new(1,1,1),1.5f);

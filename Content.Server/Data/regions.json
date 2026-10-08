@@ -1,0 +1,27 @@
+[
+  {
+    "Id": "prototype", "Destination": "outskirts",
+    "ExitX": 14, "ExitZ": 10, "ArrivalX": -12, "ArrivalZ": 10, "Radius": 0.65
+  },
+  {
+    "Id": "outskirts", "Destination": "prototype",
+    "ExitX": -14, "ExitZ": 10, "ArrivalX": 12, "ArrivalZ": 10, "Radius": 0.65,
+    "Navigation": {
+      "CellSize": 1, "AgentRadius": 0.45,
+      "BlockedAreas": [
+        { "X": 14, "Z": 10, "Width": 2, "Height": 10 },
+        { "X": 3, "Z": 3, "Width": 4, "Height": 2 }
+      ]
+    },
+    "Npc": { "Enabled": true, "DefinitionId": "test_creature", "X": 9, "Z": 2 },
+    "WorldNode": { "Key": "outskirts-crossing", "KeeperName": "Смотритель окраины" },
+    "StarterZone": {
+      "RegionName": "Восточная окраина", "TownName": "Дорожный лагерь", "GuideName": "Разведчик окраины",
+      "TownX": -10, "TownZ": 0, "GuideX": -11, "GuideZ": -1, "RevealRadiusCells": 2,
+      "Landmarks": [
+        { "Id": 1, "Name": "Старые камни", "X": -7, "Z": -6 },
+        { "Id": 2, "Name": "Восточный дозор", "X": 10, "Z": 7 }
+      ]
+    }
+  }
+]

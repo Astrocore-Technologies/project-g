@@ -1,6 +1,18 @@
 namespace Content.Database;
 internal static class WorldStorageValidation
 {
+    internal static void Batch(IReadOnlyList<DatabaseWorldSave> worlds, DatabaseSocialSave? social)
+    {
+        if (worlds.Count > 2) throw new InvalidDataException("Regional checkpoint exceeds the prototype budget.");
+        var keys = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var world in worlds)
+        {
+            Write(world);
+            if (!keys.Add(world.Session.Key)) throw new InvalidDataException("Duplicate regional write.");
+        }
+        if (social is not null && !keys.Add(social.Realm.Session.Key))
+            throw new InvalidDataException("Social and regional leases must be distinct.");
+    }
     internal static void Key(string key)
     {
         if (key.Length is < 1 or > 64 || key.Any(c => !char.IsAsciiLetterOrDigit(c) && c != '_' && c != '-')) throw new InvalidDataException("Invalid world key.");

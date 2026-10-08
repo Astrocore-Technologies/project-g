@@ -61,4 +61,6 @@ public enum NetworkMessageType : ushort
     PvpZoneState = 74,
     PvpLootState = 75,
     SocialCommand = 76, SocialResult = 77, SocialRoster = 78, SocialInvites = 79, PartyPresence = 80,
+    RegionEnter = 81,
+    RegionPacket = 82,
 }

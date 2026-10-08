@@ -61,6 +61,7 @@ public partial class WorldController : Node3D
         _network.GroundItemDespawned += OnGroundDespawn;
         _network.PickupResultReceived += OnPickupResult;
         _network.Disconnected += ClearWorld;
+        _network.RegionChanged += OnRegionChanged;
         _network.WorldNodeReceived += OnWorldNode; _network.WorldNodeResultReceived += OnWorldNodeResult;
         _network.ProfessionReceived += OnProfession;
         _network.ProfessionResultReceived += OnProfessionResult;
@@ -98,6 +99,7 @@ public partial class WorldController : Node3D
         _network.GroundItemDespawned -= OnGroundDespawn;
         _network.PickupResultReceived -= OnPickupResult;
         _network.Disconnected -= ClearWorld;
+        _network.RegionChanged -= OnRegionChanged;
         _network.WorldNodeReceived -= OnWorldNode; _network.WorldNodeResultReceived -= OnWorldNodeResult;
         _network.ProfessionReceived -= OnProfession;
         _network.ProfessionResultReceived -= OnProfessionResult;
@@ -292,31 +294,32 @@ public partial class WorldController : Node3D
 
     private void ClearWorld()
     {
+        DetachPresentation(_regionExit); _regionExit = null;
         foreach (var player in _players.Values)
-            player.QueueFree();
+            DetachPresentation(player);
 
         _players.Clear();
         foreach (var target in _targets.Values)
-            target.QueueFree();
+            DetachPresentation(target);
         _targets.Clear();
         _combat.Clear();
-        foreach (var effect in _effects.Values) if (GodotObject.IsInstanceValid(effect)) effect.QueueFree();
+        foreach (var effect in _effects.Values) if (GodotObject.IsInstanceValid(effect)) DetachPresentation(effect);
         _effects.Clear(); _abilities = null;
-        _inventory?.QueueFree(); _inventory = null;
-        _progression?.QueueFree(); _progression = null;
-        _profession?.QueueFree(); _profession = null;
-        _worldNode?.QueueFree(); _worldNode=null;
-        _starter?.QueueFree(); _starter=null;
-        _crafting?.QueueFree(); _crafting=null;
-        _trade?.QueueFree(); _trade=null;
-        _economy?.QueueFree(); _economy=null;
-        _social?.QueueFree();_social=null;
-        _pvp?.QueueFree();_pvp=null;_pvpLabels.Clear();_safeVisual?.QueueFree();_safeVisual=null;
-        _groundItems?.QueueFree(); _groundItems = null;
-        foreach (var echo in _echoes.Values) echo.QueueFree();
-        _echoes.Clear(); _echoControls?.QueueFree(); _echoControls = null;
+        DetachPresentation(_inventory); _inventory = null;
+        DetachPresentation(_progression); _progression = null;
+        DetachPresentation(_profession); _profession = null;
+        DetachPresentation(_worldNode); _worldNode=null;
+        DetachPresentation(_starter); _starter=null;
+        DetachPresentation(_crafting); _crafting=null;
+        DetachPresentation(_trade); _trade=null;
+        DetachPresentation(_economy); _economy=null;
+        DetachPresentation(_social);_social=null;
+        DetachPresentation(_pvp);_pvp=null;_pvpLabels.Clear();DetachPresentation(_safeVisual);_safeVisual=null;
+        DetachPresentation(_groundItems); _groundItems = null;
+        foreach (var echo in _echoes.Values) DetachPresentation(echo);
+        _echoes.Clear(); DetachPresentation(_echoControls); _echoControls = null;
         _localEntityId = NetworkEntityId.Invalid;
-        _navigationVisual?.QueueFree();
+        DetachPresentation(_navigationVisual);
         _navigationVisual = null;
     }
     private void OnWorldNode(WorldNodeState value) => _worldNode?.Apply(value);

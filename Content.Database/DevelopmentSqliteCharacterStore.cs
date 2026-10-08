@@ -185,9 +185,13 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
 
     public Task SaveAsync(IReadOnlyList<DatabaseSave> changes, CancellationToken cancellationToken) => SaveWithWorldAsync(changes, null, cancellationToken);
     public Task SaveWithWorldAsync(IReadOnlyList<DatabaseSave> changes, DatabaseWorldSave? world, CancellationToken cancellationToken) => SaveCheckpointAsync(changes,world,null,cancellationToken);
-    public Task SaveCheckpointAsync(IReadOnlyList<DatabaseSave> changes, DatabaseWorldSave? world, DatabaseSocialSave? social, CancellationToken cancellationToken) => Task.Run(() =>
+    public Task SaveCheckpointAsync(IReadOnlyList<DatabaseSave> changes, DatabaseWorldSave? world, DatabaseSocialSave? social, CancellationToken cancellationToken) =>
+        SaveRegionalCheckpointAsync(changes, world is null ? [] : [world], social, cancellationToken);
+    public Task SaveRegionalCheckpointAsync(IReadOnlyList<DatabaseSave> changes, IReadOnlyList<DatabaseWorldSave> worlds, DatabaseSocialSave? social, CancellationToken cancellationToken) => Task.Run(() =>
     {
-        if (changes.Count == 0 && world is null && social is null) return;
+        WorldStorageValidation.Batch(worlds, social);
+        if (changes.Count > 64) throw new InvalidDataException("Regional checkpoint exceeds the session budget.");
+        if (changes.Count == 0 && worlds.Count == 0 && social is null) return;
         using var connection = Connect(); using var transaction = connection.BeginTransaction();
         foreach (var change in changes)
         {
@@ -240,8 +244,8 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
                 if (inventory.ExecuteNonQuery() != 1) throw new InvalidDataException("Inventory row is missing.");
             }
         }
-        if (world is not null) WriteWorld(connection, transaction, world);
-        SyncOwnership(connection,transaction,changes,world);
+        foreach (var world in worlds) WriteWorld(connection, transaction, world);
+        SyncOwnership(connection,transaction,changes,worlds);
         if(social is not null) WriteSocial(connection,transaction,social,cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
         transaction.Commit();

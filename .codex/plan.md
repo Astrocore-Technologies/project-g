@@ -283,11 +283,29 @@ Protocol23, additive SQL schema8; content schema3/balance3 сохранены. S
 
 Архитектура: docs/architecture/stage17-social-plan.md. Утверждённые правила: docs/design/stage17-social-rules-proposal.md. Домашняя приёмка: docs/design/stage17-social-acceptance.md. Рабочая .data и пользовательские процессы не менялись, commit/push не выполнены. Temporary test PostgreSQL остановлена после проверки. Следующий этап18 требует отдельного решения о multi-region/social routing; сейчас не начат.
 
-**18. Несколько регионов и путешествия**
+**18. Несколько регионов и путешествия — вертикальный срез реализован, ждёт проверки**
 
-Загрузка регионов, server handoff, отсутствие двойного владения сущностью, маунты, обмен картографическими данными.
+Два соседних региона в одном процессе: `prototype` и `outskirts`.
+Сервер определяет пеший переход по границе; freeze → atomic SQL checkpoint →
+активация назначения. Lease персонажа не освобождается, двойного владельца нет.
+Переносятся inventory/progression/PvP и до3Эхо; личная карта каждого региона
+сохраняется отдельно. Одна social authority; координаты группы другого региона скрыты.
 
-Проверка: переход сохраняет персонажа и Эхо без дублей и потерь. Fast travel не добавляем.
+Protocol24: reliable RegionEnter/epoch, bounded RegionPacket для игровых сообщений.
+Старые команды/snapshots отбрасываются; AOI, prediction, navigation и UI клиента
+пересоздаются для нового региона. Snapshots остаются unreliable.
+Отключение/боевой reconnect/shutdown проходят через durability barrier.
+Ошибка записи запрещает публикацию и autosave; restart берёт сохранённый регион.
+SQLite Development, SQLschema8, без сброса данных; content schema3/balance3.
+
+**По последнему решению пользователя маунт и обмен картами сейчас НЕ делаем.**
+Межпроцессный handoff также отложен; fast travel не добавлен.
+ADR: docs/architecture/0011-region-travel.md.
+Реализация, проверки и домашняя приёмка: docs/design/stage18-travel-progress.md.
+Проверено: build0 warnings/errors;443 passed/6 PostgreSQL skipped; content validation
+и whitespace успешны. Реальный Godot headless: проход туда/обратно без ошибок.
+Lossy UDP100–150ms/10%, stale epoch, disconnect/боевой reconnect, shutdown/ошибка БД
+и crash/restart executable проверены на отдельной SQLite. Рабочая .data не менялась.
 
 **19. Полноценные Эхо и резонанс**
 
@@ -305,7 +323,7 @@ Protocol23, additive SQL schema8; content schema3/balance3 сохранены. S
 
 **Позже отдельными этапами:** мобильные клиенты, корабли, владение объектами мира, уникальные артефакты и профессии, Tournament Server. Официальная RMT-площадка — только после отдельного решения, не часть ближайшего плана.
 
-**Текущий checkpoint — этап17 реализован как прототип; этапы11–17 ждут домашней визуальной приёмки. Переходы и правила17 разрешены пользователем. Этап18 не начат.**
+**Текущий checkpoint — этап17 реализован как прототип; этапы11–17 ждут домашней визуальной приёмки. Этап18 реализован в согласованном объёме без маунта/обмена картами; ожидает пользовательской проверки. Этап19 не начат.**
 
 По запросу пользователя добавлен Development-only инструмент «Оживить» в I: восстановление HP=0 → текущий Max HP
 на fixed tick, server ownership + localhost + Development, без изменения позиции/маны/cooldown/предметов.

@@ -6,6 +6,7 @@ namespace Content.Server.World;
 public sealed partial class ServerWorld
 {
     public SocialSimulation? Social { get; private set; }
+    private bool advanceSocial = true;
     private readonly Dictionary<Guid,long> socialOffline=new();
     public void ScheduleSocialOffline(int connection)
     { if(Social is null||!_playersByConnection.TryGetValue(connection,out var p))return; var s=_pvp[p.EntityId]; socialOffline[_pvpIdentities[p.EntityId]]=Math.Max(s.CombatUntil,s.AggressorUntil); }
@@ -16,9 +17,21 @@ public sealed partial class ServerWorld
         if (!HasPvp || Social is not null) throw new InvalidOperationException("Invalid social initialization.");
         Social = new(() => PvpClock(), c => {
             var id = _pvpIdentities.FirstOrDefault(p => p.Value == c).Key;
-            return !id.IsValid || _pvp[id].CombatUntil <= PvpClock() && _pvp[id].AggressorUntil <= PvpClock() && !Combat!.Get(id).IsCasting && !Abilities!.HasActiveEffects(id);
+            return !id.IsValid || CanChangeSocial(_playersByEntity[id].ConnectionId);
         },maxParties,maxGuilds);
         Social.Restore(rows);
+    }
+    internal void AttachSocial(SocialSimulation authority)
+    {
+        if (!HasPvp || Social is not null || Players.Count != 0)
+            throw new InvalidOperationException("Shared social authority must be attached before regional login.");
+        Social = authority; advanceSocial = false;
+    }
+    internal bool CanChangeSocial(int connection)
+    {
+        var id = _playersByConnection[connection].EntityId;
+        return _pvp[id].CombatUntil <= PvpClock() && _pvp[id].AggressorUntil <= PvpClock() &&
+            !Combat!.Get(id).IsCasting && !Abilities!.HasActiveEffects(id);
     }
     public Guid SocialCharacter(int connection) => _playersByConnection.TryGetValue(connection, out var p) ? _pvpIdentities.GetValueOrDefault(p.EntityId) : Guid.Empty;
     public void BindSocial(int connection, Guid character)
@@ -37,7 +50,7 @@ public sealed partial class ServerWorld
     {
         if (Social is null) return;
         foreach(var (character,until) in socialOffline) Social.SetOffline(character,until); socialOffline.Clear();
-        Social.Advance();
+        if (advanceSocial) Social.Advance();
         foreach (var (connection, original) in socialPending)
         {
             if (!_playersByConnection.TryGetValue(connection,out var p)) continue;

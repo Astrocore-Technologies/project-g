@@ -200,9 +200,13 @@ public sealed partial class PostgresCharacterStore(string connectionString) : IC
 
     public Task SaveAsync(IReadOnlyList<DatabaseSave> changes, CancellationToken cancellationToken) => SaveWithWorldAsync(changes, null, cancellationToken);
     public Task SaveWithWorldAsync(IReadOnlyList<DatabaseSave> changes, DatabaseWorldSave? world, CancellationToken cancellationToken) => SaveCheckpointAsync(changes,world,null,cancellationToken);
-    public async Task SaveCheckpointAsync(IReadOnlyList<DatabaseSave> changes, DatabaseWorldSave? world, DatabaseSocialSave? social, CancellationToken cancellationToken)
+    public Task SaveCheckpointAsync(IReadOnlyList<DatabaseSave> changes, DatabaseWorldSave? world, DatabaseSocialSave? social, CancellationToken cancellationToken) =>
+        SaveRegionalCheckpointAsync(changes, world is null ? [] : [world], social, cancellationToken);
+    public async Task SaveRegionalCheckpointAsync(IReadOnlyList<DatabaseSave> changes, IReadOnlyList<DatabaseWorldSave> worlds, DatabaseSocialSave? social, CancellationToken cancellationToken)
     {
-        if (changes.Count == 0 && world is null && social is null) return;
+        WorldStorageValidation.Batch(worlds, social);
+        if (changes.Count > 64) throw new InvalidDataException("Regional checkpoint exceeds the session budget.");
+        if (changes.Count == 0 && worlds.Count == 0 && social is null) return;
         // Verify dedicated ownership connections before writing via the shared batch connection.
         foreach (var change in changes)
         {
@@ -259,8 +263,8 @@ public sealed partial class PostgresCharacterStore(string connectionString) : IC
                 if (await inventory.ExecuteNonQueryAsync(cancellationToken) != 1) throw new InvalidDataException("Inventory row is missing.");
             }
         }
-        if (world is not null) await WriteWorldAsync(connection, transaction, world, cancellationToken);
-        await SyncOwnershipAsync(connection,transaction,changes,world,cancellationToken);
+        foreach (var world in worlds) await WriteWorldAsync(connection, transaction, world, cancellationToken);
+        await SyncOwnershipAsync(connection,transaction,changes,worlds,cancellationToken);
         if(social is not null) await WriteSocialAsync(connection,transaction,social,cancellationToken);
         // One transaction publishes all changed characters from a simulation tick, or none.
         await transaction.CommitAsync(cancellationToken);

@@ -9,6 +9,7 @@ using Content.Shared.Movement;
 using Content.Shared.Network;
 using Content.Shared.Navigation;
 using Microsoft.Extensions.Options;
+using Content.Server.Regions;
 
 namespace Content.Server.World;
 
@@ -27,7 +28,11 @@ public sealed partial class ServerWorld
     private readonly SpatialIndex _spatial;
     private readonly NavigationPathfinder _pathfinder;
     private readonly CreatureDefinition? _playerDefinition;
-    private ulong _nextEntityId = 1;
+    private readonly RuntimeEntityAllocator _entityIds;
+    internal RuntimeEntityAllocator EntityIds => _entityIds;
+    internal ContentCatalog? RegionContent => _progressionCatalog;
+    internal string? RegionPlayerProfile => _playerDefinition?.Id;
+    public string RegionId { get; }
     private readonly HashSet<int> _persistenceDirty = new();
     internal IReadOnlyCollection<int> PersistenceDirty => _persistenceDirty;
 
@@ -35,8 +40,14 @@ public sealed partial class ServerWorld
         IOptions<NavigationOptions>? navigation = null, ContentCatalog? catalog = null,
         IOptions<CombatOptions>? combat = null, IOptions<ServerOptions>? server = null, IOptions<NpcOptions>? npc = null,
         IOptions<BossOptions>? boss = null, IOptions<InventoryOptions>? inventory = null,
-        IOptions<GroundItemOptions>? groundItems = null, IOptions<EchoOptions>? echoes = null, IOptions<WorldStoryOptions>? worldStory = null, IOptions<StarterZoneOptions>? starterZone = null, IOptions<CraftingOptions>? crafting = null)
+        IOptions<GroundItemOptions>? groundItems = null, IOptions<EchoOptions>? echoes = null, IOptions<WorldStoryOptions>? worldStory = null, IOptions<StarterZoneOptions>? starterZone = null, IOptions<CraftingOptions>? crafting = null,
+        string regionId = "prototype", RuntimeEntityAllocator? entityIds = null,
+        Content.Server.WorldStory.WorldNodeDefinition? worldNodeDefinition = null,
+        Content.Server.StarterZone.StarterZoneDefinition? starterZoneDefinition = null)
     {
+        RegionOwnership.ValidateRegion(regionId);
+        RegionId = regionId;
+        _entityIds = entityIds ?? new RuntimeEntityAllocator();
         _movement = options.Value.ToSettings();
         _interest = interest.Value;
         if (!_interest.IsValid())
@@ -54,7 +65,7 @@ public sealed partial class ServerWorld
             var position = new Vector2(settings.TargetX, settings.TargetZ);
             if (!Navigation.IsWalkable(position))
                 throw new ArgumentException("Training target must have a walkable configured position.");
-            TrainingTargetId = new NetworkEntityId(_nextEntityId++);
+            TrainingTargetId = AllocateEntityId();
             Combat.Add(TrainingTargetId, position, CombatEntityKind.TrainingTarget);
             _spatial.Add(TrainingTargetId, position);
             Abilities = new AbilitySimulation(catalog, Combat, _spatial, Navigation, settings, _interest.CellSize, StartDash);
@@ -71,7 +82,7 @@ public sealed partial class ServerWorld
             {
                 if (!catalog.Creatures.ContainsKey(npcSettings.DefinitionId))
                     throw new ArgumentException("NPC creature definition is missing.");
-                var id = new NetworkEntityId(_nextEntityId++);
+                var id = AllocateEntityId();
                 var home = new Vector2(npcSettings.X, npcSettings.Z);
                 Combat.Add(id, home, CombatEntityKind.Monster, npcSettings.DefinitionId);
                 _spatial.Add(id, home);
@@ -84,7 +95,7 @@ public sealed partial class ServerWorld
                     !definition.AbilityIds.Contains(bossSettings.AreaAbilityId) ||
                     !catalog.Abilities.TryGetValue(bossSettings.AreaAbilityId, out var area))
                     throw new ArgumentException("Boss must own a known area ability and creature profile.");
-                var id = new NetworkEntityId(_nextEntityId++);
+                var id = AllocateEntityId();
                 var home = new Vector2(actor.X, actor.Z);
                 Combat.Add(id, home, CombatEntityKind.Boss, actor.DefinitionId);
                 _spatial.Add(id, home);
@@ -92,8 +103,8 @@ public sealed partial class ServerWorld
                     area, bossSettings, new StatCalculator(catalog.Balance));
             }
         }
-        InitializeWorldNode(worldStory?.Value,catalog?.WorldNode);
-        InitializeStarterZone(starterZone?.Value,catalog?.StarterZone);
+        InitializeWorldNode(worldStory?.Value,worldNodeDefinition ?? catalog?.WorldNode);
+        InitializeStarterZone(starterZone?.Value,starterZoneDefinition ?? catalog?.StarterZone);
         InitializeCrafting(crafting?.Value,catalog?.Crafting); InitializePvp();
     }
 
@@ -115,9 +126,7 @@ public sealed partial class ServerWorld
             throw new ArgumentOutOfRangeException(nameof(playerId));
         if (_playersByConnection.ContainsKey(connectionId))
             throw new ArgumentException("Connection already owns an entity.", nameof(connectionId));
-        if (_nextEntityId == 0)
-            throw new InvalidOperationException("Runtime entity IDs exhausted.");
-        var entityId = new NetworkEntityId(_nextEntityId++);
+        var entityId = AllocateEntityId();
         var spawnIndex = (int) ((entityId.Value - 1) % 10);
         var spawn = MovementSimulation.ClampTarget(new Vector2(-9f + spawnIndex * 2f, 0f), _movement);
         if (!Navigation.TryFindSpawn(spawn, out spawn))
@@ -125,7 +134,7 @@ public sealed partial class ServerWorld
         if (saved is not null)
         {
             saved.Validate();
-            if (_playerDefinition is null || saved.ProfileId != _playerDefinition.Id ||
+            if (saved.RegionId != RegionId || _playerDefinition is null || saved.ProfileId != _playerDefinition.Id ||
                 !Navigation.IsWalkable(new Vector2(saved.X, saved.Z)))
                 throw new InvalidDataException("Saved profile/position is incompatible with this region.");
             spawn = new(saved.X, saved.Z);
@@ -169,7 +178,7 @@ public sealed partial class ServerWorld
         var stats = Combat!.InitialPlayerStats;
         return new CharacterState
         {
-            RegionId = "prototype", ProfileId = definition.Id, Stats = definition.Stats,
+            RegionId = RegionId, ProfileId = definition.Id, Stats = definition.Stats,
             Inventory = Inventory is not null ? InventorySimulation.CreateStarter(definition) : null,
             Echoes = Echoes?.CreateStarter(),
             Progression = SavedProgression.Starter(definition,_progressionCatalog!),
@@ -185,7 +194,7 @@ public sealed partial class ServerWorld
         var actor = Combat!.Get(player.EntityId);
         return new CharacterState
         {
-            RegionId = "prototype", ProfileId = _playerDefinition!.Id, Stats = player.BaseStats,
+            RegionId = RegionId, ProfileId = _playerDefinition!.Id, Stats = player.BaseStats,
             Inventory = Inventory?.Capture(player.EntityId),
             Echoes = Echoes?.Capture(player.EntityId),
             Progression = CaptureProgression(player.EntityId),
@@ -196,11 +205,12 @@ public sealed partial class ServerWorld
         };
     }
 
-    public ServerPlayer? RemovePlayer(int connectionId)
+    public ServerPlayer? RemovePlayer(int connectionId, bool disconnectSocial = true)
     {
         if (!_playersByConnection.TryGetValue(connectionId, out var player))
             return null;
-        DisconnectSocial(connectionId);
+        if (disconnectSocial) DisconnectSocial(connectionId);
+        else { socialPending.Remove(connectionId); SocialResults.Remove(connectionId); }
         GroundItems?.RemovePlayer(player.EntityId);
         Echoes?.Remove(player.EntityId);
         RemoveWorldNodePlayer(connectionId,player.EntityId);
@@ -267,11 +277,7 @@ public sealed partial class ServerWorld
         _playersByConnection.TryGetValue(connectionId, out var player) && GroundItems?.Queue(player.EntityId, command, Tick) == true;
     public bool TryQueueEchoSignature(int connectionId, EchoSignatureCommand command) =>
         _playersByConnection.TryGetValue(connectionId,out var player) && Echoes?.Queue(player.EntityId,command,Tick) == true;
-    private NetworkEntityId AllocateEntityId()
-    {
-        if (_nextEntityId == 0) throw new InvalidOperationException("Runtime IDs exhausted.");
-        return new(_nextEntityId++);
-    }
+    private NetworkEntityId AllocateEntityId() => _entityIds.Allocate();
     public IReadOnlyList<Guid> PickupClaims(int connectionId) =>
         _playersByConnection.TryGetValue(connectionId, out var player) ? GroundItems?.Claims(player.EntityId) ?? [] : [];
 

@@ -17,9 +17,9 @@ public sealed partial class PostgresCharacterStore
         await using var q=new NpgsqlCommand("INSERT INTO project_g_item_owners VALUES($1,$2) ON CONFLICT(instance_id) DO NOTHING",c,transaction); q.Parameters.AddWithValue(item); q.Parameters.AddWithValue(owner); await q.ExecuteNonQueryAsync(token); q.CommandText="SELECT owner_key FROM project_g_item_owners WHERE instance_id=$1"; q.Parameters.RemoveAt(1);
         if(await q.ExecuteScalarAsync(token) is not string actual || actual!=owner) throw new InvalidOperationException("Item already belongs to another owner.");
     }
-    private static async Task SyncOwnershipAsync(NpgsqlConnection c,NpgsqlTransaction transaction,IReadOnlyList<DatabaseSave> changes,DatabaseWorldSave? world,CancellationToken token)
+    private static async Task SyncOwnershipAsync(NpgsqlConnection c,NpgsqlTransaction transaction,IReadOnlyList<DatabaseSave> changes,IReadOnlyList<DatabaseWorldSave> worlds,CancellationToken token)
     {
-        var sets=OwnershipValidation.Sets(changes,world); var prior=new HashSet<Guid>(); var retained=sets.Values.SelectMany(ids=>ids).ToHashSet();
+        var sets=OwnershipValidation.Sets(changes,worlds); var prior=new HashSet<Guid>(); var retained=sets.Values.SelectMany(ids=>ids).ToHashSet();
         foreach(var owner in sets.Keys.Order()) { await using var q=new NpgsqlCommand("SELECT instance_id FROM project_g_item_owners WHERE owner_key=$1 FOR UPDATE",c,transaction); q.Parameters.AddWithValue(owner); await using var r=await q.ExecuteReaderAsync(token); while(await r.ReadAsync(token)) prior.Add(r.GetGuid(0)); }
         foreach(var owner in sets.Keys.Order()) { await using var q=new NpgsqlCommand("DELETE FROM project_g_item_owners WHERE owner_key=$1",c,transaction); q.Parameters.AddWithValue(owner); await q.ExecuteNonQueryAsync(token); }
         foreach(var change in changes) if(change.GroundClaims is { } claims) foreach(var item in claims)

@@ -26,14 +26,20 @@ public sealed partial class ServerWorld
     }
     private SavedExploration EmptyExploration() => new()
     {
-        RegionKey="prototype", Width=Navigation.Width, Height=Navigation.Height, OriginX=Navigation.Origin.X,
-        OriginZ=Navigation.Origin.Y, CellSize=Navigation.CellSize, Cells=new ulong[(Navigation.CellCount+63)/64], Tutorial=0
+        RegionKey=RegionId, Width=Navigation.Width, Height=Navigation.Height, OriginX=Navigation.Origin.X,
+        OriginZ=Navigation.Origin.Y, CellSize=Navigation.CellSize, Cells=new ulong[(Navigation.CellCount+63)/64], Tutorial=0, Places=0
     };
+    private SavedExploration CurrentExploration(NetworkEntityId id)
+    {
+        var value = _progression[id];
+        return value.Exploration ?? EmptyExploration() with
+        { Places = value.OtherExplorations is null ? value.Discoveries : (byte)0 };
+    }
     private void AddExploration(NetworkEntityId id)
     {
         if (!HasStarterZone) return;
         var value=_progression[id]; var map=value.Exploration;
-        if (map is not null && (map.Width!=Navigation.Width || map.Height!=Navigation.Height ||
+        if (map is not null && (map.RegionKey!=RegionId || map.Width!=Navigation.Width || map.Height!=Navigation.Height ||
             map.OriginX!=Navigation.Origin.X || map.OriginZ!=Navigation.Origin.Y || map.CellSize!=Navigation.CellSize))
             throw new InvalidDataException("Saved exploration geometry requires migration.");
         // Initial reveal is deferred to a fixed tick and durable checkpoint, including legacy characters.
@@ -45,11 +51,11 @@ public sealed partial class ServerWorld
         _starterZone.TownPosition,_starterZone.GuideName,_starterZone.GuidePosition);
     public ExplorationState ExplorationState(NetworkEntityId id)
     {
-        var progression=_progression[id]; var saved=progression.Exploration ?? EmptyExploration();
+        var progression=_progression[id]; var saved=CurrentExploration(id);
         var cells=new byte[(Navigation.CellCount+7)/8];
         for (var i=0;i<Navigation.CellCount;i++) if ((saved.Cells[i/64]&(1UL<<(i%64)))!=0) cells[i/8]|=(byte)(1<<(i%8));
         var places=new List<RevealedPlace>(2);
-        for(var i=0;i<_starterZone!.Landmarks.Length;i++) if ((progression.Discoveries&(1<<i))!=0)
+        for(var i=0;i<_starterZone!.Landmarks.Length;i++) if (((saved.Places ?? progression.Discoveries)&(1<<i))!=0)
         { var place=_starterZone.Landmarks[i]; places.Add(new(place.Id,place.Name,place.Position)); }
         return new(id,Tick,(ushort)Navigation.Width,(ushort)Navigation.Height,saved.Tutorial,cells,places);
     }
@@ -58,7 +64,7 @@ public sealed partial class ServerWorld
     private void TutorialStep(NetworkEntityId id, byte step)
     {
         if (!HasStarterZone || !_progression.TryGetValue(id,out var progression)) return;
-        var saved=progression.Exploration ?? EmptyExploration();
+        var saved=CurrentExploration(id);
         if ((saved.Tutorial&step)==step) return;
         StoreExploration(id,saved with { Tutorial=(byte)(saved.Tutorial|step) });
     }
@@ -67,9 +73,13 @@ public sealed partial class ServerWorld
         if (!HasStarterZone || Combat!.Get(player.EntityId).Health<=0) return;
         var id=player.EntityId; var cell=Navigation.Cell(player.Position);
         if (moved) TutorialStep(id,1);
-        if (_starterLastCell.TryGetValue(id,out var previous) && previous==cell) return;
+        var map=CurrentExploration(id);
+        var previousPlaces = map.Places ?? _progression[id].Discoveries;
+        var places = previousPlaces;
+        for (var i = 0; i < DiscoveryLandmarks.Length; i++)
+            if (Vector2.DistanceSquared(player.Position, DiscoveryLandmarks[i]) <= 2.25f) places |= (byte)(1 << i);
+        if (_starterLastCell.TryGetValue(id,out var previous) && previous==cell && places==previousPlaces) return;
         _starterLastCell[id]=cell;
-        var map=_progression[id].Exploration ?? EmptyExploration();
         ulong[]? changed=null;
         void Reveal(Vector2 position)
         {
@@ -87,8 +97,8 @@ public sealed partial class ServerWorld
         Reveal(player.Position);
         // Existing discovery rewards already prove a historical visit; preserve that knowledge on upgrade.
         if (_starterPending.Contains(id)) for(var i=0;i<DiscoveryLandmarks.Length;i++)
-            if ((_progression[id].Discoveries&(1<<i))!=0) Reveal(DiscoveryLandmarks[i]);
-        if(changed is not null) StoreExploration(id,map with { Cells=changed });
+            if ((places&(1<<i))!=0) Reveal(DiscoveryLandmarks[i]);
+        if(changed is not null || map.Places != places) StoreExploration(id,map with { Cells=changed ?? map.Cells, Places=places });
         else if(_progression[id].Exploration is null) StoreExploration(id,map);
     }
     private void SimulateStarterZone()

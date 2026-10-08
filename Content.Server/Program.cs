@@ -49,7 +49,7 @@ builder.Services.AddOptions<InterestOptions>()
     .Validate(options => options.IsValid(),
         "AOI radii must be finite, positive and ordered; cell query must be bounded.")
     .ValidateOnStart();
-builder.Services.AddSingleton<ServerWorld>();
+builder.Services.AddSingleton<ServerWorld>(services => services.GetRequiredService<Content.Server.Regions.RegionalWorlds>().Primary);
 builder.Services.AddOptions<NavigationOptions>()
     .Bind(builder.Configuration.GetSection(NavigationOptions.SectionName));
 builder.Services.AddOptions<CombatOptions>()
@@ -96,6 +96,8 @@ if (!validateContentOnly)
 // Parse once before opening the UDP port. Definitions remain server-only and immutable.
 var catalog = ContentCatalog.LoadFile(Path.Combine(AppContext.BaseDirectory, "Data", "prototype.json"));
 builder.Services.AddSingleton(catalog);
+builder.Services.AddSingleton(Content.Server.Regions.RegionalWorlds.Load(
+    Path.Combine(AppContext.BaseDirectory, "Data", "regions.json"), builder.Configuration, catalog));
 builder.Services.AddSingleton(new StatCalculator(catalog.Balance));
 using var host = builder.Build();
 // Resolve the world during validation too: combat profile references/ranges must fail before UDP startup.

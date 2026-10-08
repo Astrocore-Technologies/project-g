@@ -385,39 +385,39 @@ public sealed class NetworkMovementIntegrationTests
         public List<SocialInvites> SocialInvitations {get;}=new();
         public List<SocialResult> SocialResults {get;}=new();
         public List<PartyPresence> PartyPresences {get;}=new();
-        public void Social(SocialCommand command)=>_peer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
+        public void Social(SocialCommand command)=>SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
         public Dictionary<NetworkEntityId,PvpState> PvpStates {get;}=new();
         public Dictionary<NetworkEntityId,PvpPublicState> PvpFlags {get;}=new();
         public List<PvpResult> PvpResults {get;}=new();
         public List<PickupChannelState> PickupChannels {get;}=new();
         public Dictionary<ulong,PvpLootState> PvpLoot {get;}=new();
         public PvpZoneState? PvpZone {get;private set;}
-        public void Pvp(PvpCommand command)=>_peer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
+        public void Pvp(PvpCommand command)=>SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
         public Dictionary<NetworkEntityId,EconomyState> EconomyStates {get;}=new();
         public Dictionary<NetworkEntityId,MarketState> Markets {get;}=new();
         public List<EconomyQuote> EconomyQuotes {get;}=new();
         public List<EconomyResult> EconomyResults {get;}=new();
-        public void Economy(EconomyCommand command)=>_peer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
+        public void Economy(EconomyCommand command)=>SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
         public List<TradeState> TradeStates { get; }=new();
         public List<TradeResult> TradeResults { get; }=new();
-        public void Trade(TradeCommand command) => _peer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
-        public void Repair(RepairCommand command) => _peer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
+        public void Trade(TradeCommand command) => SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
+        public void Repair(RepairCommand command) => SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
         public Dictionary<NetworkEntityId,CraftState> CraftStates { get; }=new();
         public List<CraftResult> CraftResults { get; }=new();
         public Dictionary<ushort,ResourceNodeState> Resources { get; }=new();
         public Dictionary<ushort,CraftRecipeState> Recipes { get; }=new();
-        public void Craft(CraftCommand command) => _peer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
+        public void Craft(CraftCommand command) => SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
         public StarterZoneState? StarterZone { get; private set; }
         public Dictionary<NetworkEntityId,ExplorationState> Exploration { get; }=new();
         public WorldNodeState? WorldNode { get; private set; }
         public List<WorldNodeResult> WorldNodeResults { get; }=new();
-        public void Node(WorldNodeCommand command) => _peer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
+        public void Node(WorldNodeCommand command) => SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
         public Dictionary<NetworkEntityId,ProfessionState> Professions { get; } = new();
         public List<ProfessionResult> ProfessionResults { get; } = new();
-        public void Profession(ProfessionCommand command) => _peer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
+        public void Profession(ProfessionCommand command) => SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
         public Dictionary<NetworkEntityId, ProgressionState> Progressions { get; } = new();
         public List<ProgressionResult> ProgressionResults { get; } = new();
-        public void Progression(ProgressionCommand command) => _peer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
+        public void Progression(ProgressionCommand command) => SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
         public Dictionary<NetworkEntityId, EchoSpawn> Echoes { get; } = new();
         public Dictionary<NetworkEntityId, EchoLoadout> EchoLoadouts { get; } = new();
         public List<EchoAction> EchoActions { get; } = new();
@@ -442,6 +442,19 @@ public sealed class NetworkMovementIntegrationTests
         public PlayerId PlayerId => _playerId;
         public IReadOnlyDictionary<NetworkEntityId, EntitySnapshot> States => _states;
         public bool SawWallDetour { get; private set; }
+        public RegionEnter? Region { get; private set; }
+        public List<RegionEnter> Entries { get; } = new();
+        public int DroppedRegionPackets { get; private set; }
+        public int LargestPacket { get; private set; }
+
+        public void SendGame(LiteNetLib.Utils.NetDataWriter payload, DeliveryMethod method, ulong? epoch = null)
+        {
+            if (Region is not { } region && epoch is null) { _peer?.Send(payload, method); return; }
+            var envelope = new LiteNetLib.Utils.NetDataWriter();
+            NetworkProtocol.WrapRegion(envelope, epoch ?? Region!.Value.Epoch, payload);
+            _peer?.Send(envelope, method);
+        }
+
         public PlayerSpawn LocalSpawn => Spawns.Values.Single(spawn => spawn.PlayerId == _playerId);
 
         public TestClient(int port, string token = "")
@@ -472,7 +485,26 @@ public sealed class NetworkMovementIntegrationTests
             {
                 try
                 {
+                    LargestPacket = Math.Max(LargestPacket, reader.AvailableBytes);
+                    Assert.InRange(reader.AvailableBytes, 2, NetworkConstants.MaxGamePacketBytes);
                     Assert.True(NetworkProtocol.TryReadMessageType(reader, out var type));
+                    if (type == NetworkMessageType.RegionEnter)
+                    {
+                        Assert.True(NetworkProtocol.TryReadRegionEnter(reader, out var entry));
+                        Assert.True(entry.Epoch > (Region?.Epoch ?? 0));
+                        Region = entry; Entries.Add(entry);
+                        Spawns.Clear(); CombatStates.Clear(); Echoes.Clear(); EchoLoadouts.Clear();
+                        Inventories.Clear(); Loadouts.Clear(); Navigation = null; WorldNode = null;
+                        SocialRosters.Clear(); SocialInvitations.Clear(); PartyPresences.Clear();
+                        Recipes.Clear(); Resources.Clear(); GroundItems.Clear();
+                        _states.Clear(); _ticks.Clear(); _snapshotCoverage.Clear();
+                        return;
+                    }
+                    if (type == NetworkMessageType.RegionPacket)
+                    {
+                        Assert.True(NetworkProtocol.TryReadRegionHeader(reader, out var epoch, out type));
+                        if (epoch != Region?.Epoch) { DroppedRegionPackets++; return; }
+                    }
                     switch (type)
                     {
                         case NetworkMessageType.SocialRoster:
@@ -690,19 +722,19 @@ public sealed class NetworkMovementIntegrationTests
         }
 
         public void Poll() => _manager.PollEvents();
-        public void EchoSignature(uint sequence, byte slot, Vector2 aim) => _peer?.Send(NetworkProtocol.Write(new EchoSignatureCommand(sequence, 0, slot, aim)), DeliveryMethod.ReliableOrdered);
-        public void Revive(uint sequence) => _peer?.Send(NetworkProtocol.Write(new DevelopmentReviveCommand(sequence)), DeliveryMethod.ReliableOrdered);
-        public void Pickup(uint sequence, ulong handle) => _peer?.Send(NetworkProtocol.Write(new PickupCommand(sequence, handle)), DeliveryMethod.ReliableOrdered);
-        public void Inventory(uint sequence, InventoryAction action, ulong handle) => _peer?.Send(
+        public void EchoSignature(uint sequence, byte slot, Vector2 aim) => SendGame(NetworkProtocol.Write(new EchoSignatureCommand(sequence, 0, slot, aim)), DeliveryMethod.ReliableOrdered);
+        public void Revive(uint sequence) => SendGame(NetworkProtocol.Write(new DevelopmentReviveCommand(sequence)), DeliveryMethod.ReliableOrdered);
+        public void Pickup(uint sequence, ulong handle) => SendGame(NetworkProtocol.Write(new PickupCommand(sequence, handle)), DeliveryMethod.ReliableOrdered);
+        public void Inventory(uint sequence, InventoryAction action, ulong handle) => SendGame(
             NetworkProtocol.Write(new InventoryCommand(sequence, action, handle)), DeliveryMethod.ReliableOrdered);
         public bool HasSnapshot(NetworkEntityId id) => _states.ContainsKey(id);
         public bool HasFullSnapshotAtOneTick(int count) =>
             _states.Count == count && _snapshotCoverage.Values.Any(ids => ids.Count == count);
-        public void Move(uint sequence, Vector2 target) => _peer?.Send(
+        public void Move(uint sequence, Vector2 target) => SendGame(
             NetworkProtocol.Write(new MoveCommand(sequence, sequence, target)), DeliveryMethod.Sequenced);
-        public void Attack(uint sequence, Vector2 direction) => _peer?.Send(
+        public void Attack(uint sequence, Vector2 direction) => SendGame(
             NetworkProtocol.Write(new AttackCommand(sequence, uint.MaxValue, direction)), DeliveryMethod.ReliableOrdered);
-        public void Ability(uint sequence, ushort id, Vector2 aim) => _peer?.Send(
+        public void Ability(uint sequence, ushort id, Vector2 aim) => SendGame(
             NetworkProtocol.Write(new AbilityCommand(sequence, _ticks.GetValueOrDefault(LocalSpawn.EntityId), id, aim)), DeliveryMethod.ReliableOrdered);
         public uint LastAbilitySequence(NetworkEntityId id) => _states[id].LastAbilitySequence;
         public bool IsAt(NetworkEntityId id, Vector2 target) =>

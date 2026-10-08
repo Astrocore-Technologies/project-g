@@ -13,12 +13,13 @@ public sealed partial class GameServerService
     private static string CredentialHash(string token)=>Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
     private bool DetachCombatPlayer(int connection)
     {
-        _world.DisconnectPvp(connection);
-        if(!_world.IsCombatTagged(connection)||!_sessionCredentialHashes.Remove(connection,out var key))return false;
+        var world = WorldFor(connection);
+        world.DisconnectPvp(connection);
+        if(!world.IsCombatTagged(connection)||!_sessionCredentialHashes.Remove(connection,out var key))return false;
         if(_nextDetached==int.MinValue)throw new InvalidOperationException("Detached handles exhausted.");
         var detached=_nextDetached--;var session=_sessions[connection];_sessions.Remove(connection);_sessions[detached]=session;_sessionCredentialHashes[detached]=key;
-        _world.RebindConnection(connection,detached,_world.GetPlayer(connection).PlayerId);
-        _detached[key]=(detached,_world.PvpNow+30000);return true;
+        RebindRegionalPlayer(connection,detached,world.GetPlayer(connection).PlayerId);
+        _detached[key]=(detached,world.PvpNow+30000);return true;
     }
     private bool TryResumeCombat(NetPeer peer,ClientHello hello,PlayerId player)
     {
@@ -31,15 +32,15 @@ public sealed partial class GameServerService
         foreach(var (connection,r) in _combatResumes.ToArray())
         {
             _combatResumes.Remove(connection);if(!_peers.TryGetValue(connection,out var peer)||!ReferenceEquals(peer,r.Peer))continue;
-            if(_detached.TryGetValue(r.Key,out var expired)&&_world.PvpNow>=expired.Until)
+            if(_detached.TryGetValue(r.Key,out var expired)&&WorldFor(expired.Connection).PvpNow>=expired.Until)
             { _detached.Remove(r.Key); _departed.Add(expired.Connection); Reject(peer,HandshakeRejectCode.CharacterInUse,"Combat session closing; retry login."); continue; }
             if(!_detached.Remove(r.Key,out var old)||!_sessions.Remove(old.Connection,out var session)){Reject(peer,HandshakeRejectCode.CharacterInUse,"Combat session closed; retry login.");continue;}
             _departed.Remove(old.Connection);_sessionCredentialHashes.Remove(old.Connection);_sessions[connection]=session;_sessionCredentialHashes[connection]=r.Key;
-            _world.RebindConnection(old.Connection,connection,r.Player);AcceptPlayer(peer,r.Hello,r.Player,session,reattached:true);
+            RebindRegionalPlayer(old.Connection,connection,r.Player);AcceptPlayer(peer,r.Hello,r.Player,session,reattached:true);
         }
     }
     private void ExpireDetachedCombatants()
     {
-        var now=_world.PvpNow;foreach(var (key,d) in _detached.ToArray())if(now>=d.Until||!_world.IsCombatTagged(d.Connection)){_detached.Remove(key);_departed.Add(d.Connection);}
+        var now=_world.PvpNow;foreach(var (key,d) in _detached.ToArray())if(now>=d.Until||!WorldFor(d.Connection).IsCombatTagged(d.Connection)){_detached.Remove(key);_departed.Add(d.Connection);}
     }
 }

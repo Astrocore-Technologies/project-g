@@ -3,7 +3,7 @@ using Content.Database;
 namespace Content.Server.Persistence;
 
 /// <summary>Domain validation stays on the server; Database stores bounded documents.</summary>
-public sealed class DatabaseCharacterStore(ICharacterDatabase database) : ICharacterStore, ISocialStore
+public sealed class DatabaseCharacterStore(ICharacterDatabase database) : IRegionalCharacterStore
 {
     public async Task<WorldNodeSession> OpenWorldAsync(string key,SavedWorldNode initial,CancellationToken token)
     {
@@ -27,7 +27,7 @@ public sealed class DatabaseCharacterStore(ICharacterDatabase database) : IChara
         internal DatabaseWorldSession Lease { get; } = lease;
         public override ValueTask DisposeAsync() => Lease.DisposeAsync();
     }
-    public Task SaveSocialCheckpointAsync(IReadOnlyList<CharacterSave> changes, WorldNodeSave? world, SocialSave social, CancellationToken token) => SaveCheckpoint(changes, world, social, token);
+    public Task SaveSocialCheckpointAsync(IReadOnlyList<CharacterSave> changes, WorldNodeSave? world, SocialSave social, CancellationToken token) => SaveRegionalCheckpointAsync(changes, world is null ? [] : [world], social, token);
     public Task InitializeAsync(CancellationToken token) => database.InitializeAsync(token);
     public async Task<IReadOnlyList<SavedGroundItem>> LoadGroundItemsAsync(IReadOnlyList<SavedGroundItem> seeds, CancellationToken token)
     {
@@ -52,9 +52,10 @@ public sealed class DatabaseCharacterStore(ICharacterDatabase database) : IChara
     }
     public Task SaveAsync(IReadOnlyList<CharacterSave> changes, CancellationToken token) => SaveWithWorldAsync(changes,null,token);
     public Task SaveWithWorldAsync(IReadOnlyList<CharacterSave> changes,WorldNodeSave? world,CancellationToken token)
-    => SaveCheckpoint(changes,world,null,token);
-    private Task SaveCheckpoint(IReadOnlyList<CharacterSave> changes,WorldNodeSave? world,SocialSave? social,CancellationToken token)
+    => SaveRegionalCheckpointAsync(changes,world is null ? [] : [world],null,token);
+    public Task SaveRegionalCheckpointAsync(IReadOnlyList<CharacterSave> changes,IReadOnlyList<WorldNodeSave> worlds,SocialSave? social,CancellationToken token)
     {
+        if (changes.Count > 64 || worlds.Count > 2) throw new InvalidDataException("Regional checkpoint exceeds the prototype budget.");
         var writes = new DatabaseSave[changes.Count];
         for (var i = 0; i < writes.Length; i++)
         {
@@ -66,11 +67,11 @@ public sealed class DatabaseCharacterStore(ICharacterDatabase database) : IChara
                         throw new InvalidDataException("Picked instance missing from inventory.");
             writes[i] = new(session.Lease, session.Revision, change.State.Serialize(), change.State.Inventory?.Serialize(), change.GroundClaims, change.State.Echoes?.Serialize(), change.State.Progression?.Serialize(),change.State.Inventory?.Items.Select(i=>i.InstanceId).ToArray());
         }
-        DatabaseWorldSave? worldWrite=null;
-        if (world is not null)
+        var worldWrites = new List<DatabaseWorldSave>(worlds.Count);
+        foreach (var world in worlds)
         {
             if (world.Session is not WorldSession owner) throw new ArgumentException("Foreign world session.");
-            worldWrite=new(owner.Lease,owner.Revision,world.State.Serialize(),world.Audit,(world.State.Market?.Listings.Select(l=>l.Item.InstanceId) ?? []).Concat(world.State.DeathLoot?.Select(l=>l.Item.InstanceId) ?? []).ToArray());
+            worldWrites.Add(new(owner.Lease,owner.Revision,world.State.Serialize(),world.Audit,(world.State.Market?.Listings.Select(l=>l.Item.InstanceId) ?? []).Concat(world.State.DeathLoot?.Select(l=>l.Item.InstanceId) ?? []).ToArray()));
         }
         DatabaseSocialSave? socialWrite = null;
         if (social is not null)
@@ -78,7 +79,7 @@ public sealed class DatabaseCharacterStore(ICharacterDatabase database) : IChara
             if (social.Session is not SocialLease owner) throw new ArgumentException("Foreign social session.");
             socialWrite = new(new(owner.Lease, owner.Revision, "{}", [new("social", "SocialCheckpoint", "Rows " + social.Rows.Count, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())], []), social.Rows);
         }
-        return database.SaveCheckpointAsync(writes,worldWrite,socialWrite,token);
+        return database.SaveRegionalCheckpointAsync(writes,worldWrites,socialWrite,token);
     }
     private sealed class Session(DatabaseSession lease, CharacterState state)
         : CharacterSession(lease.CharacterId, lease.OwnerId, lease.Revision, state, lease.IssuedToken)

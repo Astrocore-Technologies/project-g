@@ -71,39 +71,39 @@ public partial class NetworkClient : Node
     public event Action<SocialInvites>? SocialInvitesReceived;
     public event Action<SocialResult>? SocialResultReceived;
     public event Action<PartyPresence>? PartyPresenceReceived;
-    public void SendSocial(SocialCommand command) { if(_handshakeComplete)_serverPeer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered); }
+    public void SendSocial(SocialCommand command) { if(_handshakeComplete)SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered); }
     public event Action<PvpState>? PvpStateReceived;
     public event Action<PvpPublicState>? PvpPublicReceived;
     public event Action<PvpResult>? PvpResultReceived;
     public event Action<PickupChannelState>? PickupChannelReceived;
     public event Action<PvpLootState>? PvpLootReceived;
     public PvpZoneState? LatestPvpZone {get;private set;}
-    public void SendPvp(PvpCommand command){if(_handshakeComplete)_serverPeer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);}
-    public void SendEconomy(EconomyCommand command) {if(_handshakeComplete)_serverPeer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);}
+    public void SendPvp(PvpCommand command){if(_handshakeComplete)SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);}
+    public void SendEconomy(EconomyCommand command) {if(_handshakeComplete)SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);}
     public event Action<TradeState>? TradeStateReceived;
     public event Action<TradeResult>? TradeResultReceived;
     public Dictionary<NetworkEntityId,PlayerSpawn> KnownPlayers { get; } = new();
-    public void SendTrade(TradeCommand command) { if(_handshakeComplete) _serverPeer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered); }
-    public void SendRepair(RepairCommand command) { if(_handshakeComplete) _serverPeer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered); }
+    public void SendTrade(TradeCommand command) { if(_handshakeComplete) SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered); }
+    public void SendRepair(RepairCommand command) { if(_handshakeComplete) SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered); }
     public event Action<CraftResult>? CraftResultReceived;
     public event Action<ResourceNodeState>? ResourceNodeReceived;
     public event Action<ResourceNodeDespawn>? ResourceNodeLeft;
-    public void SendCraft(CraftCommand command) { if(_handshakeComplete) _serverPeer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered); }
+    public void SendCraft(CraftCommand command) { if(_handshakeComplete) SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered); }
     public StarterZoneState? LatestStarterZone { get; private set; }
     public event Action<ExplorationState>? ExplorationReceived;
     public WorldNodeState? LatestWorldNode { get; private set; }
     public event Action<WorldNodeState>? WorldNodeReceived;
     public event Action<WorldNodeResult>? WorldNodeResultReceived;
     public void SendWorldNode(WorldNodeCommand command)
-    { if(_handshakeComplete) _serverPeer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered); }
+    { if(_handshakeComplete) SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered); }
     public event Action<ProfessionState>? ProfessionReceived;
     public event Action<ProfessionResult>? ProfessionResultReceived;
     public void SendProfession(ProfessionCommand command)
-    { if (_handshakeComplete) _serverPeer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered); }
+    { if (_handshakeComplete) SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered); }
     public event Action<ProgressionState>? ProgressionReceived;
     public event Action<ProgressionResult>? ProgressionResultReceived;
     public void SendProgression(ProgressionCommand command)
-    { if (_handshakeComplete) _serverPeer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered); }
+    { if (_handshakeComplete) SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered); }
     public event Action<EchoSpawn>? EchoSpawned;
     public event Action<EchoLoadout>? EchoLoadoutReceived;
     public event Action<EchoAction>? EchoActionReceived;
@@ -111,7 +111,7 @@ public partial class NetworkClient : Node
 
     public void SendEchoSignature(EchoSignatureCommand command)
     {
-        if (_handshakeComplete) _serverPeer?.Send(NetworkProtocol.Write(command), DeliveryMethod.ReliableOrdered);
+        if (_handshakeComplete) SendGame(NetworkProtocol.Write(command), DeliveryMethod.ReliableOrdered);
     }
 
     public override void _Ready()
@@ -172,7 +172,11 @@ public partial class NetworkClient : Node
             return;
 
         GD.Print("Connecting to server...");
-        _client.Connect("127.0.0.1", NetworkConstants.Port, NetworkConstants.ConnectionKey);
+        var port = NetworkConstants.Port;
+        foreach (var argument in OS.GetCmdlineUserArgs())
+            if (argument.StartsWith("--server-port=", StringComparison.Ordinal) &&
+                int.TryParse(argument[14..], out var configured) && configured is > 0 and <= ushort.MaxValue) port = configured;
+        _client.Connect("127.0.0.1", port, NetworkConstants.ConnectionKey);
     }
 
     public void SendMove(MoveCommand command)
@@ -180,33 +184,33 @@ public partial class NetworkClient : Node
         if (!_handshakeComplete || _serverPeer is null)
             return;
 
-        _serverPeer.Send(NetworkProtocol.Write(command), DeliveryMethod.Sequenced);
+        SendGame(NetworkProtocol.Write(command), DeliveryMethod.Sequenced);
     }
 
     public void SendAttack(AttackCommand command)
     {
         if (_handshakeComplete && _serverPeer is not null)
-            _serverPeer.Send(NetworkProtocol.Write(command), DeliveryMethod.ReliableOrdered);
+            SendGame(NetworkProtocol.Write(command), DeliveryMethod.ReliableOrdered);
     }
 
     public void SendAbility(AbilityCommand command)
     {
         if (_handshakeComplete && _serverPeer is not null)
-            _serverPeer.Send(NetworkProtocol.Write(command), DeliveryMethod.ReliableOrdered);
+            SendGame(NetworkProtocol.Write(command), DeliveryMethod.ReliableOrdered);
     }
     public void SendDevelopmentRevive(DevelopmentReviveCommand command)
     {
         if (_handshakeComplete && CanDevelopmentRevive)
-            _serverPeer?.Send(NetworkProtocol.Write(command), DeliveryMethod.ReliableOrdered);
+            SendGame(NetworkProtocol.Write(command), DeliveryMethod.ReliableOrdered);
     }
     public void SendPickup(PickupCommand command)
     {
-        if (_handshakeComplete) _serverPeer?.Send(NetworkProtocol.Write(command), DeliveryMethod.ReliableOrdered);
+        if (_handshakeComplete) SendGame(NetworkProtocol.Write(command), DeliveryMethod.ReliableOrdered);
     }
     public void SendInventory(InventoryCommand command)
     {
         if (_handshakeComplete && _serverPeer is not null)
-            _serverPeer.Send(NetworkProtocol.Write(command), DeliveryMethod.ReliableOrdered);
+            SendGame(NetworkProtocol.Write(command), DeliveryMethod.ReliableOrdered);
     }
 
     public override void _ExitTree()
@@ -238,6 +242,7 @@ public partial class NetworkClient : Node
         _serverPeer = null;
         _handshakeComplete = false;
         LocalPlayerId = PlayerId.Invalid;
+        CurrentRegion = null;
         KnownPlayers.Clear();
         CanDevelopmentRevive = false;
         Navigation = null; LatestWorldNode=null; LatestStarterZone=null; LatestPvpZone=null;CraftRecipes.Clear(); ResourceNodes.Clear();
@@ -267,6 +272,25 @@ public partial class NetworkClient : Node
                 DisconnectMalformed(peer);
                 return;
             }
+
+            if (messageType == NetworkMessageType.RegionEnter)
+            {
+                if (!_handshakeComplete || deliveryMethod != DeliveryMethod.ReliableOrdered ||
+                    !NetworkProtocol.TryReadRegionEnter(reader, out var entry))
+                { DisconnectMalformed(peer); return; }
+                if (entry.Epoch <= (CurrentRegion?.Epoch ?? 0)) return;
+                ResetRegion(entry);
+                return;
+            }
+            if (messageType == NetworkMessageType.RegionPacket)
+            {
+                if (!NetworkProtocol.TryReadRegionHeader(reader, out var epoch, out messageType))
+                { DisconnectMalformed(peer); return; }
+                // Unreliable packets can overtake the reliable entry or arrive from the previous region.
+                if (!_handshakeComplete || epoch != CurrentRegion?.Epoch) return;
+            }
+            else if (CurrentRegion is not null && messageType != NetworkMessageType.ServerReject)
+            { DisconnectMalformed(peer); return; }
 
             switch (messageType)
             {

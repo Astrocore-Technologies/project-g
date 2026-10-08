@@ -35,7 +35,7 @@ public sealed record CharacterState
 
     public void Validate()
     {
-        if (Version != CurrentVersion || RegionId != "prototype" ||
+        if (Version != CurrentVersion || !ValidRegion(RegionId) ||
             string.IsNullOrWhiteSpace(ProfileId) || ProfileId.Length > 64 ||
             !float.IsFinite(X) || !float.IsFinite(Z) ||
             !double.IsFinite(Health) || Health < 0 || !double.IsFinite(Mana) || Mana < 0 ||
@@ -50,6 +50,15 @@ public sealed record CharacterState
     }
 
     private static bool ValidDuration(double value) => double.IsFinite(value) && value is >= 0 and <= 86400;
+
+    // Syntax is model-level; the regional simulation validates configured identity/geometry.
+    private static bool ValidRegion(string region)
+    {
+        if (string.IsNullOrEmpty(region) || region.Length > 64) return false;
+        foreach (var c in region)
+            if (!(c is >= 'a' and <= 'z' or >= '0' and <= '9' or '_')) return false;
+        return true;
+    }
 
     public string Serialize() { Validate(); return JsonSerializer.Serialize(this, Json); }
     public static CharacterState Deserialize(string json)

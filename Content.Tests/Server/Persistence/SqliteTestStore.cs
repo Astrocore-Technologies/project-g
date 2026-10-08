@@ -4,7 +4,7 @@ using Microsoft.Data.Sqlite;
 namespace Content.Tests.Server.Persistence;
 
 /// <summary>Instrumentation around the real Development store: isolated files and an injectable commit gate.</summary>
-internal sealed class SqliteCharacterStore : ICharacterStore, ISocialStore
+internal sealed class SqliteCharacterStore : IRegionalCharacterStore
 {
     internal string DatabasePath { get; }
     private readonly DatabaseCharacterStore _inner;
@@ -14,6 +14,10 @@ internal sealed class SqliteCharacterStore : ICharacterStore, ISocialStore
     internal bool PendingSave => Volatile.Read(ref _pending) > 0;
     internal int OpenAttempts => Volatile.Read(ref _opens);
     internal TaskCompletionSource PauseSaves() => _saveGate = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private TaskCompletionSource? _travelGate;
+    private int _pendingTravel;
+    internal bool PendingTravel => Volatile.Read(ref _pendingTravel) != 0;
+    internal TaskCompletionSource PauseTravel() => _travelGate = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     internal SqliteCharacterStore(string? databasePath = null)
     {
@@ -40,6 +44,18 @@ internal sealed class SqliteCharacterStore : ICharacterStore, ISocialStore
         }
     }
     public Task<SocialSession> OpenSocialAsync(CancellationToken token) => _inner.OpenSocialAsync(token);
+    public async Task SaveRegionalCheckpointAsync(IReadOnlyList<CharacterSave> changes, IReadOnlyList<WorldNodeSave> worlds, SocialSave? social, CancellationToken token)
+    {
+        Interlocked.Increment(ref _pending);
+        try
+        {
+            if (_saveGate is { } gate) await gate.Task.WaitAsync(token);
+            if (_travelGate is { } travel && worlds.SelectMany(w => w.Audit).Any(a => a.Operation == "RegionArrival"))
+            { Volatile.Write(ref _pendingTravel, 1); await travel.Task.WaitAsync(token); }
+            await _inner.SaveRegionalCheckpointAsync(changes, worlds, social, token);
+        }
+        finally { Volatile.Write(ref _pendingTravel, 0); Interlocked.Decrement(ref _pending); }
+    }
     public async Task SaveSocialCheckpointAsync(IReadOnlyList<CharacterSave> changes,WorldNodeSave? world,SocialSave social,CancellationToken token)
     {
         Interlocked.Increment(ref _pending);

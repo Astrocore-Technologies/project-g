@@ -17,8 +17,7 @@ public sealed partial class GameServerService
     private readonly List<Task> _closing = new();
     private SocialSession? _socialSession;
     private SocialSave? _checkpointSocial;
-    private WorldNodeSession? _worldSession;
-    private WorldNodeSave? _checkpointWorld;
+    private IReadOnlyList<WorldNodeSave> _checkpointWorlds = [];
     private Task? _checkpoint;
     private CancellationTokenSource? _checkpointDeadline;
     private List<CharacterSave>? _checkpointChanges;
@@ -112,26 +111,28 @@ public sealed partial class GameServerService
         // Bounded one intention per type/session while waiting for disk; no growing packet queue.
         foreach (var (connection, intentions) in _intentions)
         {
-            if(intentions.Social is {} social)_world.TryQueueSocial(connection,social);
-            if(intentions.Pvp is {} pvp)_world.TryQueuePvp(connection,pvp);
-            if(intentions.Economy is { } economy) _world.TryQueueEconomy(connection,economy);
-            if(intentions.Trade is { } trade) _world.TryQueueTrade(connection,trade);
-            if(intentions.Repair is { } repair) _world.TryQueueRepair(connection,repair);
-            if (intentions.Craft is { } craft) _world.TryQueueCraft(connection,craft);
-            if (intentions.Node is { } node) _world.TryQueueWorldNode(connection,node);
-            if (intentions.NodeSecond is { } nodeSecond) _world.TryQueueWorldNode(connection,nodeSecond);
-            if (intentions.Move is { } move) _world.TryApplyMove(connection, move);
-            if (intentions.Attack is { } attack) _world.TryQueueAttack(connection, attack);
-            if (intentions.Ability is { } ability) _world.TryQueueAbility(connection, ability, _peers[connection].Ping);
-            if (intentions.Inventory is { } inventory) _world.TryQueueInventory(connection, inventory);
-            if (intentions.Pickup is { } pickup) _world.TryQueuePickup(connection, pickup);
-            if (intentions.Profession is { } profession) _world.TryQueueProfession(connection,profession);
-            if (intentions.ProfessionSecond is { } professionSecond) _world.TryQueueProfession(connection,professionSecond);
-            if (intentions.Progression is { } progression) _world.TryQueueProgression(connection,progression);
-            if (intentions.ProgressionSecond is { } second) _world.TryQueueProgression(connection,second);
-            if (intentions.Echo is { } echo) _world.TryQueueEchoSignature(connection,echo);
+            if (!_peers.ContainsKey(connection)) continue;
+            var world = WorldFor(connection);
+            if(intentions.Social is {} social)world.TryQueueSocial(connection,social);
+            if(intentions.Pvp is {} pvp)world.TryQueuePvp(connection,pvp);
+            if(intentions.Economy is { } economy) world.TryQueueEconomy(connection,economy);
+            if(intentions.Trade is { } trade) world.TryQueueTrade(connection,trade);
+            if(intentions.Repair is { } repair) world.TryQueueRepair(connection,repair);
+            if (intentions.Craft is { } craft) world.TryQueueCraft(connection,craft);
+            if (intentions.Node is { } node) world.TryQueueWorldNode(connection,node);
+            if (intentions.NodeSecond is { } nodeSecond) world.TryQueueWorldNode(connection,nodeSecond);
+            if (intentions.Move is { } move) world.TryApplyMove(connection, move);
+            if (intentions.Attack is { } attack) world.TryQueueAttack(connection, attack);
+            if (intentions.Ability is { } ability) world.TryQueueAbility(connection, ability, _peers[connection].Ping);
+            if (intentions.Inventory is { } inventory) world.TryQueueInventory(connection, inventory);
+            if (intentions.Pickup is { } pickup) world.TryQueuePickup(connection, pickup);
+            if (intentions.Profession is { } profession) world.TryQueueProfession(connection,profession);
+            if (intentions.ProfessionSecond is { } professionSecond) world.TryQueueProfession(connection,professionSecond);
+            if (intentions.Progression is { } progression) world.TryQueueProgression(connection,progression);
+            if (intentions.ProgressionSecond is { } second) world.TryQueueProgression(connection,second);
+            if (intentions.Echo is { } echo) world.TryQueueEchoSignature(connection,echo);
             if (intentions.Revive is { } revive && CanDevelopmentRevive(_peers[connection]))
-                _world.TryQueueDevelopmentRevive(connection, revive, authorized: true);
+                world.TryQueueDevelopmentRevive(connection, revive, authorized: true);
             intentions.Move = null; intentions.Attack = null; intentions.Ability = null;
         }
         _intentions.Clear();
@@ -146,19 +147,23 @@ public sealed partial class GameServerService
 
     private bool BeginCheckpoint()
     {
-        if (_characters is null || (_world.PersistenceDirty.Count == 0 && !_world.WorldNodeDirty && (_world.Social?.Dirty.Count ?? 0)==0)) return false;
-        var changes = new List<CharacterSave>(_world.PersistenceDirty.Count);
-        foreach (var connection in _world.PersistenceDirty)
-            if (_sessions.TryGetValue(connection, out var session))
-                changes.Add(new(session, _world.CaptureCharacter(connection), _world.PickupClaims(connection)));
-        if (changes.Count == 0 && !_world.WorldNodeDirty && (_world.Social?.Dirty.Count ?? 0)==0) return false;
-        _checkpointWorld=CaptureWorldWrite();
+        if (_characters is null) return false;
+        var dirty = (_world.Social?.Dirty.Count ?? 0) != 0;
+        foreach (var world in _worlds) dirty |= world.PersistenceDirty.Count != 0 || world.WorldNodeDirty;
+        if (!dirty) return false;
+        var changes = new List<CharacterSave>();
+        foreach (var world in _worlds)
+            foreach (var connection in world.PersistenceDirty)
+                if (_sessions.TryGetValue(connection, out var session))
+                    changes.Add(new(session, world.CaptureCharacter(connection), world.PickupClaims(connection)));
+        _checkpointWorlds = CaptureWorldWrites();
+        if (changes.Count == 0 && _checkpointWorlds.Count == 0 && (_world.Social?.Dirty.Count ?? 0) == 0) return false;
         _checkpointSocial=CaptureSocialWrite();
         _checkpointChanges = changes;
         _checkpointDeadline = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         // Host cancellation must not interrupt an in-flight final checkpoint.
         // A synchronous adapter failure must also leave a failed barrier, never trigger an unfenced final save.
-        try { _checkpoint = _checkpointSocial is null ? _characters.SaveWithWorldAsync(changes,_checkpointWorld, _checkpointDeadline.Token) : ((ISocialStore)_characters).SaveSocialCheckpointAsync(changes,_checkpointWorld,_checkpointSocial,_checkpointDeadline.Token); }
+        try { _checkpoint = SaveCheckpointAsync(changes, _checkpointWorlds, _checkpointSocial, _checkpointDeadline.Token); }
         catch (Exception exception) { _checkpoint = Task.FromException(exception); }
         return true;
     }
@@ -175,7 +180,7 @@ public sealed partial class GameServerService
         foreach (var change in _checkpointChanges!) change.Session.Revision++;
         CompleteWorldWrite();
         CompleteSocialWrite();
-        _world.GroundItems?.CommitClaims();
+        foreach (var world in _worlds) world.GroundItems?.CommitClaims();
         _checkpoint = null; _checkpointChanges = null;
         _checkpointDeadline!.Dispose(); _checkpointDeadline = null;
         BroadcastSnapshot();
@@ -184,11 +189,32 @@ public sealed partial class GameServerService
     private SocialSave? CaptureSocialWrite() => (_world.Social?.Dirty.Count ?? 0)>0 ? new(_socialSession ?? throw new InvalidOperationException("Missing social lease."),_world.Social!.Dirty.ToArray()) : null;
     private void CompleteSocialWrite()
     { if(_checkpointSocial is null)return; _checkpointSocial.Session.Revision++; _world.Social!.Commit(); _checkpointSocial=null; }
-    private WorldNodeSave? CaptureWorldWrite() => _world.WorldNodeDirty ? new(_worldSession ?? throw new InvalidOperationException("Missing world owner."),_world.CaptureWorldNode(),_world.WorldNodeAudit.ToArray()) : null;
+    private IReadOnlyList<WorldNodeSave> CaptureWorldWrites()
+    {
+        var writes = new List<WorldNodeSave>(2);
+        foreach (var world in _worlds)
+            if (world.WorldNodeDirty)
+                writes.Add(new(_worldLeases[world.WorldNodeKey], world.CaptureWorldNode(), world.WorldNodeAudit.ToArray()));
+        return writes;
+    }
+
+    private Task SaveCheckpointAsync(IReadOnlyList<CharacterSave> characters, IReadOnlyList<WorldNodeSave> worlds,
+        SocialSave? social, CancellationToken token)
+    {
+        if (_regions is not null)
+            return ((IRegionalCharacterStore)_characters!).SaveRegionalCheckpointAsync(characters, worlds, social, token);
+        return social is null ? _characters!.SaveWithWorldAsync(characters, worlds.SingleOrDefault(), token) :
+            ((ISocialStore)_characters!).SaveSocialCheckpointAsync(characters, worlds.SingleOrDefault(), social, token);
+    }
+
     private void CompleteWorldWrite()
     {
-        if(_checkpointWorld is null) return;
-        _checkpointWorld.Session.Revision++; _world.CommitWorldNode(_checkpointWorld.Session.Revision); _checkpointWorld=null;
+        foreach (var write in _checkpointWorlds)
+        {
+            write.Session.Revision++;
+            _worlds.Single(w => ReferenceEquals(_worldLeases[w.WorldNodeKey], write.Session)).CommitWorldNode(write.Session.Revision);
+        }
+        _checkpointWorlds = [];
     }
     private void CloseDepartedPlayers()
     {
@@ -197,8 +223,8 @@ public sealed partial class GameServerService
         {
             if (!_sessions.Remove(connection, out var session)) continue;
             _sessionCredentialHashes.Remove(connection);
-            var state = _world.CaptureCharacter(connection);
-            _world.RemovePlayer(connection);
+            var state = WorldFor(connection).CaptureCharacter(connection);
+            RemoveRegionalPlayer(connection);
             _closing.Add(SaveAndCloseAsync(session, state));
         }
         _departed.Clear();
@@ -227,23 +253,31 @@ public sealed partial class GameServerService
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         try
         {
+            if (_regions is not null)
+            {
+                try { await _regions.PendingCommit; }
+                finally { _regions.TryCompleteTravel(out _); }
+            }
             if (_checkpoint is not null)
             {
                 await _checkpoint;
                 foreach (var change in _checkpointChanges!) change.Session.Revision++;
                 CompleteWorldWrite();
                 CompleteSocialWrite();
-                _world.GroundItems?.CommitClaims();
+                foreach (var world in _worlds) world.GroundItems?.CommitClaims();
                 _checkpoint = null;
             }
             var changes = new List<CharacterSave>(_sessions.Count);
             foreach (var (connection, session) in _sessions)
-                changes.Add(new(session, _world.CaptureCharacter(connection), _world.PickupClaims(connection)));
-            var worldWrite=CaptureWorldWrite();
-            var socialWrite=CaptureSocialWrite();
-            if(socialWrite is null) await _characters.SaveWithWorldAsync(changes,worldWrite,timeout.Token);
-            else { await ((ISocialStore)_characters).SaveSocialCheckpointAsync(changes,worldWrite,socialWrite,timeout.Token); socialWrite.Session.Revision++; _world.Social!.Commit(); }
-            if(worldWrite is not null) { worldWrite.Session.Revision++; _world.CommitWorldNode(worldWrite.Session.Revision); }
+            {
+                var world = WorldFor(connection);
+                changes.Add(new(session, world.CaptureCharacter(connection), world.PickupClaims(connection)));
+            }
+            _checkpointWorlds = CaptureWorldWrites();
+            _checkpointSocial = CaptureSocialWrite();
+            await SaveCheckpointAsync(changes, _checkpointWorlds, _checkpointSocial, timeout.Token);
+            CompleteWorldWrite();
+            CompleteSocialWrite();
             await Task.WhenAll(_closing);
         }
         finally
@@ -260,8 +294,7 @@ public sealed partial class GameServerService
             cleanup.AddRange(_closing);
             await Task.WhenAll(cleanup);
             _sessions.Clear(); _logins.Clear();
-            if(_socialSession is not null) { await _socialSession.DisposeAsync(); _socialSession=null; }
-            if(_worldSession is not null) { await _worldSession.DisposeAsync(); _worldSession=null; }
+            await DisposeWorldLeasesAsync();
         }
     }
 }
