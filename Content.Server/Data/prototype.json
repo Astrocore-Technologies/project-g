@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "balanceVersion": 1,
   "balance": {
     "meleeAttack": { "strength": 1, "dexterity": 0.2, "luck": 0.3333333333333333 },
@@ -33,13 +33,18 @@
     { "id": "test_dash", "networkId": 3, "kind": "Dash", "power": 0, "manaCost": 0, "cooldownSeconds": 3, "castSeconds": 0, "range": 3, "radius": 0.45, "speed": 15, "magicAttackScale": 0 },
     { "id": "boss_ground_area", "networkId": 4, "kind": "GroundArea", "power": 12, "manaCost": 0, "cooldownSeconds": 3, "castSeconds": 1.5, "range": 8, "radius": 2, "speed": 0, "magicAttackScale": 0.5 }
   ],
+  "items": [
+    { "id": "test_sword_item", "name": "Training sword", "slot": "Weapon", "weaponId": "training_sword", "modifiers": { "meleeAttack": 8 } },
+    { "id": "test_armor_item", "name": "Training armor", "slot": "Armor", "modifiers": { "physicalDefense": 8, "maxHealth": 20 } }
+  ],
   "creatures": [
     {
       "id": "test_adventurer",
       "stats": { "strength": 10, "agility": 10, "vitality": 10, "intelligence": 10, "dexterity": 10, "luck": 10 },
       "baseHealth": 100, "baseMana": 50, "baseHealthRecovery": 1, "baseManaRecovery": 1,
       "weaponId": "training_sword",
-      "abilityIds": ["test_projectile", "test_ground_area", "test_dash"]
+      "abilityIds": ["test_projectile", "test_ground_area", "test_dash"],
+      "starterItemIds": ["test_sword_item", "test_armor_item"]
     },
     {
       "id": "test_creature",

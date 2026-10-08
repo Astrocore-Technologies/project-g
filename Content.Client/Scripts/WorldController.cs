@@ -4,6 +4,7 @@ using ProjectG.Networking;
 using Content.Shared.Navigation;
 using ProjectG.Navigation;
 using ProjectG.Combat;
+using ProjectG.Items;
 
 namespace ProjectG.Gameplay;
 
@@ -20,6 +21,7 @@ public partial class WorldController : Node3D
     private NavigationVisual? _navigationVisual;
     private AbilityPresentation? _abilities;
     private readonly Dictionary<ulong, AbilityEffectVisual> _effects = new();
+    private InventoryPresentation? _inventory;
 
     public override void _Ready()
     {
@@ -37,6 +39,8 @@ public partial class WorldController : Node3D
         _network.AbilityHitReceived += OnAbilityHit;
         _network.NpcWindupReceived += OnNpcWindup;
         _network.NpcAreaReceived += OnNpcArea;
+        _network.InventoryReceived += OnInventory;
+        _network.InventoryResultReceived += OnInventoryResult;
         _network.Disconnected += ClearWorld;
         _network.ConnectToServer();
     }
@@ -59,6 +63,8 @@ public partial class WorldController : Node3D
         _network.AbilityHitReceived -= OnAbilityHit;
         _network.NpcWindupReceived -= OnNpcWindup;
         _network.NpcAreaReceived -= OnNpcArea;
+        _network.InventoryReceived -= OnInventory;
+        _network.InventoryResultReceived -= OnInventoryResult;
         _network.Disconnected -= ClearWorld;
     }
 
@@ -86,6 +92,7 @@ public partial class WorldController : Node3D
             _abilities = new AbilityPresentation();
             player.AddChild(_abilities);
             _abilities.Initialize(player, _network);
+            _inventory = new InventoryPresentation(); AddChild(_inventory); _inventory.Initialize(_network);
         }
     }
 
@@ -154,6 +161,11 @@ public partial class WorldController : Node3D
 
     private void OnAbilityLoadout(AbilityLoadout value) => _abilities?.ApplyLoadout(value);
     private void OnAbilityResult(AbilityResult value) => _abilities?.ApplyResult(value);
+    private void OnInventory(InventoryState value)
+    {
+        if (value.EntityId == _localEntityId) _inventory?.Apply(value);
+    }
+    private void OnInventoryResult(InventoryResult value) => _inventory?.Result(value);
     private void OnAbilityHit(AbilityHit value)
     {
         if (_combat.TryGetValue(value.TargetId, out var target)) target.ApplyAbilityDamage(value);
@@ -215,6 +227,7 @@ public partial class WorldController : Node3D
         _combat.Clear();
         foreach (var effect in _effects.Values) if (GodotObject.IsInstanceValid(effect)) effect.QueueFree();
         _effects.Clear(); _abilities = null;
+        _inventory?.QueueFree(); _inventory = null;
         _localEntityId = NetworkEntityId.Invalid;
         _navigationVisual?.QueueFree();
         _navigationVisual = null;

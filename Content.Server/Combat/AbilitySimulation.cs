@@ -52,6 +52,20 @@ public sealed class AbilitySimulation
     public IReadOnlyDictionary<NetworkEntityId, AbilityResult> Results => _results;
     public bool IsDirty(NetworkEntityId id) => _dirty.Contains(id);
     internal IReadOnlyCollection<NetworkEntityId> DirtyActors => _dirty;
+    internal bool HasActiveEffects(NetworkEntityId id)
+    {
+        foreach (var effect in _effects) if (effect.ActorId == id) return true;
+        return false;
+    }
+    internal AbilityActor PrepareEquipment(NetworkEntityId id, DerivedStats stats)
+    {
+        var old = _actors[id]; var next = CreateActor(_catalog.Creatures[_options.PlayerDefinitionId], stats);
+        Array.Copy(old.ReadyAt, next.ReadyAt, old.ReadyAt.Length);
+        next.Mana = Math.Min(old.Mana, next.MaxMana);
+        next.LastSeenSequence = old.LastSeenSequence; next.LastRequestTick = old.LastRequestTick;
+        return next;
+    }
+    internal void ApplyEquipment(NetworkEntityId id, AbilityActor next) { _actors[id] = next; _dirty.Add(id); }
 
     internal SavedCooldown[] CaptureCooldowns(NetworkEntityId id)
     {

@@ -19,9 +19,9 @@ public sealed class Combatant
     public CombatEntityKind Kind { get; }
     public Vector2 Position { get; internal set; }
     public double Health { get; internal set; }
-    public DerivedStats Stats { get; }
-    public WeaponDefinition Weapon { get; }
-    public double AttackInterval { get; }
+    public DerivedStats Stats { get; internal set; }
+    public WeaponDefinition Weapon { get; internal set; }
+    public double AttackInterval { get; internal set; }
     public bool IsCasting { get; internal set; }
     public uint LastAbilitySequence { get; internal set; }
     internal uint LastSequence { get; set; }

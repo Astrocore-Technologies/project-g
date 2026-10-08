@@ -197,6 +197,12 @@ public sealed partial class GameServerService : BackgroundService
                 if (_characters is null) _world.TryQueueAbility(peer.Id, ability, peer.Ping);
                 else BufferIntentions(peer.Id).Ability ??= ability;
             }
+            if (messageType == NetworkMessageType.InventoryCommand && deliveryMethod == DeliveryMethod.ReliableOrdered &&
+                NetworkProtocol.TryReadInventoryCommand(reader, out var inventory))
+            {
+                if (_characters is null) _world.TryQueueInventory(peer.Id, inventory);
+                else BufferIntentions(peer.Id).Inventory ??= inventory;
+            }
             // Invalid game intentions are discarded; avoid logging unbounded client spam.
         }
         finally
@@ -274,6 +280,7 @@ public sealed partial class GameServerService : BackgroundService
         }
         _world.Combat?.ClearResults();
         _world.Abilities?.ClearResults();
+        _world.Inventory?.ClearResults();
     }
 
     private void SendInterest(NetPeer peer, InterestView view)
@@ -289,6 +296,17 @@ public sealed partial class GameServerService : BackgroundService
                 peer.Send(NetworkProtocol.Write(combat.State(id, _world.Tick)), DeliveryMethod.ReliableOrdered);
         }
 
+        if (_world.Combat is { } equipmentCombat)
+            foreach (var id in equipmentCombat.EquipmentDirty)
+                if (view.Entities.Contains(id) && !view.Entered.Contains(id))
+                    peer.Send(NetworkProtocol.Write(equipmentCombat.State(id, _world.Tick)), DeliveryMethod.ReliableOrdered);
+        if (_world.Inventory is { } inventory && _world.TryGetOwnedEntity(peer.Id, out var inventoryOwner))
+        {
+            if (view.Entered.Contains(inventoryOwner) || inventory.IsDirty(inventoryOwner))
+                peer.Send(NetworkProtocol.Write(inventory.State(inventoryOwner, _world.Tick)), DeliveryMethod.ReliableOrdered);
+            if (inventory.Results.TryGetValue(inventoryOwner, out var inventoryResult))
+                peer.Send(NetworkProtocol.Write(inventoryResult), DeliveryMethod.ReliableOrdered);
+        }
         if (_world.Abilities is { } abilities)
         {
             _world.UpdateAbilityInterest(peer.Id, view, view.Abilities);

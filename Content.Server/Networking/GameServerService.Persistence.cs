@@ -26,6 +26,7 @@ public sealed partial class GameServerService
         public MoveCommand? Move;
         public AttackCommand? Attack;
         public AbilityCommand? Ability;
+        public InventoryCommand? Inventory;
     }
 
     private void BeginLogin(NetPeer peer, ClientHello hello, PlayerId player)
@@ -92,6 +93,7 @@ public sealed partial class GameServerService
             if (intentions.Move is { } move) _world.TryApplyMove(connection, move);
             if (intentions.Attack is { } attack) _world.TryQueueAttack(connection, attack);
             if (intentions.Ability is { } ability) _world.TryQueueAbility(connection, ability, _peers[connection].Ping);
+            if (intentions.Inventory is { } inventory) _world.TryQueueInventory(connection, inventory);
             intentions.Move = null; intentions.Attack = null; intentions.Ability = null;
         }
         _intentions.Clear();

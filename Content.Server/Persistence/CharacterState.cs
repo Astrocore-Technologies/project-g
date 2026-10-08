@@ -9,6 +9,8 @@ namespace Content.Server.Persistence;
 public sealed record CharacterState
 {
     public const int CurrentVersion = 1;
+    // Separate model/table: additive schema migration preserves the accepted character v1 document.
+    [JsonIgnore] public SavedInventory? Inventory { get; init; }
     [JsonRequired]
     public int Version { get; init; } = CurrentVersion;
     public required string RegionId { get; init; }

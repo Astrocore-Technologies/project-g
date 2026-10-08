@@ -102,7 +102,7 @@ Checkpoint 7.2: отдельный оранжевый босс X=7, Z=-8, 242 HP
 
 ### Vertical Slice
 
-**8. Персонаж и устойчивые сохранения — реализован, ожидает приёмки**
+**8. Персонаж и устойчивые сохранения — принят пользователем**
 
 Идентификация игрока, постоянный персонаж, версионированные сохранения, восстановление после перезапуска и переподключения.
 
@@ -118,11 +118,28 @@ Checkpoint 7.2: отдельный оранжевый босс X=7, Z=-8, 242 HP
 
 Приёмка: из корня проекта задать `DOTNET_ENVIRONMENT=Development`, запустить сервер без PostgreSQL/Docker, перезапустить клиенты v9. Два клиента — разные `--identity=alice` / `--identity=bob`; после disconnect/рестарта сервера профиль возвращает позицию/HP/ману из SQLite. Двойной вход Alice отклоняется; Bob продолжает играть. Сбой БД не подтверждает незаписанное состояние. Визуальная приёмка остаётся за пользователем; следующий этап 9 — только после подтверждения. PostgreSQL-specific проверки отложены.
 
-**9. Предметы и экипировка**
+**9. Предметы и экипировка — checkpoint 9.1 реализован, ожидает приёмки**
 
 Определение предмета отдельно от его экземпляра, инвентарь, экипировка, модификаторы и ручной подбор объектов.
 
 Проверка: предмет нельзя продублировать повторным запросом; экипировка корректно влияет на бой.
+
+9.1: definitions/instances, приватный инвентарь на 8 мест, Weapon/Armor, серверные modifiers и SQLite-сохранение
+с durability barrier. Два тренировочных предмета выдаются один раз; I открывает панель, кнопки надеть/снять.
+Protocol v10 / content schema 3. По инструкции пользователя SQL/providers/migrations вынесены в `Content.Database`;
+character model v1 сохранён, additive schema v2 добавляет inventory model v1.
+Подробности: `docs/design/inventory-prototype.md`, `docs/architecture/0009-content-database.md`.
+
+Проверено: `dotnet build Game.slnx --artifacts-path .artifacts/stage9 -m:1 -p:NuGetAudit=false` — 0 warnings/errors;
+`dotnet test Content.Tests/Content.Tests.csproj --artifacts-path .artifacts/stage9 --no-build` — 219 тестов прошли.
+Есть wire round-trip/truncation/bounds, ownership/rate-limit, equip/no-heal/cooldown, SQLite instances/reconnect,
+schema v1→v2 без потери identity/HP и два UDP-клиента с latency 100–150 мс / loss 10%: gear acknowledgement после commit.
+`dotnet .artifacts/stage9/bin/Content.Server/debug/Content.Server.dll --validate-content` — успешно.
+Godot 4.7.1 console executable запущен headless (`--quit-after 900 -- --identity=stage9check`) на собственном временном
+сервере с отдельной SQLite в .artifacts: handshake v10 и загрузка сцены без runtime errors; сервер остановлен штатно.
+Визуальная проверка UI/кнопок — пользовательская приёмка. Live PostgreSQL не проверялся.
+
+9.2 — предметы в мире и ручной подбор; начинаем только после приёмки 9.1. Loot rewards/trade/crafting не включены.
 
 **10. Первое Эхо**
 
@@ -196,4 +213,4 @@ PvP-tag, safe zones, PK, последствия нападений и выпад
 
 **Позже отдельными этапами:** мобильные клиенты, корабли, владение объектами мира, уникальные артефакты и профессии, Tournament Server. Официальная RMT-площадка — только после отдельного решения, не часть ближайшего плана.
 
-**Текущий этап — 8: приёмка пользователем. Этап 9 начинается только после подтверждения.**
+**Текущий checkpoint — 9.1: приёмка пользователем. 9.2 начинается только после подтверждения.**

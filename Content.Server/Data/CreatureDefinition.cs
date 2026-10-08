@@ -15,4 +15,5 @@ public sealed record CreatureDefinition
     public required double BaseManaRecovery { get; init; }
     public required string WeaponId { get; init; }
     public required ImmutableArray<string> AbilityIds { get; init; }
+    public ImmutableArray<string> StarterItemIds { get; init; } = ImmutableArray<string>.Empty;
 }

@@ -1,3 +1,4 @@
+-- Character document v1.
 CREATE TABLE characters (
     character_id TEXT PRIMARY KEY,
     token_hash BLOB NOT NULL UNIQUE CHECK (length(token_hash) = 32),

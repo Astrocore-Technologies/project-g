@@ -4,6 +4,7 @@ using Content.Server.Networking;
 using Content.Server.Stats;
 using Content.Server.World;
 using Content.Server.Persistence;
+using Content.Database;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -56,6 +57,7 @@ builder.Services.AddOptions<NpcOptions>()
     .Bind(builder.Configuration.GetSection(NpcOptions.SectionName));
 builder.Services.AddOptions<BossOptions>()
     .Bind(builder.Configuration.GetSection(BossOptions.SectionName));
+builder.Services.AddOptions<InventoryOptions>().Bind(builder.Configuration.GetSection(InventoryOptions.SectionName));
 builder.Services.AddHostedService<GameServerService>();
 
 // Development uses SQLite by explicit user decision; neither provider has an ephemeral fallback.
@@ -70,15 +72,16 @@ if (!validateContentOnly)
         case "Sqlite":
             if (string.IsNullOrWhiteSpace(persistence.SqlitePath)) throw new InvalidOperationException("SQLite path is required.");
             var path = Path.GetFullPath(persistence.SqlitePath);
-            builder.Services.AddSingleton<ICharacterStore>(_ => new DevelopmentSqliteCharacterStore(path));
+            builder.Services.AddSingleton<ICharacterDatabase>(_ => new DevelopmentSqliteCharacterStore(path));
             break;
         case "Postgres":
             if (string.IsNullOrWhiteSpace(persistence.ConnectionString))
                 throw new InvalidOperationException("Set Persistence__ConnectionString for PostgreSQL; credentials must not be committed.");
-            builder.Services.AddSingleton<ICharacterStore>(_ => new PostgresCharacterStore(persistence.ConnectionString));
+            builder.Services.AddSingleton<ICharacterDatabase>(_ => new PostgresCharacterStore(persistence.ConnectionString));
             break;
         default: throw new InvalidOperationException("Unsupported persistence provider. Use Sqlite or Postgres.");
     }
+    builder.Services.AddSingleton<ICharacterStore, DatabaseCharacterStore>();
 }
 
 // Parse once before opening the UDP port. Definitions remain server-only and immutable.

@@ -1,3 +1,4 @@
+-- Character document v1.
 CREATE TABLE project_g_characters (
     character_id uuid PRIMARY KEY,
     token_hash bytea NOT NULL UNIQUE CHECK (octet_length(token_hash) = 32),

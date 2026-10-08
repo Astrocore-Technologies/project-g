@@ -11,4 +11,5 @@ public sealed record ContentDocument
     public required WeaponDefinition[] Weapons { get; init; }
     public required AbilityDefinition[] Abilities { get; init; }
     public required CreatureDefinition[] Creatures { get; init; }
+    public required ItemDefinition[] Items { get; init; }
 }

@@ -15,12 +15,12 @@ public sealed class SqliteStoreTests
         using (var connection = Connect(store.DatabasePath))
         using (var command = connection.CreateCommand())
         {
-            command.CommandText = "UPDATE schema_version SET version = 2"; command.ExecuteNonQuery();
+            command.CommandText = "UPDATE schema_version SET version = 99 WHERE version = 2"; command.ExecuteNonQuery();
         }
         await Assert.ThrowsAsync<InvalidDataException>(() => store.InitializeAsync(CancellationToken.None));
         using var verify = Connect(store.DatabasePath); using var version = verify.CreateCommand();
-        version.CommandText = "SELECT version FROM schema_version";
-        Assert.Equal(2L, (long)version.ExecuteScalar()!);
+        version.CommandText = "SELECT MAX(version) FROM schema_version";
+        Assert.Equal(99L, (long)version.ExecuteScalar()!);
     }
 
     [Fact]

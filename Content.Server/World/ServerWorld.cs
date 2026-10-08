@@ -4,6 +4,7 @@ using Content.Server.Combat;
 using Content.Server.Data;
 using Content.Server.Stats;
 using Content.Server.Persistence;
+using Content.Server.Items;
 using Content.Shared.Movement;
 using Content.Shared.Network;
 using Content.Shared.Navigation;
@@ -33,7 +34,7 @@ public sealed class ServerWorld
     public ServerWorld(IOptions<MovementOptions> options, IOptions<InterestOptions> interest,
         IOptions<NavigationOptions>? navigation = null, ContentCatalog? catalog = null,
         IOptions<CombatOptions>? combat = null, IOptions<ServerOptions>? server = null, IOptions<NpcOptions>? npc = null,
-        IOptions<BossOptions>? boss = null)
+        IOptions<BossOptions>? boss = null, IOptions<InventoryOptions>? inventory = null)
     {
         _movement = options.Value.ToSettings();
         _interest = interest.Value;
@@ -55,6 +56,8 @@ public sealed class ServerWorld
             Combat.Add(TrainingTargetId, position, CombatEntityKind.TrainingTarget);
             _spatial.Add(TrainingTargetId, position);
             Abilities = new AbilitySimulation(catalog, Combat, _spatial, Navigation, settings, _interest.CellSize, StartDash);
+            if (inventory?.Value.Enabled == true)
+                Inventory = new InventorySimulation(catalog, Combat, Abilities, id => _playersByEntity[id].BaseStats);
             if (npc?.Value is { Enabled: true } npcSettings)
             {
                 if (!catalog.Creatures.ContainsKey(npcSettings.DefinitionId))
@@ -89,6 +92,7 @@ public sealed class ServerWorld
     public NetworkEntityId TrainingTargetId { get; }
     public NpcSimulation? Npc { get; }
     public NpcSimulation? Boss { get; }
+    public InventorySimulation? Inventory { get; }
     public IReadOnlyCollection<ServerPlayer> Players => _playersByConnection.Values;
 
     public ServerPlayer AddPlayer(int connectionId, PlayerId playerId, CharacterState? saved = null)
@@ -123,6 +127,7 @@ public sealed class ServerWorld
             Combat?.Add(entityId, spawn, CombatEntityKind.Player, baseStats: player.BaseStats);
             if (Abilities is not null && _playerDefinition is { } definition)
                 Abilities.AddPlayer(entityId, definition);
+            Inventory?.Add(entityId, saved?.Inventory ?? InventorySimulation.CreateStarter(_playerDefinition!));
             if (saved is not null)
             {
                 var actor = Combat!.Get(entityId);
@@ -147,6 +152,7 @@ public sealed class ServerWorld
         return new CharacterState
         {
             RegionId = "prototype", ProfileId = definition.Id, Stats = definition.Stats,
+            Inventory = Inventory is not null ? InventorySimulation.CreateStarter(definition) : null,
             X = spawn.X, Z = spawn.Y, Health = stats.MaxHealth, Mana = Math.Max(0, stats.MaxMana),
             AttackCooldownSeconds = 0, Cooldowns = definition.AbilityIds.Select(id => new SavedCooldown(id, 0)).ToArray(),
             SavedAtUnixMilliseconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
@@ -160,6 +166,7 @@ public sealed class ServerWorld
         return new CharacterState
         {
             RegionId = "prototype", ProfileId = _playerDefinition!.Id, Stats = player.BaseStats,
+            Inventory = Inventory?.Capture(player.EntityId),
             X = player.Position.X, Z = player.Position.Y, Health = actor.Health,
             Mana = Abilities!.Mana(player.EntityId), Cooldowns = Abilities.CaptureCooldowns(player.EntityId),
             AttackCooldownSeconds = Math.Max(0, actor.ReadyAt - Combat.Time),
@@ -177,6 +184,7 @@ public sealed class ServerWorld
         _persistenceDirty.Remove(connectionId);
         Combat?.Remove(player.EntityId);
         Abilities?.Remove(player.EntityId);
+        Inventory?.Remove(player.EntityId);
         return player;
     }
 
@@ -219,6 +227,8 @@ public sealed class ServerWorld
     public bool TryQueueAbility(int connectionId, AbilityCommand command, int measuredRttMilliseconds) =>
         _playersByConnection.TryGetValue(connectionId, out var player) &&
         Abilities?.Queue(player.EntityId, command, Tick, measuredRttMilliseconds) == true;
+    public bool TryQueueInventory(int connectionId, InventoryCommand command) =>
+        _playersByConnection.TryGetValue(connectionId, out var player) && Inventory?.Queue(player.EntityId, command, Tick) == true;
 
     private bool StartDash(NetworkEntityId id, Vector2 destination, float speed)
     {
@@ -271,6 +281,8 @@ public sealed class ServerWorld
         Abilities?.Simulate(fixedDeltaSeconds, Tick);
         Npc?.Resolve(fixedDeltaSeconds, Tick);
         Boss?.Resolve(fixedDeltaSeconds, Tick);
+        Inventory?.Simulate(Tick);
+        if (Inventory is { } inventory) foreach (var id in inventory.Dirty) MarkPersistent(id);
         if (Combat is { } combat)
         {
             foreach (var action in combat.Events)

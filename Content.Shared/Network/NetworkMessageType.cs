@@ -20,5 +20,8 @@ public enum NetworkMessageType : ushort
     AbilityEffectState = 22,
     AbilityHit = 23,
     NpcWindup = 24,
-    NpcArea = 25
+    NpcArea = 25,
+    InventoryCommand = 26,
+    InventoryResult = 27,
+    InventoryState = 28
 }

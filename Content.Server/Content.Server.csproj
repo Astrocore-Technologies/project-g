@@ -2,19 +2,17 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Content.Shared\Content.Shared.csproj" />
+    <ProjectReference Include="..\Content.Database\Content.Database.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="LiteNetLib" Version="2.1.4" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
-    <PackageReference Include="Npgsql" Version="10.0.0" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="appsettings*.json" CopyToOutputDirectory="PreserveNewest" />
     <None Update="Data/prototype.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
-    <EmbeddedResource Include="Persistence/Migrations/*.sql" />
   </ItemGroup>
 
   <PropertyGroup>

@@ -7,7 +7,7 @@ namespace Content.Tests.Server.Persistence;
 internal sealed class SqliteCharacterStore : ICharacterStore
 {
     internal string DatabasePath { get; }
-    private readonly DevelopmentSqliteCharacterStore _inner;
+    private readonly DatabaseCharacterStore _inner;
     private TaskCompletionSource? _saveGate;
     private int _pending;
     private int _opens;
@@ -18,7 +18,7 @@ internal sealed class SqliteCharacterStore : ICharacterStore
     internal SqliteCharacterStore(string? databasePath = null)
     {
         DatabasePath = databasePath ?? Path.Combine(AppContext.BaseDirectory, "sqlite-tests", Guid.NewGuid().ToString("N"), "characters.db");
-        _inner = new DevelopmentSqliteCharacterStore(DatabasePath);
+        _inner = new DatabaseCharacterStore(new Content.Database.DevelopmentSqliteCharacterStore(DatabasePath));
     }
     private SqliteConnection Connect()
     {

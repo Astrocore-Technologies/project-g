@@ -50,6 +50,8 @@ public partial class NetworkClient : Node
     public event Action<AbilityHit>? AbilityHitReceived;
     public event Action<NpcWindup>? NpcWindupReceived;
     public event Action<NpcArea>? NpcAreaReceived;
+    public event Action<InventoryState>? InventoryReceived;
+    public event Action<InventoryResult>? InventoryResultReceived;
     public event Action? Disconnected;
 
     public override void _Ready()
@@ -128,6 +130,11 @@ public partial class NetworkClient : Node
     }
 
     public void SendAbility(AbilityCommand command)
+    {
+        if (_handshakeComplete && _serverPeer is not null)
+            _serverPeer.Send(NetworkProtocol.Write(command), DeliveryMethod.ReliableOrdered);
+    }
+    public void SendInventory(InventoryCommand command)
     {
         if (_handshakeComplete && _serverPeer is not null)
             _serverPeer.Send(NetworkProtocol.Write(command), DeliveryMethod.ReliableOrdered);
@@ -282,6 +289,16 @@ public partial class NetworkClient : Node
                 case NetworkMessageType.NpcArea:
                     if (_handshakeComplete && NetworkProtocol.TryReadNpcArea(reader, out var npcArea))
                         NpcAreaReceived?.Invoke(npcArea);
+                    else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.InventoryState:
+                    if (_handshakeComplete && NetworkProtocol.TryReadInventoryState(reader, out var inventory))
+                        InventoryReceived?.Invoke(inventory);
+                    else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.InventoryResult:
+                    if (_handshakeComplete && NetworkProtocol.TryReadInventoryResult(reader, out var inventoryResult))
+                        InventoryResultReceived?.Invoke(inventoryResult);
                     else DisconnectMalformed(peer);
                     break;
                 default:

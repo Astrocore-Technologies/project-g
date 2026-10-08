@@ -61,6 +61,30 @@ public sealed class CombatSimulation
     public bool TryGet(NetworkEntityId id, out Combatant actor) => _actors.TryGetValue(id, out actor!);
     internal double Time => _time;
     internal DerivedStats InitialPlayerStats => _calculator.Calculate(_catalog.Creatures[_playerDefinition]);
+    private readonly HashSet<NetworkEntityId> _equipmentDirty = new();
+    public IReadOnlyCollection<NetworkEntityId> EquipmentDirty => _equipmentDirty;
+
+    internal (DerivedStats Stats, WeaponDefinition Weapon, double Interval) PrepareEquipment(BaseStats primary, IReadOnlyList<ItemDefinition> equipment)
+    {
+        var creature = _catalog.Creatures[_playerDefinition] with { Stats = primary };
+        var stats = _calculator.Calculate(creature); var weapon = _catalog.Weapons[creature.WeaponId];
+        foreach (var item in equipment)
+        {
+            stats = item.Modifiers.Apply(stats);
+            if (item.WeaponId is { } weaponId) weapon = _catalog.Weapons[weaponId];
+        }
+        ValidateProfile(creature with { WeaponId = weapon.Id });
+        return (stats, weapon, Math.Max(_minimumInterval, _calculator.AttackInterval(weapon.AttackIntervalSeconds, stats)));
+    }
+
+    internal void ApplyEquipment(NetworkEntityId id, (DerivedStats Stats, WeaponDefinition Weapon, double Interval) profile)
+    {
+        var actor = _actors[id];
+        actor.Stats = profile.Stats; actor.Weapon = profile.Weapon; actor.AttackInterval = profile.Interval;
+        // Changing maxima cannot heal; existing ReadyAt is deliberately preserved.
+        actor.Health = Math.Min(actor.Health, profile.Stats.MaxHealth);
+        _equipmentDirty.Add(id);
+    }
 
     /// <summary>Authoritative spell damage; the training policy remains separate from geometry.</summary>
     public double ApplyAbilityDamage(NetworkEntityId targetId, double power)
@@ -90,7 +114,7 @@ public sealed class CombatSimulation
 
     public void Remove(NetworkEntityId id)
     {
-        _actors.Remove(id); _pending.Remove(id); _results.Remove(id);
+        _actors.Remove(id); _pending.Remove(id); _results.Remove(id); _equipmentDirty.Remove(id);
     }
 
     public void Move(NetworkEntityId id, Vector2 position) => _actors[id].Position = position;
@@ -136,7 +160,7 @@ public sealed class CombatSimulation
         _pending.Clear();
     }
 
-    public void ClearResults() => _results.Clear();
+    public void ClearResults() { _results.Clear(); _equipmentDirty.Clear(); }
 
     /// <summary>Server AI only; no client command can select a monster actor.</summary>
     public bool ExecuteNpcAttack(NetworkEntityId id, uint sequence, Vector2 direction, uint tick)

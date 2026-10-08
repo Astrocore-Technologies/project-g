@@ -8,7 +8,7 @@ namespace Content.Server.Data;
 /// <summary>Validated server-only snapshot; never send the catalog to clients.</summary>
 public sealed class ContentCatalog
 {
-    public const int SchemaVersion = 2;
+    public const int SchemaVersion = 3;
     public const int MaxFileBytes = 4 * 1024 * 1024;
     private const int MaxDefinitions = 4096;
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -31,6 +31,18 @@ public sealed class ContentCatalog
         Weapons = Index(document.Weapons, item => item.Id, "weapons");
         Abilities = Index(document.Abilities, item => item.Id, "abilities");
         Creatures = Index(document.Creatures, item => item.Id, "creatures");
+        Items = Index(document.Items, item => item.Id, "items");
+        foreach (var item in Items.Values)
+        {
+            Check(item.Name is { Length: > 0 and <= 24 } && System.Text.Encoding.UTF8.GetByteCount(item.Name) <= 48,
+                $"item {item.Id}: invalid public name");
+            Check(item.Slot is Content.Shared.Network.EquipmentSlot.Weapon or Content.Shared.Network.EquipmentSlot.Armor,
+                $"item {item.Id}: unknown equipment slot");
+            Check(item.Modifiers is not null && item.Modifiers.IsValid(), $"item {item.Id}: invalid modifiers");
+            Check(item.Slot == Content.Shared.Network.EquipmentSlot.Weapon
+                ? item.WeaponId is not null && Weapons.TryGetValue(item.WeaponId, out var weapon) && weapon.Kind == WeaponKind.Melee
+                : item.WeaponId is null, $"item {item.Id}: invalid weapon reference/kind");
+        }
 
         foreach (var weapon in Weapons.Values)
         {
@@ -70,6 +82,10 @@ public sealed class ContentCatalog
             foreach (var id in creature.AbilityIds)
                 Check(id is not null && Abilities.ContainsKey(id) && seen.Add(id),
                     $"creature {creature.Id}: unknown or duplicate abilityId {id}");
+            Check(!creature.StarterItemIds.IsDefault && creature.StarterItemIds.Length <= Content.Shared.Network.NetworkConstants.MaxInventoryItems,
+                $"creature {creature.Id}: invalid starter inventory");
+            foreach (var id in creature.StarterItemIds)
+                Check(id is not null && Items.ContainsKey(id), $"creature {creature.Id}: unknown starter item {id}");
         }
     }
 
@@ -78,6 +94,7 @@ public sealed class ContentCatalog
     public FrozenDictionary<string, WeaponDefinition> Weapons { get; }
     public FrozenDictionary<string, AbilityDefinition> Abilities { get; }
     public FrozenDictionary<string, CreatureDefinition> Creatures { get; }
+    public FrozenDictionary<string, ItemDefinition> Items { get; }
 
     public static ContentCatalog LoadFile(string path)
     {
