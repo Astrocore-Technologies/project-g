@@ -43,7 +43,7 @@ public partial class StarterZonePresentation : Node3D
         var text=_zone.GuideName+"\nДобро пожаловать в "+_zone.TownName+"!\n\n";
         var flags=_exploration?.Tutorial ?? 0;
         for(var i=0;i<Steps.Length;i++) text+=((flags&(1<<i))!=0 ? "✓ " : "○ ")+Steps[i]+"\n";
-        _guideText.Text=text+"\nI — вещи, K — характеристики и навыки, C — добыча и крафт.\nИсследуй мир и пробуй разные действия: новые возможности\nпоявляются по мере твоего пути. Подсказки не дают наград.\nF1 — открыть или закрыть эту памятку.";
+        _guideText.Text=text+"\nI — вещи, K — характеристики и навыки, C — добыча, крафт и ремонт.\nB — обмен, J — кузница, монеты и местный рынок.\nИсследуй мир и пробуй разные действия: новые возможности\nпоявляются по мере твоего пути. Подсказки не дают наград.\nF1 — открыть или закрыть эту памятку.";
     }
     public override void _UnhandledInput(InputEvent input)
     {

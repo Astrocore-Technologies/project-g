@@ -17,7 +17,7 @@ public sealed partial class InventorySimulation
         var last=actor.Crafting?.LastOperation ?? 0;
         return operation==0 || operation>long.MaxValue ? CraftOutcome.InvalidOperation
             : operation<=last ? CraftOutcome.AlreadyProcessed : operation!=last+1 ? CraftOutcome.InvalidOperation
-            : combat.Time<actor.CraftReadyAt ? CraftOutcome.Cooldown : CraftOutcome.Accepted;
+            : actor.TradeSession!=0 ? CraftOutcome.Busy : combat.Time<actor.CraftReadyAt ? CraftOutcome.Cooldown : CraftOutcome.Accepted;
     }
     public CraftOutcome CheckCraftOperation(NetworkEntityId id,ulong operation) => CheckOperation(_actors[id],operation);
     public CraftOutcome GatherMaterial(NetworkEntityId id,ulong operation,ushort material,float cooldown)
@@ -47,7 +47,7 @@ public sealed partial class InventorySimulation
             if(!catalog.Items.TryGetValue(output,out var definition)) return CraftOutcome.Unavailable;
             if(_nextHandle==0) throw new InvalidOperationException("Runtime item handles exhausted.");
             items=new Item[actor.Items.Length+1]; Array.Copy(actor.Items,items,actor.Items.Length);
-            items[^1]=new(_nextHandle,new SavedItem(Guid.NewGuid(),output,EquipmentSlot.None),definition);
+            items[^1]=new(_nextHandle,NormalizeCondition(new SavedItem(Guid.NewGuid(),output,EquipmentSlot.None),definition),definition);
         }
         // Everything is prepared before one owner-bound mutation; the checkpoint persists it with XP/world stock.
         if(items is not null) { _nextHandle++; actor.Items=items; }

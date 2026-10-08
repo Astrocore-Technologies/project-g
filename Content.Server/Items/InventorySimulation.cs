@@ -26,6 +26,10 @@ public sealed partial class InventorySimulation(ContentCatalog catalog, CombatSi
     {
         public Item[] Items = items;
         public SavedCrafting? Crafting;
+        public SavedMaintenance? Maintenance;
+        public SavedEconomy? Economy;
+        public ulong TradeSession;
+        public uint LastWearSequence;
         public double CraftReadyAt;
         public uint Sequence;
         public uint? RequestTick;
@@ -42,7 +46,7 @@ public sealed partial class InventorySimulation(ContentCatalog catalog, CombatSi
         foreach (var item in actor.Items) if (item.Saved.InstanceId == saved.InstanceId) return false;
         if (_nextHandle == 0) throw new InvalidOperationException("Runtime item handles exhausted.");
         var next = new Item[actor.Items.Length + 1]; Array.Copy(actor.Items, next, actor.Items.Length);
-        next[^1] = new(_nextHandle++, saved, definition); actor.Items = next; _dirty.Add(id); return true;
+        next[^1] = new(_nextHandle++, NormalizeCondition(saved,definition), definition); actor.Items = next; _dirty.Add(id); return true;
     }
     public static SavedInventory CreateStarter(CreatureDefinition definition) => new()
     {
@@ -58,18 +62,21 @@ public sealed partial class InventorySimulation(ContentCatalog catalog, CombatSi
                 (source.EquippedSlot != EquipmentSlot.None && source.EquippedSlot != definition.Slot))
                 throw new InvalidDataException("Saved item definition/equipment slot is incompatible with content.");
             if (_nextHandle == 0) throw new InvalidOperationException("Runtime item handles exhausted.");
-            items[i] = new(_nextHandle++, source, definition);
+            items[i] = new(_nextHandle++, NormalizeCondition(source,definition), definition);
         }
         ValidateCrafting(saved.Crafting);
-        var actor = new Actor(items) { Crafting=saved.Crafting, CraftReadyAt=combat.Time+Math.Max(0,(saved.Crafting?.CooldownSeconds ?? 0)-offlineSeconds) };
+        if(saved.Economy is {} economy && (catalog.Economy is null || economy.Coins>catalog.Economy.CoinLimit))throw new InvalidDataException("Economy migration required.");
+        foreach(var item in items)if(item.Saved.Enhancement>0 && (catalog.Economy is not {} balance || item.Saved.Enhancement>balance.EnhancementChances.Length || item.Definition.Id!=balance.BaseWeapon && item.Definition.Id!=balance.EvolvedWeapon))throw new InvalidDataException("Enhancement migration required.");
+        if(saved.Maintenance is { } receipt && (catalog.Crafting is not { } crafting || !crafting.Materials.Any(m=>m.Id==receipt.MaterialId))) throw new InvalidDataException("Maintenance material requires migration.");
+        var actor = new Actor(items) { Crafting=saved.Crafting, Maintenance=saved.Maintenance, Economy=saved.Economy, CraftReadyAt=combat.Time+Math.Max(0,(saved.Crafting?.CooldownSeconds ?? 0)-offlineSeconds) };
         Apply(id, actor, null, EquipmentSlot.None);
         _actors.Add(id, actor); _dirty.Add(id);
     }
     public void Remove(NetworkEntityId id) { _actors.Remove(id); _pending.Remove(id); _dirty.Remove(id); _results.Remove(id); }
-    public SavedInventory Capture(NetworkEntityId id) => new() { Items = _actors[id].Items.Select(item => item.Saved).ToArray(), Crafting=CaptureCrafting(id) };
+    public SavedInventory Capture(NetworkEntityId id) => new() { Items = _actors[id].Items.Select(item => item.Saved).ToArray(), Crafting=CaptureCrafting(id), Maintenance=_actors[id].Maintenance, Economy=_actors[id].Economy };
     public InventoryState State(NetworkEntityId id, uint tick) => new(id, tick, _actors[id].Items.Select(item => new InventoryEntry(
-        item.Handle, item.Definition.Name, item.Definition.Slot, item.Saved.EquippedSlot != EquipmentSlot.None,
-        item.Definition.Modifiers.MeleeAttack, item.Definition.Modifiers.PhysicalDefense, item.Definition.Modifiers.MaxHealth)).ToArray());
+        item.Handle, item.Definition.Name+(item.Saved.Enhancement>0?" +"+item.Saved.Enhancement:""), item.Definition.Slot, item.Saved.EquippedSlot != EquipmentSlot.None,
+        EffectiveDefinition(item).Modifiers.MeleeAttack, item.Definition.Modifiers.PhysicalDefense, item.Definition.Modifiers.MaxHealth)).ToArray());
     public bool Queue(NetworkEntityId id, InventoryCommand command, uint tick)
     {
         if (!_actors.TryGetValue(id, out var actor) || command.Sequence == 0 || command.ItemHandle == 0 ||
@@ -87,18 +94,20 @@ public sealed partial class InventorySimulation(ContentCatalog catalog, CombatSi
         {
             var actor = _actors[id]; var target = Array.Find(actor.Items, item => item.Handle == command.ItemHandle);
             var outcome = target is null ? InventoryOutcome.NotOwned
+                : actor.TradeSession!=0 ? InventoryOutcome.Busy
                 : combat.Get(id).Health <= 0 ? InventoryOutcome.InvalidState
                 : combat.Get(id).IsCasting || abilities.HasActiveEffects(id) ? InventoryOutcome.Busy : InventoryOutcome.Accepted;
             if (outcome == InventoryOutcome.Accepted)
             {
                 try
                 {
+                    if(actor.Items.Any(i=>i.Saved.Condition?.Revision==long.MaxValue)) throw new ArgumentException("Item revision exhausted.");
                     var slot = command.Action == InventoryAction.Equip ? target!.Definition.Slot : EquipmentSlot.None;
                     Apply(id, actor, target, slot);
                     foreach (var item in actor.Items)
-                        if (item == target) item.Saved = item.Saved with { EquippedSlot = slot };
+                        if (item == target) item.Saved = ChangeSlot(item.Saved,slot);
                         else if (slot != EquipmentSlot.None && item.Saved.EquippedSlot == slot)
-                            item.Saved = item.Saved with { EquippedSlot = EquipmentSlot.None };
+                            item.Saved = ChangeSlot(item.Saved,EquipmentSlot.None);
                     _dirty.Add(id);
                 }
                 catch (ArgumentException) { outcome = InventoryOutcome.InvalidState; }
@@ -115,7 +124,7 @@ public sealed partial class InventorySimulation(ContentCatalog catalog, CombatSi
         {
             var slot = item == changed ? desired : item.Saved.EquippedSlot;
             if (changed is not null && item != changed && desired != EquipmentSlot.None && slot == desired) slot = EquipmentSlot.None;
-            if (slot != EquipmentSlot.None) equipment.Add(item.Definition);
+            if (slot != EquipmentSlot.None && item.Saved.Condition?.Current!=0) equipment.Add(EffectiveDefinition(item));
         }
         equipment.Sort((left, right) => left.Slot.CompareTo(right.Slot));
         var profile = combat.PrepareEquipment(primary(id), equipment);

@@ -4,7 +4,7 @@ public static class NetworkConstants
 {
     public const int Port = 9050;
     public const string ConnectionKey = "project-g-dev";
-    public const ushort ProtocolVersion = 18;
+    public const ushort ProtocolVersion = 21;
     public const int MaxActiveEchoes = 3;
     public const int MaxInventoryItems = 8;
     public const int ServerTickRate = 20;

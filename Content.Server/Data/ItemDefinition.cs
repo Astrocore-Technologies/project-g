@@ -10,5 +10,6 @@ public sealed record ItemDefinition
     public required string Name { get; init; }
     public required EquipmentSlot Slot { get; init; }
     public string? WeaponId { get; init; }
+    public Content.Server.Items.ItemConditionDefinition? Condition { get; init; }
     public DerivedStatModifiers Modifiers { get; init; } = new();
 }

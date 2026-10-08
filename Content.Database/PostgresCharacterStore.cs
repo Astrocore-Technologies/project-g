@@ -30,7 +30,7 @@ public sealed partial class PostgresCharacterStore(string connectionString) : IC
         await setup.ExecuteNonQueryAsync(cancellationToken);
         await using var version = new NpgsqlCommand("SELECT COALESCE(max(version), 0) FROM project_g_schema", connection, transaction);
         var current = (int)(await version.ExecuteScalarAsync(cancellationToken))!;
-        if (current is < 0 or > 6) throw new InvalidDataException("Unsupported database schema version.");
+        if (current is < 0 or > 7) throw new InvalidDataException("Unsupported database schema version.");
         if (current == 0)
         {
             using var resource = typeof(PostgresCharacterStore).Assembly.GetManifestResourceStream(
@@ -90,10 +90,15 @@ public sealed partial class PostgresCharacterStore(string connectionString) : IC
             await using var mark = new NpgsqlCommand("INSERT INTO project_g_schema VALUES (6)", connection, transaction);
             await mark.ExecuteNonQueryAsync(cancellationToken);
         }
+        if(current<7)
+        {
+            using var resource=typeof(PostgresCharacterStore).Assembly.GetManifestResourceStream("Content.Database.Migrations.0007_ownership.sql") ?? throw new InvalidOperationException("Migration missing.");
+            using var reader=new StreamReader(resource); await using var migration=new NpgsqlCommand(await reader.ReadToEndAsync(cancellationToken),connection,transaction); await migration.ExecuteNonQueryAsync(cancellationToken); await using var mark=new NpgsqlCommand("INSERT INTO project_g_schema VALUES (7)",connection,transaction); await mark.ExecuteNonQueryAsync(cancellationToken);
+        }
         await transaction.CommitAsync(cancellationToken);
     }
 
-    public async Task<DatabaseSession> OpenAsync(string token, string initialCharacter, string initialInventory, string initialEchoes, CancellationToken cancellationToken, string? initialProgression = null)
+    public async Task<DatabaseSession> OpenAsync(string token, string initialCharacter, string initialInventory, string initialEchoes, CancellationToken cancellationToken, string? initialProgression = null,IReadOnlyList<Guid>? initialInventoryItems = null)
     {
         if (!StorageBounds.ValidToken(token)) throw new DatabaseInvalidIdentityException();
         StorageBounds.Document(initialCharacter); StorageBounds.Document(initialInventory); StorageBounds.Document(initialEchoes);
@@ -106,6 +111,7 @@ public sealed partial class PostgresCharacterStore(string connectionString) : IC
         var locked = false;
         try
         {
+            await using var transaction=await connection.BeginTransactionAsync(cancellationToken);
             var ownerId = Guid.NewGuid();
             if (issued.Length != 0)
             {
@@ -113,7 +119,7 @@ public sealed partial class PostgresCharacterStore(string connectionString) : IC
                 await using var insert = new NpgsqlCommand("""
                     INSERT INTO project_g_characters (character_id, token_hash, owner_id, revision, model_version, state)
                     VALUES ($1, $2, $3, 0, 1, $4)
-                    """, connection);
+                    """, connection,transaction);
                 insert.Parameters.AddWithValue(characterId);
                 insert.Parameters.AddWithValue(hash);
                 insert.Parameters.AddWithValue(ownerId);
@@ -122,20 +128,20 @@ public sealed partial class PostgresCharacterStore(string connectionString) : IC
             }
             else
             {
-                await using var find = new NpgsqlCommand("SELECT character_id FROM project_g_characters WHERE token_hash = $1", connection);
+                await using var find = new NpgsqlCommand("SELECT character_id FROM project_g_characters WHERE token_hash = $1", connection,transaction);
                 find.Parameters.AddWithValue(hash);
                 characterId = await find.ExecuteScalarAsync(cancellationToken) is Guid id ? id : throw new DatabaseInvalidIdentityException();
             }
             // Hash collisions only deny a login; they cannot transfer ownership to another character.
             lockKey = BinaryPrimitives.ReadInt64LittleEndian(SHA256.HashData(characterId.ToByteArray()));
-            await using var acquire = new NpgsqlCommand("SELECT pg_try_advisory_lock($1)", connection);
+            await using var acquire = new NpgsqlCommand("SELECT pg_try_advisory_lock($1)", connection,transaction);
             acquire.Parameters.AddWithValue(lockKey);
             locked = (bool)(await acquire.ExecuteScalarAsync(cancellationToken))!;
             if (!locked) throw new DatabaseCharacterInUseException();
             await using var claim = new NpgsqlCommand("""
                 UPDATE project_g_characters SET owner_id = $1, revision = revision + 1
                 WHERE character_id = $2 RETURNING revision, model_version, state::text
-                """, connection);
+                """, connection,transaction);
             claim.Parameters.AddWithValue(ownerId); claim.Parameters.AddWithValue(characterId);
             await using var record = await claim.ExecuteReaderAsync(cancellationToken);
             if (!await record.ReadAsync(cancellationToken) || record.GetInt32(1) != 1)
@@ -144,10 +150,10 @@ public sealed partial class PostgresCharacterStore(string connectionString) : IC
             await record.DisposeAsync();
             await using var inventory = new NpgsqlCommand("""
                 INSERT INTO project_g_inventory VALUES ($1, 1, $2) ON CONFLICT (character_id) DO NOTHING
-                """, connection);
+                """, connection,transaction);
             inventory.Parameters.AddWithValue(characterId);
             inventory.Parameters.AddWithValue(NpgsqlDbType.Jsonb, initialInventory);
-            await inventory.ExecuteNonQueryAsync(cancellationToken);
+            var inventoryCreated=await inventory.ExecuteNonQueryAsync(cancellationToken)==1;
             inventory.CommandText = "SELECT model_version, state::text FROM project_g_inventory WHERE character_id = $1";
             inventory.Parameters.RemoveAt(1);
             await using var items = await inventory.ExecuteReaderAsync(cancellationToken);
@@ -155,7 +161,7 @@ public sealed partial class PostgresCharacterStore(string connectionString) : IC
             var inventoryState = items.GetString(1);
             StorageBounds.Document(state); StorageBounds.Document(inventoryState);
             await items.DisposeAsync();
-            await using var echoes = new NpgsqlCommand("INSERT INTO project_g_echoes VALUES ($1,1,$2) ON CONFLICT(character_id) DO NOTHING", connection);
+            await using var echoes = new NpgsqlCommand("INSERT INTO project_g_echoes VALUES ($1,1,$2) ON CONFLICT(character_id) DO NOTHING", connection,transaction);
             echoes.Parameters.AddWithValue(characterId); echoes.Parameters.AddWithValue(NpgsqlDbType.Jsonb, initialEchoes);
             await echoes.ExecuteNonQueryAsync(cancellationToken);
             echoes.CommandText = "SELECT model_version,state::text FROM project_g_echoes WHERE character_id = $1";
@@ -166,7 +172,7 @@ public sealed partial class PostgresCharacterStore(string connectionString) : IC
             string? progressionState = null;
             if (initialProgression is not null)
             {
-            await using var progression = new NpgsqlCommand("INSERT INTO project_g_progression VALUES ($1,1,$2) ON CONFLICT(character_id) DO NOTHING", connection);
+            await using var progression = new NpgsqlCommand("INSERT INTO project_g_progression VALUES ($1,1,$2) ON CONFLICT(character_id) DO NOTHING", connection,transaction);
             progression.Parameters.AddWithValue(characterId); progression.Parameters.AddWithValue(NpgsqlDbType.Jsonb, initialProgression);
             await progression.ExecuteNonQueryAsync(cancellationToken);
             progression.CommandText = "SELECT model_version,state::text FROM project_g_progression WHERE character_id = $1";
@@ -174,6 +180,8 @@ public sealed partial class PostgresCharacterStore(string connectionString) : IC
             if (!await progressionReader.ReadAsync(cancellationToken) || progressionReader.GetInt32(0) != 1) throw new InvalidDataException("Unsupported Progression model.");
             progressionState = progressionReader.GetString(1); StorageBounds.Document(progressionState);
             }
+            if(inventoryCreated && initialInventoryItems is { } initialItems) { OwnershipValidation.Items(initialItems,8); foreach(var item in initialItems.Order()) await EnsureItemOwnerAsync(connection,transaction,item,"c:"+characterId,cancellationToken); }
+            await transaction.CommitAsync(cancellationToken);
             return new Session(characterId, ownerId, revision, state, inventoryState, echoState, issued, connection, lockKey) { Progression = progressionState };
         }
         catch
@@ -245,6 +253,7 @@ public sealed partial class PostgresCharacterStore(string connectionString) : IC
             }
         }
         if (world is not null) await WriteWorldAsync(connection, transaction, world, cancellationToken);
+        await SyncOwnershipAsync(connection,transaction,changes,world,cancellationToken);
         // One transaction publishes all changed characters from a simulation tick, or none.
         await transaction.CommitAsync(cancellationToken);
     }

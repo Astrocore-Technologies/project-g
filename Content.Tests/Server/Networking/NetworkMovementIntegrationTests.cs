@@ -378,6 +378,18 @@ public sealed class NetworkMovementIntegrationTests
         private PlayerId _playerId;
 
         public Dictionary<NetworkEntityId, PlayerSpawn> Spawns { get; } = new();
+        public Dictionary<NetworkEntityId,ItemConditionState> Conditions { get; }=new();
+        public List<RepairQuote> RepairQuotes { get; }=new();
+        public List<RepairResult> RepairResults { get; }=new();
+        public Dictionary<NetworkEntityId,EconomyState> EconomyStates {get;}=new();
+        public Dictionary<NetworkEntityId,MarketState> Markets {get;}=new();
+        public List<EconomyQuote> EconomyQuotes {get;}=new();
+        public List<EconomyResult> EconomyResults {get;}=new();
+        public void Economy(EconomyCommand command)=>_peer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
+        public List<TradeState> TradeStates { get; }=new();
+        public List<TradeResult> TradeResults { get; }=new();
+        public void Trade(TradeCommand command) => _peer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
+        public void Repair(RepairCommand command) => _peer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
         public Dictionary<NetworkEntityId,CraftState> CraftStates { get; }=new();
         public List<CraftResult> CraftResults { get; }=new();
         public Dictionary<ushort,ResourceNodeState> Resources { get; }=new();
@@ -451,6 +463,24 @@ public sealed class NetworkMovementIntegrationTests
                     Assert.True(NetworkProtocol.TryReadMessageType(reader, out var type));
                     switch (type)
                     {
+                        case NetworkMessageType.ItemConditionState:
+                            Assert.True(NetworkProtocol.TryReadItemConditionState(reader,out var condition)); Assert.Equal(LocalSpawn.EntityId,condition.OwnerId); Conditions[condition.OwnerId]=condition; break;
+                        case NetworkMessageType.EconomyState:
+                            Assert.True(NetworkProtocol.TryReadEconomyState(reader,out var economyState));Assert.Equal(LocalSpawn.EntityId,economyState.OwnerId);EconomyStates[economyState.OwnerId]=economyState;break;
+                        case NetworkMessageType.MarketState:
+                            Assert.True(NetworkProtocol.TryReadMarketState(reader,out var market));Assert.Equal(LocalSpawn.EntityId,market.OwnerId);Markets[market.OwnerId]=market;break;
+                        case NetworkMessageType.EconomyQuote:
+                            Assert.True(NetworkProtocol.TryReadEconomyQuote(reader,out var economyQuote));EconomyQuotes.Add(economyQuote);break;
+                        case NetworkMessageType.EconomyResult:
+                            Assert.True(NetworkProtocol.TryReadEconomyResult(reader,out var economyResult));EconomyResults.Add(economyResult);break;
+                        case NetworkMessageType.TradeState:
+                            Assert.True(NetworkProtocol.TryReadTradeState(reader,out var tradeState)); Assert.Equal(LocalSpawn.EntityId,tradeState.OwnerId); TradeStates.Add(tradeState); break;
+                        case NetworkMessageType.TradeResult:
+                            Assert.True(NetworkProtocol.TryReadTradeResult(reader,out var tradeResult)); TradeResults.Add(tradeResult); break;
+                        case NetworkMessageType.RepairQuote:
+                            Assert.True(NetworkProtocol.TryReadRepairQuote(reader,out var repairQuote)); RepairQuotes.Add(repairQuote); break;
+                        case NetworkMessageType.RepairResult:
+                            Assert.True(NetworkProtocol.TryReadRepairResult(reader,out var repairResult)); RepairResults.Add(repairResult); break;
                         case NetworkMessageType.CraftState:
                             Assert.True(NetworkProtocol.TryReadCraftState(reader,out var craft)); Assert.Equal(LocalSpawn.EntityId,craft.OwnerId); CraftStates[craft.OwnerId]=craft; break;
                         case NetworkMessageType.CraftResult:

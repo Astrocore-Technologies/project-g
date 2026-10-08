@@ -7,5 +7,5 @@ public abstract class DatabaseWorldSession(string key, Guid ownerId, long revisi
     public string State { get; } = state;
     public abstract ValueTask DisposeAsync();
 }
-public sealed record DatabaseWorldSave(DatabaseWorldSession Session, long ExpectedRevision, string State, IReadOnlyList<DatabaseWorldAudit> Audit);
+public sealed record DatabaseWorldSave(DatabaseWorldSession Session, long ExpectedRevision, string State, IReadOnlyList<DatabaseWorldAudit> Audit, IReadOnlyList<Guid>? EscrowItems = null);
 public sealed record DatabaseWorldAudit(string Actor, string Operation, string Reason, long Timestamp);

@@ -14,4 +14,4 @@ public sealed record SavedCrafting
         var ids=new HashSet<ushort>(); foreach(var m in Materials) if(m is null || m.Id==0 || !ids.Add(m.Id) || m.Quantity is < 1 or > 999) throw new InvalidDataException("Invalid material stack.");
     }
 }
-public sealed record SavedResourceStock([property: JsonRequired] ushort Id,[property: JsonRequired] int Remaining);
+public sealed record SavedResourceStock([property: JsonRequired] ushort Id,[property: JsonRequired] int Remaining) { public long RefillAt {get;init;} }

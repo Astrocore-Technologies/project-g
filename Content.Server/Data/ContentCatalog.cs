@@ -11,6 +11,7 @@ public sealed class ContentCatalog
     public Content.Server.WorldStory.WorldNodeDefinition? WorldNode { get; }
     public Content.Server.StarterZone.StarterZoneDefinition? StarterZone { get; }
     public Content.Server.Crafting.CraftingDefinition? Crafting { get; }
+    public Content.Server.Economy.EconomyDefinition? Economy { get; }
     public const int SchemaVersion = 3;
     public const int MaxFileBytes = 4 * 1024 * 1024;
     private const int MaxDefinitions = 4096;
@@ -52,6 +53,9 @@ public sealed class ContentCatalog
         }
 
         document.Crafting?.Validate(this); Crafting=document.Crafting;
+        foreach(var item in Items.Values) if(item.Condition is { } condition)
+        { condition.Validate(); Check(item.Slot==Content.Shared.Network.EquipmentSlot.Weapon && Crafting is not null && Crafting.Materials.Any(m=>m.Id==condition.RepairMaterialId), "Invalid durability material/slot reference."); }
+        document.Economy?.Validate(this); Economy=document.Economy;
         foreach (var weapon in Weapons.Values)
         {
             Check(Enum.IsDefined(weapon.Kind), $"weapon {weapon.Id}: unknown kind");

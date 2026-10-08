@@ -1,6 +1,6 @@
 {
   "schemaVersion": 3,
-  "balanceVersion": 1,
+  "balanceVersion": 2,
   "balance": {
     "meleeAttack": {
       "strength": 1,
@@ -200,6 +200,27 @@
       "weaponId": "training_sword",
       "modifiers": {
         "meleeAttack": 12
+      },
+      "condition": {
+        "maximum": 100,
+        "wearPerHit": 1,
+        "repairMaterialId": 2,
+        "durabilityPerMaterial": 20
+      }
+    },
+    {
+      "id": "evolved_crossing_blade",
+      "name": "Улучшенный клинок",
+      "slot": "Weapon",
+      "weaponId": "training_sword",
+      "modifiers": {
+        "meleeAttack": 18
+      },
+      "condition": {
+        "maximum": 100,
+        "wearPerHit": 1,
+        "repairMaterialId": 2,
+        "durabilityPerMaterial": 20
       }
     }
   ],
@@ -412,5 +433,29 @@
         "experience": 5
       }
     ]
+  },
+  "economy": {
+    "baseWeapon": "crafted_crossing_blade",
+    "evolvedWeapon": "evolved_crossing_blade",
+    "enhancementChances": [
+      100,
+      80,
+      60,
+      40,
+      20
+    ],
+    "attackPerLevel": 2,
+    "failureDurabilityLoss": 10,
+    "ingotId": 3,
+    "woodId": 1,
+    "oreId": 2,
+    "evolutionIngots": 2,
+    "evolutionWood": 1,
+    "attemptIngots": 1,
+    "orePrice": 1,
+    "coinLimit": 1000000,
+    "listingsPerSeller": 2,
+    "listingLimit": 8,
+    "refillSeconds": 600
   }
 }

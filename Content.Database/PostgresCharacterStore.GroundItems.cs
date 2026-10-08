@@ -24,6 +24,6 @@ public sealed partial class PostgresCharacterStore
             var item = new DatabaseGroundItem(reader.GetGuid(0), reader.GetString(1), reader.GetString(2), reader.GetFloat(3), reader.GetFloat(4));
             item.Validate(); items.Add(item);
         }
-        await reader.DisposeAsync(); await transaction.CommitAsync(token); return items;
+        await reader.DisposeAsync(); foreach(var item in items) await EnsureItemOwnerAsync(connection,transaction,item.InstanceId,"g:"+item.InstanceId,token); await transaction.CommitAsync(token); return items;
     }
 }

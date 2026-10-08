@@ -12,12 +12,18 @@ public partial class CraftingPresentation : Node3D
     private VBoxContainer _content=null!;
     private Label _status=null!;
     private CraftState? _state;
+    private ItemConditionState? _condition;
+    private readonly Dictionary<ulong,string> _itemNames=new();
+    private RepairCommand? _repairPending;
+    private RepairQuote? _repairQuote;
+    private double _quoteAge;
     private CraftCommand? _pending;
     private double _retry;
     private readonly Dictionary<ushort,Node3D> _nodes=new();
     public void Initialize(NetworkClient network,PlayerController player)
     {
         _network=network; _player=player;
+        _network.ItemConditionReceived+=Condition; _network.InventoryReceived+=Inventory; _network.RepairQuoteReceived+=Quote; _network.RepairResultReceived+=RepairResult;
         _network.CraftStateReceived+=Apply; _network.CraftResultReceived+=Result;
         _network.ResourceNodeReceived+=Resource; _network.ResourceNodeLeft+=Remove;
         var canvas=new CanvasLayer { Layer=5 }; AddChild(canvas);
@@ -33,6 +39,29 @@ public partial class CraftingPresentation : Node3D
         AddChild(new MeshInstance3D { Position=new(station.StationPosition.X,0.55f,station.StationPosition.Y),Mesh=new BoxMesh { Size=new(1.1f,0.2f,0.7f) },MaterialOverride=new StandardMaterial3D { AlbedoColor=new(0.55f,0.34f,0.16f) } });
         AddChild(new Label3D { Position=new(station.StationPosition.X,1.7f,station.StationPosition.Y),Text=station.StationName+" • C",Billboard=BaseMaterial3D.BillboardModeEnum.Enabled });
         Rebuild();
+    }
+    private void Inventory(InventoryState state)
+    { if(state.EntityId!=_player.EntityId) return; _itemNames.Clear(); foreach(var item in state.Items) _itemNames[item.Handle]=item.Name; }
+    private void Condition(ItemConditionState state) { if(state.OwnerId==_player.EntityId) { _condition=state; Rebuild(); } }
+    private void Quote(RepairQuote quote)
+    {
+        if(_repairPending is not { } pending || pending.Operation!=quote.Operation || pending.ItemHandle!=quote.ItemHandle || pending.ItemRevision!=quote.ItemRevision) return;
+        if(pending.QuoteId!=0) return;
+        _repairQuote=quote; _quoteAge=0; _status.Text="Проверь стоимость и подтверди ремонт."; Rebuild();
+    }
+    private void RequestRepair(ItemConditionEntry item)
+    {
+        if(_pending is not null || _repairPending is not null || _condition is not { } state || state.LastOperation>=long.MaxValue) return;
+        _repairPending=new(state.LastOperation+1,item.Handle,item.Revision,0); _retry=0; _network.SendRepair(_repairPending.Value); _status.Text="Уточняем стоимость ремонта…"; Rebuild();
+    }
+    private void ConfirmRepair()
+    { if(_repairQuote is not { } quote) return; _repairPending=new(quote.Operation,quote.ItemHandle,quote.ItemRevision,quote.QuoteId); _repairQuote=null; _retry=0; _network.SendRepair(_repairPending.Value); _status.Text="Ожидание ремонта…"; Rebuild(); }
+    private void CancelRepair() { _repairPending=null; _repairQuote=null; _status.Text="Ремонт отменён."; Rebuild(); }
+    private void RepairResult(RepairResult result)
+    {
+        if(_repairPending is not { } pending || pending.Operation!=result.Operation) return;
+        _repairPending=null; _repairQuote=null;
+        _status.Text=result.Outcome switch { CraftOutcome.Accepted=>"Предмет отремонтирован.",CraftOutcome.AlreadyProcessed=>"Ремонт уже выполнен; материалы повторно не списаны.",CraftOutcome.TooFar=>"Подойди к верстаку.",CraftOutcome.Busy=>"Остановись и закончи применение умения.",CraftOutcome.MissingMaterials=>"Недостаточно материалов для ремонта.",CraftOutcome.Unavailable=>"Состояние вещи изменилось или ремонт не нужен.",CraftOutcome.InvalidOperation=>"Предложение устарело. Запроси ремонт ещё раз.",_=>"Ремонт отклонён: "+result.Outcome }; Rebuild();
     }
     private void Apply(CraftState state)
     { if(state.OwnerId!=_player.EntityId) return; _state=state; Rebuild(); }
@@ -57,7 +86,7 @@ public partial class CraftingPresentation : Node3D
     }
     private void Request(CraftAction action,ushort target)
     {
-        if(_pending is not null || _state is not { } state || state.LastOperation>=long.MaxValue) return;
+        if(_pending is not null || _repairPending is not null || _state is not { } state || state.LastOperation>=long.MaxValue) return;
         _pending=new(state.LastOperation+1,action,target); _retry=0; _network.SendCraft(_pending.Value);
         _status.Text="Ожидание сохранения…"; Rebuild();
     }
@@ -73,15 +102,28 @@ public partial class CraftingPresentation : Node3D
         foreach(var node in _network.ResourceNodes.Values.OrderBy(n=>n.Id))
         {
             var current=node;
-            var button=new Button { Text=$"{node.Name}: {node.Remaining} — собрать",Disabled=_pending is not null || _state is null || node.Remaining==0 };
+            var button=new Button { Text=$"{node.Name}: {node.Remaining} — собрать",Disabled=_pending is not null || _repairPending is not null || _state is null || node.Remaining==0 };
             button.Pressed+=()=>Request(CraftAction.Gather,current.Id); _content.AddChild(button);
         }
         _content.AddChild(new Label { Text="У верстака" });
         foreach(var recipe in _network.CraftRecipes.Values.OrderBy(r=>r.Id))
         {
             var current=recipe; _content.AddChild(new Label { Text=string.Join(", ",recipe.Costs.Select(c=>$"{c.Name} ×{c.Quantity}")) });
-            var button=new Button { Text=recipe.Name+" → "+recipe.OutputName,Disabled=_pending is not null || _state is null };
+            var button=new Button { Text=recipe.Name+" → "+recipe.OutputName,Disabled=_pending is not null || _repairPending is not null || _state is null };
             button.Pressed+=()=>Request(CraftAction.Make,current.Id); _content.AddChild(button);
+        }
+        _content.AddChild(new Label { Text="Ремонт у верстака" });
+        if(_condition is { } conditions) foreach(var item in conditions.Items)
+        {
+            var current=item;
+            var button=new Button { Text=$"{_itemNames.GetValueOrDefault(item.Handle,"Оружие")}: {item.Current}/{item.Maximum} — ремонт",Disabled=_pending is not null || _repairPending is not null || item.Current==item.Maximum };
+            button.Pressed+=()=>RequestRepair(current); _content.AddChild(button);
+        }
+        if(_repairQuote is { } quote)
+        {
+            _content.AddChild(new Label { Text=$"Стоимость: {names.GetValueOrDefault(quote.MaterialId,"Материал")} ×{quote.Quantity}. Восстановить до текущего максимума." });
+            var confirm=new Button { Text="Подтвердить расход и ремонт" }; confirm.Pressed+=ConfirmRepair; _content.AddChild(confirm);
+            var cancel=new Button { Text="Отменить ремонт" }; cancel.Pressed+=CancelRepair; _content.AddChild(cancel);
         }
         _content.AddChild(new Label { Text="Подойди и остановись перед действием. Готовые вещи — в I." });
     }
@@ -98,9 +140,13 @@ public partial class CraftingPresentation : Node3D
     }
     private void Remove(ResourceNodeDespawn state) { if(_nodes.Remove(state.Id,out var node)) node.QueueFree(); Rebuild(); }
     public override void _Process(double delta)
-    { if(_pending is { } command) { _retry+=delta; if(_retry>=2) { _retry=0; _network.SendCraft(command); } } }
+    {
+        if(_repairQuote is { } quote) { _quoteAge+=delta; if(_quoteAge>=quote.ValidSeconds) { CancelRepair(); _status.Text="Предложение ремонта истекло. Запроси его заново."; } }
+        if(_pending is { } command || _repairPending is not null && _repairQuote is null)
+        { _retry+=delta; if(_retry>=2) { _retry=0; if(_pending is { } craft) _network.SendCraft(craft); else if(_repairPending is { } repair) _network.SendRepair(repair); } }
+    }
     public override void _UnhandledInput(InputEvent input)
     { if(input is InputEventKey { Pressed:true,Echo:false,Keycode:Key.C }) { _panel.Visible=!_panel.Visible; GetViewport().SetInputAsHandled(); } }
     public override void _ExitTree()
-    { if(_network is not null) { _network.CraftStateReceived-=Apply; _network.CraftResultReceived-=Result; _network.ResourceNodeReceived-=Resource; _network.ResourceNodeLeft-=Remove; } }
+    { if(_network is not null) { _network.ItemConditionReceived-=Condition; _network.InventoryReceived-=Inventory; _network.RepairQuoteReceived-=Quote; _network.RepairResultReceived-=RepairResult; _network.CraftStateReceived-=Apply; _network.CraftResultReceived-=Result; _network.ResourceNodeReceived-=Resource; _network.ResourceNodeLeft-=Remove; } }
 }

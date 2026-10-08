@@ -16,5 +16,6 @@ public sealed record ContentDocument
     public required AbilityDefinition[] Abilities { get; init; }
     public required CreatureDefinition[] Creatures { get; init; }
     public Content.Server.Crafting.CraftingDefinition? Crafting { get; init; }
+    public Content.Server.Economy.EconomyDefinition? Economy { get; init; }
     public required ItemDefinition[] Items { get; init; }
 }

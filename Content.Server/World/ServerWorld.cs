@@ -63,6 +63,7 @@ public sealed partial class ServerWorld
                 { var owner = _playersByEntity[id]; return (owner.Position,Combat.Get(id).Health > 0,owner.Motion.IsMoving); });
             if (inventory?.Value.Enabled == true)
                 Inventory = new InventorySimulation(catalog, Combat, Abilities, id => _playersByEntity[id].BaseStats);
+            if(Inventory is not null) Combat.WeaponUsable=Inventory.WeaponUsable;
             if (groundItems?.Value.Enabled == true)
                 GroundItems = new GroundItemSimulation(catalog, Inventory ?? throw new ArgumentException("Pickup requires inventory."),
                     Combat, Navigation, groundItems.Value, _interest.CellSize);
@@ -202,6 +203,9 @@ public sealed partial class ServerWorld
         Echoes?.Remove(player.EntityId);
         RemoveWorldNodePlayer(connectionId,player.EntityId);
         RemoveCraftPlayer(connectionId,player.EntityId);
+        RemoveRepairPlayer(connectionId,player.EntityId);
+        RemoveEconomyPlayer(connectionId,player.EntityId);
+        RemoveTradePlayer(connectionId,player.EntityId);
         RemoveExploration(player.EntityId);
         RemoveProgression(player.EntityId);
         _playersByConnection.Remove(connectionId);
@@ -321,6 +325,7 @@ public sealed partial class ServerWorld
         Npc?.Move(fixedDeltaSeconds, Tick);
         Boss?.Move(fixedDeltaSeconds, Tick);
         Combat?.Simulate(fixedDeltaSeconds, Tick);
+        if(Inventory is not null) foreach(var action in Combat!.Events) Inventory.Wear(action);
         Abilities?.Simulate(fixedDeltaSeconds, Tick);
         Npc?.Resolve(fixedDeltaSeconds, Tick);
         Boss?.Resolve(fixedDeltaSeconds, Tick);
@@ -330,7 +335,11 @@ public sealed partial class ServerWorld
         SimulateProgression();
         SimulateProfessions();
         SimulateWorldNode();
+        SimulateResourceRefill();
         SimulateCrafting();
+        SimulateRepair();
+        SimulateTrade();
+        SimulateEconomy();
         if (Echoes is { } echoes)
         {
             foreach (var action in Combat!.Events)

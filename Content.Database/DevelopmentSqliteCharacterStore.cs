@@ -45,7 +45,7 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
         command.ExecuteNonQuery();
         command.CommandText = "SELECT COALESCE(max(version), 0) FROM schema_version";
         var version = (long)command.ExecuteScalar()!;
-        if (version is < 0 or > 6) throw new InvalidDataException("Unsupported SQLite schema version.");
+        if (version is < 0 or > 7) throw new InvalidDataException("Unsupported SQLite schema version.");
         if (version == 0)
         {
             using var resource = typeof(DevelopmentSqliteCharacterStore).Assembly.GetManifestResourceStream(
@@ -93,23 +93,28 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
             command.CommandText = reader.ReadToEnd(); command.ExecuteNonQuery();
             command.CommandText = "INSERT INTO schema_version VALUES (6)"; command.ExecuteNonQuery();
         }
+        if(version<7)
+        {
+            using var resource=typeof(DevelopmentSqliteCharacterStore).Assembly.GetManifestResourceStream("Content.Database.Migrations.0007_ownership.sqlite.sql") ?? throw new InvalidOperationException("Migration missing.");
+            using var reader=new StreamReader(resource); command.CommandText=reader.ReadToEnd(); command.ExecuteNonQuery(); command.CommandText="INSERT INTO schema_version VALUES (7)"; command.ExecuteNonQuery();
+        }
         cancellationToken.ThrowIfCancellationRequested();
         transaction.Commit();
     }, cancellationToken);
 
-    public Task<DatabaseSession> OpenAsync(string token, string initialCharacter, string initialInventory, string initialEchoes, CancellationToken cancellationToken, string? initialProgression = null) => Task.Run<DatabaseSession>(() =>
+    public Task<DatabaseSession> OpenAsync(string token, string initialCharacter, string initialInventory, string initialEchoes, CancellationToken cancellationToken, string? initialProgression = null,IReadOnlyList<Guid>? initialInventoryItems = null) => Task.Run<DatabaseSession>(() =>
     {
         if (!StorageBounds.ValidToken(token)) throw new DatabaseInvalidIdentityException();
         StorageBounds.Document(initialCharacter); StorageBounds.Document(initialInventory); StorageBounds.Document(initialEchoes);
         if (initialProgression is not null) StorageBounds.Document(initialProgression);
         var issued = token.Length == 0 ? Convert.ToHexString(RandomNumberGenerator.GetBytes(32)) : "";
         var hash = SHA256.HashData(Convert.FromHexString(issued.Length == 0 ? token : issued));
-        using var connection = Connect();
+        using var connection = Connect(); using var transaction=connection.BeginTransaction();
         var owner = Guid.NewGuid(); Guid id;
         if (issued.Length != 0)
         {
             id = Guid.NewGuid();
-            using var insert = connection.CreateCommand();
+            using var insert = connection.CreateCommand(); insert.Transaction=transaction;
             insert.CommandText = "INSERT INTO characters VALUES ($id, $hash, $owner, 0, 1, $state)";
             insert.Parameters.AddWithValue("$id", id.ToString()); insert.Parameters.AddWithValue("$hash", hash);
             insert.Parameters.AddWithValue("$owner", owner.ToString()); insert.Parameters.AddWithValue("$state", initialCharacter);
@@ -117,7 +122,7 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
         }
         else
         {
-            using var find = connection.CreateCommand(); find.CommandText = "SELECT character_id FROM characters WHERE token_hash = $hash";
+            using var find = connection.CreateCommand(); find.Transaction=transaction; find.CommandText = "SELECT character_id FROM characters WHERE token_hash = $hash";
             find.Parameters.AddWithValue("$hash", hash);
             id = find.ExecuteScalar() is string value ? Guid.Parse(value) : throw new DatabaseInvalidIdentityException();
         }
@@ -128,25 +133,25 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
         try
         {
             cancellationToken.ThrowIfCancellationRequested();
-            using var claim = connection.CreateCommand();
+            using var claim = connection.CreateCommand(); claim.Transaction=transaction;
             claim.CommandText = "UPDATE characters SET owner_id = $owner, revision = revision + 1 WHERE character_id = $id RETURNING revision, model_version, state";
             claim.Parameters.AddWithValue("$owner", owner.ToString()); claim.Parameters.AddWithValue("$id", id.ToString());
             using var reader = claim.ExecuteReader();
             if (!reader.Read() || reader.GetInt32(1) != 1) throw new InvalidDataException("Unsupported character model.");
             var revision = reader.GetInt64(0); var state = reader.GetString(2);
             reader.Dispose();
-            using var inventory = connection.CreateCommand();
+            using var inventory = connection.CreateCommand(); inventory.Transaction=transaction;
             inventory.CommandText = "INSERT OR IGNORE INTO character_inventory VALUES ($id, 1, $state)";
             inventory.Parameters.AddWithValue("$id", id.ToString());
             inventory.Parameters.AddWithValue("$state", initialInventory);
-            inventory.ExecuteNonQuery();
+            var inventoryCreated=inventory.ExecuteNonQuery()==1;
             inventory.CommandText = "SELECT model_version, state FROM character_inventory WHERE character_id = $id";
             using var items = inventory.ExecuteReader();
             if (!items.Read() || items.GetInt32(0) != 1) throw new InvalidDataException("Unsupported inventory model.");
             var inventoryState = items.GetString(1);
             StorageBounds.Document(state); StorageBounds.Document(inventoryState);
             items.Dispose();
-            using var echoes = connection.CreateCommand();
+            using var echoes = connection.CreateCommand(); echoes.Transaction=transaction;
             echoes.CommandText = "INSERT INTO character_echoes VALUES ($id,1,$state) ON CONFLICT(character_id) DO NOTHING";
             echoes.Parameters.AddWithValue("$id", id.ToString()); echoes.Parameters.AddWithValue("$state", initialEchoes); echoes.ExecuteNonQuery();
             echoes.CommandText = "SELECT model_version,state FROM character_echoes WHERE character_id = $id";
@@ -157,7 +162,7 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
             string? progressionState = null;
             if (initialProgression is not null)
             {
-            using var progression = connection.CreateCommand();
+            using var progression = connection.CreateCommand(); progression.Transaction=transaction;
             progression.CommandText = "INSERT INTO character_progression VALUES ($id,1,$state) ON CONFLICT(character_id) DO NOTHING";
             progression.Parameters.AddWithValue("$id", id.ToString()); progression.Parameters.AddWithValue("$state", initialProgression); progression.ExecuteNonQuery();
             progression.CommandText = "SELECT model_version,state FROM character_progression WHERE character_id = $id";
@@ -165,6 +170,8 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
             if (!progressionReader.Read() || progressionReader.GetInt32(0) != 1) throw new InvalidDataException("Unsupported Progression model.");
             progressionState = progressionReader.GetString(1); StorageBounds.Document(progressionState);
             }
+            if(inventoryCreated && initialInventoryItems is { } initialItems) { OwnershipValidation.Items(initialItems,8); foreach(var item in initialItems) EnsureItemOwner(connection,transaction,item,"c:"+id); }
+            cancellationToken.ThrowIfCancellationRequested(); transaction.Commit();
             return new Session(id, owner, revision, state, inventoryState, echoState, issued, held) { Progression = progressionState };
         }
         catch { held.Dispose(); throw; }
@@ -227,6 +234,7 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
             }
         }
         if (world is not null) WriteWorld(connection, transaction, world);
+        SyncOwnership(connection,transaction,changes,world);
         cancellationToken.ThrowIfCancellationRequested();
         transaction.Commit();
     }, cancellationToken);

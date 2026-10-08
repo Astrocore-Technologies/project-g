@@ -60,6 +60,19 @@ public partial class NetworkClient : Node
     public Dictionary<ushort,CraftRecipeState> CraftRecipes { get; }=new();
     public Dictionary<ushort,ResourceNodeState> ResourceNodes { get; }=new();
     public event Action<CraftState>? CraftStateReceived;
+    public event Action<ItemConditionState>? ItemConditionReceived;
+    public event Action<RepairQuote>? RepairQuoteReceived;
+    public event Action<RepairResult>? RepairResultReceived;
+    public event Action<EconomyState>? EconomyStateReceived;
+    public event Action<EconomyQuote>? EconomyQuoteReceived;
+    public event Action<EconomyResult>? EconomyResultReceived;
+    public event Action<MarketState>? MarketStateReceived;
+    public void SendEconomy(EconomyCommand command) {if(_handshakeComplete)_serverPeer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);}
+    public event Action<TradeState>? TradeStateReceived;
+    public event Action<TradeResult>? TradeResultReceived;
+    public Dictionary<NetworkEntityId,PlayerSpawn> KnownPlayers { get; } = new();
+    public void SendTrade(TradeCommand command) { if(_handshakeComplete) _serverPeer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered); }
+    public void SendRepair(RepairCommand command) { if(_handshakeComplete) _serverPeer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered); }
     public event Action<CraftResult>? CraftResultReceived;
     public event Action<ResourceNodeState>? ResourceNodeReceived;
     public event Action<ResourceNodeDespawn>? ResourceNodeLeft;
@@ -213,6 +226,7 @@ public partial class NetworkClient : Node
         _serverPeer = null;
         _handshakeComplete = false;
         LocalPlayerId = PlayerId.Invalid;
+        KnownPlayers.Clear();
         CanDevelopmentRevive = false;
         Navigation = null; LatestWorldNode=null; LatestStarterZone=null; CraftRecipes.Clear(); ResourceNodes.Clear();
         LatestServerTick = 0;
@@ -244,6 +258,33 @@ public partial class NetworkClient : Node
 
             switch (messageType)
             {
+                case NetworkMessageType.ItemConditionState:
+                    if(_handshakeComplete && NetworkProtocol.TryReadItemConditionState(reader,out var condition)) ItemConditionReceived?.Invoke(condition); else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.EconomyState:
+                    if(_handshakeComplete && NetworkProtocol.TryReadEconomyState(reader,out var economyState))EconomyStateReceived?.Invoke(economyState);else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.EconomyQuote:
+                    if(_handshakeComplete && NetworkProtocol.TryReadEconomyQuote(reader,out var economyQuote))EconomyQuoteReceived?.Invoke(economyQuote);else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.EconomyResult:
+                    if(_handshakeComplete && NetworkProtocol.TryReadEconomyResult(reader,out var economyResult))EconomyResultReceived?.Invoke(economyResult);else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.MarketState:
+                    if(_handshakeComplete && NetworkProtocol.TryReadMarketState(reader,out var marketState))MarketStateReceived?.Invoke(marketState);else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.TradeState:
+                    if(_handshakeComplete && NetworkProtocol.TryReadTradeState(reader,out var tradeState)) TradeStateReceived?.Invoke(tradeState); else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.TradeResult:
+                    if(_handshakeComplete && NetworkProtocol.TryReadTradeResult(reader,out var tradeResult)) TradeResultReceived?.Invoke(tradeResult); else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.RepairQuote:
+                    if(_handshakeComplete && NetworkProtocol.TryReadRepairQuote(reader,out var repairQuote)) RepairQuoteReceived?.Invoke(repairQuote); else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.RepairResult:
+                    if(_handshakeComplete && NetworkProtocol.TryReadRepairResult(reader,out var repairResult)) RepairResultReceived?.Invoke(repairResult); else DisconnectMalformed(peer);
+                    break;
                 case NetworkMessageType.CraftRecipeState:
                     if(_handshakeComplete && NetworkProtocol.TryReadCraftRecipeState(reader,out var recipe) && (CraftRecipes.ContainsKey(recipe.Id) || CraftRecipes.Count<8)) CraftRecipes[recipe.Id]=recipe; else DisconnectMalformed(peer);
                     break;
@@ -319,6 +360,7 @@ public partial class NetworkClient : Node
                     {
                         if (Content.Shared.Movement.MovementSimulation.IsSequenceNewer(spawn.ServerTick, LatestServerTick))
                             LatestServerTick = spawn.ServerTick;
+                        if(KnownPlayers.Count<128 || KnownPlayers.ContainsKey(spawn.EntityId)) KnownPlayers[spawn.EntityId]=spawn;
                         PlayerSpawned?.Invoke(spawn);
                     }
                     else
@@ -341,7 +383,10 @@ public partial class NetworkClient : Node
                     break;
                 case NetworkMessageType.PlayerDespawn:
                     if (NetworkProtocol.TryReadPlayerDespawn(reader, out var despawn))
+                    {
+                        KnownPlayers.Remove(despawn.EntityId);
                         PlayerDespawned?.Invoke(despawn);
+                    }
                     else
                         DisconnectMalformed(peer);
                     break;

@@ -41,10 +41,16 @@ public enum NetworkMessageType : ushort
     ProfessionCommand = 43,
     ProfessionState = 44,
     CraftCommand = 51, CraftResult = 52, CraftState = 53, ResourceNodeState = 54, ResourceNodeDespawn = 55, CraftRecipeState = 56,
+    RepairCommand = 57, RepairQuote = 58, RepairResult = 59, ItemConditionState = 60, TradeCommand = 61, TradeState = 62, TradeResult = 63,
     StarterZoneState = 49,
     ExplorationState = 50,
     WorldNodeCommand = 46,
     WorldNodeState = 47,
     WorldNodeResult = 48,
-    ProfessionResult = 45
+    ProfessionResult = 45,
+    EconomyCommand = 64,
+    EconomyQuote = 65,
+    EconomyResult = 66,
+    EconomyState = 67,
+    MarketState = 68,
 }

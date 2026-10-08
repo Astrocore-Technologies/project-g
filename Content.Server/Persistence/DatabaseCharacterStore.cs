@@ -27,12 +27,13 @@ public sealed class DatabaseCharacterStore(ICharacterDatabase database) : IChara
     {
         DatabaseSession lease;
         try { lease = await database.OpenAsync(credential, initial.Serialize(), (initial.Inventory ?? SavedInventory.Empty).Serialize(),
-            (initial.Echoes ?? SavedEchoes.Empty).Serialize(), token, initial.Progression?.Serialize()); }
+            (initial.Echoes ?? SavedEchoes.Empty).Serialize(), token, initial.Progression?.Serialize(),initial.Inventory?.Items.Select(i=>i.InstanceId).ToArray() ?? []); }
         catch (DatabaseInvalidIdentityException) { throw new InvalidIdentityException(); }
         catch (DatabaseCharacterInUseException) { throw new CharacterInUseException(); }
         try
         {
             var state = CharacterState.Deserialize(lease.State) with { Inventory = SavedInventory.Deserialize(lease.Inventory), Echoes = SavedEchoes.Deserialize(lease.Echoes), Progression = lease.Progression is null ? null : SavedProgression.Deserialize(lease.Progression) };
+            await database.EnsureInventoryOwnershipAsync(lease,state.Inventory.Items.Select(i=>i.InstanceId).ToArray(),token);
             return new Session(lease, state);
         }
         catch { await lease.DisposeAsync(); throw; }
@@ -49,13 +50,13 @@ public sealed class DatabaseCharacterStore(ICharacterDatabase database) : IChara
                 foreach (var instance in claims)
                     if (change.State.Inventory is null || !change.State.Inventory.Items.Any(item => item.InstanceId == instance && item.EquippedSlot == Content.Shared.Network.EquipmentSlot.None))
                         throw new InvalidDataException("Picked instance missing from inventory.");
-            writes[i] = new(session.Lease, session.Revision, change.State.Serialize(), change.State.Inventory?.Serialize(), change.GroundClaims, change.State.Echoes?.Serialize(), change.State.Progression?.Serialize());
+            writes[i] = new(session.Lease, session.Revision, change.State.Serialize(), change.State.Inventory?.Serialize(), change.GroundClaims, change.State.Echoes?.Serialize(), change.State.Progression?.Serialize(),change.State.Inventory?.Items.Select(i=>i.InstanceId).ToArray());
         }
         DatabaseWorldSave? worldWrite=null;
         if (world is not null)
         {
             if (world.Session is not WorldSession owner) throw new ArgumentException("Foreign world session.");
-            worldWrite=new(owner.Lease,owner.Revision,world.State.Serialize(),world.Audit);
+            worldWrite=new(owner.Lease,owner.Revision,world.State.Serialize(),world.Audit,world.State.Market?.Listings.Select(l=>l.Item.InstanceId).ToArray() ?? []);
         }
         return database.SaveWithWorldAsync(writes,worldWrite,token);
     }

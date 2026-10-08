@@ -27,6 +27,6 @@ public sealed partial class DevelopmentSqliteCharacterStore
                 var item = new DatabaseGroundItem(Guid.Parse(reader.GetString(0)), reader.GetString(1), reader.GetString(2), reader.GetFloat(3), reader.GetFloat(4));
                 item.Validate(); items.Add(item);
             }
-            reader.Dispose(); token.ThrowIfCancellationRequested(); transaction.Commit(); return items;
+            reader.Dispose(); foreach(var item in items) EnsureItemOwner(connection,transaction,item.InstanceId,"g:"+item.InstanceId); token.ThrowIfCancellationRequested(); transaction.Commit(); return items;
         }, token);
 }

@@ -12,13 +12,17 @@ public partial class InventoryPresentation : CanvasLayer
     private VBoxContainer _rows = null!;
     private Label _status = null!;
     private uint _sequence;
+    private NetworkEntityId _owner;
+    private ItemConditionState? _latestCondition;
+    private readonly Dictionary<ulong,Label> _conditions=new();
     private bool _waiting;
     private Button _revive = null!;
     private uint _reviveSequence;
     private bool _awaitingRevive;
-    public void Initialize(NetworkClient network)
+    public void Initialize(NetworkClient network,NetworkEntityId owner)
     {
-        _network = network;
+        _network = network; _owner=owner;
+        _network.ItemConditionReceived+=Condition;
         _panel = new PanelContainer { Visible=false }; AddChild(_panel);
         _panel.SetAnchorsPreset(Control.LayoutPreset.TopRight);
         _panel.OffsetLeft = -275; _panel.OffsetRight = -15; _panel.OffsetTop = 15;
@@ -43,18 +47,26 @@ public partial class InventoryPresentation : CanvasLayer
     }
     public void Apply(InventoryState state)
     {
+        if(state.EntityId!=_owner)return; _conditions.Clear();
         foreach (var child in _rows.GetChildren()) { _rows.RemoveChild(child); child.QueueFree(); }
         foreach (var item in state.Items)
         {
             var row = new VBoxContainer(); _rows.AddChild(row);
             row.AddChild(new Label { Text = $"{item.Name}{(item.Equipped ? " [надето]" : "")}" });
             row.AddChild(new Label { Text = $"ATK {item.AttackBonus:+0.##;-0.##;0}  DEF {item.DefenseBonus:+0.##;-0.##;0}  HP {item.HealthBonus:+0.##;-0.##;0}" });
+            var durability=new Label { Visible=false }; row.AddChild(durability); _conditions[item.Handle]=durability;
             var button = new Button { Text = item.Equipped ? "Снять" : "Надеть", Disabled = _waiting };
             button.Pressed += () => Request(item);
             row.AddChild(button);
         }
         if (state.Items.Count == 0) _rows.AddChild(new Label { Text = "Пусто" });
+        ApplyConditions();
     }
+    private void Condition(ItemConditionState state)
+    { if(state.OwnerId!=_owner) return; _latestCondition=state; ApplyConditions(); }
+    private void ApplyConditions()
+    { if(_latestCondition is not {} state)return; foreach(var item in state.Items) if(_conditions.TryGetValue(item.Handle,out var label)) { label.Visible=true; label.Text=$"Прочность {item.Current}/{item.Maximum}"+(item.Current==0 ? " • требуется ремонт [C]" : " • ремонт [C]"); } }
+    public override void _ExitTree() { if(_network is not null) _network.ItemConditionReceived-=Condition; }
     private void Request(InventoryEntry item)
     {
         if (_waiting) return;

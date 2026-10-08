@@ -272,6 +272,12 @@ public sealed partial class GameServerService : BackgroundService
             }
             if (messageType==NetworkMessageType.CraftCommand && deliveryMethod==DeliveryMethod.ReliableOrdered && NetworkProtocol.TryReadCraftCommand(reader,out var craft))
             { if(_characters is null) _world.TryQueueCraft(peer.Id,craft); else BufferIntentions(peer.Id).Craft ??= craft; }
+            if(messageType==NetworkMessageType.EconomyCommand && deliveryMethod==DeliveryMethod.ReliableOrdered && NetworkProtocol.TryReadEconomyCommand(reader,out var economy))
+            { if(_characters is null) _world.TryQueueEconomy(peer.Id,economy); else BufferIntentions(peer.Id).Economy ??= economy; }
+            if(messageType==NetworkMessageType.RepairCommand && deliveryMethod==DeliveryMethod.ReliableOrdered && NetworkProtocol.TryReadRepairCommand(reader,out var repair))
+            { if(_characters is null) _world.TryQueueRepair(peer.Id,repair); else BufferIntentions(peer.Id).Repair ??= repair; }
+            if(messageType==NetworkMessageType.TradeCommand && deliveryMethod==DeliveryMethod.ReliableOrdered && NetworkProtocol.TryReadTradeCommand(reader,out var trade))
+            { if(_characters is null) _world.TryQueueTrade(peer.Id,trade); else BufferIntentions(peer.Id).Trade ??= trade; }
             // Invalid game intentions are discarded; avoid logging unbounded client spam.
         }
         finally
@@ -359,6 +365,9 @@ public sealed partial class GameServerService : BackgroundService
         _world.GroundItems?.ClearResults();
         _world.Echoes?.ClearResults();
         _world.ClearCraftResults();
+        _world.ClearRepairResults();
+        _world.ClearTradeResults();
+        _world.ClearEconomyResults();
         _world.ClearExplorationResults();
         _world.ClearProgressionResults();
         _world.ClearProfessionResults();
@@ -427,6 +436,28 @@ public sealed partial class GameServerService : BackgroundService
                 if (echoes.Results.TryGetValue(owner,out var echoResult))
                     peer.Send(NetworkProtocol.Write(echoResult),DeliveryMethod.ReliableOrdered);
             }
+        }
+        if(_world.HasEconomy && _world.TryGetOwnedEntity(peer.Id,out var economyOwner))
+        {
+            if(view.Entered.Contains(economyOwner) || _world.Inventory!.IsDirty(economyOwner) || _world.EconomyResults.ContainsKey(economyOwner)) peer.Send(NetworkProtocol.Write(_world.Inventory!.EconomyState(economyOwner,_world.Tick)),DeliveryMethod.ReliableOrdered);
+            var marketVisible=_world.CanViewMarket(peer.Id);
+            if(view.Entered.Contains(economyOwner) || marketVisible!=view.MarketVisible || _world.MarketDirty || _world.EconomyResults.ContainsKey(economyOwner))
+            {
+                var market=_world.MarketState(peer.Id,marketVisible);
+                if(marketVisible || marketVisible!=view.MarketVisible || market.Credit!=view.MarketCreditSent || view.Entered.Contains(economyOwner))peer.Send(NetworkProtocol.Write(market),DeliveryMethod.ReliableOrdered);
+                view.MarketCreditSent=market.Credit;
+            }
+            view.MarketVisible=marketVisible;
+            if(_world.EconomyQuotes.TryGetValue(economyOwner,out var economyQuote))peer.Send(NetworkProtocol.Write(economyQuote),DeliveryMethod.ReliableOrdered);
+            if(_world.EconomyResults.TryGetValue(economyOwner,out var economyResult))peer.Send(NetworkProtocol.Write(economyResult),DeliveryMethod.ReliableOrdered);
+        }
+        if(_world.TryGetOwnedEntity(peer.Id,out var tradeOwner))
+        { if(_world.TradeStates.TryGetValue(tradeOwner,out var state)) peer.Send(NetworkProtocol.Write(state),DeliveryMethod.ReliableOrdered); if(_world.TradeResults.TryGetValue(tradeOwner,out var tradeResult)) peer.Send(NetworkProtocol.Write(tradeResult),DeliveryMethod.ReliableOrdered); }
+        if(_world.Inventory is { } conditionInventory && _world.TryGetOwnedEntity(peer.Id,out var conditionOwner))
+        {
+            if(view.Entered.Contains(conditionOwner) || conditionInventory.IsDirty(conditionOwner) || _world.RepairResults.ContainsKey(conditionOwner)) peer.Send(NetworkProtocol.Write(conditionInventory.ConditionState(conditionOwner,_world.Tick)),DeliveryMethod.ReliableOrdered);
+            if(_world.RepairQuotes.TryGetValue(conditionOwner,out var quote)) peer.Send(NetworkProtocol.Write(quote),DeliveryMethod.ReliableOrdered);
+            if(_world.RepairResults.TryGetValue(conditionOwner,out var repairResult)) peer.Send(NetworkProtocol.Write(repairResult),DeliveryMethod.ReliableOrdered);
         }
         if (_world.HasCrafting && _world.TryGetOwnedEntity(peer.Id,out var craftOwner))
         {

@@ -44,7 +44,7 @@ public sealed class WorldNodeStorageTests
     {
         var store=new SqliteCharacterStore(); await store.InitializeAsync(CancellationToken.None); var initial=WorldNodeTests.Initial(WorldNodeTests.World()) with { Health=12,Mana=7 };
         var seed=await store.OpenAsync("",initial,CancellationToken.None); var token=seed.IssuedToken; var id=seed.CharacterId; await seed.DisposeAsync();
-        using(var c=Connect(store.DatabasePath)) using(var q=c.CreateCommand()) { q.CommandText="DROP TABLE world_audit; DROP TABLE world_nodes; DELETE FROM schema_version WHERE version=6"; q.ExecuteNonQuery(); }
+        using(var c=Connect(store.DatabasePath)) using(var q=c.CreateCommand()) { q.CommandText="DROP TABLE item_owners; DROP TABLE world_audit; DROP TABLE world_nodes; DELETE FROM schema_version WHERE version>=6"; q.ExecuteNonQuery(); }
         await store.InitializeAsync(CancellationToken.None); await using var restored=await store.OpenAsync(token,initial,CancellationToken.None); Assert.Equal(id,restored.CharacterId); Assert.Equal(12,restored.State.Health); Assert.Equal(7,restored.State.Mana); Assert.Equal(initial.Progression!.Serialize(),restored.State.Progression!.Serialize());
         await using var owner=await store.OpenWorldAsync("prototype-crossing",new(),CancellationToken.None); Assert.Equal(0,owner.State.Repairs);
     }

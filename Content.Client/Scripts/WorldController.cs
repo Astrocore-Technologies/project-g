@@ -31,6 +31,8 @@ public partial class WorldController : Node3D
     private ProjectG.WorldStory.WorldNodePresentation? _worldNode;
     private ProjectG.StarterZone.StarterZonePresentation? _starter;
     private ProjectG.Crafting.CraftingPresentation? _crafting;
+    private ProjectG.Trading.TradePresentation? _trade;
+    private ProjectG.Economy.EconomyPresentation? _economy;
 
     public override void _Ready()
     {
@@ -123,12 +125,12 @@ public partial class WorldController : Node3D
         if (spawn.PlayerId == _network.LocalPlayerId)
         {
             _localEntityId = spawn.EntityId;
-            if(_network.CraftRecipes.Count!=0) { _crafting=new(); AddChild(_crafting); _crafting.Initialize(_network,player); }
+            if(_network.CraftRecipes.Count!=0) { _crafting=new(); AddChild(_crafting); _crafting.Initialize(_network,player); _trade=new(); AddChild(_trade); _trade.Initialize(_network,player); _economy=new(); AddChild(_economy); _economy.Initialize(_network,player); }
             if (_network.LatestStarterZone is { } zone) { _starter=new(); AddChild(_starter); _starter.Initialize(_network,player,zone); }
             _abilities = new AbilityPresentation();
             player.AddChild(_abilities);
             _abilities.Initialize(player, _network);
-            _inventory = new InventoryPresentation(); AddChild(_inventory); _inventory.Initialize(_network);
+            _inventory = new InventoryPresentation(); AddChild(_inventory); _inventory.Initialize(_network,_localEntityId);
             _echoControls = new(); AddChild(_echoControls); _echoControls.Initialize(_network);
             _progression = new(); AddChild(_progression); _progression.Initialize(_network);
             _profession = new(); AddChild(_profession); _profession.Initialize(_network);
@@ -286,6 +288,8 @@ public partial class WorldController : Node3D
         _worldNode?.QueueFree(); _worldNode=null;
         _starter?.QueueFree(); _starter=null;
         _crafting?.QueueFree(); _crafting=null;
+        _trade?.QueueFree(); _trade=null;
+        _economy?.QueueFree(); _economy=null;
         _groundItems?.QueueFree(); _groundItems = null;
         foreach (var echo in _echoes.Values) echo.QueueFree();
         _echoes.Clear(); _echoControls?.QueueFree(); _echoControls = null;

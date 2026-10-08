@@ -7,7 +7,8 @@ public interface ICharacterDatabase
     Task SaveWithWorldAsync(IReadOnlyList<DatabaseSave> changes, DatabaseWorldSave? world, CancellationToken token) =>
         world is null ? SaveAsync(changes, token) : throw new NotSupportedException("Atomic world persistence is required.");
     Task InitializeAsync(CancellationToken cancellationToken);
-    Task<DatabaseSession> OpenAsync(string token, string initialCharacter, string initialInventory, string initialEchoes, CancellationToken cancellationToken, string? initialProgression = null);
+    Task EnsureInventoryOwnershipAsync(DatabaseSession session,IReadOnlyList<Guid> items,CancellationToken token) => throw new NotSupportedException("Item ownership registry required.");
+    Task<DatabaseSession> OpenAsync(string token, string initialCharacter, string initialInventory, string initialEchoes, CancellationToken cancellationToken, string? initialProgression = null,IReadOnlyList<Guid>? initialInventoryItems = null);
     Task SaveAsync(IReadOnlyList<DatabaseSave> changes, CancellationToken cancellationToken);
     Task<IReadOnlyList<DatabaseGroundItem>> LoadGroundItemsAsync(IReadOnlyList<DatabaseGroundItem> seeds, CancellationToken cancellationToken);
 }
@@ -24,7 +25,7 @@ public abstract class DatabaseSession(Guid characterId, Guid ownerId, long revis
     public abstract ValueTask DisposeAsync();
 }
 public sealed record DatabaseSave(DatabaseSession Session, long ExpectedRevision, string State, string? Inventory,
-    IReadOnlyList<Guid>? GroundClaims = null, string? Echoes = null, string? Progression = null);
+    IReadOnlyList<Guid>? GroundClaims = null, string? Echoes = null, string? Progression = null, IReadOnlyList<Guid>? InventoryItems = null);
 public sealed class DatabaseInvalidIdentityException : Exception;
 public sealed class DatabaseCharacterInUseException : Exception;
 internal static class StorageBounds

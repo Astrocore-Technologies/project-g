@@ -28,7 +28,7 @@ public sealed partial class ServerWorld
     {
         if(_crafting is null) return;
         if(_nodeState.Resources is { } saved && (saved.Length!=_crafting.Resources.Length || _crafting.Resources.Any(n=>!saved.Any(s=>s.Id==n.Id && s.Remaining<=n.Stock)))) throw new InvalidDataException("Resource definitions changed; migration required.");
-        _resourceStock=_crafting.Resources.Select(n=>new SavedResourceStock(n.Id,_nodeState.Resources?.Single(s=>s.Id==n.Id).Remaining ?? n.Stock)).ToArray();
+        _resourceStock=_crafting.Resources.Select(n=>_nodeState.Resources?.Single(s=>s.Id==n.Id) ?? new SavedResourceStock(n.Id,n.Stock)).ToArray();
     }
     public CraftRecipeState[] PublicCraftRecipes() => _crafting!.Recipes.Select(r=>new CraftRecipeState(r.Id,r.Name,
         r.OutputItemId is { } item ? _progressionCatalog!.Items[item].Name : _crafting.Materials.Single(m=>m.Id==r.OutputMaterialId).Name,
@@ -74,7 +74,7 @@ public sealed partial class ServerWorld
                             {
                                 outcome=Inventory.GatherMaterial(player.EntityId,command.Operation,node.MaterialId,_crafting.ActionCooldownSeconds);
                                 if(outcome==CraftOutcome.Accepted)
-                                { var next=(SavedResourceStock[])_resourceStock.Clone(); next[index]=next[index] with { Remaining=next[index].Remaining-1 }; _resourceStock=next; _nodeState=_nodeState with { Resources=next }; _resourceDirty.Add(node.Id); }
+                                { var next=(SavedResourceStock[])_resourceStock.Clone(); next[index]=next[index] with { Remaining=next[index].Remaining-1,RefillAt=next[index].Remaining==1 && HasEconomy ? checked(ResourceClock()+_progressionCatalog!.Economy!.RefillSeconds) : 0 }; _resourceStock=next; _nodeState=_nodeState with { Resources=next }; _resourceDirty.Add(node.Id); }
                             }
                         }
                         else

@@ -16,7 +16,7 @@ public sealed class CraftingIntegrationTests
     {
         var store=new SqliteCharacterStore(); await store.InitializeAsync(CancellationToken.None); var world=CraftingTests.World(); var initial=world.CreateInitialCharacter() with { X=-11,Z=-7 };
         var lease=await store.OpenWorldAsync(world.WorldNodeKey,new() { Resources=[new(1,1),new(2,24)] },CancellationToken.None); await lease.DisposeAsync();
-        var session=await store.OpenAsync("",initial,CancellationToken.None); var alice=session.IssuedToken; await session.DisposeAsync(); session=await store.OpenAsync("",initial,CancellationToken.None); var bob=session.IssuedToken; await session.DisposeAsync();
+        var session=await store.OpenAsync("",initial,CancellationToken.None); var alice=session.IssuedToken; await session.DisposeAsync(); session=await store.OpenAsync("",initial with { Inventory=initial.Inventory! with { Items=initial.Inventory.Items.Select(i=>i with { InstanceId=Guid.NewGuid() }).ToArray() } },CancellationToken.None); var bob=session.IssuedToken; await session.DisposeAsync();
         var port=CharacterPersistenceTests.FreePort(); using var server=new GameServerService(Options.Create(new ServerOptions { Port=port,NetworkPollIntervalMilliseconds=1 }),new HandshakeCoordinator(),world,NullLogger<GameServerService>.Instance,store);
         await server.StartAsync(CancellationToken.None); string winnerToken; CraftState won;
         using(var first=new NetworkMovementIntegrationTests.TestClient(port,alice)) using(var second=new NetworkMovementIntegrationTests.TestClient(port,bob))
@@ -32,10 +32,13 @@ public sealed class CraftingIntegrationTests
                     for(var i=0;i<16;i++) { first.Poll(); second.Poll(); await Task.Delay(25); }
                     Assert.Empty(first.CraftResults); Assert.Empty(second.CraftResults); Assert.Equal((ushort)1,first.Resources[1].Remaining); Assert.Equal((ushort)1,second.Resources[1].Remaining); Assert.Empty(first.CraftStates.Values.Single().Materials);
                     gate.TrySetResult(); await Poll(first,second,()=>first.CraftResults.Count==1 && second.CraftResults.Count==1 && first.Resources[1].Remaining==0 && second.Resources[1].Remaining==0);
-                    Assert.Equal(CraftOutcome.Accepted,first.CraftResults[0].Outcome); Assert.Equal(CraftOutcome.Depleted,second.CraftResults[0].Outcome);
-                    Assert.Single(first.CraftStates); Assert.Single(second.CraftStates); Assert.Single(first.CraftStates.Values.Single().Materials); Assert.Empty(second.CraftStates.Values.Single().Materials);
-                    won=first.CraftStates.Values.Single(); winnerToken=alice;
-                    first.Craft(new(1,CraftAction.Gather,1)); await Poll(first,second,()=>first.CraftResults.Count==2); Assert.Equal(CraftOutcome.AlreadyProcessed,first.CraftResults[1].Outcome); Assert.Equal(won.Materials,first.CraftStates.Values.Single().Materials);
+                    var outcomes=new[]{first.CraftResults[0].Outcome,second.CraftResults[0].Outcome};
+                    Assert.Single(outcomes,o=>o==CraftOutcome.Accepted); Assert.Single(outcomes,o=>o==CraftOutcome.Depleted);
+                    var winner=first.CraftResults[0].Outcome==CraftOutcome.Accepted?first:second;
+                    var loser=ReferenceEquals(winner,first)?second:first;
+                    Assert.Single(first.CraftStates); Assert.Single(second.CraftStates); Assert.Single(winner.CraftStates.Values.Single().Materials); Assert.Empty(loser.CraftStates.Values.Single().Materials);
+                    won=winner.CraftStates.Values.Single(); winnerToken=ReferenceEquals(winner,first)?alice:bob;
+                    winner.Craft(new(1,CraftAction.Gather,1)); await Poll(first,second,()=>winner.CraftResults.Count==2); Assert.Equal(CraftOutcome.AlreadyProcessed,winner.CraftResults[1].Outcome); Assert.Equal(won.Materials,winner.CraftStates.Values.Single().Materials);
                 }
                 finally { gate.TrySetResult(); }
             }

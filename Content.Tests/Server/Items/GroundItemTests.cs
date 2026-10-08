@@ -135,8 +135,8 @@ public sealed class GroundItemTests
         var world = World(); var ground = Assert.Single(await store.LoadGroundItemsAsync(world.GroundItems!.Seeds, CancellationToken.None));
         var initial = world.CreateInitialCharacter();
         await using var first = await store.OpenAsync("", initial, CancellationToken.None);
-        await using var second = await store.OpenAsync("", initial, CancellationToken.None);
-        await using var third = await store.OpenAsync("", initial, CancellationToken.None);
+        await using var second = await store.OpenAsync("", initial with { Inventory=initial.Inventory! with { Items=initial.Inventory.Items.Select(i=>i with { InstanceId=Guid.NewGuid() }).ToArray() } }, CancellationToken.None);
+        await using var third = await store.OpenAsync("", initial with { Inventory=initial.Inventory! with { Items=initial.Inventory.Items.Select(i=>i with { InstanceId=Guid.NewGuid() }).ToArray() } }, CancellationToken.None);
         var changed = initial with { Health = 19, Inventory = new() { Items = [.. initial.Inventory!.Items, new(ground.InstanceId, ground.DefinitionId, EquipmentSlot.None)] } };
         await store.SaveAsync([new(first, changed, [ground.InstanceId])], CancellationToken.None);
         await Assert.ThrowsAsync<InvalidOperationException>(() => store.SaveAsync([

@@ -23,7 +23,7 @@ public sealed class CraftingPersistenceTests
     {
         var store=new SqliteCharacterStore(); await store.InitializeAsync(CancellationToken.None); var world=CraftingTests.World(); var initial=world.CreateInitialCharacter() with { X=-11,Z=-7 };
         var lease=await store.OpenWorldAsync(world.WorldNodeKey,new(),CancellationToken.None); world.RestoreWorldNode(lease.State,lease.Revision);
-        var a=await store.OpenAsync("",initial,CancellationToken.None); var token=a.IssuedToken; var b=await store.OpenAsync("",initial,CancellationToken.None);
+        var a=await store.OpenAsync("",initial,CancellationToken.None); var token=a.IssuedToken; var b=await store.OpenAsync("",initial with { Inventory=initial.Inventory! with { Items=initial.Inventory.Items.Select(i=>i with { InstanceId=Guid.NewGuid() }).ToArray() } },CancellationToken.None);
         await store.SaveAsync([new(b,b.State)],CancellationToken.None);
         world.AddPlayer(42,new(1),a.State); Assert.Equal(CraftOutcome.Accepted,CraftingTests.Do(world,42,1,CraftAction.Gather,1));
         await Assert.ThrowsAsync<InvalidOperationException>(()=>store.SaveWithWorldAsync([new(a,world.CaptureCharacter(42)),new(b,b.State)],new(lease,world.CaptureWorldNode(),world.WorldNodeAudit),CancellationToken.None));

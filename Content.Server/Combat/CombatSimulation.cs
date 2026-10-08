@@ -55,6 +55,7 @@ public sealed class CombatSimulation
         ValidateProfile(catalog.Creatures[_targetDefinition]);
     }
 
+    internal Func<NetworkEntityId,bool>? WeaponUsable { get; set; }
     public IReadOnlyList<AttackEvent> Events => _events;
     public IReadOnlyDictionary<NetworkEntityId, AttackResult> Results => _results;
     public Combatant Get(NetworkEntityId id) => _actors[id];
@@ -164,7 +165,7 @@ public sealed class CombatSimulation
         foreach (var (id, command) in _pending)
         {
             var actor = _actors[id];
-            var outcome = actor.Health <= 0 || actor.IsCasting ? AttackOutcome.InvalidState
+            var outcome = actor.Health <= 0 || actor.IsCasting || WeaponUsable?.Invoke(id)==false ? AttackOutcome.InvalidState
                 : _time < actor.ReadyAt ? AttackOutcome.Cooldown : AttackOutcome.Accepted;
             _results[id] = new(command.Sequence, tick, outcome);
             if (outcome != AttackOutcome.Accepted)
