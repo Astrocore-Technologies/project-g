@@ -6,6 +6,12 @@ namespace Content.Server.Persistence;
 public sealed class DatabaseCharacterStore(ICharacterDatabase database) : ICharacterStore
 {
     public Task InitializeAsync(CancellationToken token) => database.InitializeAsync(token);
+    public async Task<IReadOnlyList<SavedGroundItem>> LoadGroundItemsAsync(IReadOnlyList<SavedGroundItem> seeds, CancellationToken token)
+    {
+        var rows = await database.LoadGroundItemsAsync(seeds.Select(item => new DatabaseGroundItem(
+            item.InstanceId, item.SeedId, item.DefinitionId, item.X, item.Z)).ToArray(), token);
+        return rows.Select(item => new SavedGroundItem(item.InstanceId, item.SeedId, item.DefinitionId, item.X, item.Z)).ToArray();
+    }
     public async Task<CharacterSession> OpenAsync(string credential, CharacterState initial, CancellationToken token)
     {
         DatabaseSession lease;
@@ -26,7 +32,11 @@ public sealed class DatabaseCharacterStore(ICharacterDatabase database) : IChara
         {
             var change = changes[i];
             if (change.Session is not Session session) throw new ArgumentException("Session belongs to another store.");
-            writes[i] = new(session.Lease, session.Revision, change.State.Serialize(), change.State.Inventory?.Serialize());
+            if (change.GroundClaims is { Count: > 0 } claims)
+                foreach (var instance in claims)
+                    if (change.State.Inventory is null || !change.State.Inventory.Items.Any(item => item.InstanceId == instance && item.EquippedSlot == Content.Shared.Network.EquipmentSlot.None))
+                        throw new InvalidDataException("Picked instance missing from inventory.");
+            writes[i] = new(session.Lease, session.Revision, change.State.Serialize(), change.State.Inventory?.Serialize(), change.GroundClaims);
         }
         return database.SaveAsync(writes, token);
     }

@@ -5,6 +5,8 @@ public interface ICharacterStore
     Task InitializeAsync(CancellationToken cancellationToken);
     Task<CharacterSession> OpenAsync(string token, CharacterState initial, CancellationToken cancellationToken);
     Task SaveAsync(IReadOnlyList<CharacterSave> changes, CancellationToken cancellationToken);
+    Task<IReadOnlyList<SavedGroundItem>> LoadGroundItemsAsync(IReadOnlyList<SavedGroundItem> seeds, CancellationToken cancellationToken) =>
+        throw new NotSupportedException("Ground item persistence is required for pickup.");
 }
 
 /// <summary>Exclusive ownership lasts through the final save and asynchronous disposal.</summary>
@@ -19,6 +21,6 @@ public abstract class CharacterSession(Guid characterId, Guid ownerId, long revi
     public abstract ValueTask DisposeAsync();
 }
 
-public sealed record CharacterSave(CharacterSession Session, CharacterState State);
+public sealed record CharacterSave(CharacterSession Session, CharacterState State, IReadOnlyList<Guid>? GroundClaims = null);
 public sealed class InvalidIdentityException : Exception;
 public sealed class CharacterInUseException : Exception;

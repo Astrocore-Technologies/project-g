@@ -118,7 +118,7 @@ Checkpoint 7.2: отдельный оранжевый босс X=7, Z=-8, 242 HP
 
 Приёмка: из корня проекта задать `DOTNET_ENVIRONMENT=Development`, запустить сервер без PostgreSQL/Docker, перезапустить клиенты v9. Два клиента — разные `--identity=alice` / `--identity=bob`; после disconnect/рестарта сервера профиль возвращает позицию/HP/ману из SQLite. Двойной вход Alice отклоняется; Bob продолжает играть. Сбой БД не подтверждает незаписанное состояние. Визуальная приёмка остаётся за пользователем; следующий этап 9 — только после подтверждения. PostgreSQL-specific проверки отложены.
 
-**9. Предметы и экипировка — checkpoint 9.1 реализован, ожидает приёмки**
+**9. Предметы и экипировка — 9.1 принят; 9.2 реализован, ожидает приёмки**
 
 Определение предмета отдельно от его экземпляра, инвентарь, экипировка, модификаторы и ручной подбор объектов.
 
@@ -139,7 +139,21 @@ Godot 4.7.1 console executable запущен headless (`--quit-after 900 -- --i
 сервере с отдельной SQLite в .artifacts: handshake v10 и загрузка сцены без runtime errors; сервер остановлен штатно.
 Визуальная проверка UI/кнопок — пользовательская приёмка. Live PostgreSQL не проверялся.
 
-9.2 — предметы в мире и ручной подбор; начинаем только после приёмки 9.1. Loot rewards/trade/crafting не включены.
+9.2: spatial AOI spawn/despawn для предметов, G под курсором — ручной pickup без автоподхода.
+Сервер проверяет sequence/rate/state/distance/препятствия/место; один предмет нельзя забрать дважды.
+Два одноразовых тестовых seed (меч -5/1, броня -5/4), atomic ground claim + inventory + character checkpoint.
+Database schema v3 / protocol v11; content schema 3 и character/inventory model v1 не менялись.
+Подробности и приёмка: `docs/design/ground-items-prototype.md`. Loot rewards/trade/crafting не включены.
+
+Проверено 9.2: `dotnet build Game.slnx --artifacts-path .artifacts/stage9-pickup -m:1 -p:NuGetAudit=false`
+— 0 warnings/errors. `dotnet test Content.Tests/Content.Tests.csproj --artifacts-path .artifacts/stage9-pickup --no-build`
+— 233 теста прошли: malformed/round-trip, replay/flood, race, distance/стены/HP/capacity, AOI exit/reentry,
+SQLite tombstone/restart, batch rollback, sync/async failure без публикации и без выдачи при shutdown.
+Два UDP-клиента тестируются с latency 100–150 мс / loss 10%; uncommitted pickup не меняет их inventory/world.
+`dotnet .artifacts/stage9-pickup/bin/Content.Server/debug/Content.Server.dll --validate-content` и `git diff --check` — успешно.
+Godot 4.7.1 console headless (`--quit-after 900 -- --identity=stage92check`) прошёл handshake v11 и создание сцены без runtime errors,
+собственный сервер использовал отдельную SQLite в .artifacts и остановлен штатно. Рабочая БД не затронута.
+Визуальная приёмка G/UI остаётся за пользователем; live PostgreSQL не запускался. AGENTS.md/scenes/.uid не менялись.
 
 **10. Первое Эхо**
 
@@ -213,4 +227,16 @@ PvP-tag, safe zones, PK, последствия нападений и выпад
 
 **Позже отдельными этапами:** мобильные клиенты, корабли, владение объектами мира, уникальные артефакты и профессии, Tournament Server. Официальная RMT-площадка — только после отдельного решения, не часть ближайшего плана.
 
-**Текущий checkpoint — 9.1: приёмка пользователем. 9.2 начинается только после подтверждения.**
+**Текущий checkpoint — 9.2: приёмка пользователем. Этап 10 начинается только после подтверждения.**
+
+По запросу пользователя добавлен Development-only инструмент «Оживить» в I: восстановление HP=0 → текущий Max HP
+на fixed tick, server ownership + localhost + Development, без изменения позиции/маны/cooldown/предметов.
+HP подтверждается только после существующего SQLite durability barrier. Protocol v12: command 33 (sequence uint32),
+capability 34 (bool byte), оба ReliableOrdered. Persistent models/schema не меняются; правила полноценного respawn не приняты.
+Проверки: `dotnet build Game.slnx --artifacts-path .artifacts/dev-revive -m:1 -p:NuGetAudit=false` — 0 warnings/errors;
+`dotnet test Content.Tests/Content.Tests.csproj --artifacts-path .artifacts/dev-revive -p:NuGetAudit=false` — 238 passed.
+Проверены wire bounds, fixed tick, отсутствие heal живого/изменения маны/gear/cooldown, SQLite restore и commit barrier,
+запрет команд в Staging/Production. `git diff --check` — успешно.
+Godot headless main scene запущена (`--quit-after 600 -- --identity=revive-smoke`); текущий пользовательский сервер v11
+правильно отклонил клиент v12. Пользовательский процесс не остановлен, визуальный тест кнопки требует restart сервера v12.
+AGENTS.md/scenes/.uid не менялись; этап 10 не начат.

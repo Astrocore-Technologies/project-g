@@ -85,6 +85,14 @@ public sealed class CombatSimulation
         actor.Health = Math.Min(actor.Health, profile.Stats.MaxHealth);
         _equipmentDirty.Add(id);
     }
+    internal void DevelopmentRevive(NetworkEntityId id)
+    {
+        var actor = _actors[id];
+        if (actor.Kind != CombatEntityKind.Player || actor.Health > 0) return;
+        actor.Health = actor.Stats.MaxHealth;
+        // Publish public HP through the same durable state path; no resources/cooldowns/gear are reset.
+        _equipmentDirty.Add(id);
+    }
 
     /// <summary>Authoritative spell damage; the training policy remains separate from geometry.</summary>
     public double ApplyAbilityDamage(NetworkEntityId targetId, double power)

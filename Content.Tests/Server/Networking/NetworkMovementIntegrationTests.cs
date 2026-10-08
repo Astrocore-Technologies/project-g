@@ -389,6 +389,9 @@ public sealed class NetworkMovementIntegrationTests
         public List<NpcArea> Areas { get; } = new();
         public Dictionary<NetworkEntityId, InventoryState> Inventories { get; } = new();
         public List<InventoryResult> InventoryResults { get; } = new();
+        public Dictionary<ulong, GroundItemSpawn> GroundItems { get; } = new();
+        public List<PickupResult> PickupResults { get; } = new();
+        public bool CanDevelopmentRevive { get; private set; }
         public NavigationGrid? Navigation { get; private set; }
         public string Token { get; private set; } = "";
         public ServerReject? Rejection { get; private set; }
@@ -510,6 +513,22 @@ public sealed class NetworkMovementIntegrationTests
                             Assert.True(NetworkProtocol.TryReadInventoryResult(reader, out var inventoryResult));
                             InventoryResults.Add(inventoryResult);
                             break;
+                        case NetworkMessageType.DevelopmentTools:
+                            Assert.True(NetworkProtocol.TryReadDevelopmentTools(reader, out var development));
+                            CanDevelopmentRevive = development.CanRevive;
+                            break;
+                        case NetworkMessageType.GroundItemSpawn:
+                            Assert.True(NetworkProtocol.TryReadGroundItemSpawn(reader, out var groundSpawn));
+                            GroundItems[groundSpawn.Handle] = groundSpawn;
+                            break;
+                        case NetworkMessageType.GroundItemDespawn:
+                            Assert.True(NetworkProtocol.TryReadGroundItemDespawn(reader, out var groundDespawn));
+                            GroundItems.Remove(groundDespawn.Handle);
+                            break;
+                        case NetworkMessageType.PickupResult:
+                            Assert.True(NetworkProtocol.TryReadPickupResult(reader, out var pickupResult));
+                            PickupResults.Add(pickupResult);
+                            break;
                         case NetworkMessageType.WorldSnapshot:
                             Assert.True(NetworkProtocol.TryReadWorldSnapshot(reader, out var snapshot));
                             // Independently delayed chunks need not be the latest tick simultaneously.
@@ -545,6 +564,8 @@ public sealed class NetworkMovementIntegrationTests
         }
 
         public void Poll() => _manager.PollEvents();
+        public void Revive(uint sequence) => _peer?.Send(NetworkProtocol.Write(new DevelopmentReviveCommand(sequence)), DeliveryMethod.ReliableOrdered);
+        public void Pickup(uint sequence, ulong handle) => _peer?.Send(NetworkProtocol.Write(new PickupCommand(sequence, handle)), DeliveryMethod.ReliableOrdered);
         public void Inventory(uint sequence, InventoryAction action, ulong handle) => _peer?.Send(
             NetworkProtocol.Write(new InventoryCommand(sequence, action, handle)), DeliveryMethod.ReliableOrdered);
         public bool HasSnapshot(NetworkEntityId id) => _states.ContainsKey(id);

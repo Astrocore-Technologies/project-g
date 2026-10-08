@@ -6,7 +6,7 @@ using NpgsqlTypes;
 namespace Content.Database;
 
 /// <summary>Async PostgreSQL I/O. Advisory ownership plus a fenced revision prevents stale writers.</summary>
-public sealed class PostgresCharacterStore(string connectionString) : ICharacterDatabase, IAsyncDisposable, IDisposable
+public sealed partial class PostgresCharacterStore(string connectionString) : ICharacterDatabase, IAsyncDisposable, IDisposable
 {
     private readonly NpgsqlDataSource _source = CreateSource(connectionString);
 
@@ -30,7 +30,7 @@ public sealed class PostgresCharacterStore(string connectionString) : ICharacter
         await setup.ExecuteNonQueryAsync(cancellationToken);
         await using var version = new NpgsqlCommand("SELECT COALESCE(max(version), 0) FROM project_g_schema", connection, transaction);
         var current = (int)(await version.ExecuteScalarAsync(cancellationToken))!;
-        if (current is < 0 or > 2) throw new InvalidDataException("Unsupported database schema version.");
+        if (current is < 0 or > 3) throw new InvalidDataException("Unsupported database schema version.");
         if (current == 0)
         {
             using var resource = typeof(PostgresCharacterStore).Assembly.GetManifestResourceStream(
@@ -49,6 +49,16 @@ public sealed class PostgresCharacterStore(string connectionString) : ICharacter
             await using var migration = new NpgsqlCommand(await reader.ReadToEndAsync(cancellationToken), connection, transaction);
             await migration.ExecuteNonQueryAsync(cancellationToken);
             await using var mark = new NpgsqlCommand("INSERT INTO project_g_schema VALUES (2)", connection, transaction);
+            await mark.ExecuteNonQueryAsync(cancellationToken);
+        }
+        if (current < 3)
+        {
+            using var resource = typeof(PostgresCharacterStore).Assembly.GetManifestResourceStream(
+                "Content.Database.Migrations.0003_ground_items.sql") ?? throw new InvalidOperationException("Migration is missing.");
+            using var reader = new StreamReader(resource);
+            await using var migration = new NpgsqlCommand(await reader.ReadToEndAsync(cancellationToken), connection, transaction);
+            await migration.ExecuteNonQueryAsync(cancellationToken);
+            await using var mark = new NpgsqlCommand("INSERT INTO project_g_schema VALUES (3)", connection, transaction);
             await mark.ExecuteNonQueryAsync(cancellationToken);
         }
         await transaction.CommitAsync(cancellationToken);
@@ -149,6 +159,16 @@ public sealed class PostgresCharacterStore(string connectionString) : ICharacter
             command.Parameters.AddWithValue(change.ExpectedRevision);
             if (await command.ExecuteNonQueryAsync(cancellationToken) != 1)
                 throw new InvalidOperationException("Character ownership/revision conflict; checkpoint aborted.");
+            if (change.GroundClaims is { Count: > 0 } claims)
+            {
+                if (claims.Count > 8 || change.Inventory is null) throw new InvalidDataException("Invalid pickup batch.");
+                foreach (var instance in claims)
+                {
+                    await using var pickup = new NpgsqlCommand("UPDATE project_g_ground_items SET claimed_by = $1 WHERE instance_id = $2 AND claimed_by IS NULL", connection, transaction);
+                    pickup.Parameters.AddWithValue(change.Session.CharacterId); pickup.Parameters.AddWithValue(instance);
+                    if (await pickup.ExecuteNonQueryAsync(cancellationToken) != 1) throw new InvalidOperationException("Ground item already claimed; checkpoint aborted.");
+                }
+            }
             if (change.Inventory is { } items)
             {
                 await using var inventory = new NpgsqlCommand("UPDATE project_g_inventory SET state = $1 WHERE character_id = $2 AND model_version = 1",

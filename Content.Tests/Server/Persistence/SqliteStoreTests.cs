@@ -15,7 +15,7 @@ public sealed class SqliteStoreTests
         using (var connection = Connect(store.DatabasePath))
         using (var command = connection.CreateCommand())
         {
-            command.CommandText = "UPDATE schema_version SET version = 99 WHERE version = 2"; command.ExecuteNonQuery();
+            command.CommandText = "UPDATE schema_version SET version = 99 WHERE version = 3"; command.ExecuteNonQuery();
         }
         await Assert.ThrowsAsync<InvalidDataException>(() => store.InitializeAsync(CancellationToken.None));
         using var verify = Connect(store.DatabasePath); using var version = verify.CreateCommand();

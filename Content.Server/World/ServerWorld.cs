@@ -16,7 +16,7 @@ namespace Content.Server.World;
 /// Authoritative movement state for the current test region.
 /// It is accessed only by the server polling thread.
 /// </summary>
-public sealed class ServerWorld
+public sealed partial class ServerWorld
 {
     private readonly Dictionary<int, ServerPlayer> _playersByConnection = new();
     private readonly Dictionary<NetworkEntityId, ServerPlayer> _playersByEntity = new();
@@ -34,7 +34,8 @@ public sealed class ServerWorld
     public ServerWorld(IOptions<MovementOptions> options, IOptions<InterestOptions> interest,
         IOptions<NavigationOptions>? navigation = null, ContentCatalog? catalog = null,
         IOptions<CombatOptions>? combat = null, IOptions<ServerOptions>? server = null, IOptions<NpcOptions>? npc = null,
-        IOptions<BossOptions>? boss = null, IOptions<InventoryOptions>? inventory = null)
+        IOptions<BossOptions>? boss = null, IOptions<InventoryOptions>? inventory = null,
+        IOptions<GroundItemOptions>? groundItems = null)
     {
         _movement = options.Value.ToSettings();
         _interest = interest.Value;
@@ -58,6 +59,9 @@ public sealed class ServerWorld
             Abilities = new AbilitySimulation(catalog, Combat, _spatial, Navigation, settings, _interest.CellSize, StartDash);
             if (inventory?.Value.Enabled == true)
                 Inventory = new InventorySimulation(catalog, Combat, Abilities, id => _playersByEntity[id].BaseStats);
+            if (groundItems?.Value.Enabled == true)
+                GroundItems = new GroundItemSimulation(catalog, Inventory ?? throw new ArgumentException("Pickup requires inventory."),
+                    Combat, Navigation, groundItems.Value, _interest.CellSize);
             if (npc?.Value is { Enabled: true } npcSettings)
             {
                 if (!catalog.Creatures.ContainsKey(npcSettings.DefinitionId))
@@ -93,6 +97,7 @@ public sealed class ServerWorld
     public NpcSimulation? Npc { get; }
     public NpcSimulation? Boss { get; }
     public InventorySimulation? Inventory { get; }
+    public GroundItemSimulation? GroundItems { get; }
     public IReadOnlyCollection<ServerPlayer> Players => _playersByConnection.Values;
 
     public ServerPlayer AddPlayer(int connectionId, PlayerId playerId, CharacterState? saved = null)
@@ -176,8 +181,11 @@ public sealed class ServerWorld
 
     public ServerPlayer? RemovePlayer(int connectionId)
     {
-        if (!_playersByConnection.Remove(connectionId, out var player))
+        if (!_playersByConnection.TryGetValue(connectionId, out var player))
             return null;
+        GroundItems?.RemovePlayer(player.EntityId);
+        _playersByConnection.Remove(connectionId);
+        _developmentRevives.Remove(connectionId); _developmentReviveSequences.Remove(connectionId);
         _playersByEntity.Remove(player.EntityId);
         _spatial.Remove(player.EntityId);
         _movingPlayers.Remove(connectionId);
@@ -229,6 +237,10 @@ public sealed class ServerWorld
         Abilities?.Queue(player.EntityId, command, Tick, measuredRttMilliseconds) == true;
     public bool TryQueueInventory(int connectionId, InventoryCommand command) =>
         _playersByConnection.TryGetValue(connectionId, out var player) && Inventory?.Queue(player.EntityId, command, Tick) == true;
+    public bool TryQueuePickup(int connectionId, PickupCommand command) =>
+        _playersByConnection.TryGetValue(connectionId, out var player) && GroundItems?.Queue(player.EntityId, command, Tick) == true;
+    public IReadOnlyList<Guid> PickupClaims(int connectionId) =>
+        _playersByConnection.TryGetValue(connectionId, out var player) ? GroundItems?.Claims(player.EntityId) ?? [] : [];
 
     private bool StartDash(NetworkEntityId id, Vector2 destination, float speed)
     {
@@ -282,6 +294,8 @@ public sealed class ServerWorld
         Npc?.Resolve(fixedDeltaSeconds, Tick);
         Boss?.Resolve(fixedDeltaSeconds, Tick);
         Inventory?.Simulate(Tick);
+        GroundItems?.Simulate(Tick);
+        ApplyDevelopmentRevives();
         if (Inventory is { } inventory) foreach (var id in inventory.Dirty) MarkPersistent(id);
         if (Combat is { } combat)
         {
@@ -309,6 +323,20 @@ public sealed class ServerWorld
         new(player.PlayerId, player.EntityId, player.Position, _movement, Tick);
 
     public PlayerSpawn CreateSpawn(NetworkEntityId id) => CreateSpawn(_playersByEntity[id]);
+
+    public void UpdateGroundInterest(int connectionId, InterestView view)
+    {
+        view.GroundEntered.Clear(); view.GroundLeft.Clear();
+        if (GroundItems is not { } ground) return;
+        var position = _playersByConnection[connectionId].Position;
+        ground.Query(position, _interest.ExitRadius, view.GroundCandidates);
+        foreach (var id in view.GroundVisible)
+            if (!view.GroundCandidates.Contains(id)) view.GroundLeft.Add(id);
+        foreach (var id in view.GroundLeft) view.GroundVisible.Remove(id);
+        foreach (var id in view.GroundCandidates)
+            if (!view.GroundVisible.Contains(id) && Vector2.DistanceSquared(position, ground.State(id.Value, Tick).Position) <= _interest.Radius * _interest.Radius)
+            { view.GroundVisible.Add(id); view.GroundEntered.Add(id); }
+    }
 
     public void UpdateInterest(int connectionId, InterestView view)
     {

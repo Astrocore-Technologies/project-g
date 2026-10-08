@@ -4,7 +4,7 @@ using Microsoft.Data.Sqlite;
 namespace Content.Database;
 
 /// <summary>File-backed Development storage. Synchronous SQLite I/O runs on workers, never in the tick.</summary>
-public sealed class DevelopmentSqliteCharacterStore : ICharacterDatabase
+public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
 {
     private readonly string _connectionString;
     private readonly string _databasePath;
@@ -45,7 +45,7 @@ public sealed class DevelopmentSqliteCharacterStore : ICharacterDatabase
         command.ExecuteNonQuery();
         command.CommandText = "SELECT COALESCE(max(version), 0) FROM schema_version";
         var version = (long)command.ExecuteScalar()!;
-        if (version is < 0 or > 2) throw new InvalidDataException("Unsupported SQLite schema version.");
+        if (version is < 0 or > 3) throw new InvalidDataException("Unsupported SQLite schema version.");
         if (version == 0)
         {
             using var resource = typeof(DevelopmentSqliteCharacterStore).Assembly.GetManifestResourceStream(
@@ -61,6 +61,14 @@ public sealed class DevelopmentSqliteCharacterStore : ICharacterDatabase
             using var reader = new StreamReader(resource);
             command.CommandText = reader.ReadToEnd(); command.ExecuteNonQuery();
             command.CommandText = "INSERT INTO schema_version VALUES (2)"; command.ExecuteNonQuery();
+        }
+        if (version < 3)
+        {
+            using var resource = typeof(DevelopmentSqliteCharacterStore).Assembly.GetManifestResourceStream(
+                "Content.Database.Migrations.0003_ground_items.sqlite.sql") ?? throw new InvalidOperationException("Migration is missing.");
+            using var reader = new StreamReader(resource);
+            command.CommandText = reader.ReadToEnd(); command.ExecuteNonQuery();
+            command.CommandText = "INSERT INTO schema_version VALUES (3)"; command.ExecuteNonQuery();
         }
         cancellationToken.ThrowIfCancellationRequested();
         transaction.Commit();
@@ -137,6 +145,17 @@ public sealed class DevelopmentSqliteCharacterStore : ICharacterDatabase
             command.Parameters.AddWithValue("$owner", session.OwnerId.ToString());
             command.Parameters.AddWithValue("$revision", change.ExpectedRevision);
             if (command.ExecuteNonQuery() != 1) throw new InvalidOperationException("Ownership/revision conflict; SQLite checkpoint aborted.");
+            if (change.GroundClaims is { Count: > 0 } claims)
+            {
+                if (claims.Count > 8 || change.Inventory is null) throw new InvalidDataException("Invalid pickup batch.");
+                foreach (var instance in claims)
+                {
+                    using var pickup = connection.CreateCommand(); pickup.Transaction = transaction;
+                    pickup.CommandText = "UPDATE ground_items SET claimed_by = $owner WHERE instance_id = $item AND claimed_by IS NULL";
+                    pickup.Parameters.AddWithValue("$owner", session.CharacterId.ToString()); pickup.Parameters.AddWithValue("$item", instance.ToString());
+                    if (pickup.ExecuteNonQuery() != 1) throw new InvalidOperationException("Ground item already claimed; checkpoint aborted.");
+                }
+            }
             if (change.Inventory is { } items)
             {
                 using var inventory = connection.CreateCommand(); inventory.Transaction = transaction;

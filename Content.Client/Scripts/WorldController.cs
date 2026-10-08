@@ -22,6 +22,7 @@ public partial class WorldController : Node3D
     private AbilityPresentation? _abilities;
     private readonly Dictionary<ulong, AbilityEffectVisual> _effects = new();
     private InventoryPresentation? _inventory;
+    private GroundItemPresentation? _groundItems;
 
     public override void _Ready()
     {
@@ -41,6 +42,9 @@ public partial class WorldController : Node3D
         _network.NpcAreaReceived += OnNpcArea;
         _network.InventoryReceived += OnInventory;
         _network.InventoryResultReceived += OnInventoryResult;
+        _network.GroundItemSpawned += OnGroundSpawn;
+        _network.GroundItemDespawned += OnGroundDespawn;
+        _network.PickupResultReceived += OnPickupResult;
         _network.Disconnected += ClearWorld;
         _network.ConnectToServer();
     }
@@ -65,6 +69,9 @@ public partial class WorldController : Node3D
         _network.NpcAreaReceived -= OnNpcArea;
         _network.InventoryReceived -= OnInventory;
         _network.InventoryResultReceived -= OnInventoryResult;
+        _network.GroundItemSpawned -= OnGroundSpawn;
+        _network.GroundItemDespawned -= OnGroundDespawn;
+        _network.PickupResultReceived -= OnPickupResult;
         _network.Disconnected -= ClearWorld;
     }
 
@@ -166,13 +173,23 @@ public partial class WorldController : Node3D
         if (value.EntityId == _localEntityId) _inventory?.Apply(value);
     }
     private void OnInventoryResult(InventoryResult value) => _inventory?.Result(value);
+    private void OnGroundSpawn(GroundItemSpawn value)
+    {
+        if (_groundItems is null) { _groundItems = new(); AddChild(_groundItems); _groundItems.Initialize(_network); }
+        _groundItems.Spawn(value);
+    }
+    private void OnGroundDespawn(GroundItemDespawn value) => _groundItems?.Despawn(value);
+    private void OnPickupResult(PickupResult value) { _groundItems?.Result(value); _inventory?.PickupResult(value); }
     private void OnAbilityHit(AbilityHit value)
     {
         if (_combat.TryGetValue(value.TargetId, out var target)) target.ApplyAbilityDamage(value);
+        RefreshAlive(value.TargetId);
     }
 
     private void RefreshAlive(NetworkEntityId id)
     {
+        if (id == _localEntityId && _combat.TryGetValue(id, out var local))
+            _inventory?.ApplyAlive(local.IsAlive);
         if (_players.TryGetValue(id, out var player) && _combat.TryGetValue(id, out var presentation))
             player.SetAlive(presentation.IsAlive);
     }
@@ -228,6 +245,7 @@ public partial class WorldController : Node3D
         foreach (var effect in _effects.Values) if (GodotObject.IsInstanceValid(effect)) effect.QueueFree();
         _effects.Clear(); _abilities = null;
         _inventory?.QueueFree(); _inventory = null;
+        _groundItems?.QueueFree(); _groundItems = null;
         _localEntityId = NetworkEntityId.Invalid;
         _navigationVisual?.QueueFree();
         _navigationVisual = null;

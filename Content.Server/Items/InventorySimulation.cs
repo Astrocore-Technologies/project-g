@@ -31,6 +31,17 @@ public sealed class InventorySimulation(ContentCatalog catalog, CombatSimulation
     public IReadOnlyCollection<NetworkEntityId> Dirty => _dirty;
     public IReadOnlyDictionary<NetworkEntityId, InventoryResult> Results => _results;
     public bool IsDirty(NetworkEntityId id) => _dirty.Contains(id);
+    public bool HasRoom(NetworkEntityId id) => _actors.TryGetValue(id, out var actor) && actor.Items.Length < NetworkConstants.MaxInventoryItems;
+    public bool AddPickedItem(NetworkEntityId id, SavedItem saved)
+    {
+        if (!HasRoom(id) || saved.InstanceId == Guid.Empty || saved.EquippedSlot != EquipmentSlot.None ||
+            !catalog.Items.TryGetValue(saved.DefinitionId, out var definition)) return false;
+        var actor = _actors[id];
+        foreach (var item in actor.Items) if (item.Saved.InstanceId == saved.InstanceId) return false;
+        if (_nextHandle == 0) throw new InvalidOperationException("Runtime item handles exhausted.");
+        var next = new Item[actor.Items.Length + 1]; Array.Copy(actor.Items, next, actor.Items.Length);
+        next[^1] = new(_nextHandle++, saved, definition); actor.Items = next; _dirty.Add(id); return true;
+    }
     public static SavedInventory CreateStarter(CreatureDefinition definition) => new()
     {
         Items = definition.StarterItemIds.Select(id => new SavedItem(Guid.NewGuid(), id, EquipmentSlot.None)).ToArray()

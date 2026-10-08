@@ -13,6 +13,9 @@ public partial class InventoryPresentation : CanvasLayer
     private Label _status = null!;
     private uint _sequence;
     private bool _waiting;
+    private Button _revive = null!;
+    private uint _reviveSequence;
+    private bool _awaitingRevive;
     public void Initialize(NetworkClient network)
     {
         _network = network;
@@ -23,6 +26,20 @@ public partial class InventoryPresentation : CanvasLayer
         content.AddChild(new Label { Text = "Инвентарь [I] — 8 мест" });
         _rows = new VBoxContainer(); content.AddChild(_rows);
         _status = new Label { Text = "Ожидание сервера..." }; content.AddChild(_status);
+        _revive = new Button { Text = "Оживить (Development)", Visible = network.CanDevelopmentRevive, Disabled = true };
+        content.AddChild(_revive); _revive.Pressed += RequestRevive;
+    }
+    public void ApplyAlive(bool alive)
+    {
+        _revive.Disabled = alive || !_network.CanDevelopmentRevive;
+        if (alive && _awaitingRevive) { _awaitingRevive = false; _status.Text = "Персонаж оживлён"; }
+    }
+    private void RequestRevive()
+    {
+        if (_revive.Disabled) return;
+        if (++_reviveSequence == 0) _reviveSequence++;
+        _revive.Disabled = true; _awaitingRevive = true; _status.Text = "Ожидание оживления...";
+        _network.SendDevelopmentRevive(new(_reviveSequence));
     }
     public void Apply(InventoryState state)
     {
@@ -52,6 +69,8 @@ public partial class InventoryPresentation : CanvasLayer
         _waiting = false; SetButtons(false);
         _status.Text = result.Outcome == InventoryOutcome.Accepted ? "Подтверждено сервером" : $"Отклонено: {result.Outcome}";
     }
+    public void PickupResult(PickupResult result) => _status.Text = result.Outcome == PickupOutcome.Accepted
+        ? "Предмет подобран" : $"Подбор отклонён: {result.Outcome}";
     private void SetButtons(bool disabled)
     {
         foreach (var row in _rows.GetChildren())

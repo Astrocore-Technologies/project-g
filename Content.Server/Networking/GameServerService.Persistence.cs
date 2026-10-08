@@ -27,6 +27,8 @@ public sealed partial class GameServerService
         public AttackCommand? Attack;
         public AbilityCommand? Ability;
         public InventoryCommand? Inventory;
+        public PickupCommand? Pickup;
+        public DevelopmentReviveCommand? Revive;
     }
 
     private void BeginLogin(NetPeer peer, ClientHello hello, PlayerId player)
@@ -94,6 +96,9 @@ public sealed partial class GameServerService
             if (intentions.Attack is { } attack) _world.TryQueueAttack(connection, attack);
             if (intentions.Ability is { } ability) _world.TryQueueAbility(connection, ability, _peers[connection].Ping);
             if (intentions.Inventory is { } inventory) _world.TryQueueInventory(connection, inventory);
+            if (intentions.Pickup is { } pickup) _world.TryQueuePickup(connection, pickup);
+            if (intentions.Revive is { } revive && CanDevelopmentRevive(_peers[connection]))
+                _world.TryQueueDevelopmentRevive(connection, revive, authorized: true);
             intentions.Move = null; intentions.Attack = null; intentions.Ability = null;
         }
         _intentions.Clear();
@@ -112,12 +117,14 @@ public sealed partial class GameServerService
         var changes = new List<CharacterSave>(_world.PersistenceDirty.Count);
         foreach (var connection in _world.PersistenceDirty)
             if (_sessions.TryGetValue(connection, out var session))
-                changes.Add(new(session, _world.CaptureCharacter(connection)));
+                changes.Add(new(session, _world.CaptureCharacter(connection), _world.PickupClaims(connection)));
         if (changes.Count == 0) return false;
         _checkpointChanges = changes;
         _checkpointDeadline = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         // Host cancellation must not interrupt an in-flight final checkpoint.
-        _checkpoint = _characters.SaveAsync(changes, _checkpointDeadline.Token);
+        // A synchronous adapter failure must also leave a failed barrier, never trigger an unfenced final save.
+        try { _checkpoint = _characters.SaveAsync(changes, _checkpointDeadline.Token); }
+        catch (Exception exception) { _checkpoint = Task.FromException(exception); }
         return true;
     }
 
@@ -131,6 +138,7 @@ public sealed partial class GameServerService
             throw new InvalidOperationException($"Character checkpoint failed ({exception.GetType().Name}); no state was published.");
         }
         foreach (var change in _checkpointChanges!) change.Session.Revision++;
+        _world.GroundItems?.CommitClaims();
         _checkpoint = null; _checkpointChanges = null;
         _checkpointDeadline!.Dispose(); _checkpointDeadline = null;
         BroadcastSnapshot();
@@ -175,10 +183,12 @@ public sealed partial class GameServerService
             {
                 await _checkpoint;
                 foreach (var change in _checkpointChanges!) change.Session.Revision++;
+                _world.GroundItems?.CommitClaims();
                 _checkpoint = null;
             }
             var changes = new List<CharacterSave>(_sessions.Count);
-            foreach (var (connection, session) in _sessions) changes.Add(new(session, _world.CaptureCharacter(connection)));
+            foreach (var (connection, session) in _sessions)
+                changes.Add(new(session, _world.CaptureCharacter(connection), _world.PickupClaims(connection)));
             await _characters.SaveAsync(changes, timeout.Token);
             await Task.WhenAll(_closing);
         }

@@ -32,6 +32,7 @@ public partial class NetworkClient : Node
     private bool _handshakeComplete;
 
     public PlayerId LocalPlayerId { get; private set; } = PlayerId.Invalid;
+    public bool CanDevelopmentRevive { get; private set; }
     public ushort ServerTickRate { get; private set; } = NetworkConstants.ServerTickRate;
     public NavigationGrid? Navigation { get; private set; }
     public uint LatestServerTick { get; private set; }
@@ -52,6 +53,9 @@ public partial class NetworkClient : Node
     public event Action<NpcArea>? NpcAreaReceived;
     public event Action<InventoryState>? InventoryReceived;
     public event Action<InventoryResult>? InventoryResultReceived;
+    public event Action<GroundItemSpawn>? GroundItemSpawned;
+    public event Action<GroundItemDespawn>? GroundItemDespawned;
+    public event Action<PickupResult>? PickupResultReceived;
     public event Action? Disconnected;
 
     public override void _Ready()
@@ -134,6 +138,15 @@ public partial class NetworkClient : Node
         if (_handshakeComplete && _serverPeer is not null)
             _serverPeer.Send(NetworkProtocol.Write(command), DeliveryMethod.ReliableOrdered);
     }
+    public void SendDevelopmentRevive(DevelopmentReviveCommand command)
+    {
+        if (_handshakeComplete && CanDevelopmentRevive)
+            _serverPeer?.Send(NetworkProtocol.Write(command), DeliveryMethod.ReliableOrdered);
+    }
+    public void SendPickup(PickupCommand command)
+    {
+        if (_handshakeComplete) _serverPeer?.Send(NetworkProtocol.Write(command), DeliveryMethod.ReliableOrdered);
+    }
     public void SendInventory(InventoryCommand command)
     {
         if (_handshakeComplete && _serverPeer is not null)
@@ -169,6 +182,7 @@ public partial class NetworkClient : Node
         _serverPeer = null;
         _handshakeComplete = false;
         LocalPlayerId = PlayerId.Invalid;
+        CanDevelopmentRevive = false;
         Navigation = null;
         LatestServerTick = 0;
         Disconnected?.Invoke();
@@ -299,6 +313,22 @@ public partial class NetworkClient : Node
                 case NetworkMessageType.InventoryResult:
                     if (_handshakeComplete && NetworkProtocol.TryReadInventoryResult(reader, out var inventoryResult))
                         InventoryResultReceived?.Invoke(inventoryResult);
+                    else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.DevelopmentTools:
+                    if (_handshakeComplete && NetworkProtocol.TryReadDevelopmentTools(reader, out var tools)) CanDevelopmentRevive = tools.CanRevive;
+                    else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.GroundItemSpawn:
+                    if (_handshakeComplete && NetworkProtocol.TryReadGroundItemSpawn(reader, out var groundSpawn)) GroundItemSpawned?.Invoke(groundSpawn);
+                    else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.GroundItemDespawn:
+                    if (_handshakeComplete && NetworkProtocol.TryReadGroundItemDespawn(reader, out var groundDespawn)) GroundItemDespawned?.Invoke(groundDespawn);
+                    else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.PickupResult:
+                    if (_handshakeComplete && NetworkProtocol.TryReadPickupResult(reader, out var pickupResult)) PickupResultReceived?.Invoke(pickupResult);
                     else DisconnectMalformed(peer);
                     break;
                 default:

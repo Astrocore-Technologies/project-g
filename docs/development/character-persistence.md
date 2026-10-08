@@ -10,7 +10,7 @@ dotnet run --project Content.Server
 ```
 
 PostgreSQL и Docker не нужны. Development использует SQLite: `.data/project-g-development.db`.
-Миграция schema v2 выполняется до открытия UDP; character model v1 и inventory model v1 хранятся отдельно.
+Миграция schema v3 выполняется до открытия UDP; character model v1 и inventory model v1 хранятся отдельно.
 SQL/providers/migrations находятся в `Content.Database`, игровые модели и adapter — в `Content.Server/Persistence`.
 WAL + FULL commits сохраняют подтверждённое состояние;
 БД, WAL/SHM и lock-файлы исключены из Git. Пересборка `bin`/`.artifacts` их не удаляет.
@@ -22,7 +22,7 @@ Staging/Production пока не запускают Development-вход. Кон
 
 ## Два клиента
 
-Перезапустите Godot-клиенты на протоколе v10.
+Перезапустите сервер и Godot-клиенты на протоколе v12.
 Для независимых персонажей задайте user arguments: `--identity=alice` / `--identity=bob`.
 В командной строке Godot user arguments идут после `--`, например `... -- --identity=alice`.
 Из editor можно задать `DevelopmentIdentityProfile` на NetworkClient или аргументы запуска.
@@ -30,6 +30,16 @@ Staging/Production пока не запускают Development-вход. Кон
 Токен находится в Godot user data: `user://development-identities/<profile>.token`.
 Не удаляйте файл для обычного reconnect: удаление создаёт новую Development identity, не восстанавливает старую.
 Не публикуйте токен. Один профиль не может быть online дважды; после disconnect дождитесь финального сохранения.
+
+## Development: оживить персонажа
+
+При HP=0 откройте `I` и нажмите «Оживить (Development)». Сервер восстанавливает текущий Max HP на месте,
+сохраняет его в SQLite и только затем рассылает CombatState. Мана, экипировка и cooldown не сбрасываются.
+Живого персонажа кнопка не лечит. Это тестовый инструмент, не окончательная gameplay-механика respawn.
+Кнопка отображается по серверной capability; запрос разрешён только после входа, своему персонажу,
+с loopback-адреса и при IHostEnvironment=Development. Staging/Production/missing environment запрещают команду.
+Полезная нагрузка ReliableOrdered: ID 33 — uint32 ненулевой sequence; ID 34 — byte CanRevive (0/1).
+Будущие gameplay respawn/death penalties не определяются этим инструментом; модель БД не меняется.
 
 ## Приёмка
 
@@ -44,6 +54,8 @@ Staging/Production пока не запускают Development-вход. Кон
 Этап 9.1: `I` — инвентарь, «Надеть»/«Снять» — подтверждаемая сервером экипировка.
 Меч и броня выдаются один раз, включая первый вход старого персонажа после additive migration.
 Перед обновлением сделайте backup БД при штатно остановленном сервере; не удаляйте её для получения предметов.
+Этап 9.2: две коробки X=-5/Z=1 и X=-5/Z=4; подойти, курсор на предмет, `G` — ручной подбор.
+Claim и inventory сохраняются атомарно; забранный тестовый предмет не появляется снова после рестарта.
 Offline время уменьшает cooldown, но не восстанавливает HP/ману. HP=0 сохраняется; respawn не добавлен.
 Прерванные casts/effects/routes не восстанавливаются; оплаченная мана/cooldown не возвращаются.
 NPC и босс перезапускаются вместе с ареной: их persistence пока нет.

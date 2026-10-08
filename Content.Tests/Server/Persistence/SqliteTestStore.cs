@@ -40,6 +40,8 @@ internal sealed class SqliteCharacterStore : ICharacterStore
         }
     }
     public Task InitializeAsync(CancellationToken token) => _inner.InitializeAsync(token);
+    public Task<IReadOnlyList<SavedGroundItem>> LoadGroundItemsAsync(IReadOnlyList<SavedGroundItem> seeds, CancellationToken token) =>
+        _inner.LoadGroundItemsAsync(seeds, token);
     public Task<CharacterSession> OpenAsync(string credential, CharacterState initial, CancellationToken token)
     {
         Interlocked.Increment(ref _opens); return _inner.OpenAsync(credential, initial, token);

@@ -23,5 +23,11 @@ public enum NetworkMessageType : ushort
     NpcArea = 25,
     InventoryCommand = 26,
     InventoryResult = 27,
-    InventoryState = 28
+    InventoryState = 28,
+    PickupCommand = 29,
+    PickupResult = 30,
+    GroundItemSpawn = 31,
+    GroundItemDespawn = 32,
+    DevelopmentRevive = 33,
+    DevelopmentTools = 34
 }

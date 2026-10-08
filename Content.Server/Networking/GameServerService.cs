@@ -26,6 +26,7 @@ public sealed partial class GameServerService : BackgroundService
     private readonly Dictionary<int, InterestView> _views = new();
     private readonly NetDataWriter _snapshotWriter = new();
     private readonly NetManager _server;
+    private readonly bool _developmentRevive;
 
     public GameServerService(
         IOptions<ServerOptions> options,
@@ -33,12 +34,13 @@ public sealed partial class GameServerService : BackgroundService
         ServerWorld world,
         ILogger<GameServerService> logger,
         ICharacterStore? characters = null,
-        IOptions<PersistenceOptions>? persistence = null)
+        IOptions<PersistenceOptions>? persistence = null, IHostEnvironment? environment = null)
     {
         _options = options.Value;
         _handshakes = handshakes;
         _world = world;
         _characters = characters;
+        _developmentRevive = environment?.IsDevelopment() == true;
         _maxSessions = persistence?.Value.MaxSessions ?? 32;
         if (_maxSessions is < 1 or > 64) throw new ArgumentException("Development session budget must be 1..64.");
         _logger = logger;
@@ -54,6 +56,12 @@ public sealed partial class GameServerService : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         if (_characters is not null) await _characters.InitializeAsync(stoppingToken);
+        if (_world.GroundItems is { } ground)
+        {
+            using var deadline = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+            deadline.CancelAfter(TimeSpan.FromSeconds(10));
+            ground.Restore(_characters is null ? ground.Seeds : await _characters.LoadGroundItemsAsync(ground.Seeds, deadline.Token));
+        }
         if (!_server.Start(_options.Port))
             throw new InvalidOperationException($"Failed to start UDP server on port {_options.Port}.");
 
@@ -203,6 +211,18 @@ public sealed partial class GameServerService : BackgroundService
                 if (_characters is null) _world.TryQueueInventory(peer.Id, inventory);
                 else BufferIntentions(peer.Id).Inventory ??= inventory;
             }
+            if (messageType == NetworkMessageType.PickupCommand && deliveryMethod == DeliveryMethod.ReliableOrdered &&
+                NetworkProtocol.TryReadPickupCommand(reader, out var pickup))
+            {
+                if (_characters is null) _world.TryQueuePickup(peer.Id, pickup);
+                else BufferIntentions(peer.Id).Pickup ??= pickup;
+            }
+            if (messageType == NetworkMessageType.DevelopmentRevive && CanDevelopmentRevive(peer) &&
+                deliveryMethod == DeliveryMethod.ReliableOrdered && NetworkProtocol.TryReadDevelopmentRevive(reader, out var revive))
+            {
+                if (_characters is null) _world.TryQueueDevelopmentRevive(peer.Id, revive, authorized: true);
+                else BufferIntentions(peer.Id).Revive ??= revive;
+            }
             // Invalid game intentions are discarded; avoid logging unbounded client spam.
         }
         finally
@@ -210,6 +230,8 @@ public sealed partial class GameServerService : BackgroundService
             reader.Recycle();
         }
     }
+
+    private bool CanDevelopmentRevive(NetPeer peer) => _developmentRevive && System.Net.IPAddress.IsLoopback(peer.Address);
 
     private void HandleHandshake(
         NetPeer peer,
@@ -253,6 +275,7 @@ public sealed partial class GameServerService : BackgroundService
             DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), session?.IssuedToken ?? "");
 
         peer.Send(NetworkProtocol.Write(welcome), DeliveryMethod.ReliableOrdered);
+        peer.Send(NetworkProtocol.Write(new DevelopmentTools(CanDevelopmentRevive(peer))), DeliveryMethod.ReliableOrdered);
         // Public collision geometry arrives before any spawn on the same reliable stream.
         peer.Send(NetworkProtocol.Write(_world.Navigation.ToMessage()), DeliveryMethod.ReliableOrdered);
 
@@ -281,11 +304,21 @@ public sealed partial class GameServerService : BackgroundService
         _world.Combat?.ClearResults();
         _world.Abilities?.ClearResults();
         _world.Inventory?.ClearResults();
+        _world.GroundItems?.ClearResults();
+        if (_characters is null) _world.GroundItems?.CommitClaims();
     }
 
     private void SendInterest(NetPeer peer, InterestView view)
     {
         _world.UpdateInterest(peer.Id, view);
+        _world.UpdateGroundInterest(peer.Id, view);
+        if (_world.GroundItems is { } ground)
+        {
+            foreach (var id in view.GroundLeft)
+                peer.Send(NetworkProtocol.Write(new GroundItemDespawn(id.Value, _world.Tick)), DeliveryMethod.ReliableOrdered);
+            foreach (var id in view.GroundEntered)
+                peer.Send(NetworkProtocol.Write(ground.State(id.Value, _world.Tick)), DeliveryMethod.ReliableOrdered);
+        }
         foreach (var id in view.Left)
             peer.Send(NetworkProtocol.Write(new PlayerDespawn(id)), DeliveryMethod.ReliableOrdered);
         foreach (var id in view.Entered)
@@ -307,6 +340,9 @@ public sealed partial class GameServerService : BackgroundService
             if (inventory.Results.TryGetValue(inventoryOwner, out var inventoryResult))
                 peer.Send(NetworkProtocol.Write(inventoryResult), DeliveryMethod.ReliableOrdered);
         }
+        if (_world.GroundItems is { } pickups && _world.TryGetOwnedEntity(peer.Id, out var pickupOwner) &&
+            pickups.Results.TryGetValue(pickupOwner, out var pickupResult))
+            peer.Send(NetworkProtocol.Write(pickupResult), DeliveryMethod.ReliableOrdered);
         if (_world.Abilities is { } abilities)
         {
             _world.UpdateAbilityInterest(peer.Id, view, view.Abilities);
