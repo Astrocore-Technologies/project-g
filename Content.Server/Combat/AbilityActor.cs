@@ -8,6 +8,8 @@ internal sealed class AbilityActor(AbilityDefinition[] definitions, AbilityProfi
 {
     public AbilityDefinition[] Definitions { get; } = definitions;
     public AbilityProfile[] Profiles { get; } = profiles;
+    public HashSet<ushort> Enabled { get; set; } = profiles.Select(p => p.Id).ToHashSet();
+    public Dictionary<ushort,int> Levels { get; set; } = new();
     public double[] ReadyAt { get; } = new double[definitions.Length];
     public double Mana { get; set; } = maximumMana;
     public double MaxMana { get; } = maximumMana;

@@ -88,13 +88,17 @@ public sealed class GroundItemIntegrationTests
                 Assert.Equal(2, Assert.Single(first.Inventories).Value.Items.Count);
                 gate.TrySetResult();
                 await Poll(() => first.PickupResults.Count == 1 && second.PickupResults.Count == 1 && first.GroundItems.Count == 0 && second.GroundItems.Count == 0);
-                Assert.Equal(PickupOutcome.Accepted, first.PickupResults[0].Outcome);
-                Assert.Equal(PickupOutcome.Missing, second.PickupResults[0].Outcome);
-                Assert.Equal(3, Assert.Single(first.Inventories).Value.Items.Count);
-                Assert.Equal(2, Assert.Single(second.Inventories).Value.Items.Count);
-                first.Pickup(2, handle); await Poll(() => first.PickupResults.Count == 2);
-                Assert.Equal(PickupOutcome.Missing, first.PickupResults[1].Outcome);
-                winnerToken = first.Token;
+                // A pending save can precede pickup delivery; reliable ordering is per peer,
+                // so packet loss may let either client win this cross-peer race.
+                Assert.Equal(1, new[] { first, second }.Count(client => client.PickupResults[0].Outcome == PickupOutcome.Accepted));
+                var winner = first.PickupResults[0].Outcome == PickupOutcome.Accepted ? first : second;
+                var loser = ReferenceEquals(winner, first) ? second : first;
+                Assert.Equal(PickupOutcome.Missing, loser.PickupResults[0].Outcome);
+                await Poll(() => Assert.Single(winner.Inventories).Value.Items.Count == 3);
+                Assert.Equal(2, Assert.Single(loser.Inventories).Value.Items.Count);
+                winner.Pickup(2, handle); await Poll(() => winner.PickupResults.Count == 2);
+                Assert.Equal(PickupOutcome.Missing, winner.PickupResults[1].Outcome);
+                winnerToken = winner.Token;
             }
             finally { gate.TrySetResult(); }
         }

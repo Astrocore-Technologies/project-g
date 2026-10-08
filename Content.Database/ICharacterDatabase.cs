@@ -4,7 +4,7 @@ namespace Content.Database;
 public interface ICharacterDatabase
 {
     Task InitializeAsync(CancellationToken cancellationToken);
-    Task<DatabaseSession> OpenAsync(string token, string initialCharacter, string initialInventory, string initialEchoes, CancellationToken cancellationToken);
+    Task<DatabaseSession> OpenAsync(string token, string initialCharacter, string initialInventory, string initialEchoes, CancellationToken cancellationToken, string? initialProgression = null);
     Task SaveAsync(IReadOnlyList<DatabaseSave> changes, CancellationToken cancellationToken);
     Task<IReadOnlyList<DatabaseGroundItem>> LoadGroundItemsAsync(IReadOnlyList<DatabaseGroundItem> seeds, CancellationToken cancellationToken);
 }
@@ -16,11 +16,12 @@ public abstract class DatabaseSession(Guid characterId, Guid ownerId, long revis
     public string State { get; } = state;
     public string Inventory { get; } = inventory;
     public string Echoes { get; } = echoes;
+    public string? Progression { get; init; }
     public string IssuedToken { get; } = issuedToken;
     public abstract ValueTask DisposeAsync();
 }
 public sealed record DatabaseSave(DatabaseSession Session, long ExpectedRevision, string State, string? Inventory,
-    IReadOnlyList<Guid>? GroundClaims = null, string? Echoes = null);
+    IReadOnlyList<Guid>? GroundClaims = null, string? Echoes = null, string? Progression = null);
 public sealed class DatabaseInvalidIdentityException : Exception;
 public sealed class DatabaseCharacterInUseException : Exception;
 internal static class StorageBounds

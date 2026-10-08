@@ -26,6 +26,7 @@ public partial class WorldController : Node3D
     private GroundItemPresentation? _groundItems;
     private readonly Dictionary<NetworkEntityId, EchoPresentation> _echoes = new();
     private EchoControls? _echoControls;
+    private ProjectG.Progression.ProgressionPresentation? _progression;
 
     public override void _Ready()
     {
@@ -49,6 +50,8 @@ public partial class WorldController : Node3D
         _network.GroundItemDespawned += OnGroundDespawn;
         _network.PickupResultReceived += OnPickupResult;
         _network.Disconnected += ClearWorld;
+        _network.ProgressionReceived += OnProgression;
+        _network.ProgressionResultReceived += OnProgressionResult;
         _network.EchoSpawned += OnEchoSpawn;
         _network.EchoLoadoutReceived += OnEchoLoadout;
         _network.EchoActionReceived += OnEchoAction;
@@ -80,6 +83,8 @@ public partial class WorldController : Node3D
         _network.GroundItemDespawned -= OnGroundDespawn;
         _network.PickupResultReceived -= OnPickupResult;
         _network.Disconnected -= ClearWorld;
+        _network.ProgressionReceived -= OnProgression;
+        _network.ProgressionResultReceived -= OnProgressionResult;
         _network.EchoSpawned -= OnEchoSpawn;
         _network.EchoLoadoutReceived -= OnEchoLoadout;
         _network.EchoActionReceived -= OnEchoAction;
@@ -92,6 +97,13 @@ public partial class WorldController : Node3D
         _navigationVisual = new NavigationVisual { Name = "NavigationGeometry" };
         AddChild(_navigationVisual);
         _navigationVisual.Build(grid);
+        foreach (var position in new Vector3[] { new(-9,0,-6),new(9,0,6) })
+        {
+            var marker = new Node3D { Position = position }; _navigationVisual.AddChild(marker);
+            marker.AddChild(new MeshInstance3D { Position = new(0,0.15f,0), Mesh = new CylinderMesh { TopRadius = 1.4f, BottomRadius = 1.4f, Height = 0.1f },
+                MaterialOverride = new StandardMaterial3D { AlbedoColor = new(0.1f,0.8f,0.7f) } });
+            marker.AddChild(new Label3D { Position = new(0,1.5f,0), Text = "Открытие • EXP", Billboard = BaseMaterial3D.BillboardModeEnum.Enabled });
+        }
     }
 
     private void OnPlayerSpawned(PlayerSpawn spawn)
@@ -112,6 +124,7 @@ public partial class WorldController : Node3D
             _abilities.Initialize(player, _network);
             _inventory = new InventoryPresentation(); AddChild(_inventory); _inventory.Initialize(_network);
             _echoControls = new(); AddChild(_echoControls); _echoControls.Initialize(_network);
+            _progression = new(); AddChild(_progression); _progression.Initialize(_network);
         }
     }
 
@@ -202,7 +215,7 @@ public partial class WorldController : Node3D
     private void RefreshAlive(NetworkEntityId id)
     {
         if (id == _localEntityId && _combat.TryGetValue(id, out var local))
-            _inventory?.ApplyAlive(local.IsAlive);
+            { _inventory?.ApplyAlive(local.IsAlive); _progression?.ApplyAlive(local.IsAlive); }
         if (id == _localEntityId && _combat.TryGetValue(id, out var owner)) _echoControls?.ApplyAlive(owner.IsAlive);
         if (_players.TryGetValue(id, out var player) && _combat.TryGetValue(id, out var presentation))
             player.SetAlive(presentation.IsAlive);
@@ -260,6 +273,7 @@ public partial class WorldController : Node3D
         foreach (var effect in _effects.Values) if (GodotObject.IsInstanceValid(effect)) effect.QueueFree();
         _effects.Clear(); _abilities = null;
         _inventory?.QueueFree(); _inventory = null;
+        _progression?.QueueFree(); _progression = null;
         _groundItems?.QueueFree(); _groundItems = null;
         foreach (var echo in _echoes.Values) echo.QueueFree();
         _echoes.Clear(); _echoControls?.QueueFree(); _echoControls = null;
@@ -267,6 +281,9 @@ public partial class WorldController : Node3D
         _navigationVisual?.QueueFree();
         _navigationVisual = null;
     }
+    private void OnProgression(ProgressionState value)
+    { if (value.OwnerId == _localEntityId) { _progression?.Apply(value); _abilities?.ApplyProgression(value); } }
+    private void OnProgressionResult(ProgressionResult value) => _progression?.Result(value);
     private void OnEchoSpawn(EchoSpawn value)
     {
         if (_echoes.ContainsKey(value.EntityId)) return;

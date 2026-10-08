@@ -378,6 +378,9 @@ public sealed class NetworkMovementIntegrationTests
         private PlayerId _playerId;
 
         public Dictionary<NetworkEntityId, PlayerSpawn> Spawns { get; } = new();
+        public Dictionary<NetworkEntityId, ProgressionState> Progressions { get; } = new();
+        public List<ProgressionResult> ProgressionResults { get; } = new();
+        public void Progression(ProgressionCommand command) => _peer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
         public Dictionary<NetworkEntityId, EchoSpawn> Echoes { get; } = new();
         public Dictionary<NetworkEntityId, EchoLoadout> EchoLoadouts { get; } = new();
         public List<EchoAction> EchoActions { get; } = new();
@@ -435,6 +438,10 @@ public sealed class NetworkMovementIntegrationTests
                     Assert.True(NetworkProtocol.TryReadMessageType(reader, out var type));
                     switch (type)
                     {
+                        case NetworkMessageType.ProgressionState:
+                            Assert.True(NetworkProtocol.TryReadProgressionState(reader,out var progression)); Assert.Equal(LocalSpawn.EntityId,progression.OwnerId); Progressions[progression.OwnerId] = progression; break;
+                        case NetworkMessageType.ProgressionResult:
+                            Assert.True(NetworkProtocol.TryReadProgressionResult(reader,out var progressionResult)); ProgressionResults.Add(progressionResult); break;
                         case NetworkMessageType.EchoSpawn:
                             Assert.True(NetworkProtocol.TryReadEchoSpawn(reader, out var echoSpawn));
                             Echoes[echoSpawn.EntityId] = echoSpawn; _ticks[echoSpawn.EntityId] = echoSpawn.ServerTick;

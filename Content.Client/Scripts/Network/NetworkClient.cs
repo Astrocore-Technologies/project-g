@@ -57,6 +57,10 @@ public partial class NetworkClient : Node
     public event Action<GroundItemDespawn>? GroundItemDespawned;
     public event Action<PickupResult>? PickupResultReceived;
     public event Action? Disconnected;
+    public event Action<ProgressionState>? ProgressionReceived;
+    public event Action<ProgressionResult>? ProgressionResultReceived;
+    public void SendProgression(ProgressionCommand command)
+    { if (_handshakeComplete) _serverPeer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered); }
     public event Action<EchoSpawn>? EchoSpawned;
     public event Action<EchoLoadout>? EchoLoadoutReceived;
     public event Action<EchoAction>? EchoActionReceived;
@@ -222,6 +226,14 @@ public partial class NetworkClient : Node
 
             switch (messageType)
             {
+                case NetworkMessageType.ProgressionState:
+                    if (_handshakeComplete && NetworkProtocol.TryReadProgressionState(reader,out var progression)) ProgressionReceived?.Invoke(progression);
+                    else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.ProgressionResult:
+                    if (_handshakeComplete && NetworkProtocol.TryReadProgressionResult(reader,out var progressionResult)) ProgressionResultReceived?.Invoke(progressionResult);
+                    else DisconnectMalformed(peer);
+                    break;
                 case NetworkMessageType.EchoSpawn:
                     if (_handshakeComplete && Navigation is not null && NetworkProtocol.TryReadEchoSpawn(reader, out var echoSpawn) && Navigation.IsWalkable(echoSpawn.Position)) EchoSpawned?.Invoke(echoSpawn);
                     else DisconnectMalformed(peer);

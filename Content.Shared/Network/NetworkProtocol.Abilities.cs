@@ -56,7 +56,7 @@ public static partial class NetworkProtocol
         value = default;
         if (reader.AvailableBytes < 29 || !reader.TryGetULong(out var actor) || actor == 0 ||
             !reader.TryGetUInt(out var tick) || !reader.TryGetDouble(out var mana) || !reader.TryGetDouble(out var maximum) ||
-            !reader.TryGetByte(out var count) || count > NetworkConstants.MaxAbilitySlots || reader.AvailableBytes != count * 47) return false;
+            !reader.TryGetByte(out var count) || count > NetworkConstants.MaxAbilityProfiles || reader.AvailableBytes != count * 47) return false;
         var slots = new AbilityProfile[count];
         for (var i = 0; i < count; i++)
         {
@@ -125,7 +125,7 @@ public static partial class NetworkProtocol
     private static bool ValidLoadout(AbilityLoadout value)
     {
         if (!value.EntityId.IsValid || !NonNegative(value.Mana) || !NonNegative(value.MaxMana) || value.Mana > value.MaxMana ||
-            value.Abilities is null || value.Abilities.Count > NetworkConstants.MaxAbilitySlots) return false;
+            value.Abilities is null || value.Abilities.Count > NetworkConstants.MaxAbilityProfiles) return false;
         for (var i = 0; i < value.Abilities.Count; i++)
         {
             if (!ValidProfile(value.Abilities[i])) return false;

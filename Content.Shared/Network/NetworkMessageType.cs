@@ -34,5 +34,8 @@ public enum NetworkMessageType : ushort
     EchoSignatureCommand = 36,
     EchoSignatureResult = 37,
     EchoAction = 38,
-    EchoLoadout = 39
+    EchoLoadout = 39,
+    ProgressionCommand = 40,
+    ProgressionState = 41,
+    ProgressionResult = 42
 }

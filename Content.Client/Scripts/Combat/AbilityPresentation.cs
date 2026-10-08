@@ -19,6 +19,13 @@ public partial class AbilityPresentation : Node3D
     private uint _pending;
     private AbilityEffectVisual? _prediction;
     private string _feedback = "";
+    private static readonly Key[] BarKeys = [Key.Q,Key.W,Key.E,Key.R,Key.A,Key.S,Key.D,Key.F];
+    private readonly ushort[] _bar = new ushort[8];
+    public void ApplyProgression(ProgressionState value)
+    {
+        Array.Clear(_bar);
+        foreach (var skill in value.Skills) if (skill.Slot != 0) _bar[skill.Slot-1] = skill.Id;
+    }
 
     public void Initialize(PlayerController player, NetworkClient network)
     {
@@ -35,17 +42,13 @@ public partial class AbilityPresentation : Node3D
     public override void _UnhandledInput(InputEvent @event)
     {
         if (!_player.IsAlive || @event is not InputEventKey { Pressed: true, Echo: false } key || _pending != 0 || _loadout.Abilities is null) return;
-        AbilityForm form;
-        switch (key.PhysicalKeycode)
-        {
-            case Key.Q: form = AbilityForm.Projectile; break;
-            case Key.W: form = AbilityForm.GroundArea; break;
-            case Key.Space: form = AbilityForm.Dash; break;
-            default: return;
-        }
+        var index = Array.IndexOf(BarKeys,key.PhysicalKeycode);
+        if (key.PhysicalKeycode != Key.Space && index < 0) return;
         AbilityProfile? selected = null;
-        foreach (var slot in _loadout.Abilities) if (slot.Form == form) { selected = slot; break; }
+        foreach (var slot in _loadout.Abilities)
+            if (key.PhysicalKeycode == Key.Space ? slot.Form == AbilityForm.Dash : slot.Id == _bar[index]) { selected = slot; break; }
         if (selected is not { } profile || profile.ReadyInSeconds > Now() - _receivedAt || _loadout.Mana < profile.ManaCost) return;
+        var form = profile.Form;
         var camera = GetViewport().GetCamera3D();
         if (camera is null) return;
         var mouse = GetViewport().GetMousePosition();
@@ -97,7 +100,8 @@ public partial class AbilityPresentation : Node3D
         var text = $"MP {_loadout.Mana:0}/{_loadout.MaxMana:0}  {_feedback}";
         foreach (var slot in _loadout.Abilities)
         {
-            var key = slot.Form == AbilityForm.Projectile ? "Q" : slot.Form == AbilityForm.GroundArea ? "W" : "Space";
+            var index = Array.IndexOf(_bar,slot.Id);
+            var key = slot.Form == AbilityForm.Dash ? "Space" : index >= 0 ? BarKeys[index].ToString() : "?";
             text += $"\n{key}: {Math.Max(0, slot.ReadyInSeconds - (Now() - _receivedAt)):0.0}s";
         }
         _label.Text = text;

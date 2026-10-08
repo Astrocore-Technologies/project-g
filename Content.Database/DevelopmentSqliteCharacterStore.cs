@@ -45,7 +45,7 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
         command.ExecuteNonQuery();
         command.CommandText = "SELECT COALESCE(max(version), 0) FROM schema_version";
         var version = (long)command.ExecuteScalar()!;
-        if (version is < 0 or > 4) throw new InvalidDataException("Unsupported SQLite schema version.");
+        if (version is < 0 or > 5) throw new InvalidDataException("Unsupported SQLite schema version.");
         if (version == 0)
         {
             using var resource = typeof(DevelopmentSqliteCharacterStore).Assembly.GetManifestResourceStream(
@@ -78,14 +78,23 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
             command.CommandText = reader.ReadToEnd(); command.ExecuteNonQuery();
             command.CommandText = "INSERT INTO schema_version VALUES (4)"; command.ExecuteNonQuery();
         }
+        if (version < 5)
+        {
+            using var resource = typeof(DevelopmentSqliteCharacterStore).Assembly.GetManifestResourceStream(
+                "Content.Database.Migrations.0005_progression.sqlite.sql") ?? throw new InvalidOperationException("Migration is missing.");
+            using var reader = new StreamReader(resource);
+            command.CommandText = reader.ReadToEnd(); command.ExecuteNonQuery();
+            command.CommandText = "INSERT INTO schema_version VALUES (5)"; command.ExecuteNonQuery();
+        }
         cancellationToken.ThrowIfCancellationRequested();
         transaction.Commit();
     }, cancellationToken);
 
-    public Task<DatabaseSession> OpenAsync(string token, string initialCharacter, string initialInventory, string initialEchoes, CancellationToken cancellationToken) => Task.Run<DatabaseSession>(() =>
+    public Task<DatabaseSession> OpenAsync(string token, string initialCharacter, string initialInventory, string initialEchoes, CancellationToken cancellationToken, string? initialProgression = null) => Task.Run<DatabaseSession>(() =>
     {
         if (!StorageBounds.ValidToken(token)) throw new DatabaseInvalidIdentityException();
         StorageBounds.Document(initialCharacter); StorageBounds.Document(initialInventory); StorageBounds.Document(initialEchoes);
+        if (initialProgression is not null) StorageBounds.Document(initialProgression);
         var issued = token.Length == 0 ? Convert.ToHexString(RandomNumberGenerator.GetBytes(32)) : "";
         var hash = SHA256.HashData(Convert.FromHexString(issued.Length == 0 ? token : issued));
         using var connection = Connect();
@@ -137,7 +146,19 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
             using var echoReader = echoes.ExecuteReader();
             if (!echoReader.Read() || echoReader.GetInt32(0) != 1) throw new InvalidDataException("Unsupported Echo model.");
             var echoState = echoReader.GetString(1); StorageBounds.Document(echoState);
-            return new Session(id, owner, revision, state, inventoryState, echoState, issued, held);
+            echoReader.Dispose();
+            string? progressionState = null;
+            if (initialProgression is not null)
+            {
+            using var progression = connection.CreateCommand();
+            progression.CommandText = "INSERT INTO character_progression VALUES ($id,1,$state) ON CONFLICT(character_id) DO NOTHING";
+            progression.Parameters.AddWithValue("$id", id.ToString()); progression.Parameters.AddWithValue("$state", initialProgression); progression.ExecuteNonQuery();
+            progression.CommandText = "SELECT model_version,state FROM character_progression WHERE character_id = $id";
+            using var progressionReader = progression.ExecuteReader();
+            if (!progressionReader.Read() || progressionReader.GetInt32(0) != 1) throw new InvalidDataException("Unsupported Progression model.");
+            progressionState = progressionReader.GetString(1); StorageBounds.Document(progressionState);
+            }
+            return new Session(id, owner, revision, state, inventoryState, echoState, issued, held) { Progression = progressionState };
         }
         catch { held.Dispose(); throw; }
     }, cancellationToken);
@@ -168,6 +189,14 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
                 echoes.CommandText = "UPDATE character_echoes SET state = $state WHERE character_id = $id AND model_version = 1";
                 echoes.Parameters.AddWithValue("$state", echoState); echoes.Parameters.AddWithValue("$id", session.CharacterId.ToString());
                 if (echoes.ExecuteNonQuery() != 1) throw new InvalidDataException("Echo row is missing.");
+            }
+            if (change.Progression is { } progressionState)
+            {
+                StorageBounds.Document(progressionState);
+                using var progression = connection.CreateCommand(); progression.Transaction = transaction;
+                progression.CommandText = "UPDATE character_progression SET state = $state WHERE character_id = $id AND model_version = 1";
+                progression.Parameters.AddWithValue("$state", progressionState); progression.Parameters.AddWithValue("$id", session.CharacterId.ToString());
+                if (progression.ExecuteNonQuery() != 1) throw new InvalidDataException("Progression row is missing.");
             }
             if (change.GroundClaims is { Count: > 0 } claims)
             {

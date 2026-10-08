@@ -12,6 +12,7 @@ public sealed record CharacterState
     // Separate model/table: additive schema migration preserves the accepted character v1 document.
     [JsonIgnore] public SavedInventory? Inventory { get; init; }
     [JsonIgnore] public SavedEchoes? Echoes { get; init; }
+    [JsonIgnore] public SavedProgression? Progression { get; init; }
     [JsonRequired]
     public int Version { get; init; } = CurrentVersion;
     public required string RegionId { get; init; }
@@ -39,7 +40,7 @@ public sealed record CharacterState
             !float.IsFinite(X) || !float.IsFinite(Z) ||
             !double.IsFinite(Health) || Health < 0 || !double.IsFinite(Mana) || Mana < 0 ||
             !ValidDuration(AttackCooldownSeconds) || SavedAtUnixMilliseconds <= 0 ||
-            Cooldowns is null || Cooldowns.Length > NetworkConstants.MaxAbilitySlots)
+            Cooldowns is null || Cooldowns.Length > NetworkConstants.MaxLearnedSkills)
             throw new InvalidDataException("Unsupported or invalid character state; migration/repair is required.");
         var ids = new HashSet<string>(StringComparer.Ordinal);
         foreach (var cooldown in Cooldowns)

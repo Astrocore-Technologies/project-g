@@ -48,6 +48,7 @@ public sealed partial class ServerWorld
         {
             var settings = combat?.Value ?? new CombatOptions();
             _playerDefinition = catalog.Creatures[settings.PlayerDefinitionId];
+            _progressionCatalog = catalog;
             Combat = new CombatSimulation(catalog, _spatial, Navigation, settings,
                 server?.Value.TickRate ?? NetworkConstants.ServerTickRate, _interest.CellSize);
             var position = new Vector2(settings.TargetX, settings.TargetZ);
@@ -137,6 +138,7 @@ public sealed partial class ServerWorld
             if (Abilities is not null && _playerDefinition is { } definition)
                 Abilities.AddPlayer(entityId, definition);
             Inventory?.Add(entityId, saved?.Inventory ?? InventorySimulation.CreateStarter(_playerDefinition!));
+            AddProgression(entityId,saved?.Progression);
             if (saved is not null)
             {
                 var actor = Combat!.Get(entityId);
@@ -164,6 +166,7 @@ public sealed partial class ServerWorld
             RegionId = "prototype", ProfileId = definition.Id, Stats = definition.Stats,
             Inventory = Inventory is not null ? InventorySimulation.CreateStarter(definition) : null,
             Echoes = Echoes?.CreateStarter(),
+            Progression = SavedProgression.Starter(definition,_progressionCatalog!),
             X = spawn.X, Z = spawn.Y, Health = stats.MaxHealth, Mana = Math.Max(0, stats.MaxMana),
             AttackCooldownSeconds = 0, Cooldowns = definition.AbilityIds.Select(id => new SavedCooldown(id, 0)).ToArray(),
             SavedAtUnixMilliseconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
@@ -179,6 +182,7 @@ public sealed partial class ServerWorld
             RegionId = "prototype", ProfileId = _playerDefinition!.Id, Stats = player.BaseStats,
             Inventory = Inventory?.Capture(player.EntityId),
             Echoes = Echoes?.Capture(player.EntityId),
+            Progression = _progression.GetValueOrDefault(player.EntityId),
             X = player.Position.X, Z = player.Position.Y, Health = actor.Health,
             Mana = Abilities!.Mana(player.EntityId), Cooldowns = Abilities.CaptureCooldowns(player.EntityId),
             AttackCooldownSeconds = Math.Max(0, actor.ReadyAt - Combat.Time),
@@ -192,6 +196,7 @@ public sealed partial class ServerWorld
             return null;
         GroundItems?.RemovePlayer(player.EntityId);
         Echoes?.Remove(player.EntityId);
+        RemoveProgression(player.EntityId);
         _playersByConnection.Remove(connectionId);
         _developmentRevives.Remove(connectionId); _developmentReviveSequences.Remove(connectionId);
         _playersByEntity.Remove(player.EntityId);
@@ -296,6 +301,7 @@ public sealed partial class ServerWorld
             player.Motion.Step(fixedDeltaSeconds);
             _spatial.Move(player.EntityId, player.Position);
             Combat?.Move(player.EntityId, player.Position);
+            VisitDiscoveries(player);
             Echoes?.Wake(player.EntityId);
             if (!player.Motion.IsMoving)
                 _stoppedPlayers.Add(connectionId);
@@ -312,6 +318,7 @@ public sealed partial class ServerWorld
         Inventory?.Simulate(Tick);
         GroundItems?.Simulate(Tick);
         ApplyDevelopmentRevives();
+        SimulateProgression();
         if (Echoes is { } echoes)
         {
             foreach (var action in Combat!.Events)

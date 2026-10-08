@@ -31,7 +31,20 @@
     { "id": "test_projectile", "networkId": 1, "kind": "Projectile", "power": 15, "manaCost": 5, "cooldownSeconds": 2, "castSeconds": 0.5, "range": 10, "radius": 0.3, "speed": 8, "magicAttackScale": 1 },
     { "id": "test_ground_area", "networkId": 2, "kind": "GroundArea", "power": 10, "manaCost": 10, "cooldownSeconds": 5, "castSeconds": 1, "range": 8, "radius": 2, "speed": 0, "magicAttackScale": 1 },
     { "id": "test_dash", "networkId": 3, "kind": "Dash", "power": 0, "manaCost": 0, "cooldownSeconds": 3, "castSeconds": 0, "range": 3, "radius": 0.45, "speed": 15, "magicAttackScale": 0 },
-    { "id": "boss_ground_area", "networkId": 4, "kind": "GroundArea", "power": 12, "manaCost": 0, "cooldownSeconds": 3, "castSeconds": 1.5, "range": 8, "radius": 2, "speed": 0, "magicAttackScale": 0.5 }
+    { "id": "boss_ground_area", "networkId": 4, "kind": "GroundArea", "power": 12, "manaCost": 0, "cooldownSeconds": 3, "castSeconds": 1.5, "range": 8, "radius": 2, "speed": 0, "magicAttackScale": 0.5 },
+    {
+      "id": "discovery_bolt",
+      "networkId": 5,
+      "kind": "Projectile",
+      "power": 17,
+      "manaCost": 5,
+      "cooldownSeconds": 2,
+      "castSeconds": 0.5,
+      "range": 10,
+      "radius": 0.3,
+      "speed": 8,
+      "magicAttackScale": 1
+    }
   ],
   "items": [
     { "id": "test_sword_item", "name": "Training sword", "slot": "Weapon", "weaponId": "training_sword", "modifiers": { "meleeAttack": 8 } },
@@ -58,5 +71,15 @@
       "baseHealth": 220, "baseMana": 20, "baseHealthRecovery": 0, "baseManaRecovery": 0,
       "weaponId": "boss_claw", "abilityIds": ["boss_ground_area"]
     }
-  ]
+  ],
+  "progression": {
+    "levelCap": 10,
+    "experiencePerLevel": 100,
+    "statPointsPerLevel": 3,
+    "discoveryExperience": 60,
+    "practicePerLevel": 3,
+    "skillLevelCap": 10,
+    "powerPerSkillLevel": 0.05,
+    "discoverySkillId": 5
+  }
 }

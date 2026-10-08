@@ -30,7 +30,7 @@ public sealed partial class PostgresCharacterStore(string connectionString) : IC
         await setup.ExecuteNonQueryAsync(cancellationToken);
         await using var version = new NpgsqlCommand("SELECT COALESCE(max(version), 0) FROM project_g_schema", connection, transaction);
         var current = (int)(await version.ExecuteScalarAsync(cancellationToken))!;
-        if (current is < 0 or > 4) throw new InvalidDataException("Unsupported database schema version.");
+        if (current is < 0 or > 5) throw new InvalidDataException("Unsupported database schema version.");
         if (current == 0)
         {
             using var resource = typeof(PostgresCharacterStore).Assembly.GetManifestResourceStream(
@@ -71,13 +71,24 @@ public sealed partial class PostgresCharacterStore(string connectionString) : IC
             await using var mark = new NpgsqlCommand("INSERT INTO project_g_schema VALUES (4)", connection, transaction);
             await mark.ExecuteNonQueryAsync(cancellationToken);
         }
+        if (current < 5)
+        {
+            using var resource = typeof(PostgresCharacterStore).Assembly.GetManifestResourceStream(
+                "Content.Database.Migrations.0005_progression.sql") ?? throw new InvalidOperationException("Migration is missing.");
+            using var reader = new StreamReader(resource);
+            await using var migration = new NpgsqlCommand(await reader.ReadToEndAsync(cancellationToken), connection, transaction);
+            await migration.ExecuteNonQueryAsync(cancellationToken);
+            await using var mark = new NpgsqlCommand("INSERT INTO project_g_schema VALUES (5)", connection, transaction);
+            await mark.ExecuteNonQueryAsync(cancellationToken);
+        }
         await transaction.CommitAsync(cancellationToken);
     }
 
-    public async Task<DatabaseSession> OpenAsync(string token, string initialCharacter, string initialInventory, string initialEchoes, CancellationToken cancellationToken)
+    public async Task<DatabaseSession> OpenAsync(string token, string initialCharacter, string initialInventory, string initialEchoes, CancellationToken cancellationToken, string? initialProgression = null)
     {
         if (!StorageBounds.ValidToken(token)) throw new DatabaseInvalidIdentityException();
         StorageBounds.Document(initialCharacter); StorageBounds.Document(initialInventory); StorageBounds.Document(initialEchoes);
+        if (initialProgression is not null) StorageBounds.Document(initialProgression);
         var connection = await _source.OpenConnectionAsync(cancellationToken);
         var issued = token.Length == 0 ? Convert.ToHexString(RandomNumberGenerator.GetBytes(32)) : "";
         var hash = SHA256.HashData(Convert.FromHexString(issued.Length == 0 ? token : issued));
@@ -142,7 +153,19 @@ public sealed partial class PostgresCharacterStore(string connectionString) : IC
             echoes.Parameters.RemoveAt(1); await using var echoReader = await echoes.ExecuteReaderAsync(cancellationToken);
             if (!await echoReader.ReadAsync(cancellationToken) || echoReader.GetInt32(0) != 1) throw new InvalidDataException("Unsupported Echo model.");
             var echoState = echoReader.GetString(1); StorageBounds.Document(echoState);
-            return new Session(characterId, ownerId, revision, state, inventoryState, echoState, issued, connection, lockKey);
+            await echoReader.DisposeAsync();
+            string? progressionState = null;
+            if (initialProgression is not null)
+            {
+            await using var progression = new NpgsqlCommand("INSERT INTO project_g_progression VALUES ($1,1,$2) ON CONFLICT(character_id) DO NOTHING", connection);
+            progression.Parameters.AddWithValue(characterId); progression.Parameters.AddWithValue(NpgsqlDbType.Jsonb, initialProgression);
+            await progression.ExecuteNonQueryAsync(cancellationToken);
+            progression.CommandText = "SELECT model_version,state::text FROM project_g_progression WHERE character_id = $1";
+            progression.Parameters.RemoveAt(1); await using var progressionReader = await progression.ExecuteReaderAsync(cancellationToken);
+            if (!await progressionReader.ReadAsync(cancellationToken) || progressionReader.GetInt32(0) != 1) throw new InvalidDataException("Unsupported Progression model.");
+            progressionState = progressionReader.GetString(1); StorageBounds.Document(progressionState);
+            }
+            return new Session(characterId, ownerId, revision, state, inventoryState, echoState, issued, connection, lockKey) { Progression = progressionState };
         }
         catch
         {
@@ -183,6 +206,13 @@ public sealed partial class PostgresCharacterStore(string connectionString) : IC
                 await using var echoes = new NpgsqlCommand("UPDATE project_g_echoes SET state = $1 WHERE character_id = $2 AND model_version = 1", connection, transaction);
                 echoes.Parameters.AddWithValue(NpgsqlDbType.Jsonb, echoState); echoes.Parameters.AddWithValue(change.Session.CharacterId);
                 if (await echoes.ExecuteNonQueryAsync(cancellationToken) != 1) throw new InvalidDataException("Echo row is missing.");
+            }
+            if (change.Progression is { } progressionState)
+            {
+                StorageBounds.Document(progressionState);
+                await using var progression = new NpgsqlCommand("UPDATE project_g_progression SET state = $1 WHERE character_id = $2 AND model_version = 1", connection, transaction);
+                progression.Parameters.AddWithValue(NpgsqlDbType.Jsonb, progressionState); progression.Parameters.AddWithValue(change.Session.CharacterId);
+                if (await progression.ExecuteNonQueryAsync(cancellationToken) != 1) throw new InvalidDataException("Progression row is missing.");
             }
             if (change.GroundClaims is { Count: > 0 } claims)
             {

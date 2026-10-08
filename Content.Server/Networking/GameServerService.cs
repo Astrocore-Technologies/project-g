@@ -229,6 +229,17 @@ public sealed partial class GameServerService : BackgroundService
                 if (_characters is null) _world.TryQueueEchoSignature(peer.Id,echo);
                 else BufferIntentions(peer.Id).Echo ??= echo;
             }
+            if (messageType == NetworkMessageType.ProgressionCommand && deliveryMethod == DeliveryMethod.ReliableOrdered &&
+                NetworkProtocol.TryReadProgressionCommand(reader,out var progression))
+            {
+                if (_characters is null) _world.TryQueueProgression(peer.Id,progression);
+                else
+                {
+                    var intentions = BufferIntentions(peer.Id);
+                    if (intentions.Progression is null) intentions.Progression = progression;
+                    else intentions.ProgressionSecond = progression;
+                }
+            }
             // Invalid game intentions are discarded; avoid logging unbounded client spam.
         }
         finally
@@ -312,6 +323,7 @@ public sealed partial class GameServerService : BackgroundService
         _world.Inventory?.ClearResults();
         _world.GroundItems?.ClearResults();
         _world.Echoes?.ClearResults();
+        _world.ClearProgressionResults();
         if (_characters is null) _world.GroundItems?.CommitClaims();
     }
 
@@ -364,6 +376,13 @@ public sealed partial class GameServerService : BackgroundService
                 if (echoes.Results.TryGetValue(owner,out var echoResult))
                     peer.Send(NetworkProtocol.Write(echoResult),DeliveryMethod.ReliableOrdered);
             }
+        }
+        if (_world.HasProgression && _world.TryGetOwnedEntity(peer.Id,out var progressionOwner))
+        {
+            if (view.Entered.Contains(progressionOwner) || _world.IsProgressionDirty(progressionOwner))
+                peer.Send(NetworkProtocol.Write(_world.ProgressionState(progressionOwner,_world.Tick)),DeliveryMethod.ReliableOrdered);
+            if (_world.ProgressionResults.TryGetValue(progressionOwner,out var progressionResult))
+                peer.Send(NetworkProtocol.Write(progressionResult),DeliveryMethod.ReliableOrdered);
         }
         if (_world.Abilities is { } abilities)
         {

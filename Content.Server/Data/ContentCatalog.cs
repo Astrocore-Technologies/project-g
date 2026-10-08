@@ -28,6 +28,8 @@ public sealed class ContentCatalog
         document.Balance.Validate();
         Balance = document.Balance;
         BalanceVersion = document.BalanceVersion;
+        ArgumentNullException.ThrowIfNull(document.Progression); document.Progression.Validate();
+        Progression = document.Progression;
         Weapons = Index(document.Weapons, item => item.Id, "weapons");
         Abilities = Index(document.Abilities, item => item.Id, "abilities");
         Creatures = Index(document.Creatures, item => item.Id, "creatures");
@@ -66,6 +68,7 @@ public sealed class ContentCatalog
             Check(ability.Kind == AbilityKind.GroundArea || ability.Speed > 0, $"ability {ability.Id}: speed must be positive");
             NonNegative(ability.MagicAttackScale, $"ability {ability.Id}.magicAttackScale");
         }
+        Check(Abilities.Values.Any(a => a.NetworkId == Progression.DiscoverySkillId && a.Kind != AbilityKind.Dash), "progression: unknown discovery skill");
         foreach (var creature in Creatures.Values)
         {
             Check(creature.Modifiers is not null && creature.Modifiers.IsValid(),
@@ -89,6 +92,7 @@ public sealed class ContentCatalog
         }
     }
 
+    public Content.Server.Progression.ProgressionBalance Progression { get; }
     public int BalanceVersion { get; }
     public StatBalance Balance { get; }
     public FrozenDictionary<string, WeaponDefinition> Weapons { get; }

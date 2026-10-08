@@ -21,6 +21,9 @@ public sealed class AbilitySimulation
     private readonly List<AbilityEffect> _effects = new();
     private readonly List<AbilityEffectState> _states = new();
     private readonly List<AbilityHit> _hits = new();
+    private readonly List<(NetworkEntityId ActorId, ushort SkillId)> _practice = new();
+    private readonly HashSet<ulong> _practiced = new();
+    public IReadOnlyList<(NetworkEntityId ActorId, ushort SkillId)> Practice => _practice;
     private readonly HashSet<NetworkEntityId> _candidates = new();
     private readonly ContentCatalog _catalog;
     private readonly CombatSimulation _combat;
@@ -44,7 +47,11 @@ public sealed class AbilitySimulation
         _catalog = catalog; _combat = combat; _spatial = spatial; _grid = grid; _options = options;
         _calculator = new StatCalculator(catalog.Balance); _startDash = startDash; _queryLimit = cellSize * 32;
         // Reject unusable content before accepting any connections.
-        CreateActor(catalog.Creatures[options.PlayerDefinitionId], _calculator.Calculate(catalog.Creatures[options.PlayerDefinitionId]));
+        var playerDefinition = catalog.Creatures[options.PlayerDefinitionId];
+        var playerStats = _calculator.Calculate(playerDefinition);
+        SavedProgression.Starter(playerDefinition,catalog).Validate();
+        CreateActor(playerDefinition,playerStats);
+        CreateActor(playerDefinition,playerStats,[catalog.Abilities.Values.Single(a => a.NetworkId == catalog.Progression.DiscoverySkillId).Id]);
     }
 
     public IReadOnlyList<AbilityEffectState> ActiveStates => _states;
@@ -59,7 +66,10 @@ public sealed class AbilitySimulation
     }
     internal AbilityActor PrepareEquipment(NetworkEntityId id, DerivedStats stats)
     {
-        var old = _actors[id]; var next = CreateActor(_catalog.Creatures[_options.PlayerDefinitionId], stats);
+        var old = _actors[id]; var next = CreateActor(_catalog.Creatures[_options.PlayerDefinitionId], stats, old.Definitions.Select(d => d.Id));
+        next.Enabled = old.Enabled; next.Levels = old.Levels;
+        for (var i=0;i<next.Profiles.Length;i++)
+            if (next.Profiles[i].Form == AbilityForm.Dash) next.Profiles[i] = next.Profiles[i] with { Speed = next.Profiles[i].Speed * (float)PowerFactor(next,next.Profiles[i].Id) };
         Array.Copy(old.ReadyAt, next.ReadyAt, old.ReadyAt.Length);
         next.Mana = Math.Min(old.Mana, next.MaxMana);
         next.LastSeenSequence = old.LastSeenSequence; next.LastRequestTick = old.LastRequestTick;
@@ -95,15 +105,16 @@ public sealed class AbilitySimulation
     public void AddPlayer(NetworkEntityId id, CreatureDefinition definition)
         => _actors.Add(id, CreateActor(definition, _combat.Get(id).Stats));
 
-    private AbilityActor CreateActor(CreatureDefinition definition, DerivedStats stats)
+    private AbilityActor CreateActor(CreatureDefinition definition, DerivedStats stats, IEnumerable<string>? learned = null)
     {
-        if (definition.AbilityIds.Length > NetworkConstants.MaxAbilitySlots)
+        var abilityIds = learned?.ToArray() ?? definition.AbilityIds.ToArray();
+        if (abilityIds.Length > NetworkConstants.MaxLearnedSkills)
             throw new ArgumentException("Prototype loadout exceeds the slot budget.");
-        var definitions = new AbilityDefinition[definition.AbilityIds.Length];
+        var definitions = new AbilityDefinition[abilityIds.Length];
         var profiles = new AbilityProfile[definitions.Length];
         for (var i = 0; i < definitions.Length; i++)
         {
-            var ability = _catalog.Abilities[definition.AbilityIds[i]];
+            var ability = _catalog.Abilities[abilityIds[i]];
             var cast = _calculator.CastDuration(ability.CastSeconds, stats);
             var lifetime = ability.Speed > 0 ? ability.Range / ability.Speed : _options.ImpactSeconds;
             if (!float.IsFinite((float)ability.Range) || !float.IsFinite((float)ability.Radius) || !float.IsFinite((float)ability.Speed) ||
@@ -150,8 +161,7 @@ public sealed class AbilitySimulation
     public AbilityLoadout Loadout(NetworkEntityId id, uint tick)
     {
         var actor = _actors[id];
-        var profiles = new AbilityProfile[actor.Profiles.Length];
-        for (var i = 0; i < profiles.Length; i++) profiles[i] = actor.Profiles[i] with { ReadyInSeconds = Math.Max(0, actor.ReadyAt[i] - _time) };
+        var profiles = actor.Profiles.Select((profile,i) => profile with { ReadyInSeconds = Math.Max(0, actor.ReadyAt[i] - _time) }).Where(profile => actor.Enabled.Contains(profile.Id)).ToArray();
         return new(id, tick, actor.Mana, actor.MaxMana, profiles);
     }
 
@@ -161,7 +171,7 @@ public sealed class AbilitySimulation
     {
         if (!float.IsFinite(delta) || delta <= 0) throw new ArgumentException("Invalid ability tick delta.");
         _delta = delta;
-        _time = StatMath.Add(_time, delta); _hits.Clear(); _states.Clear();
+        _time = StatMath.Add(_time, delta); _hits.Clear(); _states.Clear(); _practice.Clear(); _practiced.Clear();
         // Advance only active effects, not every idle player or their cooldown slots.
         for (var i = _effects.Count - 1; i >= 0; i--)
         {
@@ -208,7 +218,7 @@ public sealed class AbilitySimulation
         _dirty.Add(id);
         var index = -1;
         for (var i = 0; i < actor.Profiles.Length; i++) if (actor.Profiles[i].Id == command.AbilityId) { index = i; break; }
-        var outcome = index < 0 ? AbilityOutcome.UnknownAbility
+        var outcome = index < 0 || !actor.Enabled.Contains(command.AbilityId) ? AbilityOutcome.UnknownAbility
             : combatant.Health <= 0 ? AbilityOutcome.InvalidState
             : combatant.IsCasting ? AbilityOutcome.Busy
             : _time < actor.ReadyAt[index] ? AbilityOutcome.Cooldown
@@ -239,7 +249,9 @@ public sealed class AbilitySimulation
         combatant.IsCasting = true;
         var effect = new AbilityEffect
         {
-            Id = _nextEffectId++, ActorId = id, Sequence = command.Sequence, Definition = actor.Definitions[index], Profile = profile,
+            Id = _nextEffectId++, ActorId = id, Sequence = command.Sequence, Definition = actor.Definitions[index] with
+            { Power = actor.Definitions[index].Power * PowerFactor(actor,profile.Id),
+              MagicAttackScale = actor.Definitions[index].MagicAttackScale * PowerFactor(actor,profile.Id) }, Profile = profile,
             Origin = combatant.Position, Position = destination, Direction = direction, Phase = AbilityPhase.Telegraph,
             Remaining = (float)profile.CastSeconds, DistanceLeft = profile.Range,
             // Old observations do not earn catch-up. Nothing rewinds actor position or resources.
@@ -277,7 +289,11 @@ public sealed class AbilitySimulation
             effect.Remaining -= delta;
             if (effect.Remaining <= 0)
             {
-                if (effect.Phase == AbilityPhase.Dash) caster.IsCasting = false;
+                if (effect.Phase == AbilityPhase.Dash)
+                {
+                    caster.IsCasting = false;
+                    if (Vector2.DistanceSquared(caster.Position,effect.Origin) > 0.01f) _practice.Add((effect.ActorId,effect.Profile.Id));
+                }
                 effect.Phase = AbilityPhase.Finished;
             }
             return;
@@ -320,7 +336,25 @@ public sealed class AbilitySimulation
             StatMath.Multiply(_combat.Get(effect.ActorId).Stats.MagicAttack, effect.Definition.MagicAttackScale)));
         var damage = _combat.ApplyAbilityDamage(target.Id, power);
         _hits.Add(new(effect.Id, effect.ActorId, target.Id, tick, damage, target.Health));
+        if (damage > 0 && _practiced.Add(effect.Id)) _practice.Add((effect.ActorId,effect.Profile.Id));
     }
 
+    private double PowerFactor(AbilityActor actor, ushort id) => 1 + (actor.Levels.GetValueOrDefault(id,1) - 1) * _catalog.Progression.PowerPerSkillLevel;
+    internal void ApplyProgression(NetworkEntityId id, SavedProgression saved)
+    {
+        var old = _actors[id];
+        var next = CreateActor(_catalog.Creatures[_options.PlayerDefinitionId], _combat.Get(id).Stats, saved.Skills.Select(s => s.DefinitionId));
+        for (var i=0;i<next.Definitions.Length;i++)
+        {
+            var previous = Array.FindIndex(old.Definitions,d => d.Id == next.Definitions[i].Id);
+            if (previous >= 0) next.ReadyAt[i] = old.ReadyAt[previous];
+        }
+        next.Enabled = saved.Skills.Where(s => s.Slot != 0 || _catalog.Abilities[s.DefinitionId].Kind == AbilityKind.Dash).Select(s => _catalog.Abilities[s.DefinitionId].NetworkId).ToHashSet();
+        next.Levels = saved.Skills.ToDictionary(s => _catalog.Abilities[s.DefinitionId].NetworkId,s => s.Level);
+        for (var i=0;i<next.Profiles.Length;i++)
+            if (next.Profiles[i].Form == AbilityForm.Dash) next.Profiles[i] = next.Profiles[i] with { Speed = next.Profiles[i].Speed * (float)PowerFactor(next,next.Profiles[i].Id) };
+        next.Mana = Math.Min(old.Mana,next.MaxMana); next.LastSeenSequence = old.LastSeenSequence; next.LastRequestTick = old.LastRequestTick;
+        _actors[id] = next; _dirty.Add(id);
+    }
     private readonly record struct Pending(AbilityCommand Command, float CompensationSeconds);
 }

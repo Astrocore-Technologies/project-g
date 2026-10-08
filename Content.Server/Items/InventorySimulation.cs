@@ -119,5 +119,6 @@ public sealed class InventorySimulation(ContentCatalog catalog, CombatSimulation
         var resource = abilities.PrepareEquipment(id, profile.Stats);
         combat.ApplyEquipment(id, profile); abilities.ApplyEquipment(id, resource);
     }
+    internal void RefreshStats(NetworkEntityId id) => Apply(id, _actors[id], null, EquipmentSlot.None);
     public void ClearResults() { _dirty.Clear(); _results.Clear(); }
 }
