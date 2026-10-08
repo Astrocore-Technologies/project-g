@@ -18,6 +18,7 @@ namespace Content.Server.Networking;
 public sealed partial class GameServerService : BackgroundService
 {
     private readonly ServerOptions _options;
+    private readonly SocialOptions _socialOptions;
     private readonly HandshakeCoordinator _handshakes;
     private readonly ServerWorld _world;
     private readonly ILogger<GameServerService> _logger;
@@ -35,9 +36,10 @@ public sealed partial class GameServerService : BackgroundService
         ServerWorld world,
         ILogger<GameServerService> logger,
         ICharacterStore? characters = null,
-        IOptions<PersistenceOptions>? persistence = null, IHostEnvironment? environment = null, Content.Server.WorldStory.LiveDmInbox? liveDm = null)
+        IOptions<PersistenceOptions>? persistence = null, IHostEnvironment? environment = null, Content.Server.WorldStory.LiveDmInbox? liveDm = null, IOptions<SocialOptions>? social = null)
     {
         _liveDm=liveDm;
+        _socialOptions=social?.Value??new();if(!_socialOptions.IsValid())throw new ArgumentException("Invalid social budgets.");
         _options = options.Value;
         _handshakes = handshakes;
         _world = world;
@@ -72,9 +74,18 @@ public sealed partial class GameServerService : BackgroundService
             try { _world.RestoreWorldNode(_worldSession.State,_worldSession.Revision); }
             catch { await _worldSession.DisposeAsync(); _worldSession=null; throw; }
         }
+        if (_socialOptions.Enabled && _world.HasPvp && _characters is ISocialStore socialStore)
+        {
+            try {
+                using var deadline=CancellationTokenSource.CreateLinkedTokenSource(stoppingToken); deadline.CancelAfter(TimeSpan.FromSeconds(10));
+                _socialSession=await socialStore.OpenSocialAsync(deadline.Token);
+                _world.EnableSocial(_socialSession.Rows,_socialOptions.MaxParties,_socialOptions.MaxGuilds);
+            } catch { if(_socialSession is not null)await _socialSession.DisposeAsync(); if(_worldSession is not null)await _worldSession.DisposeAsync(); throw; }
+        }
         if (_liveDm?.Enabled==true && !_world.HasWorldNode) throw new InvalidOperationException("Live-DM requires a persistent world node.");
         if (!_server.Start(_options.Port))
         {
+            if(_socialSession is not null) { await _socialSession.DisposeAsync(); _socialSession=null; }
             if(_worldSession is not null) { await _worldSession.DisposeAsync(); _worldSession=null; }
             throw new InvalidOperationException($"Failed to start UDP server on port {_options.Port}.");
         }
@@ -158,6 +169,8 @@ public sealed partial class GameServerService : BackgroundService
         _views.Remove(peer.Id);
         var playerId = _handshakes.RemoveConnection(peer.Id);
         _intentions.Remove(peer.Id);
+        _world.ScheduleSocialOffline(peer.Id);
+        socialSent.Remove(peer.Id); socialPresenceSent.Remove(peer.Id);
         if (_sessions.ContainsKey(peer.Id)) {if(!DetachCombatPlayer(peer.Id))_departed.Add(peer.Id);}
         else _world.RemovePlayer(peer.Id);
 
@@ -280,6 +293,8 @@ public sealed partial class GameServerService : BackgroundService
             { if(_characters is null) _world.TryQueueTrade(peer.Id,trade); else BufferIntentions(peer.Id).Trade ??= trade; }
             if(messageType==NetworkMessageType.PvpCommand&&deliveryMethod==DeliveryMethod.ReliableOrdered&&NetworkProtocol.TryReadPvpCommand(reader,out var pvp))
             {if(_characters is null)_world.TryQueuePvp(peer.Id,pvp);else BufferIntentions(peer.Id).Pvp??=pvp;}
+            if(messageType==NetworkMessageType.SocialCommand&&deliveryMethod==DeliveryMethod.ReliableOrdered&&NetworkProtocol.TryReadSocialCommand(reader,out var social))
+                BufferIntentions(peer.Id).Social??=social;
             // Invalid game intentions are discarded; avoid logging unbounded client spam.
         }
         finally
@@ -326,7 +341,11 @@ public sealed partial class GameServerService : BackgroundService
     private void AcceptPlayer(NetPeer peer, ClientHello hello, PlayerId playerId, CharacterSession? session = null, bool reattached=false)
     {
         var player = reattached?_world.GetPlayer(peer.Id):_world.AddPlayer(peer.Id, playerId, session?.State);
-        if(session is not null) _world.BindWorldActor(peer.Id,session.CharacterId);
+        if(session is not null)
+        {
+            try { _world.BindWorldActor(peer.Id,session.CharacterId); _world.BindSocial(peer.Id,session.CharacterId); }
+            catch { if(!reattached)_world.RemovePlayer(peer.Id); throw; }
+        }
         var welcome = new ServerWelcome(
             playerId,
             checked((ushort) _options.TickRate),
@@ -372,6 +391,7 @@ public sealed partial class GameServerService : BackgroundService
         _world.ClearTradeResults();
         _world.ClearEconomyResults();
         _world.ClearPvpResults();
+        _world.Social?.Changed.Clear(); _world.SocialResults.Clear();
         _world.ClearExplorationResults();
         _world.ClearProgressionResults();
         _world.ClearProfessionResults();
@@ -436,6 +456,7 @@ public sealed partial class GameServerService : BackgroundService
                 if(view.Entered.Contains(owner)||_world.GroundItems!.ChannelDirty(owner))peer.Send(NetworkProtocol.Write(_world.GroundItems!.ChannelState(owner,_world.Tick)),DeliveryMethod.ReliableOrdered);
             }
         }
+        SendSocial(peer);
         if (_world.Inventory is { } inventory && _world.TryGetOwnedEntity(peer.Id, out var inventoryOwner))
         {
             if (view.Entered.Contains(inventoryOwner) || inventory.IsDirty(inventoryOwner))

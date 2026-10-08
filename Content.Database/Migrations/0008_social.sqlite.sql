@@ -1,0 +1,3 @@
+CREATE TABLE social_records(realm TEXT NOT NULL,record_key TEXT NOT NULL,kind INTEGER NOT NULL CHECK(kind BETWEEN 0 AND 4),revision INTEGER NOT NULL CHECK(revision>0),state TEXT NOT NULL,PRIMARY KEY(realm,record_key));
+CREATE TABLE social_members(realm TEXT NOT NULL,kind INTEGER NOT NULL CHECK(kind IN (2,3)),character_id TEXT NOT NULL,aggregate_key TEXT NOT NULL,PRIMARY KEY(realm,kind,character_id),FOREIGN KEY(character_id) REFERENCES characters(character_id),FOREIGN KEY(realm,aggregate_key) REFERENCES social_records(realm,record_key));
+CREATE TABLE social_names(realm TEXT NOT NULL,name TEXT NOT NULL,aggregate_key TEXT NOT NULL,PRIMARY KEY(realm,name),UNIQUE(realm,aggregate_key),FOREIGN KEY(realm,aggregate_key) REFERENCES social_records(realm,record_key));

@@ -193,3 +193,13 @@ No autoloot. Dropped items существуют в мире и потенциа�
 - mass world-boss reward rules;
 - detailed rumor/quest information system;
 - long-term seasonal progression.
+
+## Утверждённые временные правила этапа17 (2026-10-08)
+
+Пользователь утвердил пакет stage17-social-rules-proposal.md целиком. Одна party на CharacterId: обычная6, расширенная20, offline участники занимают слоты; членство и роли сохраняются. После120с отсутствия лидера его заменяет online участник с самым ранним join ordinal; после рестарта grace начинается заново. Friendly fire off внутри одной party проверяется на impact. Изменение состава, лидерства и размера требует отсутствия PvP-tag/aggressor/cast/active effects у затронутых участников.
+
+EXP личный, без автоматического деления, бонуса или пассивной выдачи группе. Лут ручной по stage16, без party reservation; guild/party не отменяют личный active tag и5с pickup. Boss autoscale и общий contribution/reward loop не добавляются.
+
+Одна гильдия на CharacterId независимо от party: бесплатно, до32 участников включая offline. Единственный Leader; Officer приглашает и исключает только Member, не повышает участников. Только Leader назначает/снимает Officer. Передача главы online участнику требует его явного acceptance30с. Guildleader выходит после передачи; единственный последний Leader отдельно подтверждает disband. Автоматического offline takeover главы нет. Guild membership сама не даёт PvP-иммунитет.
+
+Имя гильдии3–24 Unicode letters/digits/spaces/hyphen, NFKC с объединением пробелов, до96UTF-8bytes, unique среди active гильдий. Приглашения30с без резервации места; revision/logout/restart инвалидируют их. Состав и роли durable. Своя party видит HP/позиции только online участников текущего региона; offline данные неизвестны, без дальнего AOI spawn, fog или secret reveal. Guild получает roster/roles/online. Chat/bank/tax/world ownership/cross-region/production auth и постоянный balance не приняты.

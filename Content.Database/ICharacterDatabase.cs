@@ -6,6 +6,8 @@ public interface ICharacterDatabase
     Task<DatabaseWorldSession> OpenWorldAsync(string key, string initial, CancellationToken token) => throw new NotSupportedException("World ownership is required.");
     Task SaveWithWorldAsync(IReadOnlyList<DatabaseSave> changes, DatabaseWorldSave? world, CancellationToken token) =>
         world is null ? SaveAsync(changes, token) : throw new NotSupportedException("Atomic world persistence is required.");
+    Task<IReadOnlyList<DatabaseSocialRow>> LoadSocialAsync(string realm,CancellationToken token) => throw new NotSupportedException("Social storage required.");
+    Task SaveCheckpointAsync(IReadOnlyList<DatabaseSave> changes,DatabaseWorldSave? world,DatabaseSocialSave? social,CancellationToken token) => social is null?SaveWithWorldAsync(changes,world,token):throw new NotSupportedException("Atomic social storage required.");
     Task InitializeAsync(CancellationToken cancellationToken);
     Task EnsureInventoryOwnershipAsync(DatabaseSession session,IReadOnlyList<Guid> items,CancellationToken token) => throw new NotSupportedException("Item ownership registry required.");
     Task<DatabaseSession> OpenAsync(string token, string initialCharacter, string initialInventory, string initialEchoes, CancellationToken cancellationToken, string? initialProgression = null,IReadOnlyList<Guid>? initialInventoryItems = null);

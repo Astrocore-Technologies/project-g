@@ -381,6 +381,11 @@ public sealed class NetworkMovementIntegrationTests
         public Dictionary<NetworkEntityId,ItemConditionState> Conditions { get; }=new();
         public List<RepairQuote> RepairQuotes { get; }=new();
         public List<RepairResult> RepairResults { get; }=new();
+        public Dictionary<SocialKind,SocialRoster> SocialRosters {get;}=new();
+        public List<SocialInvites> SocialInvitations {get;}=new();
+        public List<SocialResult> SocialResults {get;}=new();
+        public List<PartyPresence> PartyPresences {get;}=new();
+        public void Social(SocialCommand command)=>_peer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
         public Dictionary<NetworkEntityId,PvpState> PvpStates {get;}=new();
         public Dictionary<NetworkEntityId,PvpPublicState> PvpFlags {get;}=new();
         public List<PvpResult> PvpResults {get;}=new();
@@ -470,6 +475,14 @@ public sealed class NetworkMovementIntegrationTests
                     Assert.True(NetworkProtocol.TryReadMessageType(reader, out var type));
                     switch (type)
                     {
+                        case NetworkMessageType.SocialRoster:
+                            Assert.True(NetworkProtocol.TryReadSocialRoster(reader,out var roster));Assert.Equal(LocalSpawn.EntityId,roster.Owner);SocialRosters[roster.Kind]=roster;break;
+                        case NetworkMessageType.SocialInvites:
+                            Assert.True(NetworkProtocol.TryReadSocialInvites(reader,out var invites));Assert.Equal(LocalSpawn.EntityId,invites.Owner);SocialInvitations.Add(invites);break;
+                        case NetworkMessageType.SocialResult:
+                            Assert.True(NetworkProtocol.TryReadSocialResult(reader,out var socialResult));SocialResults.Add(socialResult);break;
+                        case NetworkMessageType.PartyPresence:
+                            Assert.True(NetworkProtocol.TryReadPartyPresence(reader,out var presence));Assert.Equal(LocalSpawn.EntityId,presence.Owner);PartyPresences.Add(presence);break;
                         case NetworkMessageType.PvpState:
                             Assert.True(NetworkProtocol.TryReadPvpState(reader,out var pvpState));Assert.Equal(LocalSpawn.EntityId,pvpState.OwnerId);PvpStates[pvpState.OwnerId]=pvpState;break;
                         case NetworkMessageType.PvpPublicState:

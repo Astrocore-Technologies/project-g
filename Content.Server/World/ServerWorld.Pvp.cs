@@ -47,6 +47,7 @@ public sealed partial class ServerWorld
         if(CombatSimulation.IsNpc(actor.Kind))return victim.Kind==CombatEntityKind.Player;
         if(victim.Kind!=CombatEntityKind.Player)return CombatSimulation.IsHostileTarget(victim.Kind);
         if(!_pvp.TryGetValue(source,out var attacker)||!_pvp.TryGetValue(target,out var defender))return false;
+        if(Social?.SameParty(_pvpIdentities[source],_pvpIdentities[target])==true)return false;
         var now=PvpClock();
         if(Rules.IsSafe(actor.Position)||Rules.IsSafe(victim.Position)||defender.ProtectionUntil>now)return false;
         if(defender.Mode!=PvpMode.Peaceful||defender.CombatUntil>now||defender.AggressorUntil>now)return true;

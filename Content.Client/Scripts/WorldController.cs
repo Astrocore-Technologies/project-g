@@ -34,6 +34,7 @@ public partial class WorldController : Node3D
     private ProjectG.Trading.TradePresentation? _trade;
     private ProjectG.Economy.EconomyPresentation? _economy;
     private ProjectG.Pvp.PvpPresentation? _pvp;
+    private ProjectG.Social.SocialPresentation? _social;
     private readonly Dictionary<NetworkEntityId,Label3D> _pvpLabels=new();
     private Node3D? _safeVisual;
 
@@ -130,7 +131,7 @@ public partial class WorldController : Node3D
         if (spawn.PlayerId == _network.LocalPlayerId)
         {
             _localEntityId = spawn.EntityId;
-            if(_network.LatestPvpZone is {} pvpZone){_pvp=new();AddChild(_pvp);_pvp.Initialize(_network,player);DrawSafeZone(pvpZone);}
+            if(_network.LatestPvpZone is {} pvpZone){_social=new();AddChild(_social);_social.Initialize(_network,player);_pvp=new();AddChild(_pvp);_pvp.Initialize(_network,player);DrawSafeZone(pvpZone);}
             if(_network.CraftRecipes.Count!=0) { _crafting=new(); AddChild(_crafting); _crafting.Initialize(_network,player); _trade=new(); AddChild(_trade); _trade.Initialize(_network,player); _economy=new(); AddChild(_economy); _economy.Initialize(_network,player); }
             if (_network.LatestStarterZone is { } zone) { _starter=new(); AddChild(_starter); _starter.Initialize(_network,player,zone); }
             _abilities = new AbilityPresentation();
@@ -309,6 +310,7 @@ public partial class WorldController : Node3D
         _crafting?.QueueFree(); _crafting=null;
         _trade?.QueueFree(); _trade=null;
         _economy?.QueueFree(); _economy=null;
+        _social?.QueueFree();_social=null;
         _pvp?.QueueFree();_pvp=null;_pvpLabels.Clear();_safeVisual?.QueueFree();_safeVisual=null;
         _groundItems?.QueueFree(); _groundItems = null;
         foreach (var echo in _echoes.Values) echo.QueueFree();

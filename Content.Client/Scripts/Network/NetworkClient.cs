@@ -67,6 +67,11 @@ public partial class NetworkClient : Node
     public event Action<EconomyQuote>? EconomyQuoteReceived;
     public event Action<EconomyResult>? EconomyResultReceived;
     public event Action<MarketState>? MarketStateReceived;
+    public event Action<SocialRoster>? SocialRosterReceived;
+    public event Action<SocialInvites>? SocialInvitesReceived;
+    public event Action<SocialResult>? SocialResultReceived;
+    public event Action<PartyPresence>? PartyPresenceReceived;
+    public void SendSocial(SocialCommand command) { if(_handshakeComplete)_serverPeer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered); }
     public event Action<PvpState>? PvpStateReceived;
     public event Action<PvpPublicState>? PvpPublicReceived;
     public event Action<PvpResult>? PvpResultReceived;
@@ -265,6 +270,14 @@ public partial class NetworkClient : Node
 
             switch (messageType)
             {
+                case NetworkMessageType.SocialRoster:
+                    if(_handshakeComplete&&NetworkProtocol.TryReadSocialRoster(reader,out var roster))SocialRosterReceived?.Invoke(roster);else DisconnectMalformed(peer);break;
+                case NetworkMessageType.SocialInvites:
+                    if(_handshakeComplete&&NetworkProtocol.TryReadSocialInvites(reader,out var invites))SocialInvitesReceived?.Invoke(invites);else DisconnectMalformed(peer);break;
+                case NetworkMessageType.SocialResult:
+                    if(_handshakeComplete&&NetworkProtocol.TryReadSocialResult(reader,out var socialResult))SocialResultReceived?.Invoke(socialResult);else DisconnectMalformed(peer);break;
+                case NetworkMessageType.PartyPresence:
+                    if(_handshakeComplete&&NetworkProtocol.TryReadPartyPresence(reader,out var presence))PartyPresenceReceived?.Invoke(presence);else DisconnectMalformed(peer);break;
                 case NetworkMessageType.PvpState:
                     if(_handshakeComplete&&NetworkProtocol.TryReadPvpState(reader,out var pvpState))PvpStateReceived?.Invoke(pvpState);else DisconnectMalformed(peer);break;
                 case NetworkMessageType.PvpPublicState:

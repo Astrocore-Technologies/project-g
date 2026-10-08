@@ -4,7 +4,7 @@ using Microsoft.Data.Sqlite;
 namespace Content.Tests.Server.Persistence;
 
 /// <summary>Instrumentation around the real Development store: isolated files and an injectable commit gate.</summary>
-internal sealed class SqliteCharacterStore : ICharacterStore
+internal sealed class SqliteCharacterStore : ICharacterStore, ISocialStore
 {
     internal string DatabasePath { get; }
     private readonly DatabaseCharacterStore _inner;
@@ -38,6 +38,13 @@ internal sealed class SqliteCharacterStore : ICharacterStore
             try { using var probe = new FileStream(DatabasePath + "." + SingleId.ToString("N") + ".lock", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None); return false; }
             catch (IOException) { return true; }
         }
+    }
+    public Task<SocialSession> OpenSocialAsync(CancellationToken token) => _inner.OpenSocialAsync(token);
+    public async Task SaveSocialCheckpointAsync(IReadOnlyList<CharacterSave> changes,WorldNodeSave? world,SocialSave social,CancellationToken token)
+    {
+        Interlocked.Increment(ref _pending);
+        try { if(_saveGate is {} gate)await gate.Task.WaitAsync(token); await _inner.SaveSocialCheckpointAsync(changes,world,social,token); }
+        finally { Interlocked.Decrement(ref _pending); }
     }
     public Task InitializeAsync(CancellationToken token) => _inner.InitializeAsync(token);
     public Task<IReadOnlyList<SavedGroundItem>> LoadGroundItemsAsync(IReadOnlyList<SavedGroundItem> seeds, CancellationToken token) =>

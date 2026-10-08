@@ -200,6 +200,7 @@ public sealed partial class ServerWorld
     {
         if (!_playersByConnection.TryGetValue(connectionId, out var player))
             return null;
+        DisconnectSocial(connectionId);
         GroundItems?.RemovePlayer(player.EntityId);
         Echoes?.Remove(player.EntityId);
         RemoveWorldNodePlayer(connectionId,player.EntityId);
@@ -302,6 +303,7 @@ public sealed partial class ServerWorld
         Tick++;
         _persistenceDirty.Clear();
         SimulatePvpIntentions();
+        SimulateSocial();
 
         _stoppedPlayers.Clear();
         // Idle players do not require movement work or spatial updates each tick.

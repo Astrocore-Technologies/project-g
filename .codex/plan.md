@@ -271,13 +271,17 @@ Protocol v21, BalanceVersion 2, SQL schema 7: unique ownership registry с termi
 
 Реализованы mode/tag/safe policy для melee/projectile/AoE/Echo, civilian episodes/PK/rep, PvE/mixed/PvP death/EXP/receipt, full-instance world loot, explicit respawn, combat disconnect/same actor reconnect, V UI/flags/city boundary/G channel/TTL. Protocol v22 / balance3, SQL schema7: optional SavedPvp/DeathLoot JSON + unique registry, без reset/recovery. Death/EXP/PK/ownership/audit фиксируются до публикации. Детали: docs/architecture/stage16-pvp-death-plan.md; правила: docs/design/stage16-rules-proposal.md.
 
-Проверено: C# client/server/tests build без ошибок, suite375/375 (24 новых PvP теста), content schema3/balance3 validation и tracked/untracked whitespace. Real SQLite rollback/restart/expiry/one owner, lossy UDP commit gate/reconnect/shutdown, настоящие projectile/AoE/Echo policy. Существующие NU1903 SQLite dependency. Godot отсутствует, сцена/UI не запускались; Live PostgreSQL 16 проверен на отдельном временном Docker-контейнере: full instance/restart/pickup, stale world fence rollback и terminal expiry. Домашняя приёмка/команды: docs/design/pvp-stage16-progress.md. Рабочая .data/процессы не менялись; commit/push не выполнены. Этап17 не начат.
+Проверено: C# client/server/tests build без ошибок, suite375/375 (24 новых PvP теста), content schema3/balance3 validation и tracked/untracked whitespace. Real SQLite rollback/restart/expiry/one owner, lossy UDP commit gate/reconnect/shutdown, настоящие projectile/AoE/Echo policy. Существующие NU1903 SQLite dependency. Godot отсутствует, сцена/UI не запускались; Live PostgreSQL 16 проверен на отдельном временном Docker-контейнере: full instance/restart/pickup, stale world fence rollback и terminal expiry. Домашняя приёмка/команды: docs/design/pvp-stage16-progress.md. Рабочая .data/процессы не менялись; commit/push не выполнены. Проверки выше относятся к checkpoint этапа16.
 
-**17. Группы и гильдии**
+**17. Группы и гильдии — реализован прототип, визуальная приёмка ожидается**
 
-Группа на 6 игроков, расширенный состав до 20, гибкие роли, совместные активности и базовые гильдейские права.
+Пользователь утвердил весь пакет правил сообщением «го». Реализованы party6/20, приглашения30с, роли/лидерство, offline slots и grace120с, приватные roster/HP/позиции, durable membership/replay и guild32/free/Leader-Officer-Member/explicit handoff. Friendly fire off внутри party; guild сама иммунитета не даёт. EXP личный, лут ручной по stage16. N — группа, O — гильдия.
 
-Проверка: группа не требует Holy Trinity; участие и награды обрабатываются по согласованным правилам.
+Protocol23, additive SQL schema8; content schema3/balance3 сохранены. Social realm lease и общий character/world/social/audit checkpoint, unique membership/name/FK, bounded version1 documents и restore checks. SQLite и PostgreSQL поддерживаются; offline administration не дублирует membership в character JSON. Server-only budgets через Social.Enabled/MaxParties/MaxGuilds.
+
+Проверено: full Game.slnx build — 0 ошибок, content validation успешна; 408/408 тестов без skips, включая33 новых social checks и живую PostgreSQL16. Domain/roles/replay/TTL/leader/restart; real projectile/AoE/Echo immunity и guild PvP; SQL unique/rollback/7→8 migration; lossy UDP100–150ms/10% privacy, commit gate и reconnect; packet budget20. Tracked/untracked whitespace проверены. Существующее NU1903 для SQLitePCLRaw.lib.e_sqlite3 2.1.11 сохраняется. Godot executable отсутствует: сцена/UI не запускались.
+
+Архитектура: docs/architecture/stage17-social-plan.md. Утверждённые правила: docs/design/stage17-social-rules-proposal.md. Домашняя приёмка: docs/design/stage17-social-acceptance.md. Рабочая .data и пользовательские процессы не менялись, commit/push не выполнены. Temporary test PostgreSQL остановлена после проверки. Следующий этап18 требует отдельного решения о multi-region/social routing; сейчас не начат.
 
 **18. Несколько регионов и путешествия**
 
@@ -301,7 +305,7 @@ Protocol v21, BalanceVersion 2, SQL schema 7: unique ownership registry с termi
 
 **Позже отдельными этапами:** мобильные клиенты, корабли, владение объектами мира, уникальные артефакты и профессии, Tournament Server. Официальная RMT-площадка — только после отдельного решения, не часть ближайшего плана.
 
-**Текущий checkpoint — этап 16 реализован как прототип; визуальная приёмка ожидается. Этапы11–15 также ждут приёмки. Переходы разрешены пользователем; этап17 не начат.**
+**Текущий checkpoint — этап17 реализован как прототип; этапы11–17 ждут домашней визуальной приёмки. Переходы и правила17 разрешены пользователем. Этап18 не начат.**
 
 По запросу пользователя добавлен Development-only инструмент «Оживить» в I: восстановление HP=0 → текущий Max HP
 на fixed tick, server ownership + localhost + Development, без изменения позиции/маны/cooldown/предметов.

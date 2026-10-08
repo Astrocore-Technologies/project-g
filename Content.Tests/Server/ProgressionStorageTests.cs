@@ -14,7 +14,7 @@ public sealed class ProgressionStorageTests
         var initial = CharacterPersistenceTests.World().CreateInitialCharacter() with { Health = 17,Mana = 9,Progression = null };
         var old = await store.OpenAsync("",initial,CancellationToken.None); var token = old.IssuedToken; var id = old.CharacterId; await old.DisposeAsync();
         using (var c = Connect(store.DatabasePath)) using (var q = c.CreateCommand())
-        { q.CommandText = "DROP TABLE item_owners; DROP TABLE world_audit; DROP TABLE world_nodes; DROP TABLE character_progression; DELETE FROM schema_version WHERE version >= 5"; q.ExecuteNonQuery(); }
+        { q.CommandText = "DROP TABLE social_members; DROP TABLE social_names; DROP TABLE social_records; DROP TABLE item_owners; DROP TABLE world_audit; DROP TABLE world_nodes; DROP TABLE character_progression; DELETE FROM schema_version WHERE version >= 5"; q.ExecuteNonQuery(); }
         store = new SqliteCharacterStore(store.DatabasePath); await store.InitializeAsync(CancellationToken.None); await store.InitializeAsync(CancellationToken.None);
         var fresh = CharacterPersistenceTests.World().CreateInitialCharacter();
         var restored = await store.OpenAsync(token,fresh,CancellationToken.None);

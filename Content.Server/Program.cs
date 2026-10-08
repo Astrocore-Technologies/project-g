@@ -42,6 +42,7 @@ builder.Services
         "Movement bounds must be ordered.")
     .ValidateOnStart();
 
+builder.Services.AddOptions<SocialOptions>().Bind(builder.Configuration.GetSection(SocialOptions.SectionName)).Validate(o=>o.IsValid(),"Social budgets must be 1..64 parties and 1..32 guilds.").ValidateOnStart();
 builder.Services.AddSingleton<HandshakeCoordinator>();
 builder.Services.AddOptions<InterestOptions>()
     .Bind(builder.Configuration.GetSection(InterestOptions.SectionName))

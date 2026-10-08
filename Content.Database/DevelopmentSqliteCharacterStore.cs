@@ -25,7 +25,7 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
         try
         {
             connection.Open();
-            using var sync = connection.CreateCommand(); sync.CommandText = "PRAGMA synchronous = FULL";
+            using var sync = connection.CreateCommand(); sync.CommandText = "PRAGMA synchronous = FULL; PRAGMA foreign_keys = ON";
             sync.ExecuteNonQuery();
             return connection;
         }
@@ -45,7 +45,7 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
         command.ExecuteNonQuery();
         command.CommandText = "SELECT COALESCE(max(version), 0) FROM schema_version";
         var version = (long)command.ExecuteScalar()!;
-        if (version is < 0 or > 7) throw new InvalidDataException("Unsupported SQLite schema version.");
+        if (version is < 0 or > 8) throw new InvalidDataException("Unsupported SQLite schema version.");
         if (version == 0)
         {
             using var resource = typeof(DevelopmentSqliteCharacterStore).Assembly.GetManifestResourceStream(
@@ -97,6 +97,12 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
         {
             using var resource=typeof(DevelopmentSqliteCharacterStore).Assembly.GetManifestResourceStream("Content.Database.Migrations.0007_ownership.sqlite.sql") ?? throw new InvalidOperationException("Migration missing.");
             using var reader=new StreamReader(resource); command.CommandText=reader.ReadToEnd(); command.ExecuteNonQuery(); command.CommandText="INSERT INTO schema_version VALUES (7)"; command.ExecuteNonQuery();
+        }
+        if(version<8)
+        {
+            using var resource=typeof(DevelopmentSqliteCharacterStore).Assembly.GetManifestResourceStream("Content.Database.Migrations.0008_social.sqlite.sql") ?? throw new InvalidOperationException("Migration missing.");
+            using var reader=new StreamReader(resource);
+            command.CommandText=reader.ReadToEnd(); command.ExecuteNonQuery(); command.CommandText="INSERT INTO schema_version VALUES(8)"; command.ExecuteNonQuery();
         }
         cancellationToken.ThrowIfCancellationRequested();
         transaction.Commit();
@@ -178,9 +184,10 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
     }, cancellationToken);
 
     public Task SaveAsync(IReadOnlyList<DatabaseSave> changes, CancellationToken cancellationToken) => SaveWithWorldAsync(changes, null, cancellationToken);
-    public Task SaveWithWorldAsync(IReadOnlyList<DatabaseSave> changes, DatabaseWorldSave? world, CancellationToken cancellationToken) => Task.Run(() =>
+    public Task SaveWithWorldAsync(IReadOnlyList<DatabaseSave> changes, DatabaseWorldSave? world, CancellationToken cancellationToken) => SaveCheckpointAsync(changes,world,null,cancellationToken);
+    public Task SaveCheckpointAsync(IReadOnlyList<DatabaseSave> changes, DatabaseWorldSave? world, DatabaseSocialSave? social, CancellationToken cancellationToken) => Task.Run(() =>
     {
-        if (changes.Count == 0 && world is null) return;
+        if (changes.Count == 0 && world is null && social is null) return;
         using var connection = Connect(); using var transaction = connection.BeginTransaction();
         foreach (var change in changes)
         {
@@ -235,6 +242,7 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
         }
         if (world is not null) WriteWorld(connection, transaction, world);
         SyncOwnership(connection,transaction,changes,world);
+        if(social is not null) WriteSocial(connection,transaction,social,cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
         transaction.Commit();
     }, cancellationToken);
