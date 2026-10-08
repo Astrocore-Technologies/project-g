@@ -35,7 +35,7 @@ public sealed partial class ServerWorld
     {
         if (!HasWorldNode || WorldNodeDirty || _appliedConsequences!=0 || revision<=0) throw new InvalidOperationException("World restore is startup-only.");
         state.Validate(); if(state.Repairs>_node!.ContributionsRequired || state.Patrols>_node.ContributionsRequired) throw new InvalidDataException("World content migration required.");
-        _nodeState=state; _nodeRevision=revision; ApplyWorldConsequences();
+        _nodeState=state; _nodeRevision=revision; RestoreCraftResources(); ApplyWorldConsequences();
     }
     public void BindWorldActor(int connection,Guid character)
     {

@@ -270,6 +270,8 @@ public sealed partial class GameServerService : BackgroundService
                 var intentions=BufferIntentions(peer.Id);
                 if(intentions.Node is null) intentions.Node=node; else intentions.NodeSecond=node;
             }
+            if (messageType==NetworkMessageType.CraftCommand && deliveryMethod==DeliveryMethod.ReliableOrdered && NetworkProtocol.TryReadCraftCommand(reader,out var craft))
+            { if(_characters is null) _world.TryQueueCraft(peer.Id,craft); else BufferIntentions(peer.Id).Craft ??= craft; }
             // Invalid game intentions are discarded; avoid logging unbounded client spam.
         }
         finally
@@ -327,6 +329,8 @@ public sealed partial class GameServerService : BackgroundService
         // Public collision geometry arrives before any spawn on the same reliable stream.
         peer.Send(NetworkProtocol.Write(_world.Navigation.ToMessage()), DeliveryMethod.ReliableOrdered);
 
+        if (_world.HasStarterZone) peer.Send(NetworkProtocol.Write(_world.PublicStarterZone()),DeliveryMethod.ReliableOrdered);
+        if (_world.HasCrafting) foreach(var recipe in _world.PublicCraftRecipes()) peer.Send(NetworkProtocol.Write(recipe),DeliveryMethod.ReliableOrdered);
         var view = new InterestView { BridgeNavigationSent=_world.HasWorldNode && (_world.PublicWorldNode().Consequences&1)!=0 };
         _views.Add(peer.Id, view);
         SendInterest(peer, view);
@@ -354,6 +358,8 @@ public sealed partial class GameServerService : BackgroundService
         _world.Inventory?.ClearResults();
         _world.GroundItems?.ClearResults();
         _world.Echoes?.ClearResults();
+        _world.ClearCraftResults();
+        _world.ClearExplorationResults();
         _world.ClearProgressionResults();
         _world.ClearProfessionResults();
         _world.ClearWorldNodeResults();
@@ -373,6 +379,9 @@ public sealed partial class GameServerService : BackgroundService
         }
         _world.UpdateInterest(peer.Id, view);
         _world.UpdateGroundInterest(peer.Id, view);
+        _world.UpdateResourceInterest(peer.Id,view);
+        foreach(var id in view.ResourceLeft) peer.Send(NetworkProtocol.Write(new ResourceNodeDespawn(id,_world.Tick)),DeliveryMethod.ReliableOrdered);
+        foreach(var id in view.ResourceVisible) if(view.ResourceEntered.Contains(id) || _world.IsResourceDirty(id)) peer.Send(NetworkProtocol.Write(_world.ResourceState(id)),DeliveryMethod.ReliableOrdered);
         if (_world.GroundItems is { } ground)
         {
             foreach (var id in view.GroundLeft)
@@ -419,6 +428,14 @@ public sealed partial class GameServerService : BackgroundService
                     peer.Send(NetworkProtocol.Write(echoResult),DeliveryMethod.ReliableOrdered);
             }
         }
+        if (_world.HasCrafting && _world.TryGetOwnedEntity(peer.Id,out var craftOwner))
+        {
+            if(view.Entered.Contains(craftOwner) || _world.Inventory!.IsDirty(craftOwner) || _world.CraftResults.ContainsKey(craftOwner)) peer.Send(NetworkProtocol.Write(_world.CraftState(craftOwner)),DeliveryMethod.ReliableOrdered);
+            if(_world.CraftResults.TryGetValue(craftOwner,out var craftResult)) peer.Send(NetworkProtocol.Write(craftResult),DeliveryMethod.ReliableOrdered);
+        }
+        if (_world.HasStarterZone && _world.TryGetOwnedEntity(peer.Id,out var explorationOwner) &&
+            (view.Entered.Contains(explorationOwner) || _world.IsExplorationDirty(explorationOwner)))
+            peer.Send(NetworkProtocol.Write(_world.ExplorationState(explorationOwner)),DeliveryMethod.ReliableOrdered);
         if (_world.HasProgression && _world.TryGetOwnedEntity(peer.Id,out var progressionOwner))
         {
             if (view.Entered.Contains(progressionOwner) || _world.IsProgressionDirty(progressionOwner))

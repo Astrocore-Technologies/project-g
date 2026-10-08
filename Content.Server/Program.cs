@@ -60,6 +60,8 @@ builder.Services.AddOptions<BossOptions>()
 builder.Services.AddOptions<InventoryOptions>().Bind(builder.Configuration.GetSection(InventoryOptions.SectionName));
 builder.Services.AddOptions<GroundItemOptions>().Bind(builder.Configuration.GetSection(GroundItemOptions.SectionName));
 builder.Services.AddOptions<EchoOptions>().Bind(builder.Configuration.GetSection(EchoOptions.SectionName));
+builder.Services.AddOptions<CraftingOptions>().Bind(builder.Configuration.GetSection(CraftingOptions.SectionName));
+builder.Services.AddOptions<StarterZoneOptions>().Bind(builder.Configuration.GetSection(StarterZoneOptions.SectionName));
 builder.Services.AddOptions<WorldStoryOptions>().Bind(builder.Configuration.GetSection(WorldStoryOptions.SectionName));
 builder.Services.AddOptions<Content.Server.WorldStory.LiveDmOptions>().Bind(builder.Configuration.GetSection(Content.Server.WorldStory.LiveDmOptions.SectionName));
 builder.Services.AddSingleton<Content.Server.WorldStory.LiveDmInbox>();

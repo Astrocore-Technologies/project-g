@@ -8,7 +8,7 @@ using Content.Shared.Network;
 namespace Content.Server.Items;
 
 /// <summary>Owner-bound instances and fixed-tick equipment intentions, independent of transport/Godot.</summary>
-public sealed class InventorySimulation(ContentCatalog catalog, CombatSimulation combat, AbilitySimulation abilities,
+public sealed partial class InventorySimulation(ContentCatalog catalog, CombatSimulation combat, AbilitySimulation abilities,
     Func<NetworkEntityId, BaseStats> primary)
 {
     private readonly Dictionary<NetworkEntityId, Actor> _actors = new();
@@ -25,6 +25,8 @@ public sealed class InventorySimulation(ContentCatalog catalog, CombatSimulation
     private sealed class Actor(Item[] items)
     {
         public Item[] Items = items;
+        public SavedCrafting? Crafting;
+        public double CraftReadyAt;
         public uint Sequence;
         public uint? RequestTick;
     }
@@ -46,7 +48,7 @@ public sealed class InventorySimulation(ContentCatalog catalog, CombatSimulation
     {
         Items = definition.StarterItemIds.Select(id => new SavedItem(Guid.NewGuid(), id, EquipmentSlot.None)).ToArray()
     };
-    public void Add(NetworkEntityId id, SavedInventory saved)
+    public void Add(NetworkEntityId id, SavedInventory saved, double offlineSeconds=0)
     {
         saved.Validate(); var items = new Item[saved.Items.Length];
         for (var i = 0; i < items.Length; i++)
@@ -58,12 +60,13 @@ public sealed class InventorySimulation(ContentCatalog catalog, CombatSimulation
             if (_nextHandle == 0) throw new InvalidOperationException("Runtime item handles exhausted.");
             items[i] = new(_nextHandle++, source, definition);
         }
-        var actor = new Actor(items);
+        ValidateCrafting(saved.Crafting);
+        var actor = new Actor(items) { Crafting=saved.Crafting, CraftReadyAt=combat.Time+Math.Max(0,(saved.Crafting?.CooldownSeconds ?? 0)-offlineSeconds) };
         Apply(id, actor, null, EquipmentSlot.None);
         _actors.Add(id, actor); _dirty.Add(id);
     }
     public void Remove(NetworkEntityId id) { _actors.Remove(id); _pending.Remove(id); _dirty.Remove(id); _results.Remove(id); }
-    public SavedInventory Capture(NetworkEntityId id) => new() { Items = _actors[id].Items.Select(item => item.Saved).ToArray() };
+    public SavedInventory Capture(NetworkEntityId id) => new() { Items = _actors[id].Items.Select(item => item.Saved).ToArray(), Crafting=CaptureCrafting(id) };
     public InventoryState State(NetworkEntityId id, uint tick) => new(id, tick, _actors[id].Items.Select(item => new InventoryEntry(
         item.Handle, item.Definition.Name, item.Definition.Slot, item.Saved.EquippedSlot != EquipmentSlot.None,
         item.Definition.Modifiers.MeleeAttack, item.Definition.Modifiers.PhysicalDefense, item.Definition.Modifiers.MaxHealth)).ToArray());

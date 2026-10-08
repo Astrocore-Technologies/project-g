@@ -9,12 +9,14 @@ public sealed record SavedInventory
 {
     [JsonRequired] public int Version { get; init; } = 1;
     public required SavedItem[] Items { get; init; }
+    [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)] public SavedCrafting? Crafting { get; init; }
     private static readonly JsonSerializerOptions Json = new()
     { UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow, RespectRequiredConstructorParameters = true, MaxDepth = 8 };
     public static SavedInventory Empty => new() { Items = [] };
     public void Validate()
     {
         if (Version != 1 || Items is null || Items.Length > NetworkConstants.MaxInventoryItems) throw new InvalidDataException("Invalid inventory model.");
+        Crafting?.Validate();
         var ids = new HashSet<Guid>(); var slots = new HashSet<EquipmentSlot>();
         foreach (var item in Items)
             if (item is null || item.InstanceId == Guid.Empty || !ids.Add(item.InstanceId) ||
@@ -26,7 +28,16 @@ public sealed record SavedInventory
     public static SavedInventory Deserialize(string json)
     {
         if (json.Length > 8192) throw new InvalidDataException("Inventory model exceeds size budget.");
+        using var document=JsonDocument.Parse(json);
+        RejectDuplicates(document.RootElement);
+        if(document.RootElement.TryGetProperty("Crafting",out var crafting) && crafting.ValueKind==JsonValueKind.Null) throw new InvalidDataException("Null crafting component.");
         var value = JsonSerializer.Deserialize<SavedInventory>(json, Json) ?? throw new InvalidDataException("Missing inventory.");
         value.Validate(); return value;
     }
+    private static void RejectDuplicates(JsonElement value)
+    {
+        if(value.ValueKind==JsonValueKind.Object) { var names=new HashSet<string>(); foreach(var property in value.EnumerateObject()) { if(!names.Add(property.Name)) throw new InvalidDataException("Duplicate inventory property."); RejectDuplicates(property.Value); } }
+        else if(value.ValueKind==JsonValueKind.Array) foreach(var child in value.EnumerateArray()) RejectDuplicates(child);
+    }
+
 }

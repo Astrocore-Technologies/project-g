@@ -378,6 +378,13 @@ public sealed class NetworkMovementIntegrationTests
         private PlayerId _playerId;
 
         public Dictionary<NetworkEntityId, PlayerSpawn> Spawns { get; } = new();
+        public Dictionary<NetworkEntityId,CraftState> CraftStates { get; }=new();
+        public List<CraftResult> CraftResults { get; }=new();
+        public Dictionary<ushort,ResourceNodeState> Resources { get; }=new();
+        public Dictionary<ushort,CraftRecipeState> Recipes { get; }=new();
+        public void Craft(CraftCommand command) => _peer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
+        public StarterZoneState? StarterZone { get; private set; }
+        public Dictionary<NetworkEntityId,ExplorationState> Exploration { get; }=new();
         public WorldNodeState? WorldNode { get; private set; }
         public List<WorldNodeResult> WorldNodeResults { get; }=new();
         public void Node(WorldNodeCommand command) => _peer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
@@ -444,6 +451,20 @@ public sealed class NetworkMovementIntegrationTests
                     Assert.True(NetworkProtocol.TryReadMessageType(reader, out var type));
                     switch (type)
                     {
+                        case NetworkMessageType.CraftState:
+                            Assert.True(NetworkProtocol.TryReadCraftState(reader,out var craft)); Assert.Equal(LocalSpawn.EntityId,craft.OwnerId); CraftStates[craft.OwnerId]=craft; break;
+                        case NetworkMessageType.CraftResult:
+                            Assert.True(NetworkProtocol.TryReadCraftResult(reader,out var craftResult)); CraftResults.Add(craftResult); break;
+                        case NetworkMessageType.ResourceNodeState:
+                            Assert.True(NetworkProtocol.TryReadResourceNodeState(reader,out var resource)); Resources[resource.Id]=resource; break;
+                        case NetworkMessageType.ResourceNodeDespawn:
+                            Assert.True(NetworkProtocol.TryReadResourceNodeDespawn(reader,out var left)); Resources.Remove(left.Id); break;
+                        case NetworkMessageType.CraftRecipeState:
+                            Assert.True(NetworkProtocol.TryReadCraftRecipeState(reader,out var recipe)); Recipes[recipe.Id]=recipe; break;
+                        case NetworkMessageType.StarterZoneState:
+                            Assert.True(NetworkProtocol.TryReadStarterZoneState(reader,out var zone)); StarterZone=zone; break;
+                        case NetworkMessageType.ExplorationState:
+                            Assert.True(NetworkProtocol.TryReadExplorationState(reader,out var exploration)); Assert.Equal(LocalSpawn.EntityId,exploration.OwnerId); Exploration[exploration.OwnerId]=exploration; break;
                         case NetworkMessageType.WorldNodeState:
                             Assert.True(NetworkProtocol.TryReadWorldNodeState(reader,out var node));
                             if(WorldNode is null || node.Revision>WorldNode.Value.Revision) WorldNode=node;

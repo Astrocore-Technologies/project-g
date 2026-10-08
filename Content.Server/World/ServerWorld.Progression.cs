@@ -9,7 +9,7 @@ namespace Content.Server.World;
 public sealed partial class ServerWorld
 {
     private ContentCatalog? _progressionCatalog;
-    private static readonly Vector2[] DiscoveryLandmarks = [new(-9,-6),new(9,6)];
+    private Vector2[] DiscoveryLandmarks = [new(-9,-6),new(9,6)];
     private readonly Dictionary<NetworkEntityId,SavedProgression> _progression = new();
     private readonly Dictionary<NetworkEntityId,ProgressionCommand> _progressionPending = new();
     private readonly Dictionary<NetworkEntityId,(uint Sequence,uint Tick)> _progressionSequences = new();
@@ -86,6 +86,7 @@ public sealed partial class ServerWorld
             var bit = (byte)(1 << i);
             if ((value.Discoveries & bit) != 0 || Vector2.DistanceSquared(player.Position,landmarks[i]) > 2.25f) continue;
             _progression[player.EntityId] = value with { Discoveries = (byte)(value.Discoveries | bit) };
+            if (HasStarterZone) _starterDirty.Add(player.EntityId);
             GrantExperience(player.EntityId,_progressionCatalog!.Progression.DiscoveryExperience); DirtyProgression(player.EntityId);
             value = _progression[player.EntityId];
             EvaluateProfessionOffer(player.EntityId);

@@ -29,6 +29,8 @@ public partial class WorldController : Node3D
     private ProjectG.Progression.ProgressionPresentation? _progression;
     private ProjectG.Progression.ProfessionPresentation? _profession;
     private ProjectG.WorldStory.WorldNodePresentation? _worldNode;
+    private ProjectG.StarterZone.StarterZonePresentation? _starter;
+    private ProjectG.Crafting.CraftingPresentation? _crafting;
 
     public override void _Ready()
     {
@@ -105,13 +107,7 @@ public partial class WorldController : Node3D
         _navigationVisual = new NavigationVisual { Name = "NavigationGeometry" };
         AddChild(_navigationVisual);
         _navigationVisual.Build(grid);
-        foreach (var position in new Vector3[] { new(-9,0,-6),new(9,0,6) })
-        {
-            var marker = new Node3D { Position = position }; _navigationVisual.AddChild(marker);
-            marker.AddChild(new MeshInstance3D { Position = new(0,0.15f,0), Mesh = new CylinderMesh { TopRadius = 1.4f, BottomRadius = 1.4f, Height = 0.1f },
-                MaterialOverride = new StandardMaterial3D { AlbedoColor = new(0.1f,0.8f,0.7f) } });
-            marker.AddChild(new Label3D { Position = new(0,1.5f,0), Text = "Открытие • EXP", Billboard = BaseMaterial3D.BillboardModeEnum.Enabled });
-        }
+
     }
 
     private void OnPlayerSpawned(PlayerSpawn spawn)
@@ -127,6 +123,8 @@ public partial class WorldController : Node3D
         if (spawn.PlayerId == _network.LocalPlayerId)
         {
             _localEntityId = spawn.EntityId;
+            if(_network.CraftRecipes.Count!=0) { _crafting=new(); AddChild(_crafting); _crafting.Initialize(_network,player); }
+            if (_network.LatestStarterZone is { } zone) { _starter=new(); AddChild(_starter); _starter.Initialize(_network,player,zone); }
             _abilities = new AbilityPresentation();
             player.AddChild(_abilities);
             _abilities.Initialize(player, _network);
@@ -286,6 +284,8 @@ public partial class WorldController : Node3D
         _progression?.QueueFree(); _progression = null;
         _profession?.QueueFree(); _profession = null;
         _worldNode?.QueueFree(); _worldNode=null;
+        _starter?.QueueFree(); _starter=null;
+        _crafting?.QueueFree(); _crafting=null;
         _groundItems?.QueueFree(); _groundItems = null;
         foreach (var echo in _echoes.Values) echo.QueueFree();
         _echoes.Clear(); _echoControls?.QueueFree(); _echoControls = null;

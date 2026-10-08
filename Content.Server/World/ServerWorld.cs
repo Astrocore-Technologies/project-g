@@ -35,7 +35,7 @@ public sealed partial class ServerWorld
         IOptions<NavigationOptions>? navigation = null, ContentCatalog? catalog = null,
         IOptions<CombatOptions>? combat = null, IOptions<ServerOptions>? server = null, IOptions<NpcOptions>? npc = null,
         IOptions<BossOptions>? boss = null, IOptions<InventoryOptions>? inventory = null,
-        IOptions<GroundItemOptions>? groundItems = null, IOptions<EchoOptions>? echoes = null, IOptions<WorldStoryOptions>? worldStory = null)
+        IOptions<GroundItemOptions>? groundItems = null, IOptions<EchoOptions>? echoes = null, IOptions<WorldStoryOptions>? worldStory = null, IOptions<StarterZoneOptions>? starterZone = null, IOptions<CraftingOptions>? crafting = null)
     {
         _movement = options.Value.ToSettings();
         _interest = interest.Value;
@@ -92,6 +92,8 @@ public sealed partial class ServerWorld
             }
         }
         InitializeWorldNode(worldStory?.Value,catalog?.WorldNode);
+        InitializeStarterZone(starterZone?.Value,catalog?.StarterZone);
+        InitializeCrafting(crafting?.Value,catalog?.Crafting);
     }
 
     public uint Tick { get; private set; }
@@ -138,8 +140,9 @@ public sealed partial class ServerWorld
             Combat?.Add(entityId, spawn, CombatEntityKind.Player, baseStats: player.BaseStats);
             if (Abilities is not null && _playerDefinition is { } definition)
                 Abilities.AddPlayer(entityId, definition);
-            Inventory?.Add(entityId, saved?.Inventory ?? InventorySimulation.CreateStarter(_playerDefinition!));
+            Inventory?.Add(entityId, saved?.Inventory ?? InventorySimulation.CreateStarter(_playerDefinition!),saved?.OfflineSeconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()) ?? 0);
             AddProgression(entityId,saved?.Progression);
+            AddExploration(entityId);
             if (saved is not null)
             {
                 var actor = Combat!.Get(entityId);
@@ -198,6 +201,8 @@ public sealed partial class ServerWorld
         GroundItems?.RemovePlayer(player.EntityId);
         Echoes?.Remove(player.EntityId);
         RemoveWorldNodePlayer(connectionId,player.EntityId);
+        RemoveCraftPlayer(connectionId,player.EntityId);
+        RemoveExploration(player.EntityId);
         RemoveProgression(player.EntityId);
         _playersByConnection.Remove(connectionId);
         _developmentRevives.Remove(connectionId); _developmentReviveSequences.Remove(connectionId);
@@ -300,10 +305,12 @@ public sealed partial class ServerWorld
             _persistenceDirty.Add(connectionId);
             if (Combat is not null && Combat.Get(player.EntityId).Health <= 0)
                 player.Motion.Reset(player.Position, player.Position);
+            var previousPosition=player.Position;
             player.Motion.Step(fixedDeltaSeconds);
             _spatial.Move(player.EntityId, player.Position);
             Combat?.Move(player.EntityId, player.Position);
             VisitDiscoveries(player);
+            RevealStarterArea(player,player.Position!=previousPosition);
             Echoes?.Wake(player.EntityId);
             if (!player.Motion.IsMoving)
                 _stoppedPlayers.Add(connectionId);
@@ -323,6 +330,7 @@ public sealed partial class ServerWorld
         SimulateProgression();
         SimulateProfessions();
         SimulateWorldNode();
+        SimulateCrafting();
         if (Echoes is { } echoes)
         {
             foreach (var action in Combat!.Events)
@@ -333,6 +341,7 @@ public sealed partial class ServerWorld
             echoes.Simulate(fixedDeltaSeconds,Tick);
             foreach (var owner in echoes.DirtyOwners) MarkPersistent(owner);
         }
+        SimulateStarterZone();
         if (Inventory is { } inventory) foreach (var id in inventory.Dirty) MarkPersistent(id);
         if (Combat is { } combat)
         {

@@ -1,11 +1,16 @@
-[gd_scene load_steps=6 format=3 uid="uid://dmxklxo60o5gn"]
+[gd_scene load_steps=7 format=3 uid="uid://dmxklxo60o5gn"]
 
 [ext_resource type="Script" path="res://Scripts/WorldController.cs" id="1_world"]
 [ext_resource type="PackedScene" path="res://Scenes/PlayerAvatar.tscn" id="2_player"]
 [ext_resource type="Script" uid="uid://bklqoyyb08nt8" path="res://Scripts/Network/NetworkClient.cs" id="3_network"]
 
+[sub_resource type="StandardMaterial3D" id="Material_ground"]
+albedo_color = Color(0.25, 0.34, 0.24, 1)
+roughness = 1.0
+
 [sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
-size = Vector2(30, 30)
+material = SubResource("Material_ground")
+size = Vector2(40, 36)
 
 [sub_resource type="BoxShape3D" id="BoxShape_ground"]
 size = Vector3(30, 0.2, 30)

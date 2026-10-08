@@ -9,6 +9,8 @@ namespace Content.Server.Data;
 public sealed class ContentCatalog
 {
     public Content.Server.WorldStory.WorldNodeDefinition? WorldNode { get; }
+    public Content.Server.StarterZone.StarterZoneDefinition? StarterZone { get; }
+    public Content.Server.Crafting.CraftingDefinition? Crafting { get; }
     public const int SchemaVersion = 3;
     public const int MaxFileBytes = 4 * 1024 * 1024;
     private const int MaxDefinitions = 4096;
@@ -27,6 +29,7 @@ public sealed class ContentCatalog
             throw new ArgumentException("Unsupported schemaVersion or invalid balanceVersion.");
         ArgumentNullException.ThrowIfNull(document.Balance);
         document.Balance.Validate();
+        document.StarterZone?.Validate(); StarterZone=document.StarterZone;
         document.WorldNode?.Validate(); WorldNode = document.WorldNode;
         Balance = document.Balance;
         BalanceVersion = document.BalanceVersion;
@@ -48,6 +51,7 @@ public sealed class ContentCatalog
                 : item.WeaponId is null, $"item {item.Id}: invalid weapon reference/kind");
         }
 
+        document.Crafting?.Validate(this); Crafting=document.Crafting;
         foreach (var weapon in Weapons.Values)
         {
             Check(Enum.IsDefined(weapon.Kind), $"weapon {weapon.Id}: unknown kind");

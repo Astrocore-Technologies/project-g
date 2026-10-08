@@ -57,6 +57,15 @@ public partial class NetworkClient : Node
     public event Action<GroundItemDespawn>? GroundItemDespawned;
     public event Action<PickupResult>? PickupResultReceived;
     public event Action? Disconnected;
+    public Dictionary<ushort,CraftRecipeState> CraftRecipes { get; }=new();
+    public Dictionary<ushort,ResourceNodeState> ResourceNodes { get; }=new();
+    public event Action<CraftState>? CraftStateReceived;
+    public event Action<CraftResult>? CraftResultReceived;
+    public event Action<ResourceNodeState>? ResourceNodeReceived;
+    public event Action<ResourceNodeDespawn>? ResourceNodeLeft;
+    public void SendCraft(CraftCommand command) { if(_handshakeComplete) _serverPeer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered); }
+    public StarterZoneState? LatestStarterZone { get; private set; }
+    public event Action<ExplorationState>? ExplorationReceived;
     public WorldNodeState? LatestWorldNode { get; private set; }
     public event Action<WorldNodeState>? WorldNodeReceived;
     public event Action<WorldNodeResult>? WorldNodeResultReceived;
@@ -205,7 +214,7 @@ public partial class NetworkClient : Node
         _handshakeComplete = false;
         LocalPlayerId = PlayerId.Invalid;
         CanDevelopmentRevive = false;
-        Navigation = null; LatestWorldNode=null;
+        Navigation = null; LatestWorldNode=null; LatestStarterZone=null; CraftRecipes.Clear(); ResourceNodes.Clear();
         LatestServerTick = 0;
         Disconnected?.Invoke();
 
@@ -235,6 +244,29 @@ public partial class NetworkClient : Node
 
             switch (messageType)
             {
+                case NetworkMessageType.CraftRecipeState:
+                    if(_handshakeComplete && NetworkProtocol.TryReadCraftRecipeState(reader,out var recipe) && (CraftRecipes.ContainsKey(recipe.Id) || CraftRecipes.Count<8)) CraftRecipes[recipe.Id]=recipe; else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.ResourceNodeState:
+                    if(_handshakeComplete && NetworkProtocol.TryReadResourceNodeState(reader,out var resource) && Navigation?.IsWalkable(resource.Position)==true && (ResourceNodes.ContainsKey(resource.Id) || ResourceNodes.Count<16)) { ResourceNodes[resource.Id]=resource; ResourceNodeReceived?.Invoke(resource); } else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.ResourceNodeDespawn:
+                    if(_handshakeComplete && NetworkProtocol.TryReadResourceNodeDespawn(reader,out var resourceLeft)) { ResourceNodes.Remove(resourceLeft.Id); ResourceNodeLeft?.Invoke(resourceLeft); } else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.CraftState:
+                    if(_handshakeComplete && NetworkProtocol.TryReadCraftState(reader,out var craftState)) CraftStateReceived?.Invoke(craftState); else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.CraftResult:
+                    if(_handshakeComplete && NetworkProtocol.TryReadCraftResult(reader,out var craftResult)) CraftResultReceived?.Invoke(craftResult); else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.StarterZoneState:
+                    if (_handshakeComplete && NetworkProtocol.TryReadStarterZoneState(reader,out var zone)) LatestStarterZone=zone;
+                    else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.ExplorationState:
+                    if (_handshakeComplete && NetworkProtocol.TryReadExplorationState(reader,out var exploration) && Navigation is { } grid && exploration.Width==grid.Width && exploration.Height==grid.Height) ExplorationReceived?.Invoke(exploration);
+                    else DisconnectMalformed(peer);
+                    break;
                 case NetworkMessageType.WorldNodeState:
                     if(_handshakeComplete && NetworkProtocol.TryReadWorldNodeState(reader,out var node))
                     { if(LatestWorldNode is null || node.Revision>LatestWorldNode.Value.Revision) { LatestWorldNode=node; WorldNodeReceived?.Invoke(node); } }

@@ -19,7 +19,7 @@ public partial class InventoryPresentation : CanvasLayer
     public void Initialize(NetworkClient network)
     {
         _network = network;
-        _panel = new PanelContainer(); AddChild(_panel);
+        _panel = new PanelContainer { Visible=false }; AddChild(_panel);
         _panel.SetAnchorsPreset(Control.LayoutPreset.TopRight);
         _panel.OffsetLeft = -275; _panel.OffsetRight = -15; _panel.OffsetTop = 15;
         var content = new VBoxContainer(); _panel.AddChild(content);

@@ -25,6 +25,7 @@ public sealed partial class GameServerService
         CancellationTokenSource Deadline);
     private sealed class Intentions
     {
+        public CraftCommand? Craft;
         public WorldNodeCommand? Node;
         public WorldNodeCommand? NodeSecond;
         public MoveCommand? Move;
@@ -101,6 +102,7 @@ public sealed partial class GameServerService
         // Bounded one intention per type/session while waiting for disk; no growing packet queue.
         foreach (var (connection, intentions) in _intentions)
         {
+            if (intentions.Craft is { } craft) _world.TryQueueCraft(connection,craft);
             if (intentions.Node is { } node) _world.TryQueueWorldNode(connection,node);
             if (intentions.NodeSecond is { } nodeSecond) _world.TryQueueWorldNode(connection,nodeSecond);
             if (intentions.Move is { } move) _world.TryApplyMove(connection, move);

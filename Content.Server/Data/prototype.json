@@ -192,6 +192,15 @@
         "physicalDefense": 8,
         "maxHealth": 20
       }
+    },
+    {
+      "id": "crafted_crossing_blade",
+      "name": "Клинок переправы",
+      "slot": "Weapon",
+      "weaponId": "training_sword",
+      "modifiers": {
+        "meleeAttack": 12
+      }
     }
   ],
   "creatures": [
@@ -305,6 +314,103 @@
       "На восточном берегу появился дозор.",
       "Дорога у переправы стала спокойнее.",
       "Хранитель предупреждает: надвигается буря."
+    ]
+  },
+  "starterZone": {
+    "regionName": "Берега Переправы",
+    "townName": "Речная пристань",
+    "guideName": "Проводница Лада",
+    "townX": -10,
+    "townZ": 0,
+    "guideX": -11,
+    "guideZ": -1,
+    "revealRadiusCells": 3,
+    "landmarks": [
+      {
+        "id": 1,
+        "name": "Старая роща",
+        "x": -9,
+        "z": -6
+      },
+      {
+        "id": 2,
+        "name": "Восточный путевой камень",
+        "x": 9,
+        "z": 6
+      }
+    ]
+  },
+  "crafting": {
+    "stationName": "Верстак пристани",
+    "stationX": -10,
+    "stationZ": 2,
+    "interactionRange": 2,
+    "actionCooldownSeconds": 1,
+    "materials": [
+      {
+        "id": 1,
+        "name": "Древесина"
+      },
+      {
+        "id": 2,
+        "name": "Железная руда"
+      },
+      {
+        "id": 3,
+        "name": "Железный слиток"
+      }
+    ],
+    "resources": [
+      {
+        "id": 1,
+        "name": "Сухое дерево",
+        "materialId": 1,
+        "x": -11,
+        "z": -7,
+        "stock": 16
+      },
+      {
+        "id": 2,
+        "name": "Железная жила",
+        "materialId": 2,
+        "x": -5,
+        "z": -7,
+        "stock": 24
+      }
+    ],
+    "recipes": [
+      {
+        "id": 1,
+        "name": "Выплавить слиток",
+        "costs": [
+          {
+            "id": 2,
+            "quantity": 2
+          }
+        ],
+        "outputMaterialId": 3,
+        "outputQuantity": 1,
+        "outputItemId": null,
+        "experience": 2
+      },
+      {
+        "id": 2,
+        "name": "Клинок переправы",
+        "costs": [
+          {
+            "id": 1,
+            "quantity": 2
+          },
+          {
+            "id": 3,
+            "quantity": 2
+          }
+        ],
+        "outputMaterialId": 0,
+        "outputQuantity": 1,
+        "outputItemId": "crafted_crossing_blade",
+        "experience": 5
+      }
     ]
   }
 }

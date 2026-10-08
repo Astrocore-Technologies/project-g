@@ -5,6 +5,11 @@ namespace Content.Server.World;
 /// <summary>Per-observer relevance state and reusable tick output. Owned by one connection.</summary>
 public sealed class InterestView
 {
+    public HashSet<ushort> ResourceVisible { get; }=new();
+    public List<ushort> ResourceEntered { get; }=new();
+    public List<ushort> ResourceLeft { get; }=new();
+    public HashSet<NetworkEntityId> ResourceCandidates { get; }=new();
+
     internal HashSet<NetworkEntityId> Candidates { get; } = new();
     internal HashSet<NetworkEntityId> Visible { get; } = new();
     internal List<NetworkEntityId> EnteredIds { get; } = new();
