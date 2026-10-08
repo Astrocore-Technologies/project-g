@@ -1,6 +1,8 @@
 # .NET build
 bin/
 obj/
+.artifacts/
+.data/
 
 # IDE
 .vs/

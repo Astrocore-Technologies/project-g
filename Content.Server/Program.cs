@@ -3,6 +3,8 @@ using Content.Server.Data;
 using Content.Server.Networking;
 using Content.Server.Stats;
 using Content.Server.World;
+using Content.Server.Persistence;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -55,6 +57,29 @@ builder.Services.AddOptions<NpcOptions>()
 builder.Services.AddOptions<BossOptions>()
     .Bind(builder.Configuration.GetSection(BossOptions.SectionName));
 builder.Services.AddHostedService<GameServerService>();
+
+// Development uses SQLite by explicit user decision; neither provider has an ephemeral fallback.
+builder.Services.AddOptions<PersistenceOptions>().Bind(builder.Configuration.GetSection(PersistenceOptions.SectionName));
+if (!validateContentOnly)
+{
+    if (!builder.Environment.IsDevelopment())
+        throw new InvalidOperationException("Development token login is disabled outside Development. Production authentication is not implemented.");
+    var persistence = builder.Configuration.GetSection(PersistenceOptions.SectionName).Get<PersistenceOptions>() ?? new();
+    switch (persistence.Provider)
+    {
+        case "Sqlite":
+            if (string.IsNullOrWhiteSpace(persistence.SqlitePath)) throw new InvalidOperationException("SQLite path is required.");
+            var path = Path.GetFullPath(persistence.SqlitePath);
+            builder.Services.AddSingleton<ICharacterStore>(_ => new DevelopmentSqliteCharacterStore(path));
+            break;
+        case "Postgres":
+            if (string.IsNullOrWhiteSpace(persistence.ConnectionString))
+                throw new InvalidOperationException("Set Persistence__ConnectionString for PostgreSQL; credentials must not be committed.");
+            builder.Services.AddSingleton<ICharacterStore>(_ => new PostgresCharacterStore(persistence.ConnectionString));
+            break;
+        default: throw new InvalidOperationException("Unsupported persistence provider. Use Sqlite or Postgres.");
+    }
+}
 
 // Parse once before opening the UDP port. Definitions remain server-only and immutable.
 var catalog = ContentCatalog.LoadFile(Path.Combine(AppContext.BaseDirectory, "Data", "prototype.json"));

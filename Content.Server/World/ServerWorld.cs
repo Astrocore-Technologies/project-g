@@ -3,6 +3,7 @@ using Content.Server.Configuration;
 using Content.Server.Combat;
 using Content.Server.Data;
 using Content.Server.Stats;
+using Content.Server.Persistence;
 using Content.Shared.Movement;
 using Content.Shared.Network;
 using Content.Shared.Navigation;
@@ -26,6 +27,8 @@ public sealed class ServerWorld
     private readonly NavigationPathfinder _pathfinder;
     private readonly CreatureDefinition? _playerDefinition;
     private ulong _nextEntityId = 1;
+    private readonly HashSet<int> _persistenceDirty = new();
+    internal IReadOnlyCollection<int> PersistenceDirty => _persistenceDirty;
 
     public ServerWorld(IOptions<MovementOptions> options, IOptions<InterestOptions> interest,
         IOptions<NavigationOptions>? navigation = null, ContentCatalog? catalog = null,
@@ -88,7 +91,7 @@ public sealed class ServerWorld
     public NpcSimulation? Boss { get; }
     public IReadOnlyCollection<ServerPlayer> Players => _playersByConnection.Values;
 
-    public ServerPlayer AddPlayer(int connectionId, PlayerId playerId)
+    public ServerPlayer AddPlayer(int connectionId, PlayerId playerId, CharacterState? saved = null)
     {
         if (!playerId.IsValid)
             throw new ArgumentOutOfRangeException(nameof(playerId));
@@ -101,15 +104,67 @@ public sealed class ServerWorld
         var spawn = MovementSimulation.ClampTarget(new Vector2(-9f + spawnIndex * 2f, 0f), _movement);
         if (!Navigation.TryFindSpawn(spawn, out spawn))
             throw new InvalidOperationException("Region has no walkable spawn.");
+        if (saved is not null)
+        {
+            saved.Validate();
+            if (_playerDefinition is null || saved.ProfileId != _playerDefinition.Id ||
+                !Navigation.IsWalkable(new Vector2(saved.X, saved.Z)))
+                throw new InvalidDataException("Saved profile/position is incompatible with this region.");
+            spawn = new(saved.X, saved.Z);
+        }
         var player = new ServerPlayer(connectionId, playerId, entityId,
             new NavigationMover(Navigation, _movement, _pathfinder, spawn));
+        player.BaseStats = saved?.Stats ?? _playerDefinition?.Stats ?? default;
         _playersByConnection.Add(connectionId, player);
         _playersByEntity.Add(entityId, player);
         _spatial.Add(entityId, spawn);
-        Combat?.Add(entityId, spawn, CombatEntityKind.Player);
-        if (Abilities is not null && _playerDefinition is { } definition)
-            Abilities.AddPlayer(entityId, definition);
+        try
+        {
+            Combat?.Add(entityId, spawn, CombatEntityKind.Player, baseStats: player.BaseStats);
+            if (Abilities is not null && _playerDefinition is { } definition)
+                Abilities.AddPlayer(entityId, definition);
+            if (saved is not null)
+            {
+                var actor = Combat!.Get(entityId);
+                if (saved.Health > actor.Stats.MaxHealth)
+                    throw new InvalidDataException("Saved HP exceeds current maximum; content migration is required.");
+                var offline = saved.OfflineSeconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+                actor.Health = saved.Health;
+                actor.ReadyAt = Combat.Time + Math.Max(0, saved.AttackCooldownSeconds - offline);
+                Abilities!.Restore(entityId, saved, offline);
+            }
+        }
+        catch { RemovePlayer(connectionId); throw; }
         return player;
+    }
+
+    public CharacterState CreateInitialCharacter()
+    {
+        var definition = _playerDefinition ?? throw new InvalidOperationException("Persistence requires player content.");
+        if (!Navigation.TryFindSpawn(new Vector2(-9, 0), out var spawn))
+            throw new InvalidOperationException("Region has no spawn.");
+        var stats = Combat!.InitialPlayerStats;
+        return new CharacterState
+        {
+            RegionId = "prototype", ProfileId = definition.Id, Stats = definition.Stats,
+            X = spawn.X, Z = spawn.Y, Health = stats.MaxHealth, Mana = Math.Max(0, stats.MaxMana),
+            AttackCooldownSeconds = 0, Cooldowns = definition.AbilityIds.Select(id => new SavedCooldown(id, 0)).ToArray(),
+            SavedAtUnixMilliseconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+        };
+    }
+
+    public CharacterState CaptureCharacter(int connectionId)
+    {
+        var player = _playersByConnection[connectionId];
+        var actor = Combat!.Get(player.EntityId);
+        return new CharacterState
+        {
+            RegionId = "prototype", ProfileId = _playerDefinition!.Id, Stats = player.BaseStats,
+            X = player.Position.X, Z = player.Position.Y, Health = actor.Health,
+            Mana = Abilities!.Mana(player.EntityId), Cooldowns = Abilities.CaptureCooldowns(player.EntityId),
+            AttackCooldownSeconds = Math.Max(0, actor.ReadyAt - Combat.Time),
+            SavedAtUnixMilliseconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+        };
     }
 
     public ServerPlayer? RemovePlayer(int connectionId)
@@ -119,6 +174,7 @@ public sealed class ServerWorld
         _playersByEntity.Remove(player.EntityId);
         _spatial.Remove(player.EntityId);
         _movingPlayers.Remove(connectionId);
+        _persistenceDirty.Remove(connectionId);
         Combat?.Remove(player.EntityId);
         Abilities?.Remove(player.EntityId);
         return player;
@@ -190,12 +246,14 @@ public sealed class ServerWorld
     public void Simulate(float fixedDeltaSeconds)
     {
         Tick++;
+        _persistenceDirty.Clear();
 
         _stoppedPlayers.Clear();
         // Idle players do not require movement work or spatial updates each tick.
         foreach (var connectionId in _movingPlayers)
         {
             var player = _playersByConnection[connectionId];
+            _persistenceDirty.Add(connectionId);
             if (Combat is not null && Combat.Get(player.EntityId).Health <= 0)
                 player.Motion.Reset(player.Position, player.Position);
             player.Motion.Step(fixedDeltaSeconds);
@@ -213,6 +271,26 @@ public sealed class ServerWorld
         Abilities?.Simulate(fixedDeltaSeconds, Tick);
         Npc?.Resolve(fixedDeltaSeconds, Tick);
         Boss?.Resolve(fixedDeltaSeconds, Tick);
+        if (Combat is { } combat)
+        {
+            foreach (var action in combat.Events)
+            {
+                MarkPersistent(action.AttackerId);
+                MarkPersistent(action.TargetId);
+            }
+            // Misses can still consume a melee cooldown.
+            foreach (var id in combat.Results.Keys) MarkPersistent(id);
+        }
+        if (Abilities is { } abilities)
+        {
+            foreach (var id in abilities.DirtyActors) MarkPersistent(id);
+            foreach (var hit in abilities.Hits) MarkPersistent(hit.TargetId);
+        }
+    }
+
+    private void MarkPersistent(NetworkEntityId id)
+    {
+        if (_playersByEntity.TryGetValue(id, out var player)) _persistenceDirty.Add(player.ConnectionId);
     }
 
     public PlayerSpawn CreateSpawn(ServerPlayer player) =>

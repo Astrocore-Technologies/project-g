@@ -1,6 +1,7 @@
 using System.Numerics;
 using Content.Shared.Network;
 using Content.Shared.Navigation;
+using Content.Server.Stats;
 
 namespace Content.Server.World;
 
@@ -19,4 +20,5 @@ public sealed class ServerPlayer(
     internal NavigationMover Motion { get; } = motion;
     internal uint? LastPathRequestTick { get; set; }
     public uint LastProcessedSequence { get; internal set; }
+    internal BaseStats BaseStats { get; set; }
 }

@@ -59,6 +59,8 @@ public sealed class CombatSimulation
     public IReadOnlyDictionary<NetworkEntityId, AttackResult> Results => _results;
     public Combatant Get(NetworkEntityId id) => _actors[id];
     public bool TryGet(NetworkEntityId id, out Combatant actor) => _actors.TryGetValue(id, out actor!);
+    internal double Time => _time;
+    internal DerivedStats InitialPlayerStats => _calculator.Calculate(_catalog.Creatures[_playerDefinition]);
 
     /// <summary>Authoritative spell damage; the training policy remains separate from geometry.</summary>
     public double ApplyAbilityDamage(NetworkEntityId targetId, double power)
@@ -73,13 +75,14 @@ public sealed class CombatSimulation
     public static bool IsHostileTarget(CombatEntityKind kind) => kind is CombatEntityKind.TrainingTarget or CombatEntityKind.Monster or CombatEntityKind.Boss;
     public static bool IsNpc(CombatEntityKind kind) => kind is CombatEntityKind.Monster or CombatEntityKind.Boss;
 
-    public void Add(NetworkEntityId id, Vector2 position, CombatEntityKind kind, string? definitionId = null)
+    public void Add(NetworkEntityId id, Vector2 position, CombatEntityKind kind, string? definitionId = null,
+        BaseStats? baseStats = null)
     {
         if (!id.IsValid || !Enum.IsDefined(kind) || !_navigation.IsWalkable(position))
             throw new ArgumentException("Combat actor needs a valid ID, kind and walkable position.");
         var definition = _catalog.Creatures[definitionId ?? (kind == CombatEntityKind.Player ? _playerDefinition : _targetDefinition)];
         ValidateProfile(definition);
-        var stats = _calculator.Calculate(definition);
+        var stats = _calculator.Calculate(baseStats is { } saved ? definition with { Stats = saved } : definition);
         var weapon = _catalog.Weapons[definition.WeaponId];
         _actors.Add(id, new Combatant(id, kind, position, stats, weapon,
             Math.Max(_minimumInterval, _calculator.AttackInterval(weapon.AttackIntervalSeconds, stats))));

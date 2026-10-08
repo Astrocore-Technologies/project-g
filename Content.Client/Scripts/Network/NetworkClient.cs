@@ -10,6 +10,11 @@ namespace ProjectG.Networking;
 public partial class NetworkClient : Node
 {
     [Export]
+    public string DevelopmentIdentityProfile { get; set; } = "default";
+    private string _identityPath = "";
+    private string _identityToken = "";
+    private bool _identityUsable;
+    [Export]
     public bool SimulateNetworkConditions { get; set; }
 
     [Export(PropertyHint.Range, "0,500,1")]
@@ -49,6 +54,29 @@ public partial class NetworkClient : Node
 
     public override void _Ready()
     {
+        // Profiles let two local clients own different characters without sharing a credential.
+        var profile = DevelopmentIdentityProfile;
+        foreach (var argument in OS.GetCmdlineUserArgs())
+            if (argument.StartsWith("--identity=", StringComparison.Ordinal)) profile = argument[11..];
+        if (profile.Length is < 1 or > 32 || profile.Any(character =>
+                character is not (>= 'a' and <= 'z') and not (>= 'A' and <= 'Z') and
+                not (>= '0' and <= '9') and not '_' and not '-'))
+        {
+            GD.PushError("Invalid development identity profile; use 1..32 ASCII letters/digits/_/-.");
+            return;
+        }
+        _identityPath = ProjectSettings.GlobalizePath($"user://development-identities/{profile}.token");
+        try
+        {
+            if (System.IO.File.Exists(_identityPath))
+                _identityToken = new System.IO.FileInfo(_identityPath).Length == 64
+                    ? System.IO.File.ReadAllText(_identityPath) : "invalid";
+            _identityUsable = NetworkProtocol.IsDevelopmentToken(_identityToken) &&
+                (!System.IO.File.Exists(_identityPath) || _identityToken.Length != 0);
+            if (!_identityUsable) GD.PushError("Development identity file is invalid; it was not replaced.");
+        }
+        catch (System.IO.IOException) { GD.PushError("Cannot read development identity; login disabled."); }
+        catch (UnauthorizedAccessException) { GD.PushError("Cannot read development identity; login disabled."); }
         _listener = new EventBasedNetListener();
         _client = new NetManager(_listener);
 
@@ -78,7 +106,7 @@ public partial class NetworkClient : Node
 
     public void ConnectToServer()
     {
-        if (_client is null || _client.FirstPeer is not null)
+        if (!_identityUsable || _client is null || _client.FirstPeer is not null)
             return;
 
         GD.Print("Connecting to server...");
@@ -123,7 +151,7 @@ public partial class NetworkClient : Node
         _serverPeer = peer;
         var buildVersion =
             Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown";
-        var hello = new ClientHello(NetworkConstants.ProtocolVersion, buildVersion);
+        var hello = new ClientHello(NetworkConstants.ProtocolVersion, buildVersion, _identityToken);
 
         peer.Send(NetworkProtocol.Write(hello), DeliveryMethod.ReliableOrdered);
         GD.Print("Connected. Sending protocol handshake...");
@@ -277,6 +305,43 @@ public partial class NetworkClient : Node
         }
 
         _handshakeComplete = true;
+        if (welcome.DevelopmentToken.Length != 0)
+        {
+            if (_identityToken.Length != 0)
+            {
+                DisconnectMalformed(peer);
+                return;
+            }
+            var temporary = _identityPath + "." + Guid.NewGuid().ToString("N") + ".tmp";
+            try
+            {
+                System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(_identityPath)!);
+                using (var stream = new System.IO.FileStream(temporary, System.IO.FileMode.CreateNew,
+                           System.IO.FileAccess.Write, System.IO.FileShare.None))
+                {
+                    var bytes = System.Text.Encoding.ASCII.GetBytes(welcome.DevelopmentToken);
+                    stream.Write(bytes);
+                    stream.Flush(flushToDisk: true);
+                }
+                // Do not overwrite another concurrently launched client's profile.
+                System.IO.File.Move(temporary, _identityPath, overwrite: false);
+                _identityToken = welcome.DevelopmentToken;
+            }
+            catch (Exception exception) when (exception is System.IO.IOException or UnauthorizedAccessException)
+            {
+                _identityUsable = false;
+                _handshakeComplete = false;
+                GD.PushError("Cannot safely store development identity; connection closed. Use separate profiles for two clients.");
+                _client.DisconnectPeer(peer);
+                return;
+            }
+            finally
+            {
+                try { if (System.IO.File.Exists(temporary)) System.IO.File.Delete(temporary); }
+                catch (System.IO.IOException) { GD.PushWarning("Could not remove temporary development identity file."); }
+                catch (UnauthorizedAccessException) { GD.PushWarning("Could not remove temporary development identity file."); }
+            }
+        }
         LocalPlayerId = welcome.PlayerId;
         ServerTickRate = welcome.TickRate;
         HandshakeCompleted?.Invoke(welcome);

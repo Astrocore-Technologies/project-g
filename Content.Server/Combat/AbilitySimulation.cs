@@ -2,6 +2,7 @@ using System.Numerics;
 using Content.Server.Configuration;
 using Content.Server.Data;
 using Content.Server.Stats;
+using Content.Server.Persistence;
 using Content.Server.World;
 using Content.Shared.Combat;
 using Content.Shared.Movement;
@@ -50,6 +51,32 @@ public sealed class AbilitySimulation
     public IReadOnlyList<AbilityHit> Hits => _hits;
     public IReadOnlyDictionary<NetworkEntityId, AbilityResult> Results => _results;
     public bool IsDirty(NetworkEntityId id) => _dirty.Contains(id);
+    internal IReadOnlyCollection<NetworkEntityId> DirtyActors => _dirty;
+
+    internal SavedCooldown[] CaptureCooldowns(NetworkEntityId id)
+    {
+        var actor = _actors[id];
+        var saved = new SavedCooldown[actor.Definitions.Length];
+        for (var i = 0; i < saved.Length; i++)
+            saved[i] = new(actor.Definitions[i].Id, Math.Max(0, actor.ReadyAt[i] - _time));
+        return saved;
+    }
+
+    internal double Mana(NetworkEntityId id) => _actors[id].Mana;
+
+    internal void Restore(NetworkEntityId id, CharacterState state, double offlineSeconds)
+    {
+        var actor = _actors[id];
+        if (state.Mana > actor.MaxMana || state.Cooldowns.Length != actor.Definitions.Length)
+            throw new InvalidDataException("Saved mana/loadout does not match current content.");
+        actor.Mana = state.Mana;
+        for (var i = 0; i < actor.Definitions.Length; i++)
+        {
+            var saved = Array.Find(state.Cooldowns, item => item.AbilityId == actor.Definitions[i].Id)
+                ?? throw new InvalidDataException("Saved ability is not in the current loadout.");
+            actor.ReadyAt[i] = _time + Math.Max(0, saved.Seconds - offlineSeconds);
+        }
+    }
 
     public void AddPlayer(NetworkEntityId id, CreatureDefinition definition)
         => _actors.Add(id, CreateActor(definition, _combat.Get(id).Stats));

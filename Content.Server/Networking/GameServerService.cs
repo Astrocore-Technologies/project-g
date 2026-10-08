@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Content.Server.Configuration;
 using Content.Server.World;
+using Content.Server.Persistence;
 using Content.Shared.Network;
 using LiteNetLib;
 using LiteNetLib.Utils;
@@ -14,7 +15,7 @@ namespace Content.Server.Networking;
 /// Owns transport and advances the authoritative world on a fixed tick.
 /// All callbacks and simulation updates execute on this service's single thread.
 /// </summary>
-public sealed class GameServerService : BackgroundService
+public sealed partial class GameServerService : BackgroundService
 {
     private readonly ServerOptions _options;
     private readonly HandshakeCoordinator _handshakes;
@@ -30,11 +31,16 @@ public sealed class GameServerService : BackgroundService
         IOptions<ServerOptions> options,
         HandshakeCoordinator handshakes,
         ServerWorld world,
-        ILogger<GameServerService> logger)
+        ILogger<GameServerService> logger,
+        ICharacterStore? characters = null,
+        IOptions<PersistenceOptions>? persistence = null)
     {
         _options = options.Value;
         _handshakes = handshakes;
         _world = world;
+        _characters = characters;
+        _maxSessions = persistence?.Value.MaxSessions ?? 32;
+        if (_maxSessions is < 1 or > 64) throw new ArgumentException("Development session budget must be 1..64.");
         _logger = logger;
         _server = new NetManager(_listener);
 
@@ -47,6 +53,7 @@ public sealed class GameServerService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        if (_characters is not null) await _characters.InitializeAsync(stoppingToken);
         if (!_server.Start(_options.Port))
             throw new InvalidOperationException($"Failed to start UDP server on port {_options.Port}.");
 
@@ -66,12 +73,20 @@ public sealed class GameServerService : BackgroundService
             while (!stoppingToken.IsCancellationRequested)
             {
                 _server.PollEvents();
+                CompleteCheckpoint();
+                if (_checkpoint is null)
+                {
+                    CompleteLogins();
+                    CompleteClosings();
+                    CloseDepartedPlayers();
+                }
 
                 // Limit catch-up work so a temporary stall cannot spiral indefinitely.
-                for (var catchUp = 0; clock.Elapsed >= nextTick && catchUp < 4; catchUp++)
+                for (var catchUp = 0; _checkpoint is null && clock.Elapsed >= nextTick && catchUp < 4; catchUp++)
                 {
+                    ApplyBufferedIntentions();
                     _world.Simulate(fixedDelta);
-                    BroadcastSnapshot();
+                    if (!BeginCheckpoint()) BroadcastSnapshot();
                     nextTick += tickDuration;
                 }
 
@@ -85,6 +100,7 @@ public sealed class GameServerService : BackgroundService
         finally
         {
             _server.Stop();
+            await FlushCharactersAsync();
             _logger.LogInformation("Server stopped cleanly");
         }
     }
@@ -118,7 +134,9 @@ public sealed class GameServerService : BackgroundService
         _peers.Remove(peer.Id);
         _views.Remove(peer.Id);
         var playerId = _handshakes.RemoveConnection(peer.Id);
-        _world.RemovePlayer(peer.Id);
+        _intentions.Remove(peer.Id);
+        if (_sessions.ContainsKey(peer.Id)) _departed.Add(peer.Id);
+        else _world.RemovePlayer(peer.Id);
 
         // Remaining observers receive the despawn through their AOI delta next tick.
 
@@ -146,24 +164,39 @@ public sealed class GameServerService : BackgroundService
 
             if (!_handshakes.TryGetPlayerId(peer.Id, out _))
             {
+                if (reader.RawDataSize > NetworkConstants.MaxHandshakePacketBytes || deliveryMethod != DeliveryMethod.ReliableOrdered)
+                {
+                    RejectMalformed(peer, "Handshake must be bounded and reliable.");
+                    return;
+                }
                 HandleHandshake(peer, reader, messageType);
                 return;
             }
 
+            // Identity loading is asynchronous; no player intentions before its restored spawn.
+            if (_characters is not null && !_views.ContainsKey(peer.Id)) return;
+
             if (messageType == NetworkMessageType.MoveCommand &&
                 NetworkProtocol.TryReadMoveCommand(reader, out var command))
             {
-                _world.TryApplyMove(peer.Id, command);
+                if (_characters is null) _world.TryApplyMove(peer.Id, command);
+                else BufferIntentions(peer.Id).Move = command;
                 return;
             }
             if (messageType == NetworkMessageType.AttackCommand &&
                 deliveryMethod == DeliveryMethod.ReliableOrdered &&
                 NetworkProtocol.TryReadAttackCommand(reader, out var attack))
-                _world.TryQueueAttack(peer.Id, attack);
+            {
+                if (_characters is null) _world.TryQueueAttack(peer.Id, attack);
+                else BufferIntentions(peer.Id).Attack ??= attack;
+            }
             if (messageType == NetworkMessageType.AbilityCommand &&
                 deliveryMethod == DeliveryMethod.ReliableOrdered &&
                 NetworkProtocol.TryReadAbilityCommand(reader, out var ability))
-                _world.TryQueueAbility(peer.Id, ability, peer.Ping);
+            {
+                if (_characters is null) _world.TryQueueAbility(peer.Id, ability, peer.Ping);
+                else BufferIntentions(peer.Id).Ability ??= ability;
+            }
             // Invalid game intentions are discarded; avoid logging unbounded client spam.
         }
         finally
@@ -196,11 +229,22 @@ public sealed class GameServerService : BackgroundService
             return;
         }
 
-        var player = _world.AddPlayer(peer.Id, decision.PlayerId);
+        if (_characters is not null)
+        {
+            BeginLogin(peer, hello, decision.PlayerId);
+            return;
+        }
+
+        AcceptPlayer(peer, hello, decision.PlayerId);
+    }
+
+    private void AcceptPlayer(NetPeer peer, ClientHello hello, PlayerId playerId, CharacterSession? session = null)
+    {
+        var player = _world.AddPlayer(peer.Id, playerId, session?.State);
         var welcome = new ServerWelcome(
-            decision.PlayerId,
+            playerId,
             checked((ushort) _options.TickRate),
-            DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+            DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), session?.IssuedToken ?? "");
 
         peer.Send(NetworkProtocol.Write(welcome), DeliveryMethod.ReliableOrdered);
         // Public collision geometry arrives before any spawn on the same reliable stream.
@@ -213,7 +257,7 @@ public sealed class GameServerService : BackgroundService
         _logger.LogInformation(
             "Handshake accepted. ConnectionId={ConnectionId}, PlayerId={PlayerId}, EntityId={EntityId}, Build={BuildVersion}",
             peer.Id,
-            decision.PlayerId.Value,
+            playerId.Value,
             player.EntityId.Value,
             hello.BuildVersion);
     }

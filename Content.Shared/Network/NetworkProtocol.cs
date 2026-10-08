@@ -18,6 +18,7 @@ public static partial class NetworkProtocol
 
     public static NetDataWriter Write(ClientHello message)
     {
+        if (!IsDevelopmentToken(message.DevelopmentToken)) throw new ArgumentException("Invalid development token.");
         ArgumentOutOfRangeException.ThrowIfGreaterThan(
             message.BuildVersion.Length,
             NetworkConstants.MaxBuildVersionLength);
@@ -25,11 +26,13 @@ public static partial class NetworkProtocol
         var writer = CreateWriter(NetworkMessageType.ClientHello);
         writer.Put(message.ProtocolVersion);
         writer.Put(message.BuildVersion);
+        writer.Put(message.DevelopmentToken);
         return writer;
     }
 
     public static NetDataWriter Write(ServerWelcome message)
     {
+        if (!IsDevelopmentToken(message.DevelopmentToken)) throw new ArgumentException("Invalid development token.");
         if (!message.PlayerId.IsValid)
             throw new ArgumentOutOfRangeException(nameof(message), "Player ID must be valid.");
 
@@ -37,6 +40,7 @@ public static partial class NetworkProtocol
         writer.Put(message.PlayerId.Value);
         writer.Put(message.TickRate);
         writer.Put(message.ServerUnixTimeMilliseconds);
+        writer.Put(message.DevelopmentToken);
         return writer;
     }
 
@@ -152,12 +156,16 @@ public static partial class NetworkProtocol
             !reader.TryGetString(out var buildVersion) ||
             buildVersion is null ||
             buildVersion.Length > NetworkConstants.MaxBuildVersionLength ||
-            reader.AvailableBytes != 0)
+            (protocolVersion == NetworkConstants.ProtocolVersion && reader.AvailableBytes == 0))
         {
             return false;
         }
 
-        message = new ClientHello(protocolVersion, buildVersion);
+        var token = "";
+        // Legacy hello can still receive a meaningful version rejection, never a successful login.
+        if (reader.AvailableBytes != 0 && (!reader.TryGetString(out token) || !IsDevelopmentToken(token))) return false;
+        if (reader.AvailableBytes != 0) return false;
+        message = new ClientHello(protocolVersion, buildVersion, token);
         return true;
     }
 
@@ -168,6 +176,7 @@ public static partial class NetworkProtocol
         if (!reader.TryGetULong(out var playerId) ||
             !reader.TryGetUShort(out var tickRate) ||
             !reader.TryGetLong(out var serverTime) ||
+            !reader.TryGetString(out var token) || !IsDevelopmentToken(token) ||
             playerId == 0 ||
             tickRate == 0 ||
             reader.AvailableBytes != 0)
@@ -175,7 +184,18 @@ public static partial class NetworkProtocol
             return false;
         }
 
-        message = new ServerWelcome(new PlayerId(playerId), tickRate, serverTime);
+        message = new ServerWelcome(new PlayerId(playerId), tickRate, serverTime, token);
+        return true;
+    }
+
+    // Fixed 256-bit hex credential; empty means first login (or non-persistent test transport).
+    public static bool IsDevelopmentToken(string? token)
+    {
+        if (token is null) return false;
+        if (token.Length == 0) return true;
+        if (token.Length != 64) return false;
+        foreach (var character in token)
+            if (character is not (>= '0' and <= '9') and not (>= 'A' and <= 'F')) return false;
         return true;
     }
 

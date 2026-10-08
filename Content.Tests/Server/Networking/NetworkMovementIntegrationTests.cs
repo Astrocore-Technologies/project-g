@@ -368,7 +368,7 @@ public sealed class NetworkMovementIntegrationTests
         }
     }
 
-    private sealed class TestClient : IDisposable
+    internal sealed class TestClient : IDisposable
     {
         private readonly NetManager _manager;
         private readonly Dictionary<NetworkEntityId, EntitySnapshot> _states = new();
@@ -388,10 +388,14 @@ public sealed class NetworkMovementIntegrationTests
         public List<NpcWindup> Windups { get; } = new();
         public List<NpcArea> Areas { get; } = new();
         public NavigationGrid? Navigation { get; private set; }
+        public string Token { get; private set; } = "";
+        public ServerReject? Rejection { get; private set; }
+        public PlayerId PlayerId => _playerId;
+        public IReadOnlyDictionary<NetworkEntityId, EntitySnapshot> States => _states;
         public bool SawWallDetour { get; private set; }
         public PlayerSpawn LocalSpawn => Spawns.Values.Single(spawn => spawn.PlayerId == _playerId);
 
-        public TestClient(int port)
+        public TestClient(int port, string token = "")
         {
             var listener = new EventBasedNetListener();
             _manager = new NetManager(listener)
@@ -406,7 +410,14 @@ public sealed class NetworkMovementIntegrationTests
             {
                 _peer = peer;
                 peer.Send(NetworkProtocol.Write(new ClientHello(
-                    NetworkConstants.ProtocolVersion, "two-client-test")), DeliveryMethod.ReliableOrdered);
+                    NetworkConstants.ProtocolVersion, "two-client-test", token)), DeliveryMethod.ReliableOrdered);
+            };
+            listener.PeerDisconnectedEvent += (_, info) =>
+            {
+                var reader = info.AdditionalData;
+                if (reader.AvailableBytes != 0 && NetworkProtocol.TryReadMessageType(reader, out var type) &&
+                    type == NetworkMessageType.ServerReject && NetworkProtocol.TryReadServerReject(reader, out var reject))
+                    Rejection = reject;
             };
             listener.NetworkReceiveEvent += (_, reader, _, _) =>
             {
@@ -418,6 +429,7 @@ public sealed class NetworkMovementIntegrationTests
                         case NetworkMessageType.ServerWelcome:
                             Assert.True(NetworkProtocol.TryReadServerWelcome(reader, out var welcome));
                             _playerId = welcome.PlayerId;
+                            Token = welcome.DevelopmentToken.Length == 0 ? token : welcome.DevelopmentToken;
                             break;
                         case NetworkMessageType.PlayerSpawn:
                             Assert.NotNull(Navigation);
