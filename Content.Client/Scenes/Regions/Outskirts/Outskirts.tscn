@@ -1,0 +1,101 @@
+[gd_scene load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Editor/Regions/RegionRoot.cs" id="1"]
+[ext_resource type="Script" path="res://Scripts/Editor/Regions/EntryMarker.cs" id="2"]
+[ext_resource type="Script" path="res://Scripts/Editor/Regions/GateMarker.cs" id="3"]
+[ext_resource type="Script" path="res://Scripts/Editor/Regions/ActorSpawnMarker.cs" id="4"]
+[ext_resource type="Script" path="res://Scripts/Editor/Regions/InteractionMarker.cs" id="5"]
+[ext_resource type="Script" path="res://Scripts/Editor/Regions/NavigationPatchMarker.cs" id="6"]
+
+[sub_resource type="StandardMaterial3D" id="GroundMaterial"]
+albedo_color = Color(0.45, 0.36, 0.23, 1)
+roughness = 1.0
+
+[sub_resource type="BoxMesh" id="GroundMesh"]
+material = SubResource("GroundMaterial")
+size = Vector3(30, 0.2, 30)
+
+[sub_resource type="BoxShape3D" id="GroundShape"]
+size = Vector3(30, 0.2, 30)
+
+[sub_resource type="StandardMaterial3D" id="BlockMaterial"]
+albedo_color = Color(0.48, 0.53, 0.58, 1)
+roughness = 1.0
+
+[sub_resource type="BoxMesh" id="BlockMesh"]
+material = SubResource("BlockMaterial")
+size = Vector3(2, 2, 5)
+
+[sub_resource type="BoxShape3D" id="BlockShape"]
+size = Vector3(2, 2, 5)
+
+[node name="Outskirts" type="Node3D"]
+script = ExtResource("1")
+RegionId = "outskirts"
+MovementBounds = Rect2(-15, -15, 30, 30)
+
+[node name="Environment" type="Node3D" parent="."]
+
+[node name="Sun" type="DirectionalLight3D" parent="Environment"]
+rotation_degrees = Vector3(-60, -25, 0)
+light_energy = 1.2
+shadow_enabled = true
+
+[node name="PreviewCamera" type="Camera3D" parent="Environment"]
+position = Vector3(0, 28, 24)
+rotation_degrees = Vector3(-49.4, 0, 0)
+projection = 1
+size = 42.0
+current = true
+
+[node name="Terrain" type="Node3D" parent="."]
+
+[node name="Ground" type="StaticBody3D" parent="Terrain" groups=["region_walkable"]]
+position = Vector3(0, -0.1, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Terrain/Ground"]
+mesh = SubResource("GroundMesh")
+
+[node name="Collision" type="CollisionShape3D" parent="Terrain/Ground"]
+shape = SubResource("GroundShape")
+
+[node name="DemoBlocker" type="StaticBody3D" parent="Terrain" groups=["region_movement_blocker"]]
+position = Vector3(3, 1, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Terrain/DemoBlocker"]
+mesh = SubResource("BlockMesh")
+
+[node name="Collision" type="CollisionShape3D" parent="Terrain/DemoBlocker"]
+shape = SubResource("BlockShape")
+
+[node name="Decorations" type="Node3D" parent="."]
+
+[node name="PublicStateBindings" type="Node3D" parent="."]
+
+[node name="AuthoringAnchors" type="Node3D" parent="."]
+
+[node name="Entry" type="Marker3D" parent="AuthoringAnchors"]
+position = Vector3(-12, 0, 10)
+script = ExtResource("2")
+AuthoredObjectId = "20000000-0000-4000-8000-000000000001"
+
+[node name="Gate" type="Marker3D" parent="AuthoringAnchors"]
+position = Vector3(-14, 0, 10)
+script = ExtResource("3")
+AuthoredObjectId = "20000000-0000-4000-8000-000000000002"
+
+[node name="ActorSpawn" type="Marker3D" parent="AuthoringAnchors"]
+position = Vector3(9, 0, 2)
+script = ExtResource("4")
+AuthoredObjectId = "20000000-0000-4000-8000-000000000003"
+
+[node name="Interaction" type="Marker3D" parent="AuthoringAnchors"]
+position = Vector3(-10, 0, -1)
+script = ExtResource("5")
+AuthoredObjectId = "20000000-0000-4000-8000-000000000004"
+
+[node name="NavigationPatch" type="Marker3D" parent="AuthoringAnchors"]
+position = Vector3(0, 0, 7)
+script = ExtResource("6")
+AuthoredObjectId = "20000000-0000-4000-8000-000000000005"
+Footprint = Vector2(2, 2)

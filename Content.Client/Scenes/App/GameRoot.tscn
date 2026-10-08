@@ -1,0 +1,43 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Regions/GameRoot.cs" id="1"]
+[ext_resource type="PackedScene" path="res://Scenes/Regions/Prototype/Prototype.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://Scenes/Regions/Outskirts/Outskirts.tscn" id="3"]
+
+[node name="GameRoot" type="Node" node_paths=PackedStringArray("RegionHost", "PrototypeButton", "OutskirtsButton", "StatusLabel")]
+script = ExtResource("1")
+RegionHost = NodePath("RegionHost")
+PrototypeScene = ExtResource("2")
+OutskirtsScene = ExtResource("3")
+PrototypeButton = NodePath("PreviewUI/Panel/Margin/Controls/Buttons/Prototype")
+OutskirtsButton = NodePath("PreviewUI/Panel/Margin/Controls/Buttons/Outskirts")
+StatusLabel = NodePath("PreviewUI/Panel/Margin/Controls/Status")
+
+[node name="RegionHost" type="Node3D" parent="."]
+
+[node name="PreviewUI" type="CanvasLayer" parent="."]
+
+[node name="Panel" type="PanelContainer" parent="PreviewUI"]
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 610.0
+offset_bottom = 120.0
+
+[node name="Margin" type="MarginContainer" parent="PreviewUI/Panel"]
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="Controls" type="VBoxContainer" parent="PreviewUI/Panel/Margin"]
+
+[node name="Buttons" type="HBoxContainer" parent="PreviewUI/Panel/Margin/Controls"]
+
+[node name="Prototype" type="Button" parent="PreviewUI/Panel/Margin/Controls/Buttons"]
+text = "Prototype"
+
+[node name="Outskirts" type="Button" parent="PreviewUI/Panel/Margin/Controls/Buttons"]
+text = "Outskirts"
+
+[node name="Status" type="Label" parent="PreviewUI/Panel/Margin/Controls"]
+text = "Offline region preview"
