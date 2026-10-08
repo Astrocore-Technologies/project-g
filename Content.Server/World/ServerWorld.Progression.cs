@@ -21,14 +21,14 @@ public sealed partial class ServerWorld
     private void AddProgression(NetworkEntityId id, SavedProgression? saved)
     {
         if (_progressionCatalog is not { } catalog) return;
-        var value = saved ?? SavedProgression.Starter(_playerDefinition!,catalog); value.Validate();
+        var value = saved ?? SavedProgression.Starter(_playerDefinition!,catalog); value.Validate(); ValidateProfession(value);
         var balance = catalog.Progression;
         if (value.Level > balance.LevelCap || (value.Level == balance.LevelCap ? value.Experience != 0 : value.Experience >= balance.LevelThreshold(value.Level)))
             throw new InvalidDataException("Saved level curve requires migration.");
         foreach (var skill in value.Skills)
         {
             if (!catalog.Abilities.TryGetValue(skill.DefinitionId,out var definition) ||
-                (!_playerDefinition!.AbilityIds.Contains(skill.DefinitionId) && definition.NetworkId != balance.DiscoverySkillId) ||
+                (!_playerDefinition!.AbilityIds.Contains(skill.DefinitionId) && definition.NetworkId != balance.DiscoverySkillId && !HasProfessionSkillSource(value,skill.DefinitionId)) ||
                 skill.Level > balance.SkillLevelCap || (skill.Level == balance.SkillLevelCap ? skill.Practice != 0 : skill.Practice >= balance.PracticeThreshold(skill.Level)) ||
                 (definition.Kind == AbilityKind.Dash && skill.Slot != 0))
                 throw new InvalidDataException("Saved skill/content requires migration.");
@@ -36,7 +36,7 @@ public sealed partial class ServerWorld
         if (value.Skills.Count(s => catalog.Abilities[s.DefinitionId].Kind == AbilityKind.Dash) > 1 ||
             value.Skills.Any(s => catalog.Abilities[s.DefinitionId].NetworkId == balance.DiscoverySkillId && value.Discoveries == 0))
             throw new InvalidDataException("Invalid progression source.");
-        _progression.Add(id,value); Abilities!.ApplyProgression(id,value); _progressionDirty.Add(id);
+        _progression.Add(id,value); Abilities!.ApplyProgression(id,value); _progressionDirty.Add(id); _professionDirty.Add(id); EvaluateProfessionOffer(id);
     }
     public ProgressionState ProgressionState(NetworkEntityId id, uint tick)
     {
@@ -88,6 +88,7 @@ public sealed partial class ServerWorld
             _progression[player.EntityId] = value with { Discoveries = (byte)(value.Discoveries | bit) };
             GrantExperience(player.EntityId,_progressionCatalog!.Progression.DiscoveryExperience); DirtyProgression(player.EntityId);
             value = _progression[player.EntityId];
+            EvaluateProfessionOffer(player.EntityId);
         }
     }
     private void SimulateProgression()
@@ -98,6 +99,7 @@ public sealed partial class ServerWorld
         foreach (var hit in Abilities!.Hits) if (hit.Damage > 0 && IsPlayer(hit.ActorId)) GrantExperience(hit.ActorId,1);
         foreach (var use in Abilities.Practice)
         {
+            RecordProfessionUse(use.ActorId);
             if (!_progression.TryGetValue(use.ActorId,out var value)) continue;
             var index = Array.FindIndex(value.Skills,s => catalog.Abilities[s.DefinitionId].NetworkId == use.SkillId);
             if (index < 0) continue;
@@ -160,5 +162,5 @@ public sealed partial class ServerWorld
         _progressionPending.Clear();
     }
     private void RemoveProgression(NetworkEntityId id)
-    { _progression.Remove(id); _progressionPending.Remove(id); _progressionSequences.Remove(id); _progressionDirty.Remove(id); _progressionResults.Remove(id); }
+    { RemoveProfession(id); _progression.Remove(id); _progressionPending.Remove(id); _progressionSequences.Remove(id); _progressionDirty.Remove(id); _progressionResults.Remove(id); }
 }

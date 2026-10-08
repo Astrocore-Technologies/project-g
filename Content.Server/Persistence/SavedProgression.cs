@@ -12,6 +12,8 @@ public sealed record SavedProgression
     public required int StatPoints { get; init; }
     public required byte Discoveries { get; init; }
     public required SavedSkill[] Skills { get; init; }
+    public SavedWorldParticipation WorldParticipation { get; init; } = new();
+    public SavedProfession Profession { get; init; } = new();
     public static SavedProgression Starter(CreatureDefinition definition, ContentCatalog catalog)
     {
         byte slot = 0;
@@ -26,6 +28,9 @@ public sealed record SavedProgression
         if (Version != 1 || Level is < 1 or > 1000 || Experience is < 0 or > 1000000000 ||
             StatPoints is < 0 or > 100000 || Discoveries > 3 || Skills is null || Skills.Length > NetworkConstants.MaxLearnedSkills)
             throw new InvalidDataException("Invalid progression model.");
+        if (Profession is null) throw new InvalidDataException("Missing profession history.");
+        Profession.Validate();
+        if (WorldParticipation is null) throw new InvalidDataException("Missing world participation."); WorldParticipation.Validate();
         var ids = new HashSet<string>(); var slots = new HashSet<byte>();
         foreach (var skill in Skills)
             if (skill is null || string.IsNullOrWhiteSpace(skill.DefinitionId) || skill.DefinitionId.Length > 64 ||

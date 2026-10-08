@@ -3,6 +3,9 @@ namespace Content.Database;
 /// <summary>Opaque versioned documents: no gameplay, Godot or wire dependencies.</summary>
 public interface ICharacterDatabase
 {
+    Task<DatabaseWorldSession> OpenWorldAsync(string key, string initial, CancellationToken token) => throw new NotSupportedException("World ownership is required.");
+    Task SaveWithWorldAsync(IReadOnlyList<DatabaseSave> changes, DatabaseWorldSave? world, CancellationToken token) =>
+        world is null ? SaveAsync(changes, token) : throw new NotSupportedException("Atomic world persistence is required.");
     Task InitializeAsync(CancellationToken cancellationToken);
     Task<DatabaseSession> OpenAsync(string token, string initialCharacter, string initialInventory, string initialEchoes, CancellationToken cancellationToken, string? initialProgression = null);
     Task SaveAsync(IReadOnlyList<DatabaseSave> changes, CancellationToken cancellationToken);

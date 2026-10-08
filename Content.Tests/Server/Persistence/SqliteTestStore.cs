@@ -46,14 +46,16 @@ internal sealed class SqliteCharacterStore : ICharacterStore
     {
         Interlocked.Increment(ref _opens); return _inner.OpenAsync(credential, initial, token);
     }
-    public async Task SaveAsync(IReadOnlyList<CharacterSave> changes, CancellationToken token)
+    public Task<WorldNodeSession> OpenWorldAsync(string key,SavedWorldNode initial,CancellationToken token) => _inner.OpenWorldAsync(key,initial,token);
+    public Task SaveAsync(IReadOnlyList<CharacterSave> changes,CancellationToken token) => SaveWithWorldAsync(changes,null,token);
+    public async Task SaveWithWorldAsync(IReadOnlyList<CharacterSave> changes,WorldNodeSave? world,CancellationToken token)
     {
-        if (changes.Count == 0) return;
+        if (changes.Count == 0 && world is null) return;
         Interlocked.Increment(ref _pending);
         try
         {
             if (_saveGate is { } gate) await gate.Task.WaitAsync(token);
-            await _inner.SaveAsync(changes, token);
+            await _inner.SaveWithWorldAsync(changes,world,token);
         }
         finally { Interlocked.Decrement(ref _pending); }
     }

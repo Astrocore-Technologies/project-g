@@ -15,6 +15,8 @@ public sealed class InterestView
     internal HashSet<NetworkEntityId> GroundVisible { get; } = new();
     internal List<NetworkEntityId> GroundEntered { get; } = new();
     internal List<NetworkEntityId> GroundLeft { get; } = new();
+    internal ulong WorldNodeRevision { get; set; }
+    internal bool BridgeNavigationSent { get; set; }
     internal uint NpcWindupVersion { get; set; }
     internal uint BossWindupVersion { get; set; }
     internal uint BossAreaVersion { get; set; }

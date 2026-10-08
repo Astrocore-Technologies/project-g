@@ -45,7 +45,7 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
         command.ExecuteNonQuery();
         command.CommandText = "SELECT COALESCE(max(version), 0) FROM schema_version";
         var version = (long)command.ExecuteScalar()!;
-        if (version is < 0 or > 5) throw new InvalidDataException("Unsupported SQLite schema version.");
+        if (version is < 0 or > 6) throw new InvalidDataException("Unsupported SQLite schema version.");
         if (version == 0)
         {
             using var resource = typeof(DevelopmentSqliteCharacterStore).Assembly.GetManifestResourceStream(
@@ -85,6 +85,13 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
             using var reader = new StreamReader(resource);
             command.CommandText = reader.ReadToEnd(); command.ExecuteNonQuery();
             command.CommandText = "INSERT INTO schema_version VALUES (5)"; command.ExecuteNonQuery();
+        }
+        if (version < 6)
+        {
+            using var resource = typeof(DevelopmentSqliteCharacterStore).Assembly.GetManifestResourceStream("Content.Database.Migrations.0006_world.sqlite.sql") ?? throw new InvalidOperationException("Migration is missing.");
+            using var reader = new StreamReader(resource);
+            command.CommandText = reader.ReadToEnd(); command.ExecuteNonQuery();
+            command.CommandText = "INSERT INTO schema_version VALUES (6)"; command.ExecuteNonQuery();
         }
         cancellationToken.ThrowIfCancellationRequested();
         transaction.Commit();
@@ -163,9 +170,10 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
         catch { held.Dispose(); throw; }
     }, cancellationToken);
 
-    public Task SaveAsync(IReadOnlyList<DatabaseSave> changes, CancellationToken cancellationToken) => Task.Run(() =>
+    public Task SaveAsync(IReadOnlyList<DatabaseSave> changes, CancellationToken cancellationToken) => SaveWithWorldAsync(changes, null, cancellationToken);
+    public Task SaveWithWorldAsync(IReadOnlyList<DatabaseSave> changes, DatabaseWorldSave? world, CancellationToken cancellationToken) => Task.Run(() =>
     {
-        if (changes.Count == 0) return;
+        if (changes.Count == 0 && world is null) return;
         using var connection = Connect(); using var transaction = connection.BeginTransaction();
         foreach (var change in changes)
         {
@@ -218,6 +226,7 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
                 if (inventory.ExecuteNonQuery() != 1) throw new InvalidDataException("Inventory row is missing.");
             }
         }
+        if (world is not null) WriteWorld(connection, transaction, world);
         cancellationToken.ThrowIfCancellationRequested();
         transaction.Commit();
     }, cancellationToken);

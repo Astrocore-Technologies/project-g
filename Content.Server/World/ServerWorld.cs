@@ -35,7 +35,7 @@ public sealed partial class ServerWorld
         IOptions<NavigationOptions>? navigation = null, ContentCatalog? catalog = null,
         IOptions<CombatOptions>? combat = null, IOptions<ServerOptions>? server = null, IOptions<NpcOptions>? npc = null,
         IOptions<BossOptions>? boss = null, IOptions<InventoryOptions>? inventory = null,
-        IOptions<GroundItemOptions>? groundItems = null, IOptions<EchoOptions>? echoes = null)
+        IOptions<GroundItemOptions>? groundItems = null, IOptions<EchoOptions>? echoes = null, IOptions<WorldStoryOptions>? worldStory = null)
     {
         _movement = options.Value.ToSettings();
         _interest = interest.Value;
@@ -91,6 +91,7 @@ public sealed partial class ServerWorld
                     area, bossSettings, new StatCalculator(catalog.Balance));
             }
         }
+        InitializeWorldNode(worldStory?.Value,catalog?.WorldNode);
     }
 
     public uint Tick { get; private set; }
@@ -196,6 +197,7 @@ public sealed partial class ServerWorld
             return null;
         GroundItems?.RemovePlayer(player.EntityId);
         Echoes?.Remove(player.EntityId);
+        RemoveWorldNodePlayer(connectionId,player.EntityId);
         RemoveProgression(player.EntityId);
         _playersByConnection.Remove(connectionId);
         _developmentRevives.Remove(connectionId); _developmentReviveSequences.Remove(connectionId);
@@ -319,6 +321,8 @@ public sealed partial class ServerWorld
         GroundItems?.Simulate(Tick);
         ApplyDevelopmentRevives();
         SimulateProgression();
+        SimulateProfessions();
+        SimulateWorldNode();
         if (Echoes is { } echoes)
         {
             foreach (var action in Combat!.Events)

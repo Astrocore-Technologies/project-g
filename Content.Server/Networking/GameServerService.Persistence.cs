@@ -15,6 +15,8 @@ public sealed partial class GameServerService
     private readonly Dictionary<int, Intentions> _intentions = new();
     private readonly HashSet<int> _departed = new();
     private readonly List<Task> _closing = new();
+    private WorldNodeSession? _worldSession;
+    private WorldNodeSave? _checkpointWorld;
     private Task? _checkpoint;
     private CancellationTokenSource? _checkpointDeadline;
     private List<CharacterSave>? _checkpointChanges;
@@ -23,6 +25,8 @@ public sealed partial class GameServerService
         CancellationTokenSource Deadline);
     private sealed class Intentions
     {
+        public WorldNodeCommand? Node;
+        public WorldNodeCommand? NodeSecond;
         public MoveCommand? Move;
         public AttackCommand? Attack;
         public AbilityCommand? Ability;
@@ -32,6 +36,8 @@ public sealed partial class GameServerService
         public EchoSignatureCommand? Echo;
         public ProgressionCommand? Progression;
         public ProgressionCommand? ProgressionSecond;
+        public ProfessionCommand? Profession;
+        public ProfessionCommand? ProfessionSecond;
     }
 
     private void BeginLogin(NetPeer peer, ClientHello hello, PlayerId player)
@@ -95,11 +101,15 @@ public sealed partial class GameServerService
         // Bounded one intention per type/session while waiting for disk; no growing packet queue.
         foreach (var (connection, intentions) in _intentions)
         {
+            if (intentions.Node is { } node) _world.TryQueueWorldNode(connection,node);
+            if (intentions.NodeSecond is { } nodeSecond) _world.TryQueueWorldNode(connection,nodeSecond);
             if (intentions.Move is { } move) _world.TryApplyMove(connection, move);
             if (intentions.Attack is { } attack) _world.TryQueueAttack(connection, attack);
             if (intentions.Ability is { } ability) _world.TryQueueAbility(connection, ability, _peers[connection].Ping);
             if (intentions.Inventory is { } inventory) _world.TryQueueInventory(connection, inventory);
             if (intentions.Pickup is { } pickup) _world.TryQueuePickup(connection, pickup);
+            if (intentions.Profession is { } profession) _world.TryQueueProfession(connection,profession);
+            if (intentions.ProfessionSecond is { } professionSecond) _world.TryQueueProfession(connection,professionSecond);
             if (intentions.Progression is { } progression) _world.TryQueueProgression(connection,progression);
             if (intentions.ProgressionSecond is { } second) _world.TryQueueProgression(connection,second);
             if (intentions.Echo is { } echo) _world.TryQueueEchoSignature(connection,echo);
@@ -119,17 +129,18 @@ public sealed partial class GameServerService
 
     private bool BeginCheckpoint()
     {
-        if (_characters is null || _world.PersistenceDirty.Count == 0) return false;
+        if (_characters is null || (_world.PersistenceDirty.Count == 0 && !_world.WorldNodeDirty)) return false;
         var changes = new List<CharacterSave>(_world.PersistenceDirty.Count);
         foreach (var connection in _world.PersistenceDirty)
             if (_sessions.TryGetValue(connection, out var session))
                 changes.Add(new(session, _world.CaptureCharacter(connection), _world.PickupClaims(connection)));
-        if (changes.Count == 0) return false;
+        if (changes.Count == 0 && !_world.WorldNodeDirty) return false;
+        _checkpointWorld=CaptureWorldWrite();
         _checkpointChanges = changes;
         _checkpointDeadline = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         // Host cancellation must not interrupt an in-flight final checkpoint.
         // A synchronous adapter failure must also leave a failed barrier, never trigger an unfenced final save.
-        try { _checkpoint = _characters.SaveAsync(changes, _checkpointDeadline.Token); }
+        try { _checkpoint = _characters.SaveWithWorldAsync(changes,_checkpointWorld, _checkpointDeadline.Token); }
         catch (Exception exception) { _checkpoint = Task.FromException(exception); }
         return true;
     }
@@ -144,12 +155,19 @@ public sealed partial class GameServerService
             throw new InvalidOperationException($"Character checkpoint failed ({exception.GetType().Name}); no state was published.");
         }
         foreach (var change in _checkpointChanges!) change.Session.Revision++;
+        CompleteWorldWrite();
         _world.GroundItems?.CommitClaims();
         _checkpoint = null; _checkpointChanges = null;
         _checkpointDeadline!.Dispose(); _checkpointDeadline = null;
         BroadcastSnapshot();
     }
 
+    private WorldNodeSave? CaptureWorldWrite() => _world.WorldNodeDirty ? new(_worldSession ?? throw new InvalidOperationException("Missing world owner."),_world.CaptureWorldNode(),_world.WorldNodeAudit.ToArray()) : null;
+    private void CompleteWorldWrite()
+    {
+        if(_checkpointWorld is null) return;
+        _checkpointWorld.Session.Revision++; _world.CommitWorldNode(_checkpointWorld.Session.Revision); _checkpointWorld=null;
+    }
     private void CloseDepartedPlayers()
     {
         foreach (var connection in _departed)
@@ -189,13 +207,16 @@ public sealed partial class GameServerService
             {
                 await _checkpoint;
                 foreach (var change in _checkpointChanges!) change.Session.Revision++;
+                CompleteWorldWrite();
                 _world.GroundItems?.CommitClaims();
                 _checkpoint = null;
             }
             var changes = new List<CharacterSave>(_sessions.Count);
             foreach (var (connection, session) in _sessions)
                 changes.Add(new(session, _world.CaptureCharacter(connection), _world.PickupClaims(connection)));
-            await _characters.SaveAsync(changes, timeout.Token);
+            var worldWrite=CaptureWorldWrite();
+            await _characters.SaveWithWorldAsync(changes,worldWrite,timeout.Token);
+            if(worldWrite is not null) { worldWrite.Session.Revision++; _world.CommitWorldNode(worldWrite.Session.Revision); }
             await Task.WhenAll(_closing);
         }
         finally
@@ -212,6 +233,7 @@ public sealed partial class GameServerService
             cleanup.AddRange(_closing);
             await Task.WhenAll(cleanup);
             _sessions.Clear(); _logins.Clear();
+            if(_worldSession is not null) { await _worldSession.DisposeAsync(); _worldSession=null; }
         }
     }
 }

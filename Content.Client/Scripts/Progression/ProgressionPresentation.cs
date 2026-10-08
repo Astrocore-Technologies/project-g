@@ -16,7 +16,7 @@ public partial class ProgressionPresentation : CanvasLayer
     private string _feedback = "";
     private double _sentAt;
     private static readonly string[] Keys = ["Q","W","E","R","A","S","D","F"];
-    private static string SkillName(ushort id) => id switch { 1 => "Снаряд",2 => "Область",3 => "Рывок",5 => "Болт открытия",_ => "Навык" };
+    private static string SkillName(ushort id) => id switch { 1 => "Снаряд",2 => "Область",3 => "Рывок",5 => "Болт открытия",6 => "Импульс",_ => "Навык" };
     private static readonly string[] StatNames = ["STR","AGI","VIT","INT","DEX","LUK"];
     public void Initialize(NetworkClient network)
     { _network = network; AddChild(_summary); AddChild(_panel); var scroll = new ScrollContainer { CustomMinimumSize = new(420,460) }; _panel.AddChild(scroll); scroll.AddChild(_rows); }

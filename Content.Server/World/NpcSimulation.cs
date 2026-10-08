@@ -57,6 +57,14 @@ public sealed class NpcSimulation
         }
     }
 
+    private float? _storyAggroRadius;
+    public float EffectiveAggroRadius => _storyAggroRadius ?? _options.AggroRadius;
+    public void ApplyPatrol(float radius,uint tick)
+    {
+        if (!float.IsFinite(radius) || radius is <= 0 || radius>_options.AggroRadius) throw new ArgumentException("Patrol cannot increase threat.");
+        _storyAggroRadius=radius;
+        if (TargetId.IsValid) Return(tick);
+    }
     public NetworkEntityId Id { get; }
     public Vector2 Home { get; }
     public NavigationMover Motion { get; }
@@ -128,13 +136,14 @@ public sealed class NpcSimulation
         if (TargetId.IsValid && !ValidTarget(out _)) { Return(tick); return; }
         if (!TargetId.IsValid)
         {
-            _spatial.Query(Motion.Position, _options.AggroRadius, _candidates);
+            _spatial.Query(Motion.Position, EffectiveAggroRadius, _candidates);
             var nearest = float.MaxValue;
             foreach (var id in _candidates)
             {
                 if (!_combat.TryGet(id, out var candidate) || candidate.Kind != CombatEntityKind.Player || candidate.Health <= 0 ||
                     !_grid.CanTraverse(Motion.Position, candidate.Position)) continue;
                 var distance = Vector2.DistanceSquared(Motion.Position, candidate.Position);
+                if (distance > EffectiveAggroRadius * EffectiveAggroRadius) continue;
                 if (distance < nearest || (distance == nearest && id.Value < TargetId.Value)) { nearest = distance; TargetId = id; }
             }
             if (!TargetId.IsValid) return;

@@ -378,6 +378,12 @@ public sealed class NetworkMovementIntegrationTests
         private PlayerId _playerId;
 
         public Dictionary<NetworkEntityId, PlayerSpawn> Spawns { get; } = new();
+        public WorldNodeState? WorldNode { get; private set; }
+        public List<WorldNodeResult> WorldNodeResults { get; }=new();
+        public void Node(WorldNodeCommand command) => _peer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
+        public Dictionary<NetworkEntityId,ProfessionState> Professions { get; } = new();
+        public List<ProfessionResult> ProfessionResults { get; } = new();
+        public void Profession(ProfessionCommand command) => _peer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
         public Dictionary<NetworkEntityId, ProgressionState> Progressions { get; } = new();
         public List<ProgressionResult> ProgressionResults { get; } = new();
         public void Progression(ProgressionCommand command) => _peer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
@@ -438,6 +444,16 @@ public sealed class NetworkMovementIntegrationTests
                     Assert.True(NetworkProtocol.TryReadMessageType(reader, out var type));
                     switch (type)
                     {
+                        case NetworkMessageType.WorldNodeState:
+                            Assert.True(NetworkProtocol.TryReadWorldNodeState(reader,out var node));
+                            if(WorldNode is null || node.Revision>WorldNode.Value.Revision) WorldNode=node;
+                            break;
+                        case NetworkMessageType.WorldNodeResult:
+                            Assert.True(NetworkProtocol.TryReadWorldNodeResult(reader,out var nodeResult)); WorldNodeResults.Add(nodeResult); break;
+                        case NetworkMessageType.ProfessionState:
+                            Assert.True(NetworkProtocol.TryReadProfessionState(reader,out var profession)); Assert.Equal(LocalSpawn.EntityId,profession.OwnerId); Professions[profession.OwnerId]=profession; break;
+                        case NetworkMessageType.ProfessionResult:
+                            Assert.True(NetworkProtocol.TryReadProfessionResult(reader,out var professionResult)); ProfessionResults.Add(professionResult); break;
                         case NetworkMessageType.ProgressionState:
                             Assert.True(NetworkProtocol.TryReadProgressionState(reader,out var progression)); Assert.Equal(LocalSpawn.EntityId,progression.OwnerId); Progressions[progression.OwnerId] = progression; break;
                         case NetworkMessageType.ProgressionResult:
@@ -471,7 +487,7 @@ public sealed class NetworkMovementIntegrationTests
                             break;
                         case NetworkMessageType.RegionNavigation:
                             Assert.True(NetworkProtocol.TryReadRegionNavigation(reader, out var region));
-                            Navigation = new NavigationGrid(region);
+                            if(Navigation is null) Navigation=new NavigationGrid(region); else Navigation.ApplyOpening(region);
                             break;
                         case NetworkMessageType.PlayerDespawn:
                             Assert.True(NetworkProtocol.TryReadPlayerDespawn(reader, out var despawn));

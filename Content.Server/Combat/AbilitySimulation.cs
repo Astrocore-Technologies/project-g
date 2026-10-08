@@ -52,6 +52,7 @@ public sealed class AbilitySimulation
         SavedProgression.Starter(playerDefinition,catalog).Validate();
         CreateActor(playerDefinition,playerStats);
         CreateActor(playerDefinition,playerStats,[catalog.Abilities.Values.Single(a => a.NetworkId == catalog.Progression.DiscoverySkillId).Id]);
+        foreach (var profession in catalog.Professions) CreateActor(playerDefinition,playerStats,[profession.SkillId]);
     }
 
     public IReadOnlyList<AbilityEffectState> ActiveStates => _states;

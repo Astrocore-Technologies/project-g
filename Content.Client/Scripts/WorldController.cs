@@ -27,6 +27,8 @@ public partial class WorldController : Node3D
     private readonly Dictionary<NetworkEntityId, EchoPresentation> _echoes = new();
     private EchoControls? _echoControls;
     private ProjectG.Progression.ProgressionPresentation? _progression;
+    private ProjectG.Progression.ProfessionPresentation? _profession;
+    private ProjectG.WorldStory.WorldNodePresentation? _worldNode;
 
     public override void _Ready()
     {
@@ -50,6 +52,9 @@ public partial class WorldController : Node3D
         _network.GroundItemDespawned += OnGroundDespawn;
         _network.PickupResultReceived += OnPickupResult;
         _network.Disconnected += ClearWorld;
+        _network.WorldNodeReceived += OnWorldNode; _network.WorldNodeResultReceived += OnWorldNodeResult;
+        _network.ProfessionReceived += OnProfession;
+        _network.ProfessionResultReceived += OnProfessionResult;
         _network.ProgressionReceived += OnProgression;
         _network.ProgressionResultReceived += OnProgressionResult;
         _network.EchoSpawned += OnEchoSpawn;
@@ -83,6 +88,9 @@ public partial class WorldController : Node3D
         _network.GroundItemDespawned -= OnGroundDespawn;
         _network.PickupResultReceived -= OnPickupResult;
         _network.Disconnected -= ClearWorld;
+        _network.WorldNodeReceived -= OnWorldNode; _network.WorldNodeResultReceived -= OnWorldNodeResult;
+        _network.ProfessionReceived -= OnProfession;
+        _network.ProfessionResultReceived -= OnProfessionResult;
         _network.ProgressionReceived -= OnProgression;
         _network.ProgressionResultReceived -= OnProgressionResult;
         _network.EchoSpawned -= OnEchoSpawn;
@@ -125,6 +133,8 @@ public partial class WorldController : Node3D
             _inventory = new InventoryPresentation(); AddChild(_inventory); _inventory.Initialize(_network);
             _echoControls = new(); AddChild(_echoControls); _echoControls.Initialize(_network);
             _progression = new(); AddChild(_progression); _progression.Initialize(_network);
+            _profession = new(); AddChild(_profession); _profession.Initialize(_network);
+            if(_network.LatestWorldNode is not null) { _worldNode=new(); AddChild(_worldNode); _worldNode.Initialize(_network,player); }
         }
     }
 
@@ -215,7 +225,7 @@ public partial class WorldController : Node3D
     private void RefreshAlive(NetworkEntityId id)
     {
         if (id == _localEntityId && _combat.TryGetValue(id, out var local))
-            { _inventory?.ApplyAlive(local.IsAlive); _progression?.ApplyAlive(local.IsAlive); }
+            { _inventory?.ApplyAlive(local.IsAlive); _progression?.ApplyAlive(local.IsAlive); _profession?.ApplyAlive(local.IsAlive); _worldNode?.ApplyAlive(local.IsAlive); }
         if (id == _localEntityId && _combat.TryGetValue(id, out var owner)) _echoControls?.ApplyAlive(owner.IsAlive);
         if (_players.TryGetValue(id, out var player) && _combat.TryGetValue(id, out var presentation))
             player.SetAlive(presentation.IsAlive);
@@ -274,6 +284,8 @@ public partial class WorldController : Node3D
         _effects.Clear(); _abilities = null;
         _inventory?.QueueFree(); _inventory = null;
         _progression?.QueueFree(); _progression = null;
+        _profession?.QueueFree(); _profession = null;
+        _worldNode?.QueueFree(); _worldNode=null;
         _groundItems?.QueueFree(); _groundItems = null;
         foreach (var echo in _echoes.Values) echo.QueueFree();
         _echoes.Clear(); _echoControls?.QueueFree(); _echoControls = null;
@@ -281,6 +293,10 @@ public partial class WorldController : Node3D
         _navigationVisual?.QueueFree();
         _navigationVisual = null;
     }
+    private void OnWorldNode(WorldNodeState value) => _worldNode?.Apply(value);
+    private void OnWorldNodeResult(WorldNodeResult value) => _worldNode?.Result(value);
+    private void OnProfession(ProfessionState value) { if (value.OwnerId == _localEntityId) _profession?.Apply(value); }
+    private void OnProfessionResult(ProfessionResult value) => _profession?.Result(value);
     private void OnProgression(ProgressionState value)
     { if (value.OwnerId == _localEntityId) { _progression?.Apply(value); _abilities?.ApplyProgression(value); } }
     private void OnProgressionResult(ProgressionResult value) => _progression?.Result(value);

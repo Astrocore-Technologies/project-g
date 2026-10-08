@@ -5,6 +5,17 @@ namespace Content.Server.Persistence;
 /// <summary>Domain validation stays on the server; Database stores bounded documents.</summary>
 public sealed class DatabaseCharacterStore(ICharacterDatabase database) : ICharacterStore
 {
+    public async Task<WorldNodeSession> OpenWorldAsync(string key,SavedWorldNode initial,CancellationToken token)
+    {
+        var lease=await database.OpenWorldAsync(key,initial.Serialize(),token);
+        try { return new WorldSession(lease,SavedWorldNode.Deserialize(lease.State)); }
+        catch { await lease.DisposeAsync(); throw; }
+    }
+    private sealed class WorldSession(DatabaseWorldSession lease,SavedWorldNode state) : WorldNodeSession(lease.Revision,state)
+    {
+        internal DatabaseWorldSession Lease { get; }=lease;
+        public override ValueTask DisposeAsync() => Lease.DisposeAsync();
+    }
     public Task InitializeAsync(CancellationToken token) => database.InitializeAsync(token);
     public async Task<IReadOnlyList<SavedGroundItem>> LoadGroundItemsAsync(IReadOnlyList<SavedGroundItem> seeds, CancellationToken token)
     {
@@ -26,7 +37,8 @@ public sealed class DatabaseCharacterStore(ICharacterDatabase database) : IChara
         }
         catch { await lease.DisposeAsync(); throw; }
     }
-    public Task SaveAsync(IReadOnlyList<CharacterSave> changes, CancellationToken token)
+    public Task SaveAsync(IReadOnlyList<CharacterSave> changes, CancellationToken token) => SaveWithWorldAsync(changes,null,token);
+    public Task SaveWithWorldAsync(IReadOnlyList<CharacterSave> changes,WorldNodeSave? world,CancellationToken token)
     {
         var writes = new DatabaseSave[changes.Count];
         for (var i = 0; i < writes.Length; i++)
@@ -39,7 +51,13 @@ public sealed class DatabaseCharacterStore(ICharacterDatabase database) : IChara
                         throw new InvalidDataException("Picked instance missing from inventory.");
             writes[i] = new(session.Lease, session.Revision, change.State.Serialize(), change.State.Inventory?.Serialize(), change.GroundClaims, change.State.Echoes?.Serialize(), change.State.Progression?.Serialize());
         }
-        return database.SaveAsync(writes, token);
+        DatabaseWorldSave? worldWrite=null;
+        if (world is not null)
+        {
+            if (world.Session is not WorldSession owner) throw new ArgumentException("Foreign world session.");
+            worldWrite=new(owner.Lease,owner.Revision,world.State.Serialize(),world.Audit);
+        }
+        return database.SaveWithWorldAsync(writes,worldWrite,token);
     }
     private sealed class Session(DatabaseSession lease, CharacterState state)
         : CharacterSession(lease.CharacterId, lease.OwnerId, lease.Revision, state, lease.IssuedToken)

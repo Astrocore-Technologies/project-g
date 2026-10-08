@@ -37,5 +37,11 @@ public enum NetworkMessageType : ushort
     EchoLoadout = 39,
     ProgressionCommand = 40,
     ProgressionState = 41,
-    ProgressionResult = 42
+    ProgressionResult = 42,
+    ProfessionCommand = 43,
+    ProfessionState = 44,
+    WorldNodeCommand = 46,
+    WorldNodeState = 47,
+    WorldNodeResult = 48,
+    ProfessionResult = 45
 }

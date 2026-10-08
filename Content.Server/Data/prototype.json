@@ -2,36 +2,151 @@
   "schemaVersion": 3,
   "balanceVersion": 1,
   "balance": {
-    "meleeAttack": { "strength": 1, "dexterity": 0.2, "luck": 0.3333333333333333 },
-    "rangedAttack": { "dexterity": 1, "strength": 0.2, "luck": 0.3333333333333333 },
-    "magicAttack": { "intelligence": 1.5, "dexterity": 0.2, "luck": 0.3333333333333333 },
-    "meleeWeapon": { "strength": 0.005 },
-    "rangedWeapon": { "dexterity": 0.005 },
-    "physicalDefense": { "vitality": 0.5, "agility": 0.2 },
-    "magicDefense": { "intelligence": 1, "vitality": 0.2, "dexterity": 0.2 },
-    "health": { "vitality": 0.01 },
-    "mana": { "intelligence": 0.01 },
-    "healthRecovery": { "vitality": 0.03333333333333333 },
-    "manaRecovery": { "intelligence": 0.027777777777777776 },
-    "healthItem": { "vitality": 0.02 },
-    "manaItem": { "intelligence": 0.01 },
-    "attackSpeed": { "agility": 0.01, "dexterity": 0.0025 },
-    "castSpeed": { "dexterity": 0.01, "intelligence": 0.005 },
-    "criticalOdds": { "luck": 0.06315789473684211 },
+    "meleeAttack": {
+      "strength": 1,
+      "dexterity": 0.2,
+      "luck": 0.3333333333333333
+    },
+    "rangedAttack": {
+      "dexterity": 1,
+      "strength": 0.2,
+      "luck": 0.3333333333333333
+    },
+    "magicAttack": {
+      "intelligence": 1.5,
+      "dexterity": 0.2,
+      "luck": 0.3333333333333333
+    },
+    "meleeWeapon": {
+      "strength": 0.005
+    },
+    "rangedWeapon": {
+      "dexterity": 0.005
+    },
+    "physicalDefense": {
+      "vitality": 0.5,
+      "agility": 0.2
+    },
+    "magicDefense": {
+      "intelligence": 1,
+      "vitality": 0.2,
+      "dexterity": 0.2
+    },
+    "health": {
+      "vitality": 0.01
+    },
+    "mana": {
+      "intelligence": 0.01
+    },
+    "healthRecovery": {
+      "vitality": 0.03333333333333333
+    },
+    "manaRecovery": {
+      "intelligence": 0.027777777777777776
+    },
+    "healthItem": {
+      "vitality": 0.02
+    },
+    "manaItem": {
+      "intelligence": 0.01
+    },
+    "attackSpeed": {
+      "agility": 0.01,
+      "dexterity": 0.0025
+    },
+    "castSpeed": {
+      "dexterity": 0.01,
+      "intelligence": 0.005
+    },
+    "criticalOdds": {
+      "luck": 0.06315789473684211
+    },
     "baseCriticalChance": 0.05,
     "defenseScale": 100
   },
   "weapons": [
-    { "id": "training_sword", "kind": "Melee", "attack": 10, "attackIntervalSeconds": 1, "range": 2 },
-    { "id": "training_bow", "kind": "Ranged", "attack": 10, "attackIntervalSeconds": 1.2, "range": 10 },
-    { "id": "training_staff", "kind": "Magic", "attack": 10, "attackIntervalSeconds": 1.5, "range": 8 },
-    { "id": "boss_claw", "kind": "Melee", "attack": 12, "attackIntervalSeconds": 1.5, "range": 2.5 }
+    {
+      "id": "training_sword",
+      "kind": "Melee",
+      "attack": 10,
+      "attackIntervalSeconds": 1,
+      "range": 2
+    },
+    {
+      "id": "training_bow",
+      "kind": "Ranged",
+      "attack": 10,
+      "attackIntervalSeconds": 1.2,
+      "range": 10
+    },
+    {
+      "id": "training_staff",
+      "kind": "Magic",
+      "attack": 10,
+      "attackIntervalSeconds": 1.5,
+      "range": 8
+    },
+    {
+      "id": "boss_claw",
+      "kind": "Melee",
+      "attack": 12,
+      "attackIntervalSeconds": 1.5,
+      "range": 2.5
+    }
   ],
   "abilities": [
-    { "id": "test_projectile", "networkId": 1, "kind": "Projectile", "power": 15, "manaCost": 5, "cooldownSeconds": 2, "castSeconds": 0.5, "range": 10, "radius": 0.3, "speed": 8, "magicAttackScale": 1 },
-    { "id": "test_ground_area", "networkId": 2, "kind": "GroundArea", "power": 10, "manaCost": 10, "cooldownSeconds": 5, "castSeconds": 1, "range": 8, "radius": 2, "speed": 0, "magicAttackScale": 1 },
-    { "id": "test_dash", "networkId": 3, "kind": "Dash", "power": 0, "manaCost": 0, "cooldownSeconds": 3, "castSeconds": 0, "range": 3, "radius": 0.45, "speed": 15, "magicAttackScale": 0 },
-    { "id": "boss_ground_area", "networkId": 4, "kind": "GroundArea", "power": 12, "manaCost": 0, "cooldownSeconds": 3, "castSeconds": 1.5, "range": 8, "radius": 2, "speed": 0, "magicAttackScale": 0.5 },
+    {
+      "id": "test_projectile",
+      "networkId": 1,
+      "kind": "Projectile",
+      "power": 15,
+      "manaCost": 5,
+      "cooldownSeconds": 2,
+      "castSeconds": 0.5,
+      "range": 10,
+      "radius": 0.3,
+      "speed": 8,
+      "magicAttackScale": 1
+    },
+    {
+      "id": "test_ground_area",
+      "networkId": 2,
+      "kind": "GroundArea",
+      "power": 10,
+      "manaCost": 10,
+      "cooldownSeconds": 5,
+      "castSeconds": 1,
+      "range": 8,
+      "radius": 2,
+      "speed": 0,
+      "magicAttackScale": 1
+    },
+    {
+      "id": "test_dash",
+      "networkId": 3,
+      "kind": "Dash",
+      "power": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 3,
+      "castSeconds": 0,
+      "range": 3,
+      "radius": 0.45,
+      "speed": 15,
+      "magicAttackScale": 0
+    },
+    {
+      "id": "boss_ground_area",
+      "networkId": 4,
+      "kind": "GroundArea",
+      "power": 12,
+      "manaCost": 0,
+      "cooldownSeconds": 3,
+      "castSeconds": 1.5,
+      "range": 8,
+      "radius": 2,
+      "speed": 0,
+      "magicAttackScale": 0.5
+    },
     {
       "id": "discovery_bolt",
       "networkId": 5,
@@ -44,32 +159,102 @@
       "radius": 0.3,
       "speed": 8,
       "magicAttackScale": 1
+    },
+    {
+      "id": "trail_impulse",
+      "networkId": 6,
+      "kind": "Projectile",
+      "power": 20,
+      "manaCost": 5,
+      "cooldownSeconds": 2,
+      "castSeconds": 0.5,
+      "range": 10,
+      "radius": 0.3,
+      "speed": 8,
+      "magicAttackScale": 1
     }
   ],
   "items": [
-    { "id": "test_sword_item", "name": "Training sword", "slot": "Weapon", "weaponId": "training_sword", "modifiers": { "meleeAttack": 8 } },
-    { "id": "test_armor_item", "name": "Training armor", "slot": "Armor", "modifiers": { "physicalDefense": 8, "maxHealth": 20 } }
+    {
+      "id": "test_sword_item",
+      "name": "Training sword",
+      "slot": "Weapon",
+      "weaponId": "training_sword",
+      "modifiers": {
+        "meleeAttack": 8
+      }
+    },
+    {
+      "id": "test_armor_item",
+      "name": "Training armor",
+      "slot": "Armor",
+      "modifiers": {
+        "physicalDefense": 8,
+        "maxHealth": 20
+      }
+    }
   ],
   "creatures": [
     {
       "id": "test_adventurer",
-      "stats": { "strength": 10, "agility": 10, "vitality": 10, "intelligence": 10, "dexterity": 10, "luck": 10 },
-      "baseHealth": 100, "baseMana": 50, "baseHealthRecovery": 1, "baseManaRecovery": 1,
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "vitality": 10,
+        "intelligence": 10,
+        "dexterity": 10,
+        "luck": 10
+      },
+      "baseHealth": 100,
+      "baseMana": 50,
+      "baseHealthRecovery": 1,
+      "baseManaRecovery": 1,
       "weaponId": "training_sword",
-      "abilityIds": ["test_projectile", "test_ground_area", "test_dash"],
-      "starterItemIds": ["test_sword_item", "test_armor_item"]
+      "abilityIds": [
+        "test_projectile",
+        "test_ground_area",
+        "test_dash"
+      ],
+      "starterItemIds": [
+        "test_sword_item",
+        "test_armor_item"
+      ]
     },
     {
       "id": "test_creature",
-      "stats": { "strength": 5, "agility": 5, "vitality": 5, "intelligence": 0, "dexterity": 5, "luck": 0 },
-      "baseHealth": 80, "baseMana": 20, "baseHealthRecovery": 0, "baseManaRecovery": 0,
-      "weaponId": "training_sword", "abilityIds": []
+      "stats": {
+        "strength": 5,
+        "agility": 5,
+        "vitality": 5,
+        "intelligence": 0,
+        "dexterity": 5,
+        "luck": 0
+      },
+      "baseHealth": 80,
+      "baseMana": 20,
+      "baseHealthRecovery": 0,
+      "baseManaRecovery": 0,
+      "weaponId": "training_sword",
+      "abilityIds": []
     },
     {
       "id": "test_boss",
-      "stats": { "strength": 8, "agility": 0, "vitality": 10, "intelligence": 5, "dexterity": 5, "luck": 0 },
-      "baseHealth": 220, "baseMana": 20, "baseHealthRecovery": 0, "baseManaRecovery": 0,
-      "weaponId": "boss_claw", "abilityIds": ["boss_ground_area"]
+      "stats": {
+        "strength": 8,
+        "agility": 0,
+        "vitality": 10,
+        "intelligence": 5,
+        "dexterity": 5,
+        "luck": 0
+      },
+      "baseHealth": 220,
+      "baseMana": 20,
+      "baseHealthRecovery": 0,
+      "baseManaRecovery": 0,
+      "weaponId": "boss_claw",
+      "abilityIds": [
+        "boss_ground_area"
+      ]
     }
   ],
   "progression": {
@@ -81,5 +266,45 @@
     "skillLevelCap": 10,
     "powerPerSkillLevel": 0.05,
     "discoverySkillId": 5
+  },
+  "professions": [
+    {
+      "id": 1,
+      "name": "Хранитель троп",
+      "skillId": "trail_impulse",
+      "discoveryMask": 3,
+      "successfulUses": 3
+    }
+  ],
+  "worldNode": {
+    "key": "prototype-crossing",
+    "keeperName": "Хранитель переправы",
+    "x": -3,
+    "z": -2,
+    "interactionRange": 2,
+    "contributionsRequired": 2,
+    "patrolHitsRequired": 1,
+    "patrolAggroRadius": 2,
+    "openingCells": [
+      404,
+      405,
+      434,
+      435,
+      464,
+      465
+    ],
+    "keeperLines": [
+      "Нужна помощь с ремонтом и разведкой восточной угрозы.",
+      "Переправа открыта. Восточная угроза пока рядом.",
+      "Дозор собран. Переправа всё ещё повреждена.",
+      "Переправа открыта и под защитой дозора."
+    ],
+    "rumors": [
+      "У переправы ждут добровольцев.",
+      "Путники восстановили короткий путь.",
+      "На восточном берегу появился дозор.",
+      "Дорога у переправы стала спокойнее.",
+      "Хранитель предупреждает: надвигается буря."
+    ]
   }
 }

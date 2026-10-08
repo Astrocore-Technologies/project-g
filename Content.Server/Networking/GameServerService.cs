@@ -27,6 +27,7 @@ public sealed partial class GameServerService : BackgroundService
     private readonly NetDataWriter _snapshotWriter = new();
     private readonly NetManager _server;
     private readonly bool _developmentRevive;
+    private readonly Content.Server.WorldStory.LiveDmInbox? _liveDm;
 
     public GameServerService(
         IOptions<ServerOptions> options,
@@ -34,8 +35,9 @@ public sealed partial class GameServerService : BackgroundService
         ServerWorld world,
         ILogger<GameServerService> logger,
         ICharacterStore? characters = null,
-        IOptions<PersistenceOptions>? persistence = null, IHostEnvironment? environment = null)
+        IOptions<PersistenceOptions>? persistence = null, IHostEnvironment? environment = null, Content.Server.WorldStory.LiveDmInbox? liveDm = null)
     {
+        _liveDm=liveDm;
         _options = options.Value;
         _handshakes = handshakes;
         _world = world;
@@ -62,8 +64,20 @@ public sealed partial class GameServerService : BackgroundService
             deadline.CancelAfter(TimeSpan.FromSeconds(10));
             ground.Restore(_characters is null ? ground.Seeds : await _characters.LoadGroundItemsAsync(ground.Seeds, deadline.Token));
         }
+        if (_world.HasWorldNode)
+        {
+            if (_characters is null) throw new InvalidOperationException("World node requires durable storage.");
+            using var deadline=CancellationTokenSource.CreateLinkedTokenSource(stoppingToken); deadline.CancelAfter(TimeSpan.FromSeconds(10));
+            _worldSession=await _characters.OpenWorldAsync(_world.WorldNodeKey,new SavedWorldNode(),deadline.Token);
+            try { _world.RestoreWorldNode(_worldSession.State,_worldSession.Revision); }
+            catch { await _worldSession.DisposeAsync(); _worldSession=null; throw; }
+        }
+        if (_liveDm?.Enabled==true && !_world.HasWorldNode) throw new InvalidOperationException("Live-DM requires a persistent world node.");
         if (!_server.Start(_options.Port))
+        {
+            if(_worldSession is not null) { await _worldSession.DisposeAsync(); _worldSession=null; }
             throw new InvalidOperationException($"Failed to start UDP server on port {_options.Port}.");
+        }
 
         _logger.LogInformation(
             "Server started. Port={Port}, Protocol={ProtocolVersion}, TickRate={TickRate}",
@@ -93,6 +107,7 @@ public sealed partial class GameServerService : BackgroundService
                 for (var catchUp = 0; _checkpoint is null && clock.Elapsed >= nextTick && catchUp < 4; catchUp++)
                 {
                     ApplyBufferedIntentions();
+                    if(_liveDm?.TryTake(out var dm)==true) _world.ApplyLiveDm(dm);
                     _world.Simulate(fixedDelta);
                     if (!BeginCheckpoint()) BroadcastSnapshot();
                     nextTick += tickDuration;
@@ -240,6 +255,21 @@ public sealed partial class GameServerService : BackgroundService
                     else intentions.ProgressionSecond = progression;
                 }
             }
+            if (messageType == NetworkMessageType.ProfessionCommand && deliveryMethod == DeliveryMethod.ReliableOrdered && NetworkProtocol.TryReadProfessionCommand(reader,out var profession))
+            {
+                if (_characters is null) _world.TryQueueProfession(peer.Id,profession);
+                else
+                {
+                    var intentions=BufferIntentions(peer.Id);
+                    if (intentions.Profession is null) intentions.Profession=profession;
+                    else intentions.ProfessionSecond=profession;
+                }
+            }
+            if (messageType==NetworkMessageType.WorldNodeCommand && deliveryMethod==DeliveryMethod.ReliableOrdered && NetworkProtocol.TryReadWorldNodeCommand(reader,out var node))
+            {
+                var intentions=BufferIntentions(peer.Id);
+                if(intentions.Node is null) intentions.Node=node; else intentions.NodeSecond=node;
+            }
             // Invalid game intentions are discarded; avoid logging unbounded client spam.
         }
         finally
@@ -286,6 +316,7 @@ public sealed partial class GameServerService : BackgroundService
     private void AcceptPlayer(NetPeer peer, ClientHello hello, PlayerId playerId, CharacterSession? session = null)
     {
         var player = _world.AddPlayer(peer.Id, playerId, session?.State);
+        if(session is not null) _world.BindWorldActor(peer.Id,session.CharacterId);
         var welcome = new ServerWelcome(
             playerId,
             checked((ushort) _options.TickRate),
@@ -296,7 +327,7 @@ public sealed partial class GameServerService : BackgroundService
         // Public collision geometry arrives before any spawn on the same reliable stream.
         peer.Send(NetworkProtocol.Write(_world.Navigation.ToMessage()), DeliveryMethod.ReliableOrdered);
 
-        var view = new InterestView();
+        var view = new InterestView { BridgeNavigationSent=_world.HasWorldNode && (_world.PublicWorldNode().Consequences&1)!=0 };
         _views.Add(peer.Id, view);
         SendInterest(peer, view);
 
@@ -324,11 +355,22 @@ public sealed partial class GameServerService : BackgroundService
         _world.GroundItems?.ClearResults();
         _world.Echoes?.ClearResults();
         _world.ClearProgressionResults();
+        _world.ClearProfessionResults();
+        _world.ClearWorldNodeResults();
         if (_characters is null) _world.GroundItems?.CommitClaims();
     }
 
     private void SendInterest(NetPeer peer, InterestView view)
     {
+        if(_world.HasWorldNode)
+        {
+            var state=_world.PublicWorldNode();
+            if((state.Consequences&1)!=0 && !view.BridgeNavigationSent)
+            { peer.Send(NetworkProtocol.Write(_world.Navigation.ToMessage()),DeliveryMethod.ReliableOrdered); view.BridgeNavigationSent=true; }
+            if(view.WorldNodeRevision!=state.Revision)
+            { peer.Send(NetworkProtocol.Write(state),DeliveryMethod.ReliableOrdered); view.WorldNodeRevision=state.Revision; }
+            if(_world.TryGetOwnedEntity(peer.Id,out var ownerId) && _world.WorldNodeResults.TryGetValue(ownerId,out var nodeResult)) peer.Send(NetworkProtocol.Write(nodeResult),DeliveryMethod.ReliableOrdered);
+        }
         _world.UpdateInterest(peer.Id, view);
         _world.UpdateGroundInterest(peer.Id, view);
         if (_world.GroundItems is { } ground)
@@ -383,6 +425,13 @@ public sealed partial class GameServerService : BackgroundService
                 peer.Send(NetworkProtocol.Write(_world.ProgressionState(progressionOwner,_world.Tick)),DeliveryMethod.ReliableOrdered);
             if (_world.ProgressionResults.TryGetValue(progressionOwner,out var progressionResult))
                 peer.Send(NetworkProtocol.Write(progressionResult),DeliveryMethod.ReliableOrdered);
+        }
+        if (_world.HasProgression && _world.TryGetOwnedEntity(peer.Id,out var professionOwner))
+        {
+            if (view.Entered.Contains(professionOwner) || _world.IsProfessionDirty(professionOwner))
+                peer.Send(NetworkProtocol.Write(_world.ProfessionState(professionOwner,_world.Tick)),DeliveryMethod.ReliableOrdered);
+            if (_world.ProfessionResults.TryGetValue(professionOwner,out var professionResult))
+                peer.Send(NetworkProtocol.Write(professionResult),DeliveryMethod.ReliableOrdered);
         }
         if (_world.Abilities is { } abilities)
         {

@@ -57,6 +57,15 @@ public partial class NetworkClient : Node
     public event Action<GroundItemDespawn>? GroundItemDespawned;
     public event Action<PickupResult>? PickupResultReceived;
     public event Action? Disconnected;
+    public WorldNodeState? LatestWorldNode { get; private set; }
+    public event Action<WorldNodeState>? WorldNodeReceived;
+    public event Action<WorldNodeResult>? WorldNodeResultReceived;
+    public void SendWorldNode(WorldNodeCommand command)
+    { if(_handshakeComplete) _serverPeer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered); }
+    public event Action<ProfessionState>? ProfessionReceived;
+    public event Action<ProfessionResult>? ProfessionResultReceived;
+    public void SendProfession(ProfessionCommand command)
+    { if (_handshakeComplete) _serverPeer?.Send(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered); }
     public event Action<ProgressionState>? ProgressionReceived;
     public event Action<ProgressionResult>? ProgressionResultReceived;
     public void SendProgression(ProgressionCommand command)
@@ -196,7 +205,7 @@ public partial class NetworkClient : Node
         _handshakeComplete = false;
         LocalPlayerId = PlayerId.Invalid;
         CanDevelopmentRevive = false;
-        Navigation = null;
+        Navigation = null; LatestWorldNode=null;
         LatestServerTick = 0;
         Disconnected?.Invoke();
 
@@ -226,6 +235,22 @@ public partial class NetworkClient : Node
 
             switch (messageType)
             {
+                case NetworkMessageType.WorldNodeState:
+                    if(_handshakeComplete && NetworkProtocol.TryReadWorldNodeState(reader,out var node))
+                    { if(LatestWorldNode is null || node.Revision>LatestWorldNode.Value.Revision) { LatestWorldNode=node; WorldNodeReceived?.Invoke(node); } }
+                    else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.WorldNodeResult:
+                    if(_handshakeComplete && NetworkProtocol.TryReadWorldNodeResult(reader,out var nodeResult)) WorldNodeResultReceived?.Invoke(nodeResult); else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.ProfessionState:
+                    if (_handshakeComplete && NetworkProtocol.TryReadProfessionState(reader,out var profession)) ProfessionReceived?.Invoke(profession);
+                    else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.ProfessionResult:
+                    if (_handshakeComplete && NetworkProtocol.TryReadProfessionResult(reader,out var professionResult)) ProfessionResultReceived?.Invoke(professionResult);
+                    else DisconnectMalformed(peer);
+                    break;
                 case NetworkMessageType.ProgressionState:
                     if (_handshakeComplete && NetworkProtocol.TryReadProgressionState(reader,out var progression)) ProgressionReceived?.Invoke(progression);
                     else DisconnectMalformed(peer);
@@ -268,10 +293,15 @@ public partial class NetworkClient : Node
                         DisconnectMalformed(peer);
                     break;
                 case NetworkMessageType.RegionNavigation:
-                    if (_handshakeComplete && Navigation is null &&
+                    if (_handshakeComplete &&
                         NetworkProtocol.TryReadRegionNavigation(reader, out var region))
                     {
-                        Navigation = new NavigationGrid(region);
+                        if(Navigation is null) Navigation=new NavigationGrid(region);
+                        else
+                        {
+                            try { Navigation.ApplyOpening(region); }
+                            catch(ArgumentException) { DisconnectMalformed(peer); break; }
+                        }
                         NavigationReceived?.Invoke(Navigation);
                     }
                     else

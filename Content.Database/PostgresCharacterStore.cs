@@ -30,7 +30,7 @@ public sealed partial class PostgresCharacterStore(string connectionString) : IC
         await setup.ExecuteNonQueryAsync(cancellationToken);
         await using var version = new NpgsqlCommand("SELECT COALESCE(max(version), 0) FROM project_g_schema", connection, transaction);
         var current = (int)(await version.ExecuteScalarAsync(cancellationToken))!;
-        if (current is < 0 or > 5) throw new InvalidDataException("Unsupported database schema version.");
+        if (current is < 0 or > 6) throw new InvalidDataException("Unsupported database schema version.");
         if (current == 0)
         {
             using var resource = typeof(PostgresCharacterStore).Assembly.GetManifestResourceStream(
@@ -79,6 +79,15 @@ public sealed partial class PostgresCharacterStore(string connectionString) : IC
             await using var migration = new NpgsqlCommand(await reader.ReadToEndAsync(cancellationToken), connection, transaction);
             await migration.ExecuteNonQueryAsync(cancellationToken);
             await using var mark = new NpgsqlCommand("INSERT INTO project_g_schema VALUES (5)", connection, transaction);
+            await mark.ExecuteNonQueryAsync(cancellationToken);
+        }
+        if (current < 6)
+        {
+            using var resource = typeof(PostgresCharacterStore).Assembly.GetManifestResourceStream("Content.Database.Migrations.0006_world.sql") ?? throw new InvalidOperationException("Migration is missing.");
+            using var reader = new StreamReader(resource);
+            await using var migration = new NpgsqlCommand(await reader.ReadToEndAsync(cancellationToken), connection, transaction);
+            await migration.ExecuteNonQueryAsync(cancellationToken);
+            await using var mark = new NpgsqlCommand("INSERT INTO project_g_schema VALUES (6)", connection, transaction);
             await mark.ExecuteNonQueryAsync(cancellationToken);
         }
         await transaction.CommitAsync(cancellationToken);
@@ -175,9 +184,10 @@ public sealed partial class PostgresCharacterStore(string connectionString) : IC
         }
     }
 
-    public async Task SaveAsync(IReadOnlyList<DatabaseSave> changes, CancellationToken cancellationToken)
+    public Task SaveAsync(IReadOnlyList<DatabaseSave> changes, CancellationToken cancellationToken) => SaveWithWorldAsync(changes, null, cancellationToken);
+    public async Task SaveWithWorldAsync(IReadOnlyList<DatabaseSave> changes, DatabaseWorldSave? world, CancellationToken cancellationToken)
     {
-        if (changes.Count == 0) return;
+        if (changes.Count == 0 && world is null) return;
         // Verify dedicated ownership connections before writing via the shared batch connection.
         foreach (var change in changes)
         {
@@ -234,6 +244,7 @@ public sealed partial class PostgresCharacterStore(string connectionString) : IC
                 if (await inventory.ExecuteNonQueryAsync(cancellationToken) != 1) throw new InvalidDataException("Inventory row is missing.");
             }
         }
+        if (world is not null) await WriteWorldAsync(connection, transaction, world, cancellationToken);
         // One transaction publishes all changed characters from a simulation tick, or none.
         await transaction.CommitAsync(cancellationToken);
     }

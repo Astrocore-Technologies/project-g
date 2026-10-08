@@ -3,7 +3,7 @@ using Content.Shared.Network;
 
 namespace Content.Shared.Navigation;
 
-/// <summary>Immutable, bounded flat-region geometry used by authority and prediction.</summary>
+/// <summary>Bounded flat geometry shared by authority and prediction; updates only open cells.</summary>
 public sealed class NavigationGrid
 {
     private readonly byte[] _blocked;
@@ -46,6 +46,12 @@ public sealed class NavigationGrid
         return true;
     }
 
+    public void ApplyOpening(RegionNavigation data)
+    {
+        if (!IsValid(data) || data.Origin!=Origin || data.CellSize!=CellSize || data.AgentRadius!=AgentRadius || data.Width!=Width || data.Height!=Height) throw new ArgumentException("Opening changed grid geometry.");
+        for (var i=0;i<_blocked.Length;i++) if (_blocked[i]==0 && data.BlockedCells[i]!=0) throw new ArgumentException("Opening cannot close a cell.");
+        data.BlockedCells.CopyTo(_blocked,0);
+    }
     public RegionNavigation ToMessage() => new(Origin, CellSize, AgentRadius,
         (ushort) Width, (ushort) Height, (byte[]) _blocked.Clone());
 

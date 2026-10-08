@@ -17,7 +17,7 @@ public sealed class ContentCatalogTests
         var catalog = Load();
         Assert.Equal(1, catalog.BalanceVersion);
         Assert.Equal(4, catalog.Weapons.Count);
-        Assert.Equal(5, catalog.Abilities.Count);
+        Assert.Equal(6, catalog.Abilities.Count);
         var actor = catalog.Creatures["test_adventurer"];
         Assert.True(catalog.Weapons.ContainsKey(actor.WeaponId));
         Assert.All(actor.AbilityIds, id => Assert.True(catalog.Abilities.ContainsKey(id)));

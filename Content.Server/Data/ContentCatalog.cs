@@ -8,6 +8,7 @@ namespace Content.Server.Data;
 /// <summary>Validated server-only snapshot; never send the catalog to clients.</summary>
 public sealed class ContentCatalog
 {
+    public Content.Server.WorldStory.WorldNodeDefinition? WorldNode { get; }
     public const int SchemaVersion = 3;
     public const int MaxFileBytes = 4 * 1024 * 1024;
     private const int MaxDefinitions = 4096;
@@ -26,6 +27,7 @@ public sealed class ContentCatalog
             throw new ArgumentException("Unsupported schemaVersion or invalid balanceVersion.");
         ArgumentNullException.ThrowIfNull(document.Balance);
         document.Balance.Validate();
+        document.WorldNode?.Validate(); WorldNode = document.WorldNode;
         Balance = document.Balance;
         BalanceVersion = document.BalanceVersion;
         ArgumentNullException.ThrowIfNull(document.Progression); document.Progression.Validate();
@@ -69,6 +71,15 @@ public sealed class ContentCatalog
             NonNegative(ability.MagicAttackScale, $"ability {ability.Id}.magicAttackScale");
         }
         Check(Abilities.Values.Any(a => a.NetworkId == Progression.DiscoverySkillId && a.Kind != AbilityKind.Dash), "progression: unknown discovery skill");
+        if (document.Professions is null || document.Professions.Length > 8) throw new ArgumentException("Invalid profession budget.");
+        var professionIds = new HashSet<ushort>();
+        foreach (var profession in document.Professions)
+            Check(profession is not null && profession.Id != 0 && professionIds.Add(profession.Id) &&
+                profession.Name is { Length: > 0 and <= 24 } && System.Text.Encoding.UTF8.GetByteCount(profession.Name) <= 72 &&
+                profession.DiscoveryMask is > 0 and <= 3 && profession.SuccessfulUses is > 0 and <= 10000 &&
+                profession.SkillId is not null && Abilities.TryGetValue(profession.SkillId,out var skill) && skill.Kind != AbilityKind.Dash,
+                "Invalid profession definition/reference.");
+        Professions = Array.AsReadOnly((Content.Server.Professions.ProfessionDefinition[])document.Professions.Clone());
         foreach (var creature in Creatures.Values)
         {
             Check(creature.Modifiers is not null && creature.Modifiers.IsValid(),
@@ -93,6 +104,7 @@ public sealed class ContentCatalog
     }
 
     public Content.Server.Progression.ProgressionBalance Progression { get; }
+    public IReadOnlyList<Content.Server.Professions.ProfessionDefinition> Professions { get; }
     public int BalanceVersion { get; }
     public StatBalance Balance { get; }
     public FrozenDictionary<string, WeaponDefinition> Weapons { get; }

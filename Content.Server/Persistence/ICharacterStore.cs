@@ -2,6 +2,8 @@ namespace Content.Server.Persistence;
 
 public interface ICharacterStore
 {
+    Task<WorldNodeSession> OpenWorldAsync(string key,SavedWorldNode initial,CancellationToken token) => throw new NotSupportedException("World ownership required.");
+    Task SaveWithWorldAsync(IReadOnlyList<CharacterSave> changes,WorldNodeSave? world,CancellationToken token) => world is null ? SaveAsync(changes,token) : throw new NotSupportedException("Atomic world save required.");
     Task InitializeAsync(CancellationToken cancellationToken);
     Task<CharacterSession> OpenAsync(string token, CharacterState initial, CancellationToken cancellationToken);
     Task SaveAsync(IReadOnlyList<CharacterSave> changes, CancellationToken cancellationToken);

@@ -9,6 +9,8 @@ public sealed record ContentDocument
     public required int BalanceVersion { get; init; }
     public required StatBalance Balance { get; init; }
     public Content.Server.Progression.ProgressionBalance Progression { get; init; } = new();
+    public Content.Server.Professions.ProfessionDefinition[] Professions { get; init; } = [];
+    public Content.Server.WorldStory.WorldNodeDefinition? WorldNode { get; init; }
     public required WeaponDefinition[] Weapons { get; init; }
     public required AbilityDefinition[] Abilities { get; init; }
     public required CreatureDefinition[] Creatures { get; init; }
