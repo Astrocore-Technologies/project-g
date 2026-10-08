@@ -35,6 +35,7 @@ public partial class WorldController : Node3D
         _network.AbilityResultReceived += OnAbilityResult;
         _network.AbilityEffectReceived += OnAbilityEffect;
         _network.AbilityHitReceived += OnAbilityHit;
+        _network.NpcWindupReceived += OnNpcWindup;
         _network.Disconnected += ClearWorld;
         _network.ConnectToServer();
     }
@@ -55,6 +56,7 @@ public partial class WorldController : Node3D
         _network.AbilityResultReceived -= OnAbilityResult;
         _network.AbilityEffectReceived -= OnAbilityEffect;
         _network.AbilityHitReceived -= OnAbilityHit;
+        _network.NpcWindupReceived -= OnNpcWindup;
         _network.Disconnected -= ClearWorld;
     }
 
@@ -99,6 +101,7 @@ public partial class WorldController : Node3D
         if (_combat.TryGetValue(state.EntityId, out var existing))
         {
             existing.ApplyState(state);
+            RefreshAlive(state.EntityId);
             return;
         }
         Node3D actor;
@@ -110,13 +113,16 @@ public partial class WorldController : Node3D
         }
         else
         {
-            actor = new Node3D { Name = $"TrainingTarget-{state.EntityId.Value}" };
+            actor = state.Kind == CombatEntityKind.Monster ? new NpcPresentation() : new Node3D();
+            actor.Name = $"{state.Kind}-{state.EntityId.Value}";
             AddChild(actor);
             actor.Position = new Vector3(state.Position.X, 1, state.Position.Y);
+            if (actor is NpcPresentation npc) npc.Initialize(state, _network.Navigation!);
             actor.AddChild(new MeshInstance3D
             {
                 Mesh = new CylinderMesh { TopRadius = 0.4f, BottomRadius = 0.4f, Height = 2 },
-                MaterialOverride = new StandardMaterial3D { AlbedoColor = new Color(0.65f, 0.3f, 0.8f) }
+                MaterialOverride = new StandardMaterial3D { AlbedoColor = state.Kind == CombatEntityKind.Monster
+                    ? new Color(0.9f, 0.15f, 0.1f) : new Color(0.65f, 0.3f, 0.8f) }
             });
             _targets.Add(state.EntityId, actor);
         }
@@ -124,6 +130,7 @@ public partial class WorldController : Node3D
         actor.AddChild(presentation);
         presentation.Initialize(state, _network, state.EntityId == _localEntityId);
         _combat.Add(state.EntityId, presentation);
+        RefreshAlive(state.EntityId);
     }
 
     private void OnAttack(AttackEvent action)
@@ -132,6 +139,7 @@ public partial class WorldController : Node3D
             actor.Confirm(action);
         if (action.TargetId.IsValid && _combat.TryGetValue(action.TargetId, out var target))
             target.ApplyDamage(action);
+        RefreshAlive(action.TargetId);
     }
 
     private void OnAttackResult(AttackResult result)
@@ -145,6 +153,16 @@ public partial class WorldController : Node3D
     private void OnAbilityHit(AbilityHit value)
     {
         if (_combat.TryGetValue(value.TargetId, out var target)) target.ApplyAbilityDamage(value);
+    }
+
+    private void RefreshAlive(NetworkEntityId id)
+    {
+        if (_players.TryGetValue(id, out var player) && _combat.TryGetValue(id, out var presentation))
+            player.SetAlive(presentation.IsAlive);
+    }
+    private void OnNpcWindup(NpcWindup windup)
+    {
+        if (_combat.TryGetValue(windup.ActorId, out var presentation)) presentation.ShowWindup(windup);
     }
 
     private void OnAbilityEffect(AbilityEffectState value)
@@ -172,6 +190,8 @@ public partial class WorldController : Node3D
         {
             if (_players.TryGetValue(entity.EntityId, out var player))
                 player.ApplySnapshot(entity, snapshot.ServerTick);
+            else if (_targets.TryGetValue(entity.EntityId, out var actor) && actor is NpcPresentation npc)
+                npc.Apply(entity, snapshot.ServerTick);
         }
     }
 

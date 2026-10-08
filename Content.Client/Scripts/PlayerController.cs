@@ -34,6 +34,15 @@ public partial class PlayerController : CharacterBody3D
     public NetworkEntityId EntityId { get; private set; } = NetworkEntityId.Invalid;
     public uint ClientTick => _clientTick;
     public NumericsVector2 PredictedPosition => _predictedPosition;
+    public bool IsAlive { get; private set; } = true;
+    public void SetAlive(bool alive)
+    {
+        IsAlive = alive;
+        if (alive) return;
+        _dash = null; _predictionHistory.Clear();
+        _target = _predictedPosition = _authoritative.Position;
+        _motion?.Reset(_target, _target);
+    }
 
     public void Initialize(
         PlayerSpawn spawn,
@@ -79,7 +88,7 @@ public partial class PlayerController : CharacterBody3D
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (!_isLocal ||
+        if (!_isLocal || !IsAlive ||
             @event is not InputEventMouseButton mouseEvent ||
             mouseEvent.ButtonIndex != MouseButton.Right ||
             !mouseEvent.Pressed)
@@ -128,6 +137,12 @@ public partial class PlayerController : CharacterBody3D
         _lastServerTick = serverTick;
         if (_isLocal)
         {
+            if (!IsAlive)
+            {
+                _authoritative = snapshot; _predictedPosition = snapshot.Position;
+                GlobalPosition = ToGodot(snapshot.Position);
+                return;
+            }
             Reconcile(snapshot);
             return;
         }
@@ -139,7 +154,7 @@ public partial class PlayerController : CharacterBody3D
 
     private void UpdateLocal(double delta)
     {
-        if (_motion is null)
+        if (_motion is null || !IsAlive)
             return;
         if (_dash is { } expired && NowSeconds() - expired.StartedAt > 2)
             RejectDash(expired.Sequence);
@@ -220,7 +235,7 @@ public partial class PlayerController : CharacterBody3D
 
     public bool PredictDash(uint sequence, NumericsVector2 direction, float range, float speed)
     {
-        if (!_isLocal || _motion is null || _dash is not null || _motion.IsDashing ||
+        if (!_isLocal || !IsAlive || _motion is null || _dash is not null || _motion.IsDashing ||
             !DashGeometry.TryDestination(_navigation, _predictedPosition, direction, range, out var destination)) return false;
         _dash = new(sequence, _clientTick + 1, direction, range, speed, destination, _target, NowSeconds(), false);
         _target = destination;

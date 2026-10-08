@@ -31,6 +31,7 @@ public partial class CombatPresentation : Node3D
     private double _slashRemaining;
     private double _damageRemaining;
     private string _damageText = "";
+    public bool IsAlive => _state.Health > 0;
 
     public void Initialize(CombatState state, NetworkClient network, bool local)
     {
@@ -56,7 +57,7 @@ public partial class CombatPresentation : Node3D
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (!_local || @event is not InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } mouse ||
+        if (!_local || !IsAlive || @event is not InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } mouse ||
             Now() < _nextAttackAt || _pending != 0)
             return;
         var camera = GetViewport().GetCamera3D();
@@ -133,6 +134,15 @@ public partial class CombatPresentation : Node3D
         UpdateLabel();
     }
 
+    public void ShowWindup(NpcWindup value)
+    {
+        if (!IsAlive || value.ServerTick < _spawnTick) return;
+        if (value.RemainingSeconds == 0) { _slash.Visible = false; _slashRemaining = 0; return; }
+        ShowSwing(value.Origin, value.Direction, value.Range, predicted: false);
+        _slashMaterial.AlbedoColor = new Color(1, 0.15f, 0.05f, 0.5f);
+        _slashRemaining = value.RemainingSeconds;
+    }
+
     public override void _Process(double delta)
     {
         if (_slashRemaining > 0 && (_slashRemaining -= delta) <= 0)
@@ -159,7 +169,11 @@ public partial class CombatPresentation : Node3D
         _slashRemaining = 0.15;
     }
 
-    private void UpdateLabel() => _healthLabel.Text = $"HP {_state.Health:0.0}/{_state.MaxHealth:0.0}\n{_damageText}";
+    private void UpdateLabel()
+    {
+        if (!IsAlive) { _slash.Visible = false; _slashRemaining = 0; }
+        _healthLabel.Text = $"HP {_state.Health:0.0}/{_state.MaxHealth:0.0}\n{(IsAlive ? _damageText : "Defeated")}";
+    }
     private static double Now() => Time.GetTicksMsec() / 1000d;
 
     private static ArrayMesh BuildCone(float range, float halfAngle)

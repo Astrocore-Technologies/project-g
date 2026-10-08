@@ -28,7 +28,7 @@ public sealed class ServerWorld
 
     public ServerWorld(IOptions<MovementOptions> options, IOptions<InterestOptions> interest,
         IOptions<NavigationOptions>? navigation = null, ContentCatalog? catalog = null,
-        IOptions<CombatOptions>? combat = null, IOptions<ServerOptions>? server = null)
+        IOptions<CombatOptions>? combat = null, IOptions<ServerOptions>? server = null, IOptions<NpcOptions>? npc = null)
     {
         _movement = options.Value.ToSettings();
         _interest = interest.Value;
@@ -50,6 +50,16 @@ public sealed class ServerWorld
             Combat.Add(TrainingTargetId, position, CombatEntityKind.TrainingTarget);
             _spatial.Add(TrainingTargetId, position);
             Abilities = new AbilitySimulation(catalog, Combat, _spatial, Navigation, settings, _interest.CellSize, StartDash);
+            if (npc?.Value is { Enabled: true } npcSettings)
+            {
+                if (!catalog.Creatures.ContainsKey(npcSettings.DefinitionId))
+                    throw new ArgumentException("NPC creature definition is missing.");
+                var id = new NetworkEntityId(_nextEntityId++);
+                var home = new Vector2(npcSettings.X, npcSettings.Z);
+                Combat.Add(id, home, CombatEntityKind.Monster, npcSettings.DefinitionId);
+                _spatial.Add(id, home);
+                Npc = new NpcSimulation(id, Combat, _spatial, Navigation, _movement, npcSettings, _interest.CellSize);
+            }
         }
     }
 
@@ -58,6 +68,7 @@ public sealed class ServerWorld
     public CombatSimulation? Combat { get; }
     public AbilitySimulation? Abilities { get; }
     public NetworkEntityId TrainingTargetId { get; }
+    public NpcSimulation? Npc { get; }
     public IReadOnlyCollection<ServerPlayer> Players => _playersByConnection.Values;
 
     public ServerPlayer AddPlayer(int connectionId, PlayerId playerId)
@@ -100,6 +111,7 @@ public sealed class ServerWorld
     {
         if (!_playersByConnection.TryGetValue(connectionId, out var player) ||
             !MovementSimulation.IsSequenceNewer(command.Sequence, player.LastProcessedSequence) ||
+            (Combat is not null && Combat.Get(player.EntityId).Health <= 0) ||
             !MovementSimulation.IsValidTarget(command.Target, _movement))
         {
             return false;
@@ -137,7 +149,8 @@ public sealed class ServerWorld
 
     private bool StartDash(NetworkEntityId id, Vector2 destination, float speed)
     {
-        if (!_playersByEntity.TryGetValue(id, out var player) || !player.Motion.TryStartDash(destination, speed)) return false;
+        if (!_playersByEntity.TryGetValue(id, out var player) || Combat?.Get(id).Health <= 0 ||
+            !player.Motion.TryStartDash(destination, speed)) return false;
         _movingPlayers.Add(player.ConnectionId);
         return true;
     }
@@ -166,6 +179,8 @@ public sealed class ServerWorld
         foreach (var connectionId in _movingPlayers)
         {
             var player = _playersByConnection[connectionId];
+            if (Combat is not null && Combat.Get(player.EntityId).Health <= 0)
+                player.Motion.Reset(player.Position, player.Position);
             player.Motion.Step(fixedDeltaSeconds);
             _spatial.Move(player.EntityId, player.Position);
             Combat?.Move(player.EntityId, player.Position);
@@ -175,8 +190,10 @@ public sealed class ServerWorld
         foreach (var connectionId in _stoppedPlayers)
             _movingPlayers.Remove(connectionId);
         // Resolve queued attacks after movement, on current authoritative positions; no client-time rewind.
+        Npc?.Move(fixedDeltaSeconds, Tick);
         Combat?.Simulate(fixedDeltaSeconds, Tick);
         Abilities?.Simulate(fixedDeltaSeconds, Tick);
+        Npc?.Resolve(fixedDeltaSeconds, Tick);
     }
 
     public PlayerSpawn CreateSpawn(ServerPlayer player) =>
@@ -211,7 +228,11 @@ public sealed class ServerWorld
             if (view.Visible.Add(id))
                 view.EnteredIds.Add(id);
             if (player is null)
+            {
+                if (Npc is { } npcActor && id == npcActor.Id)
+                    view.States.Add(new(id, npcActor.Motion.Position, 0, npcActor.Motion.Target));
                 continue;
+            }
             view.States.Add(new EntitySnapshot(
                 player.EntityId,
                 player.Position,

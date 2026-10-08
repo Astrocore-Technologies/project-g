@@ -280,6 +280,37 @@ public sealed class NetworkMovementIntegrationTests
         }
     }
 
+    [Fact]
+    public async Task TwoLossyClientsObserveNpcTelegraphDamageAndIndependentSnapshots()
+    {
+        var port = GetFreePort();
+        var world = new ServerWorld(Options.Create(new MovementOptions()), Options.Create(new InterestOptions()),
+            catalog: ContentCatalogTests.Load(), npc: Options.Create(new NpcOptions { Enabled = true, X = -3, Z = 1 }));
+        using var server = CreateServer(port, world);
+        await server.StartAsync(CancellationToken.None);
+        using var first = new TestClient(port); using var second = new TestClient(port);
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+        try
+        {
+            await PollUntilAsync(first, second, () => first.CombatStates.Count == 4 && second.CombatStates.Count == 4 &&
+                first.Attacks.Count > 0 && second.Attacks.Count > 0, timeout.Token);
+            var hit = first.Attacks.First(action => action.AttackerId == world.Npc!.Id && action.Damage > 0);
+            await PollUntilAsync(first, second, () => second.Attacks.Contains(hit), timeout.Token);
+            Assert.Contains(first.Windups, value => value.ActorId == world.Npc!.Id && value.RemainingSeconds > 0);
+            Assert.Contains(second.Windups, value => value.ActorId == world.Npc!.Id && value.RemainingSeconds > 0);
+            Assert.Contains(hit.TargetId, first.Spawns.Keys);
+            Assert.Empty(first.Results); Assert.Empty(second.Results);
+            await PollUntilAsync(first, second, () => first.HasSnapshot(world.Npc!.Id) && second.HasSnapshot(world.Npc!.Id), timeout.Token);
+            Assert.DoesNotContain(world.Npc!.Id, first.Spawns.Keys);
+            Assert.Equal(CombatEntityKind.Monster, first.CombatStates[world.Npc.Id].Kind);
+        }
+        finally
+        {
+            using var stop = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+            await server.StopAsync(stop.Token);
+        }
+    }
+
     private static int GetFreePort()
     {
         using var socket = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
@@ -318,6 +349,7 @@ public sealed class NetworkMovementIntegrationTests
         public List<AbilityResult> AbilityResults { get; } = new();
         public List<AbilityEffectState> Effects { get; } = new();
         public List<AbilityHit> AbilityHits { get; } = new();
+        public List<NpcWindup> Windups { get; } = new();
         public NavigationGrid? Navigation { get; private set; }
         public bool SawWallDetour { get; private set; }
         public PlayerSpawn LocalSpawn => Spawns.Values.Single(spawn => spawn.PlayerId == _playerId);
@@ -372,6 +404,8 @@ public sealed class NetworkMovementIntegrationTests
                             Assert.True(NetworkProtocol.TryReadCombatState(reader, out var combat));
                             if (combat.Kind == CombatEntityKind.Player) Assert.Contains(combat.EntityId, Spawns.Keys);
                             CombatStates[combat.EntityId] = combat;
+                            if (combat.Kind == CombatEntityKind.Monster && !_ticks.ContainsKey(combat.EntityId))
+                                _ticks[combat.EntityId] = combat.ServerTick;
                             break;
                         case NetworkMessageType.AttackEvent:
                             Assert.True(NetworkProtocol.TryReadAttackEvent(reader, out var attack));
@@ -405,6 +439,11 @@ public sealed class NetworkMovementIntegrationTests
                             AbilityHits.Add(hit);
                             var previous = CombatStates[hit.TargetId];
                             CombatStates[hit.TargetId] = previous with { Health = hit.TargetHealth };
+                            break;
+                        case NetworkMessageType.NpcWindup:
+                            Assert.True(NetworkProtocol.TryReadNpcWindup(reader, out var windup));
+                            Assert.Contains(windup.ActorId, CombatStates.Keys);
+                            Windups.Add(windup);
                             break;
                         case NetworkMessageType.WorldSnapshot:
                             Assert.True(NetworkProtocol.TryReadWorldSnapshot(reader, out var snapshot));
@@ -441,6 +480,7 @@ public sealed class NetworkMovementIntegrationTests
         }
 
         public void Poll() => _manager.PollEvents();
+        public bool HasSnapshot(NetworkEntityId id) => _states.ContainsKey(id);
         public bool HasFullSnapshotAtOneTick(int count) =>
             _states.Count == count && _snapshotCoverage.Values.Any(ids => ids.Count == count);
         public void Move(uint sequence, Vector2 target) => _peer?.Send(

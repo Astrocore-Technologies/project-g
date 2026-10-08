@@ -64,17 +64,20 @@ public sealed class CombatSimulation
     public double ApplyAbilityDamage(NetworkEntityId targetId, double power)
     {
         var target = _actors[targetId];
-        if (target.Kind != CombatEntityKind.TrainingTarget || target.Health <= 0) return 0;
+        if (!IsHostileTarget(target.Kind) || target.Health <= 0) return 0;
         var damage = Math.Min(target.Health, _calculator.ApplyDefense(Math.Max(0, power), target.Stats.MagicDefense));
         target.Health = Math.Max(0, target.Health - damage);
         return damage;
     }
 
-    public void Add(NetworkEntityId id, Vector2 position, CombatEntityKind kind)
+    public static bool IsHostileTarget(CombatEntityKind kind) => kind is CombatEntityKind.TrainingTarget or CombatEntityKind.Monster;
+
+    public void Add(NetworkEntityId id, Vector2 position, CombatEntityKind kind, string? definitionId = null)
     {
         if (!id.IsValid || !Enum.IsDefined(kind) || !_navigation.IsWalkable(position))
             throw new ArgumentException("Combat actor needs a valid ID, kind and walkable position.");
-        var definition = _catalog.Creatures[kind == CombatEntityKind.Player ? _playerDefinition : _targetDefinition];
+        var definition = _catalog.Creatures[definitionId ?? (kind == CombatEntityKind.Player ? _playerDefinition : _targetDefinition)];
+        ValidateProfile(definition);
         var stats = _calculator.Calculate(definition);
         var weapon = _catalog.Weapons[definition.WeaponId];
         _actors.Add(id, new Combatant(id, kind, position, stats, weapon,
@@ -131,6 +134,18 @@ public sealed class CombatSimulation
 
     public void ClearResults() => _results.Clear();
 
+    /// <summary>Server AI only; no client command can select a monster actor.</summary>
+    public bool ExecuteNpcAttack(NetworkEntityId id, uint sequence, Vector2 direction, uint tick)
+    {
+        if (!_actors.TryGetValue(id, out var actor) || actor.Kind != CombatEntityKind.Monster || actor.Health <= 0 ||
+            !BasicAttackShape.IsValidDirection(direction) || !MovementSimulation.IsSequenceNewer(sequence, actor.LastSequence) ||
+            _time < actor.ReadyAt) return false;
+        actor.LastSequence = sequence;
+        actor.ReadyAt = StatMath.Add(_time, actor.AttackInterval);
+        Resolve(actor, new(sequence, tick, direction), tick);
+        return true;
+    }
+
     public CombatState State(NetworkEntityId id, uint tick)
     {
         var actor = _actors[id];
@@ -147,7 +162,8 @@ public sealed class CombatSimulation
         var nearest = float.MaxValue;
         foreach (var id in _candidates)
         {
-            if (!_actors.TryGetValue(id, out var candidate) || candidate.Kind != CombatEntityKind.TrainingTarget ||
+            if (!_actors.TryGetValue(id, out var candidate) ||
+                !(actor.Kind == CombatEntityKind.Monster ? candidate.Kind == CombatEntityKind.Player : IsHostileTarget(candidate.Kind)) ||
                 candidate.Health <= 0 || !BasicAttackShape.Contains(actor.Position, direction, candidate.Position, range, _halfAngle) ||
                 !_navigation.CanTraverse(actor.Position, candidate.Position))
                 continue;

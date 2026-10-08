@@ -253,7 +253,7 @@ public sealed class AbilitySimulation
         Combatant? target = null; var first = float.MaxValue;
         foreach (var id in _candidates)
         {
-            if (!_combat.TryGet(id, out var candidate) || candidate.Kind != CombatEntityKind.TrainingTarget || candidate.Health <= 0 ||
+            if (!_combat.TryGet(id, out var candidate) || !CombatSimulation.IsHostileTarget(candidate.Kind) || candidate.Health <= 0 ||
                 !SweptCircle.TryHit(from, to, candidate.Position, effect.Profile.Radius + _grid.AgentRadius, out var fraction) ||
                 !_grid.CanTraverse(from, candidate.Position)) continue;
             if (fraction < first || (fraction == first && (target is null || id.Value < target.Id.Value))) { first = fraction; target = candidate; }
@@ -269,7 +269,7 @@ public sealed class AbilitySimulation
     {
         _spatial.Query(effect.Position, effect.Profile.Radius, _candidates);
         foreach (var id in _candidates)
-            if (_combat.TryGet(id, out var target) && target.Kind == CombatEntityKind.TrainingTarget && target.Health > 0 &&
+            if (_combat.TryGet(id, out var target) && CombatSimulation.IsHostileTarget(target.Kind) && target.Health > 0 &&
                 _grid.CanTraverse(effect.Position, target.Position)) Hit(effect, target, tick);
     }
 

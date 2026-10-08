@@ -267,6 +267,12 @@ public sealed class GameServerService : BackgroundService
             }
         }
 
+        if (_world.Npc is { Telegraph: { } telegraph } npc)
+        {
+            if (view.Entities.Contains(npc.Id) && (view.Entered.Contains(npc.Id) || view.NpcWindupVersion != npc.WindupVersion))
+                peer.Send(NetworkProtocol.Write(telegraph with { ServerTick = _world.Tick }), DeliveryMethod.ReliableOrdered);
+            view.NpcWindupVersion = npc.WindupVersion;
+        }
         var chunkCapacity = NetworkProtocol.SnapshotCapacity(peer.GetMaxSinglePacketSize(DeliveryMethod.Unreliable));
         if (chunkCapacity == 0) throw new InvalidOperationException("Peer MTU cannot hold an entity snapshot.");
         for (var offset = 0; offset < view.Snapshots.Count; offset += chunkCapacity)

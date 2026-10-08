@@ -34,7 +34,7 @@ public partial class AbilityPresentation : Node3D
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (@event is not InputEventKey { Pressed: true, Echo: false } key || _pending != 0 || _loadout.Abilities is null) return;
+        if (!_player.IsAlive || @event is not InputEventKey { Pressed: true, Echo: false } key || _pending != 0 || _loadout.Abilities is null) return;
         AbilityForm form;
         switch (key.PhysicalKeycode)
         {

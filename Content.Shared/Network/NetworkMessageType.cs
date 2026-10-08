@@ -18,5 +18,6 @@ public enum NetworkMessageType : ushort
     AbilityResult = 20,
     AbilityLoadout = 21,
     AbilityEffectState = 22,
-    AbilityHit = 23
+    AbilityHit = 23,
+    NpcWindup = 24
 }

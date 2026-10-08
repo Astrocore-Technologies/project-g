@@ -1,0 +1,42 @@
+using Content.Shared.Movement;
+using Content.Shared.Navigation;
+using Content.Shared.Network;
+using Godot;
+using NumericsVector2 = System.Numerics.Vector2;
+
+namespace ProjectG.Combat;
+
+/// <summary>Bounded interpolation only; NPC perception and navigation stay on the server.</summary>
+public partial class NpcPresentation : Node3D
+{
+    private readonly List<Point> _points = new();
+    private NavigationGrid _grid = null!;
+    private uint _tick;
+    public void Initialize(CombatState state, NavigationGrid grid)
+    {
+        _grid = grid; _tick = state.ServerTick;
+        Position = new(state.Position.X, 1, state.Position.Y);
+        _points.Add(new(Now(), state.Position));
+    }
+    public void Apply(EntitySnapshot state, uint tick)
+    {
+        if (!MovementSimulation.IsSequenceNewer(tick, _tick)) return;
+        _tick = tick; _points.Add(new(Now(), state.Position));
+        if (_points.Count > 20) _points.RemoveAt(0);
+    }
+    public override void _Process(double delta)
+    {
+        if (_points.Count == 0) return;
+        var time = Now() - 0.1;
+        while (_points.Count >= 2 && _points[1].Time <= time) _points.RemoveAt(0);
+        var position = _points[0].Position;
+        if (_points.Count >= 2 && _grid.CanTraverse(position, _points[1].Position))
+        {
+            var amount = (float)Math.Clamp((time - _points[0].Time) / Math.Max(0.0001, _points[1].Time - _points[0].Time), 0, 1);
+            position = NumericsVector2.Lerp(position, _points[1].Position, amount);
+        }
+        Position = new(position.X, 1, position.Y);
+    }
+    private static double Now() => Time.GetTicksMsec() / 1000d;
+    private readonly record struct Point(double Time, NumericsVector2 Position);
+}
