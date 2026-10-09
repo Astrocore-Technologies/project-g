@@ -1,11 +1,24 @@
 [
   {
     "Id": "prototype", "Destination": "outskirts",
-    "ExitX": 14, "ExitZ": 10, "ArrivalX": -12, "ArrivalZ": 10, "Radius": 0.65
+    "ExitX": 37, "ExitZ": -10, "ArrivalX": -12, "ArrivalZ": 10, "Radius": 0.65,
+    "Movement": { "MinX": -40, "MaxX": 40, "MinZ": -32, "MaxZ": 32, "SpawnX": -12, "SpawnZ": 18, "WorldLayoutVersion": 1 },
+    "Navigation": { "GeometryFile": "Data/Regions/river-landing.json" },
+    "Npc": { "Enabled": true, "DefinitionId": "test_creature", "X": -23, "Z": -22 },
+    "WorldNode": { "X": 15, "Z": -10 },
+    "StarterZone": {
+      "RegionName": "Окраина Речной пристани", "TownName": "Речная пристань", "GuideName": "Проводник",
+      "TownX": -12, "TownZ": 18, "GuideX": -15, "GuideZ": 19, "RevealRadiusCells": 3,
+      "Landmarks": [
+        { "Id": 1, "Name": "Роща", "X": -24, "Z": -10 },
+        { "Id": 2, "Name": "Старый мост", "X": 14, "Z": -10 }
+      ]
+    }
   },
   {
     "Id": "outskirts", "Destination": "prototype",
-    "ExitX": -14, "ExitZ": 10, "ArrivalX": 12, "ArrivalZ": 10, "Radius": 0.65,
+    "ExitX": -14, "ExitZ": 10, "ArrivalX": 34, "ArrivalZ": -10, "Radius": 0.65,
+    "Movement": { "WorldLayoutVersion": 1 },
     "Navigation": {
       "CellSize": 1, "AgentRadius": 0.45,
       "BlockedAreas": [

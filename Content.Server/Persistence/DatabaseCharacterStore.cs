@@ -3,7 +3,7 @@ using Content.Database;
 namespace Content.Server.Persistence;
 
 /// <summary>Domain validation stays on the server; Database stores bounded documents.</summary>
-public sealed class DatabaseCharacterStore(ICharacterDatabase database) : IRegionalCharacterStore
+public sealed class DatabaseCharacterStore(ICharacterDatabase database, RiverLandingMigration? migration = null) : IRegionalCharacterStore
 {
     public async Task<WorldNodeSession> OpenWorldAsync(string key,SavedWorldNode initial,CancellationToken token)
     {
@@ -46,7 +46,16 @@ public sealed class DatabaseCharacterStore(ICharacterDatabase database) : IRegio
         {
             var state = CharacterState.Deserialize(lease.State) with { Inventory = SavedInventory.Deserialize(lease.Inventory), Echoes = SavedEchoes.Deserialize(lease.Echoes), Progression = lease.Progression is null ? null : SavedProgression.Deserialize(lease.Progression) };
             await database.EnsureInventoryOwnershipAsync(lease,state.Inventory.Items.Select(i=>i.InstanceId).ToArray(),token);
-            return new Session(lease, state);
+            var migrated = migration?.Apply(state) ?? state;
+            var session = new Session(lease, migrated);
+            if (!ReferenceEquals(migrated, state))
+            {
+                // Commit under the exclusive character lease before making the actor visible.
+                await database.SaveAsync([new(lease, lease.Revision, migrated.Serialize(), null, null,
+                    migrated.Echoes?.Serialize(), migrated.Progression?.Serialize())], token);
+                session.Revision++;
+            }
+            return session;
         }
         catch { await lease.DisposeAsync(); throw; }
     }

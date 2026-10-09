@@ -81,7 +81,12 @@ if (!validateContentOnly)
         case "Sqlite":
             if (string.IsNullOrWhiteSpace(persistence.SqlitePath)) throw new InvalidOperationException("SQLite path is required.");
             var path = Path.GetFullPath(persistence.SqlitePath);
-            builder.Services.AddSingleton<ICharacterDatabase>(_ => new DevelopmentSqliteCharacterStore(path));
+            builder.Services.AddSingleton<ICharacterDatabase>(_ =>
+            {
+                var database = new DevelopmentSqliteCharacterStore(path);
+                database.CreateBackup(path + ".before-river-landing-" + Guid.NewGuid().ToString("N") + ".bak");
+                return database;
+            });
             break;
         case "Postgres":
             if (string.IsNullOrWhiteSpace(persistence.ConnectionString))
@@ -98,6 +103,12 @@ var catalog = ContentCatalog.LoadFile(Path.Combine(AppContext.BaseDirectory, "Da
 builder.Services.AddSingleton(catalog);
 builder.Services.AddSingleton(Content.Server.Regions.RegionalWorlds.Load(
     Path.Combine(AppContext.BaseDirectory, "Data", "regions.json"), builder.Configuration, catalog));
+builder.Services.AddSingleton(services =>
+{
+    var world = services.GetRequiredService<ServerWorld>();
+    var initial = world.CreateInitialCharacter();
+    return new RiverLandingMigration(world.Navigation, new(initial.X, initial.Z));
+});
 builder.Services.AddSingleton(new StatCalculator(catalog.Balance));
 using var host = builder.Build();
 // Resolve the world during validation too: combat profile references/ranges must fail before UDP startup.

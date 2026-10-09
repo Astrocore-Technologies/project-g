@@ -187,6 +187,12 @@ public partial class NetworkClient : Node
         SendGame(NetworkProtocol.Write(command), DeliveryMethod.Sequenced);
     }
 
+    public void RejectRegionContent()
+    {
+        _handshakeComplete = false;
+        if (_serverPeer is not null) _client?.DisconnectPeer(_serverPeer);
+    }
+
     public void SendAttack(AttackCommand command)
     {
         if (_handshakeComplete && _serverPeer is not null)

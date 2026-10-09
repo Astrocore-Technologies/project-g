@@ -37,7 +37,7 @@ public static partial class NetworkProtocol
     public static bool TryReadExplorationState(NetDataReader r,out ExplorationState s)
     {
         s=default;
-        if(r.AvailableBytes>364 || !r.TryGetULong(out var owner) || owner==0 || !r.TryGetUInt(out var tick) || !r.TryGetUShort(out var width) || !r.TryGetUShort(out var height) || width==0 || height==0 || (long)width*height>NetworkConstants.MaxNavigationCells || !r.TryGetByte(out var tutorial) || tutorial>127 || !r.TryGetUShort(out var bytes) || bytes!=((int)width*height+7)/8 || r.AvailableBytes<bytes+1) return false;
+        if(r.AvailableBytes>NetworkConstants.MaxGamePacketBytes-RegionEnvelopeBytes-sizeof(ushort) || !r.TryGetULong(out var owner) || owner==0 || !r.TryGetUInt(out var tick) || !r.TryGetUShort(out var width) || !r.TryGetUShort(out var height) || width==0 || height==0 || (long)width*height>NetworkConstants.MaxNavigationCells || !r.TryGetByte(out var tutorial) || tutorial>127 || !r.TryGetUShort(out var bytes) || bytes!=((int)width*height+7)/8 || r.AvailableBytes<bytes+1) return false;
         var cells=new byte[bytes]; for(var i=0;i<cells.Length;i++) if(!r.TryGetByte(out cells[i])) return false;
         if(!r.TryGetByte(out var places) || places>2) return false;
         var points=new RevealedPlace[places];

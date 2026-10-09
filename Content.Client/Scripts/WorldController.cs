@@ -113,6 +113,8 @@ public partial class WorldController : Node3D
 
     private void OnNavigationReceived(NavigationGrid grid)
     {
+        if (!_contentReady) return;
+        if (_authoredRegion is not null) { ApplyAuthoredNavigation(grid); return; }
         _navigationVisual?.QueueFree();
         _navigationVisual = new NavigationVisual { Name = "NavigationGeometry" };
         AddChild(_navigationVisual);
@@ -122,7 +124,7 @@ public partial class WorldController : Node3D
 
     private void OnPlayerSpawned(PlayerSpawn spawn)
     {
-        if (_players.ContainsKey(spawn.EntityId))
+        if (!_contentReady || _players.ContainsKey(spawn.EntityId))
             return;
 
         var player = PlayerScene.Instantiate<PlayerController>();
@@ -135,7 +137,7 @@ public partial class WorldController : Node3D
             _localEntityId = spawn.EntityId;
             if(_network.LatestPvpZone is {} pvpZone){_social=new();AddChild(_social);_social.Initialize(_network,player);_pvp=new();AddChild(_pvp);_pvp.Initialize(_network,player);DrawSafeZone(pvpZone);}
             if(_network.CraftRecipes.Count!=0) { _crafting=new(); AddChild(_crafting); _crafting.Initialize(_network,player); _trade=new(); AddChild(_trade); _trade.Initialize(_network,player); _economy=new(); AddChild(_economy); _economy.Initialize(_network,player); }
-            if (_network.LatestStarterZone is { } zone) { _starter=new(); AddChild(_starter); _starter.Initialize(_network,player,zone); }
+            if (_network.LatestStarterZone is { } zone) { _starter=new(); AddChild(_starter); _starter.Initialize(_network,player,zone,_authoredRegion is null); }
             _abilities = new AbilityPresentation();
             player.AddChild(_abilities);
             _abilities.Initialize(player, _network);
@@ -294,6 +296,7 @@ public partial class WorldController : Node3D
 
     private void ClearWorld()
     {
+        UnloadAuthoredRegion();
         DetachPresentation(_regionExit); _regionExit = null;
         foreach (var player in _players.Values)
             DetachPresentation(player);

@@ -18,6 +18,13 @@ public partial class WorldController
     {
         ClearWorld();
         if (_network.CurrentRegion is not { } region) return;
+        _contentReady = true;
+        if (region.GeometryHash != 0)
+        {
+            if (region.Region != "prototype") { RejectRegion("Неизвестная клиентская сцена региона."); return; }
+            LoadAuthoredRegion(region.GeometryHash);
+            if (!_contentReady) return;
+        }
         _regionExit = new Node3D { Position = new(region.Exit.X, .08f, region.Exit.Y) };
         AddChild(_regionExit);
         _regionExit.AddChild(new MeshInstance3D

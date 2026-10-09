@@ -19,7 +19,7 @@ namespace Content.Tests.Server;
 
 public sealed class RegionalNetworkTests
 {
-    internal static RegionalWorlds Worlds() => RegionalWorlds.Load(Path.Combine(AppContext.BaseDirectory, "Data", "regions.json"),
+    internal static RegionalWorlds Worlds() => RegionalWorlds.Load(Path.Combine(AppContext.BaseDirectory, "Fixtures", "legacy-regions.json"),
         new ConfigurationBuilder().AddJsonFile(Path.Combine(AppContext.BaseDirectory, "appsettings.json")).Build(), ContentCatalogTests.Load());
 
     private static GameServerService Server(int port, RegionalWorlds worlds, SqliteCharacterStore store) => new(
@@ -30,9 +30,11 @@ public sealed class RegionalNetworkTests
     {
         await store.InitializeAsync(default);
         var world = worlds.Worlds.Single(w => w.RegionId == region);
-        var initial = world.CreateInitialCharacter() with { RegionId = region, X = region == "prototype" ? 13 : -12, Z = 10,
+        var departure = worlds.Routes.Single(r => r.Source == region).Departure;
+        var position = departure + new Vector2(region == "prototype" ? -1 : 2, 0);
+        var initial = world.CreateInitialCharacter() with { RegionId = region, X = position.X, Z = position.Y,
             Echoes = new SavedEchoes { Active = Enumerable.Range(1, 3).Select(i => new SavedEcho(Guid.NewGuid(),
-                "test_guardian_echo", (byte)i, region == "prototype" ? 13 : -12, 10 + .2f * i, 0, 0)).ToArray() } };
+                "test_guardian_echo", (byte)i, position.X, position.Y + .2f * i, 0, 0)).ToArray() } };
         await using var session = await store.OpenAsync("", initial, default);
         return session.IssuedToken;
     }
@@ -185,7 +187,7 @@ public sealed class RegionalNetworkTests
     [Fact]
     public async Task ExecutableCrashAfterArrivalRestartsFromDurableDestination()
     {
-        var worlds = Worlds(); var store = new SqliteCharacterStore(); var token = await Seed(store, worlds);
+        var worlds = RiverLandingTests.Worlds(); var store = new SqliteCharacterStore(); var token = await Seed(store, worlds);
         var port = CharacterPersistenceTests.FreePort();
         Process Start()
         {
@@ -207,7 +209,7 @@ public sealed class RegionalNetworkTests
                 await Poll(() => client.Spawns.Count == 1, client); uint sequence = 0;
                 await Poll(() =>
                 {
-                    if (client.Region?.Region == "prototype") client.Move(++sequence, new(14, 10));
+                    if (client.Region?.Region == "prototype") client.Move(++sequence, worlds.Routes[0].Departure);
                     return client.Region?.Region == "outskirts" && client.Spawns.Count == 1;
                 }, client);
                 Assert.Equal("outskirts", store.SingleState.RegionId);

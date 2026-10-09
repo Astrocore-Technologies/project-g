@@ -50,7 +50,7 @@ public sealed class RegionalWorlds
             var primary = definition.Id == "prototype";
             if (!primary && (definition.WorldNode is null || definition.StarterZone is null || definition.Navigation is null))
                 throw new InvalidDataException("Adjoining region needs its own geometry and public places.");
-            worlds.Add(new ServerWorld(Settings<MovementOptions>("Movement"), Settings<InterestOptions>("Interest"),
+            worlds.Add(new ServerWorld(definition.Movement is { } movement ? Options.Create(movement) : Settings<MovementOptions>("Movement"), Settings<InterestOptions>("Interest"),
                 definition.Navigation is { } nav ? Options.Create(nav) : Settings<NavigationOptions>("Navigation"), catalog,
                 Settings<CombatOptions>("Combat"), Settings<ServerOptions>("Server"),
                 definition.Npc is { } npc ? Options.Create(npc) : Settings<NpcOptions>("Npc"), Settings<BossOptions>("Boss"),
@@ -73,6 +73,7 @@ public sealed class RegionalWorlds
         public required float ArrivalZ { get; init; }
         public required float Radius { get; init; }
         public NavigationOptions? Navigation { get; init; }
+        public MovementOptions? Movement { get; init; }
         public NpcOptions? Npc { get; init; }
         public WorldNodeDefinition? WorldNode { get; init; }
         public StarterZoneDefinition? StarterZone { get; init; }

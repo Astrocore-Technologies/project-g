@@ -44,7 +44,7 @@ public sealed class NavigationProtocolTests
     [InlineData(65535, 65535, 1f, 0.45f, 0)]
     [InlineData(2, 2, 0f, 0.45f, 0)]
     [InlineData(2, 2, 1f, float.NaN, 0)]
-    [InlineData(2, 2, 1f, 0.45f, 2)]
+    [InlineData(2, 2, 1f, 0.45f, 16)]
     public void NavigationRejectsInvalidDimensionsGeometryOrCells(
         ushort width, ushort height, float cellSize, float radius, byte cellValue)
     {
@@ -56,7 +56,7 @@ public sealed class NavigationProtocolTests
         writer.Put(radius);
         writer.Put(width);
         writer.Put(height);
-        for (var i = 0; i < 4; i++) writer.Put(cellValue);
+        writer.Put(cellValue);
         var reader = new NetDataReader(writer.CopyData());
         Assert.True(NetworkProtocol.TryReadMessageType(reader, out _));
         Assert.False(NetworkProtocol.TryReadRegionNavigation(reader, out _));

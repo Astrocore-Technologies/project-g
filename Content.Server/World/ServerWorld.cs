@@ -33,6 +33,9 @@ public sealed partial class ServerWorld
     internal ContentCatalog? RegionContent => _progressionCatalog;
     internal string? RegionPlayerProfile => _playerDefinition?.Id;
     public string RegionId { get; }
+    public ulong GeometryHash { get; }
+    private readonly Vector2 _spawn;
+    private readonly int _worldLayoutVersion;
     private readonly HashSet<int> _persistenceDirty = new();
     internal IReadOnlyCollection<int> PersistenceDirty => _persistenceDirty;
 
@@ -49,11 +52,20 @@ public sealed partial class ServerWorld
         RegionId = regionId;
         _entityIds = entityIds ?? new RuntimeEntityAllocator();
         _movement = options.Value.ToSettings();
+        _spawn = new(options.Value.SpawnX, options.Value.SpawnZ);
+        _worldLayoutVersion = options.Value.WorldLayoutVersion;
         _interest = interest.Value;
         if (!_interest.IsValid())
             throw new ArgumentException("Invalid interest settings.", nameof(interest));
         _spatial = new SpatialIndex(_interest.CellSize);
         Navigation = (navigation?.Value ?? new NavigationOptions()).CreateGrid(_movement);
+        if (navigation?.Value.GeometryFile is { } geometryFile)
+        {
+            var geometry = FlatRegionGeometry.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, geometryFile)));
+            GeometryHash = geometry.Hash;
+            worldNodeDefinition = (worldNodeDefinition ?? catalog?.WorldNode ?? throw new InvalidDataException("Missing region rules."))
+                with { OpeningCells = geometry.OpeningCells };
+        }
         _pathfinder = new NavigationPathfinder(Navigation);
         if (catalog is not null)
         {
@@ -128,7 +140,7 @@ public sealed partial class ServerWorld
             throw new ArgumentException("Connection already owns an entity.", nameof(connectionId));
         var entityId = AllocateEntityId();
         var spawnIndex = (int) ((entityId.Value - 1) % 10);
-        var spawn = MovementSimulation.ClampTarget(new Vector2(-9f + spawnIndex * 2f, 0f), _movement);
+        var spawn = MovementSimulation.ClampTarget(_spawn + new Vector2(spawnIndex * 2f, 0f), _movement);
         if (!Navigation.TryFindSpawn(spawn, out spawn))
             throw new InvalidOperationException("Region has no walkable spawn.");
         if (saved is not null)
@@ -173,12 +185,12 @@ public sealed partial class ServerWorld
     public CharacterState CreateInitialCharacter()
     {
         var definition = _playerDefinition ?? throw new InvalidOperationException("Persistence requires player content.");
-        if (!Navigation.TryFindSpawn(new Vector2(-9, 0), out var spawn))
+        if (!Navigation.TryFindSpawn(_spawn, out var spawn))
             throw new InvalidOperationException("Region has no spawn.");
         var stats = Combat!.InitialPlayerStats;
         return new CharacterState
         {
-            RegionId = RegionId, ProfileId = definition.Id, Stats = definition.Stats,
+            RegionId = RegionId, ProfileId = definition.Id, Stats = definition.Stats, WorldLayoutVersion = _worldLayoutVersion,
             Inventory = Inventory is not null ? InventorySimulation.CreateStarter(definition) : null,
             Echoes = Echoes?.CreateStarter(),
             Progression = SavedProgression.Starter(definition,_progressionCatalog!),
@@ -194,7 +206,7 @@ public sealed partial class ServerWorld
         var actor = Combat!.Get(player.EntityId);
         return new CharacterState
         {
-            RegionId = RegionId, ProfileId = _playerDefinition!.Id, Stats = player.BaseStats,
+            RegionId = RegionId, ProfileId = _playerDefinition!.Id, Stats = player.BaseStats, WorldLayoutVersion = _worldLayoutVersion,
             Inventory = Inventory?.Capture(player.EntityId),
             Echoes = Echoes?.Capture(player.EntityId),
             Progression = CaptureProgression(player.EntityId),

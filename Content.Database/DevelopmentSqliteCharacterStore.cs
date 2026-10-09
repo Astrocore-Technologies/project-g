@@ -32,6 +32,18 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
         catch { connection.Dispose(); throw; }
     }
 
+    /// <summary>SQLite online backup includes committed WAL data; never copies a live db file blindly.</summary>
+    public void CreateBackup(string backupPath)
+    {
+        if (!File.Exists(_databasePath)) return;
+        var backup = Path.GetFullPath(backupPath);
+        if (File.Exists(backup)) throw new IOException("Backup target already exists.");
+        using var source = Connect();
+        using var destination = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = backup, Pooling = false }.ToString());
+        destination.Open();
+        source.BackupDatabase(destination);
+    }
+
     public Task InitializeAsync(CancellationToken cancellationToken) => Task.Run(() =>
     {
         using var connection = Connect();

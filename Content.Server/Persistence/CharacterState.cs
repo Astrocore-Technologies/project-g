@@ -15,6 +15,8 @@ public sealed record CharacterState
     [JsonIgnore] public SavedProgression? Progression { get; init; }
     [JsonRequired]
     public int Version { get; init; } = CurrentVersion;
+    // Absent in v1 legacy saves. Independent of character/progression schema versions.
+    public int WorldLayoutVersion { get; init; }
     public required string RegionId { get; init; }
     public required string ProfileId { get; init; }
     public required BaseStats Stats { get; init; }
@@ -35,7 +37,7 @@ public sealed record CharacterState
 
     public void Validate()
     {
-        if (Version != CurrentVersion || !ValidRegion(RegionId) ||
+        if (Version != CurrentVersion || WorldLayoutVersion is < 0 or > 1 || !ValidRegion(RegionId) ||
             string.IsNullOrWhiteSpace(ProfileId) || ProfileId.Length > 64 ||
             !float.IsFinite(X) || !float.IsFinite(Z) ||
             !double.IsFinite(Health) || Health < 0 || !double.IsFinite(Mana) || Mana < 0 ||

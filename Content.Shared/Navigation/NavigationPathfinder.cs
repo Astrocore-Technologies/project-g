@@ -12,6 +12,7 @@ public sealed class NavigationPathfinder
     private readonly bool[] _closed;
     private readonly PriorityQueue<int, (int Score, int Id)> _open = new();
     private readonly List<Vector2> _rawPath = new();
+    private uint _revision;
 
     public NavigationPathfinder(NavigationGrid grid)
     {
@@ -26,6 +27,11 @@ public sealed class NavigationPathfinder
 
     public bool TryFindPath(Vector2 from, Vector2 target, List<Vector2> result)
     {
+        if (_revision != _grid.Revision)
+        {
+            for (var i = 0; i < _walkable.Length; i++) _walkable[i] = _grid.IsWalkable(_grid.Center(i));
+            _revision = _grid.Revision;
+        }
         result.Clear();
         if (!_grid.IsWalkable(from) || !_grid.IsWalkable(target))
             return false;

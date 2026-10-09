@@ -13,6 +13,7 @@ public sealed class NavigationGrid
     public int Width { get; }
     public int Height { get; }
     public int CellCount => Width * Height;
+    public uint Revision { get; private set; }
 
     public NavigationGrid(RegionNavigation data)
     {
@@ -51,6 +52,7 @@ public sealed class NavigationGrid
         if (!IsValid(data) || data.Origin!=Origin || data.CellSize!=CellSize || data.AgentRadius!=AgentRadius || data.Width!=Width || data.Height!=Height) throw new ArgumentException("Opening changed grid geometry.");
         for (var i=0;i<_blocked.Length;i++) if (_blocked[i]==0 && data.BlockedCells[i]!=0) throw new ArgumentException("Opening cannot close a cell.");
         data.BlockedCells.CopyTo(_blocked,0);
+        Revision++;
     }
     public RegionNavigation ToMessage() => new(Origin, CellSize, AgentRadius,
         (ushort) Width, (ushort) Height, (byte[]) _blocked.Clone());

@@ -4,7 +4,7 @@ using LiteNetLib.Utils;
 namespace Content.Shared.Network;
 
 // Public boundary geometry only; no destination content or unexplored map is sent.
-public readonly record struct RegionEnter(ulong Epoch, string Region, Vector2 Exit, float Radius);
+public readonly record struct RegionEnter(ulong Epoch, string Region, Vector2 Exit, float Radius, ulong GeometryHash = 0);
 
 public static partial class NetworkProtocol
 {
@@ -22,17 +22,19 @@ public static partial class NetworkProtocol
         var writer = CreateWriter(NetworkMessageType.RegionEnter);
         writer.Put(value.Epoch); writer.Put(value.Region);
         writer.Put(value.Exit.X); writer.Put(value.Exit.Y); writer.Put(value.Radius);
+        writer.Put(value.GeometryHash);
         return writer;
     }
 
     public static bool TryReadRegionEnter(NetDataReader reader, out RegionEnter value)
     {
         value = default;
-        if (reader.AvailableBytes > 86 || !reader.TryGetULong(out var epoch) ||
+        if (reader.AvailableBytes > 94 || !reader.TryGetULong(out var epoch) ||
             !reader.TryGetString(out var region) || !reader.TryGetFloat(out var x) ||
-            !reader.TryGetFloat(out var z) || !reader.TryGetFloat(out var radius) || reader.AvailableBytes != 0)
+            !reader.TryGetFloat(out var z) || !reader.TryGetFloat(out var radius) ||
+            !reader.TryGetULong(out var geometryHash) || reader.AvailableBytes != 0)
             return false;
-        var candidate = new RegionEnter(epoch, region, new(x, z), radius);
+        var candidate = new RegionEnter(epoch, region, new(x, z), radius, geometryHash);
         if (!ValidRegion(candidate)) return false;
         value = candidate; return true;
     }

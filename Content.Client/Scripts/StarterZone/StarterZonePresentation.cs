@@ -20,7 +20,7 @@ public partial class StarterZonePresentation : Node3D
     private double _refresh;
     private readonly HashSet<ushort> _places=new();
     private static readonly string[] Steps=["ПКМ — пройти по дороге", "ЛКМ — ударить тренировочную цель", "QWER / ASDF — умения; Space — рывок", "T / Y / U — ручная способность Эхо", "Исследовать окрестности", "H у хранителя — помочь переправе", "P — проверить доступные профессии"];
-    public void Initialize(NetworkClient network, PlayerController player, StarterZoneState zone)
+    public void Initialize(NetworkClient network, PlayerController player, StarterZoneState zone, bool buildLegacyScenery = true)
     {
         _network=network; _player=player; _zone=zone;
         _network.ExplorationReceived+=Apply; _network.WorldNodeReceived+=WorldChanged;
@@ -35,7 +35,7 @@ public partial class StarterZonePresentation : Node3D
         var guideColumn=new VBoxContainer(); _guide.AddChild(guideColumn);
         _guideText=new Label { AutowrapMode=TextServer.AutowrapMode.WordSmart,CustomMinimumSize=new(500,0) }; guideColumn.AddChild(_guideText);
         var close=new Button { Text="Продолжить путь" }; close.Pressed+=()=>_guide.Hide(); guideColumn.AddChild(close);
-        RefreshGuide(); BuildTown();
+        RefreshGuide(); BuildTown(buildLegacyScenery);
         if(network.LatestWorldNode is { } state) WorldChanged(state);
     }
     private void RefreshGuide()
@@ -78,8 +78,10 @@ public partial class StarterZonePresentation : Node3D
     private static StandardMaterial3D Material(Color color) => new() { AlbedoColor=color,Roughness=0.9f };
     private void Box(Vector3 position, Vector3 size, Color color)
     { AddChild(new MeshInstance3D { Position=position,Mesh=new BoxMesh { Size=size },MaterialOverride=Material(color) }); }
-    private void BuildTown()
+    private void BuildTown(bool legacy)
     {
+        if (legacy)
+        {
         // Walkable plaza/road decals; buildings stand beyond the existing western region boundary.
         Box(new(-10,0.014f,0),new(8,0.025f,10),new(0.32f,0.29f,0.23f));
         Box(new(-7,0.032f,0),new(14,0.025f,1.8f),new(0.44f,0.38f,0.27f));
@@ -89,10 +91,12 @@ public partial class StarterZonePresentation : Node3D
             var z=-7+i*6; Box(new(-17,1.5f,z),new(3,3,4),new(0.52f,0.43f,0.31f));
             Box(new(-17,3.15f,z),new(3.4f,0.4f,4.4f),new(0.29f,0.18f,0.13f));
         }
+        }
         var guide=new Node3D { Position=new(_zone.GuidePosition.X,0,_zone.GuidePosition.Y) }; AddChild(guide);
         guide.AddChild(new MeshInstance3D { Position=new(0,0.8f,0),Mesh=new CapsuleMesh { Radius=0.3f,Height=1.6f },MaterialOverride=Material(new(0.25f,0.5f,0.85f)) });
         guide.AddChild(new Label3D { Position=new(0,2.1f,0),Text=_zone.GuideName+" • F1",Billboard=BaseMaterial3D.BillboardModeEnum.Enabled });
         AddChild(new Label3D { Position=new(_zone.TownPosition.X,2.8f,_zone.TownPosition.Y-4),Text=_zone.TownName,Billboard=BaseMaterial3D.BillboardModeEnum.Enabled });
+        if (!legacy) return;
         _bridge=new Node3D { Visible=false }; AddChild(_bridge);
         _bridge.AddChild(new MeshInstance3D { Position=new(0,0.045f,-0.5f),Mesh=new BoxMesh { Size=new(3,0.08f,2.8f) },MaterialOverride=Material(new(0.56f,0.38f,0.19f)) });
         for(var i=0;i<5;i++) _bridge.AddChild(new MeshInstance3D { Position=new(-1.2f+i*0.6f,0.091f,-0.5f),Mesh=new BoxMesh { Size=new(0.035f,0.012f,2.8f) },MaterialOverride=Material(new(0.25f,0.17f,0.1f)) });

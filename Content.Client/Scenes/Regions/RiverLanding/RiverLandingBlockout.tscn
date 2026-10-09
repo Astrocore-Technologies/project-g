@@ -1,4 +1,4 @@
-[gd_scene load_steps=85 format=3]
+[gd_scene load_steps=87 format=3]
 
 [ext_resource type="Script" path="res://Scripts/Editor/Regions/RegionRoot.cs" id="Root"]
 [ext_resource type="Script" path="res://Scripts/Regions/BlockoutPreview.cs" id="Preview"]
@@ -9,6 +9,12 @@
 [ext_resource type="Script" path="res://Scripts/Editor/Regions/ActorSpawnMarker.cs" id="ActorSpawnMarker"]
 [ext_resource type="Script" path="res://Scripts/Editor/Regions/InteractionMarker.cs" id="InteractionMarker"]
 [ext_resource type="Script" path="res://Scripts/Editor/Regions/NavigationPatchMarker.cs" id="NavigationPatchMarker"]
+
+[sub_resource type="BoxShape3D" id="RepairBarrierShape"]
+size = Vector3(2, 1, 4)
+
+[sub_resource type="BoxMesh" id="RepairBarrierMesh"]
+size = Vector3(2, 1, 4)
 
 [sub_resource type="StandardMaterial3D" id="Ground"]
 albedo_color = Color(0.4, 0.43, 0.4, 1)
@@ -734,6 +740,18 @@ shape = SubResource("Shape15")
 
 [node name="Bridge" type="Node3D" parent="PublicStateBindings"]
 
+
+[node name="RepairBarrier" type="StaticBody3D" parent="PublicStateBindings/Bridge" groups=["region_movement_blocker", "region_repair_barrier"]]
+position = Vector3(24, 0.5, -10)
+collision_layer = 2
+collision_mask = 0
+
+[node name="Mesh" type="MeshInstance3D" parent="PublicStateBindings/Bridge/RepairBarrier"]
+mesh = SubResource("RepairBarrierMesh")
+material_override = SubResource("Stone")
+
+[node name="Collision" type="CollisionShape3D" parent="PublicStateBindings/Bridge/RepairBarrier"]
+shape = SubResource("RepairBarrierShape")
 
 [node name="Deck" type="StaticBody3D" parent="PublicStateBindings/Bridge" groups=["region_walkable"]]
 position = Vector3(24, -0.2, -10)

@@ -4,7 +4,7 @@ public static class NetworkConstants
 {
     public const int Port = 9050;
     public const string ConnectionKey = "project-g-dev";
-    public const ushort ProtocolVersion = 24;
+    public const ushort ProtocolVersion = 25;
     public const int MaxActiveEchoes = 3;
     public const int MaxInventoryItems = 8;
     public const int ServerTickRate = 20;
@@ -15,7 +15,8 @@ public static class NetworkConstants
     public const int MaxAbilitySlots = 8;
     public const int MaxAbilityProfiles = 9; // eight bar slots plus the tactical dash
     public const int MaxLearnedSkills = 16;
-    public const int MaxNavigationCells = 1024;
+    // Finite flat blockout budget; bit-packed maps fit one regional packet.
+    public const int MaxNavigationCells = 6144;
     public const int MaxBuildVersionLength = 64;
     public const int MaxRejectReasonLength = 160;
 }
