@@ -7,6 +7,7 @@ public partial class SocialPresentation : CanvasLayer
 {
     private NetworkClient network=null!; private PlayerController player=null!;
     private PanelContainer panel=null!; private VBoxContainer body=null!; private Label hud=null!,status=null!;
+    private ScrollContainer partyHud=null!;
     private readonly Dictionary<SocialKind,SocialRoster> rosters=new();
     private readonly Dictionary<(SocialKind,byte),SocialMember[]> pages=new();
     private readonly Dictionary<ulong,(PartyMemberPresence State,uint Tick,double At)> presence=new();
@@ -15,7 +16,8 @@ public partial class SocialPresentation : CanvasLayer
     public void Initialize(NetworkClient n,PlayerController p)
     {
         network=n;player=p;Layer=9;
-        hud=new(){Position=new Vector2(18,160),Text=""};AddChild(hud);
+        partyHud=new(){Position=new Vector2(24,472),Size=new Vector2(240,168),Visible=false};AddChild(partyHud);
+        hud=new(){Text="",MouseFilter=Control.MouseFilterEnum.Ignore};partyHud.AddChild(hud);
         panel=new(){Position=new Vector2(80,80),CustomMinimumSize=new Vector2(520,480),Visible=false};AddChild(panel);
         var outer=new VBoxContainer();panel.AddChild(outer);status=new(){AutowrapMode=TextServer.AutowrapMode.WordSmart};outer.AddChild(status);
         var scroll=new ScrollContainer(){CustomMinimumSize=new Vector2(500,440)};outer.AddChild(scroll);body=new(){SizeFlagsHorizontal=Control.SizeFlags.ExpandFill};scroll.AddChild(body);
@@ -83,7 +85,7 @@ public partial class SocialPresentation : CanvasLayer
     {
         clock+=delta;if(pending is {} c&&clock-sent>=2){sent=clock;network.SendSocial(c);}
         if(clock<refresh)return;refresh=clock+.5;
-        hud.Text=rosters.Count>0?"Группа — N | Гильдия — O":"";
+        hud.Text="Группа · N"; partyHud.Visible=rosters.TryGetValue(SocialKind.Party,out var party)&&party.Id!=0;
         if(rosters.TryGetValue(SocialKind.Party,out var r)&&r.Id!=0)
         {foreach(var m in Members(SocialKind.Party)){var text="#"+m.Handle+": ";if(presence.TryGetValue(m.Handle,out var p)&&clock-p.At<3)text+=(p.State.Flags&1)==0?((p.State.Flags&4)!=0?"отключён в бою":"офлайн"):(p.State.Flags&2)!=0?"погиб":p.State.Health.ToString("0")+"/"+p.State.MaxHealth.ToString("0")+" | "+p.State.Position.X.ToString("0")+", "+p.State.Position.Y.ToString("0");else text+="нет свежих данных";hud.Text+="\n"+text;}}
         var size=GetViewport().GetVisibleRect().Size;panel.Position=new Vector2(Math.Max(12,size.X-550),12);

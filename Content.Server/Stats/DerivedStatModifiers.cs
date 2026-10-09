@@ -19,6 +19,7 @@ public sealed record DerivedStatModifiers
     public double AttackSpeedMultiplier { get; init; }
     public double CastSpeedMultiplier { get; init; }
     public double CriticalChance { get; init; }
+    public double BlockDamage { get; init; }
 
     public bool IsValid() => double.IsFinite(MeleeAttack) && double.IsFinite(RangedAttack) &&
         double.IsFinite(MagicAttack) && double.IsFinite(MeleeWeaponMultiplier) &&
@@ -27,7 +28,7 @@ public sealed record DerivedStatModifiers
         double.IsFinite(HealthRecovery) && double.IsFinite(ManaRecovery) &&
         double.IsFinite(HealthItemMultiplier) && double.IsFinite(ManaItemMultiplier) &&
         double.IsFinite(AttackSpeedMultiplier) && double.IsFinite(CastSpeedMultiplier) &&
-        double.IsFinite(CriticalChance);
+        double.IsFinite(CriticalChance) && double.IsFinite(BlockDamage);
 
     public DerivedStats Apply(DerivedStats value)
     {
@@ -46,6 +47,6 @@ public sealed record DerivedStatModifiers
             StatMath.Add(value.ManaItemMultiplier, ManaItemMultiplier),
             StatMath.Add(value.AttackSpeedMultiplier, AttackSpeedMultiplier),
             StatMath.Add(value.CastSpeedMultiplier, CastSpeedMultiplier),
-            StatMath.Add(value.CriticalChance, CriticalChance));
+            StatMath.Add(value.CriticalChance, CriticalChance), StatMath.Add(value.BlockDamage, BlockDamage));
     }
 }

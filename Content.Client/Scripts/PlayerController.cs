@@ -30,6 +30,22 @@ public partial class PlayerController : CharacterBody3D
 	private bool _isLocal;
 	private EntitySnapshot _authoritative;
 	private DashPrediction? _dash;
+	private bool _rightHeld;
+	private double _cursorRefresh;
+	private float _defenseMovement = 1;
+	public bool DefenseHeld { get; set; }
+	public event Action? ManualMoveRequested;
+	public bool IsDashing => _dash is not null || _motion?.IsDashing == true;
+	public void SetDefenseMovement(float multiplier) => _defenseMovement=multiplier;
+	public bool MoveTo(NumericsVector2 target)
+	{
+		if (!_isLocal || !IsAlive || _motion is null) return false;
+		target=MovementSimulation.ClampTarget(target,_settings);
+		if (!_motion.TrySetTarget(target)) return false;
+		_target=target; return true;
+	}
+	public void StopMovement() { if (!IsDashing) MoveTo(_predictedPosition); }
+	public bool CanReachDirectly(NumericsVector2 point) => _navigation.CanTraverse(_predictedPosition,point);
 
 	public NetworkEntityId EntityId { get; private set; } = NetworkEntityId.Invalid;
 	public uint ClientTick => _clientTick;
@@ -40,6 +56,7 @@ public partial class PlayerController : CharacterBody3D
 		IsAlive = alive;
 		if (alive) return;
 		_dash = null; _predictionHistory.Clear();
+		_rightHeld=false; DefenseHeld=false;
 		_target = _predictedPosition = _authoritative.Position;
 		_motion?.Reset(_target, _target);
 	}
@@ -88,6 +105,7 @@ public partial class PlayerController : CharacterBody3D
 
 	public override void _UnhandledInput(InputEvent @event)
 	{
+		if (ProjectG.UI.GameUi.CharacterWindowOpen) return;
 		if (!_isLocal || !IsAlive ||
 			@event is not InputEventMouseButton mouseEvent ||
 			mouseEvent.ButtonIndex != MouseButton.Right ||
@@ -110,6 +128,7 @@ public partial class PlayerController : CharacterBody3D
 			return;
 
 		var clicked = rayOrigin + rayDirection * distance;
+		_rightHeld=true; ManualMoveRequested?.Invoke();
 		var target = MovementSimulation.ClampTarget(
 			new NumericsVector2(clicked.X, clicked.Z),
 			_settings);
@@ -119,6 +138,12 @@ public partial class PlayerController : CharacterBody3D
 
 	public override void _PhysicsProcess(double delta)
 	{
+		if (_isLocal && _rightHeld)
+		{
+			if (!Input.IsMouseButtonPressed(MouseButton.Right) || !GetWindow().HasFocus() || ProjectG.UI.GameUi.CharacterWindowOpen) _rightHeld=false;
+			else if ((_cursorRefresh+=delta)>=.1 && GetViewport().GuiGetHoveredControl() is null)
+			{ _cursorRefresh=0; if (TryCursorGround(out var point)) MoveTo(point); }
+		}
 		if (_isLocal)
 			UpdateLocal(delta);
 	}
@@ -178,10 +203,10 @@ public partial class PlayerController : CharacterBody3D
 				_dash = pending with { Applied = true };
 			}
 			ApplyMovementFrame(command);
-			_motion.Step(_fixedDelta);
+			_motion.Step(_fixedDelta*(_motion.IsDashing ? 1 : _defenseMovement));
 			_predictedPosition = _motion.Position;
 
-			_predictionHistory.Add(new PredictedFrame(command));
+			_predictionHistory.Add(new PredictedFrame(command,_defenseMovement));
 			if (_predictionHistory.Count > MaxPredictionHistory)
 				_predictionHistory.RemoveAt(0);
 
@@ -227,7 +252,7 @@ public partial class PlayerController : CharacterBody3D
 				injected = true;
 			}
 			ApplyMovementFrame(frame.Command);
-			_motion.Step(_fixedDelta);
+			_motion.Step(_fixedDelta*(_motion.IsDashing ? 1 : frame.SpeedMultiplier));
 		}
 
 		_predictedPosition = _motion.Position;
@@ -298,7 +323,14 @@ public partial class PlayerController : CharacterBody3D
 
 	private static double NowSeconds() => Time.GetTicksMsec() / 1000d;
 
-	private readonly record struct PredictedFrame(MoveCommand Command);
+	private readonly record struct PredictedFrame(MoveCommand Command,float SpeedMultiplier);
+	public bool TryCursorGround(out NumericsVector2 point)
+	{
+		point=default; var camera=GetViewport().GetCamera3D(); if(camera is null) return false;
+		var mouse=GetViewport().GetMousePosition(); var origin=camera.ProjectRayOrigin(mouse); var ray=camera.ProjectRayNormal(mouse);
+		if(Mathf.Abs(ray.Y)<.0001f || -origin.Y/ray.Y<=0) return false;
+		var hit=origin+ray*(-origin.Y/ray.Y); point=new(hit.X,hit.Z); return true;
+	}
 	private readonly record struct DashPrediction(uint Sequence, uint ClientTick, NumericsVector2 Direction,
 		float Range, float Speed, NumericsVector2 Destination, NumericsVector2 PreviousTarget, double StartedAt, bool Applied);
 

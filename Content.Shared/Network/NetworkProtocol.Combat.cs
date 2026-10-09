@@ -13,17 +13,18 @@ public static partial class NetworkProtocol
         writer.Put(message.Sequence);
         writer.Put(message.ClientTick);
         WriteVector2(writer, message.Direction);
+        writer.Put(message.TargetId.Value);
         return writer;
     }
 
     public static bool TryReadAttackCommand(NetDataReader reader, out AttackCommand message)
     {
         message = default;
-        if (reader.AvailableBytes != 16 || !reader.TryGetUInt(out var sequence) || sequence == 0 ||
+        if (reader.AvailableBytes != 24 || !reader.TryGetUInt(out var sequence) || sequence == 0 ||
             !reader.TryGetUInt(out var tick) || !TryReadVector2(reader, out var direction) ||
-            !BasicAttackShape.IsValidDirection(direction))
+            !BasicAttackShape.IsValidDirection(direction) || !reader.TryGetULong(out var target))
             return false;
-        message = new(sequence, tick, direction);
+        message = new(sequence, tick, direction,new(target));
         return true;
     }
 
@@ -64,21 +65,22 @@ public static partial class NetworkProtocol
         writer.Put(message.Damage);
         writer.Put(message.TargetHealth);
         writer.Put(message.Critical);
+        writer.Put((byte)message.Guard);
         return writer;
     }
 
     public static bool TryReadAttackEvent(NetDataReader reader, out AttackEvent message)
     {
         message = default;
-        if (reader.AvailableBytes != 61 || !reader.TryGetULong(out var actor) ||
+        if (reader.AvailableBytes != 62 || !reader.TryGetULong(out var actor) ||
             !reader.TryGetUInt(out var sequence) || !reader.TryGetUInt(out var tick) ||
             !TryReadVector2(reader, out var origin) || !TryReadVector2(reader, out var direction) ||
             !reader.TryGetFloat(out var range) || !reader.TryGetULong(out var target) ||
             !reader.TryGetDouble(out var damage) || !reader.TryGetDouble(out var health) ||
-            !reader.TryGetByte(out var critical) || critical > 1)
+            !reader.TryGetByte(out var critical) || critical > 1 || !reader.TryGetByte(out var guard) || !Enum.IsDefined((GuardImpact)guard))
             return false;
         var value = new AttackEvent(new(actor), sequence, tick, origin, direction,
-            range, new(target), damage, health, critical == 1);
+            range, new(target), damage, health, critical == 1,(GuardImpact)guard);
         if (!ValidAttackEvent(value))
             return false;
         message = value;
@@ -119,7 +121,7 @@ public static partial class NetworkProtocol
         return true;
     }
 
-    private static bool ValidAttackEvent(AttackEvent value) => value.AttackerId.IsValid && value.Sequence != 0 &&
+    private static bool ValidAttackEvent(AttackEvent value) => value.AttackerId.IsValid && value.Sequence != 0 && Enum.IsDefined(value.Guard) &&
         float.IsFinite(value.Origin.X) && float.IsFinite(value.Origin.Y) &&
         BasicAttackShape.IsValidDirection(value.Direction) && float.IsFinite(value.Range) && value.Range > 0 &&
         double.IsFinite(value.Damage) && value.Damage >= 0 && double.IsFinite(value.TargetHealth) && value.TargetHealth >= 0 &&

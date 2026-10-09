@@ -21,6 +21,7 @@ public sealed record StatBalance
     public required StatWeights CriticalOdds { get; init; }
     public required double BaseCriticalChance { get; init; }
     public required double DefenseScale { get; init; }
+    public double BaseBlockDamage { get; init; } = .3;
 
     public void Validate()
     {
@@ -29,7 +30,7 @@ public sealed record StatBalance
             ManaRecovery, HealthItem, ManaItem, AttackSpeed, CastSpeed, CriticalOdds];
         if (rules.Any(rule => rule is null || !rule.IsValid()) ||
             !double.IsFinite(BaseCriticalChance) || BaseCriticalChance <= 0 || BaseCriticalChance >= 1 ||
-            !double.IsFinite(DefenseScale) || DefenseScale <= 0)
+            !double.IsFinite(DefenseScale) || DefenseScale <= 0 || !double.IsFinite(BaseBlockDamage))
             throw new ArgumentException("Invalid balance: coefficients must be finite/non-negative, " +
                 "critical chance in (0, 1), defense scale positive.");
     }

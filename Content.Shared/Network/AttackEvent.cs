@@ -6,4 +6,4 @@ namespace Content.Shared.Network;
 public readonly record struct AttackEvent(
     NetworkEntityId AttackerId, uint Sequence, uint ServerTick,
     Vector2 Origin, Vector2 Direction, float Range,
-    NetworkEntityId TargetId, double Damage, double TargetHealth, bool Critical);
+    NetworkEntityId TargetId, double Damage, double TargetHealth, bool Critical, GuardImpact Guard = GuardImpact.None);

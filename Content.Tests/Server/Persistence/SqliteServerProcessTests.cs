@@ -31,6 +31,10 @@ public sealed class SqliteServerProcessTests
                 await CharacterPersistenceTests.Poll(client, () => { client.Move(++sequence, target); return client.IsAt(id, target); });
                 // Kill only this test's newly created child. No graceful-save path is allowed here.
                 child.Process.Kill(); await child.Process.WaitForExitAsync();
+                // NC: recovery continues during travel. The last durable value can be newer than the cast reply.
+                var durableMana = probe.SingleState.Mana;
+                Assert.InRange(durableMana, mana, before);
+                mana = durableMana;
             }
             finally { await StopOwnChild(child.Process); }
         }

@@ -49,6 +49,7 @@ public partial class AbilityPresentation : Node3D
             if (key.PhysicalKeycode == Key.Space ? slot.Form == AbilityForm.Dash : slot.Id == _bar[index]) { selected = slot; break; }
         if (selected is not { } profile || profile.ReadyInSeconds > Now() - _receivedAt || _loadout.Mana < profile.ManaCost) return;
         var form = profile.Form;
+        if (form==AbilityForm.Dash && _network.LatestDefense is { } defense && defense.Stamina<defense.DodgeCost) return;
         var camera = GetViewport().GetCamera3D();
         if (camera is null) return;
         var mouse = GetViewport().GetMousePosition();
@@ -97,14 +98,7 @@ public partial class AbilityPresentation : Node3D
             _player.RejectDash(_pending); _pending = 0; ClearPreview();
         }
         if (_loadout.Abilities is null) return;
-        var text = $"MP {_loadout.Mana:0}/{_loadout.MaxMana:0}  {_feedback}";
-        foreach (var slot in _loadout.Abilities)
-        {
-            var index = Array.IndexOf(_bar,slot.Id);
-            var key = slot.Form == AbilityForm.Dash ? "Space" : index >= 0 ? BarKeys[index].ToString() : "?";
-            text += $"\n{key}: {Math.Max(0, slot.ReadyInSeconds - (Now() - _receivedAt)):0.0}s";
-        }
-        _label.Text = text;
+        _label.Text = _feedback;
     }
 
     public override void _ExitTree() => ClearPreview();

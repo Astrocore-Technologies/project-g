@@ -12,7 +12,7 @@ using Content.Shared.Network;
 namespace Content.Server.Combat;
 
 /// <summary>Pure fixed-tick abilities; resources and outcomes never depend on client time or FPS.</summary>
-public sealed class AbilitySimulation
+public sealed partial class AbilitySimulation
 {
     private readonly Dictionary<NetworkEntityId, AbilityActor> _actors = new();
     private readonly Dictionary<NetworkEntityId, Pending> _pending = new();
@@ -40,7 +40,8 @@ public sealed class AbilitySimulation
     public AbilitySimulation(ContentCatalog catalog, CombatSimulation combat, SpatialIndex spatial, NavigationGrid grid,
         CombatOptions options, float cellSize, Func<NetworkEntityId, Vector2, float, bool> startDash)
     {
-        if (options.MaxAbilityEffects is < 1 or > 1024 || options.MaxCompensationMilliseconds is < 0 or > 200 ||
+        if (!double.IsFinite(options.ManaRecoveryIntervalSeconds) || options.ManaRecoveryIntervalSeconds is <= 0 or > 60 ||
+            options.MaxAbilityEffects is < 1 or > 1024 || options.MaxCompensationMilliseconds is < 0 or > 200 ||
             !float.IsFinite(options.MaxAbilityLifetimeSeconds) || options.MaxAbilityLifetimeSeconds is <= 0 or > 60 ||
             !float.IsFinite(options.ImpactSeconds) || options.ImpactSeconds <= 0 || options.ImpactSeconds > options.MaxAbilityLifetimeSeconds)
             throw new ArgumentException("Invalid bounded prototype ability settings.");
@@ -73,10 +74,11 @@ public sealed class AbilitySimulation
             if (next.Profiles[i].Form == AbilityForm.Dash) next.Profiles[i] = next.Profiles[i] with { Speed = next.Profiles[i].Speed * (float)PowerFactor(next,next.Profiles[i].Id) };
         Array.Copy(old.ReadyAt, next.ReadyAt, old.ReadyAt.Length);
         next.Mana = Math.Min(old.Mana, next.MaxMana);
+        next.RecoveryElapsed = old.RecoveryElapsed; // NC
         next.LastSeenSequence = old.LastSeenSequence; next.LastRequestTick = old.LastRequestTick;
         return next;
     }
-    internal void ApplyEquipment(NetworkEntityId id, AbilityActor next) { _actors[id] = next; _dirty.Add(id); }
+    internal void ApplyEquipment(NetworkEntityId id, AbilityActor next) { _actors[id] = next; _dirty.Add(id); RefreshManaRecovery(id); }
 
     internal SavedCooldown[] CaptureCooldowns(NetworkEntityId id)
     {
@@ -88,7 +90,7 @@ public sealed class AbilitySimulation
     }
 
     internal void ResetSession(NetworkEntityId id){var a=_actors[id];a.LastSeenSequence=0;a.LastRequestTick=null;_pending.Remove(id);_results.Remove(id);}
-    internal void Respawn(NetworkEntityId id){var a=_actors[id];a.Mana=a.MaxMana*.5;_dirty.Add(id);}
+    internal void Respawn(NetworkEntityId id){var a=_actors[id];a.Mana=a.MaxMana*.5;_dirty.Add(id);RefreshManaRecovery(id);}
     internal void StopDead(NetworkEntityId id){_combat.Get(id).IsCasting=false;_pending.Remove(id);}
     internal double Mana(NetworkEntityId id) => _actors[id].Mana;
 
@@ -98,6 +100,7 @@ public sealed class AbilitySimulation
         if (state.Mana > actor.MaxMana || state.Cooldowns.Length != actor.Definitions.Length)
             throw new InvalidDataException("Saved mana/loadout does not match current content.");
         actor.Mana = state.Mana;
+        RefreshManaRecovery(id); // NC: offline time never restores mana.
         for (var i = 0; i < actor.Definitions.Length; i++)
         {
             var saved = Array.Find(state.Cooldowns, item => item.AbilityId == actor.Definitions[i].Id)
@@ -130,13 +133,14 @@ public sealed class AbilitySimulation
                 throw new ArgumentException($"Ability {ability.Id} exceeds execution budgets or has an unsupported dash cast.");
             definitions[i] = ability;
             profiles[i] = new(ability.NetworkId, (AbilityForm)ability.Kind, (float)ability.Range, (float)ability.Radius,
-                (float)ability.Speed, cast, ability.CooldownSeconds, ability.ManaCost, 0);
+                (float)ability.Speed, cast, ability.CooldownSeconds, ability.Kind==AbilityKind.Dash ? 0 : ability.ManaCost, 0);
         }
         return new AbilityActor(definitions, profiles, Math.Max(0, stats.MaxMana));
     }
 
     public void Remove(NetworkEntityId id)
     {
+        _recoveringMana.Remove(id); _offlineMana.Remove(id); // NC
         _actors.Remove(id); _pending.Remove(id); _results.Remove(id); _dirty.Remove(id);
         for (var i = _effects.Count - 1; i >= 0; i--) if (_effects[i].ActorId == id) _effects.RemoveAt(i);
         // ActiveStates is refreshed next tick; stale send caches expire through interest removal.
@@ -176,6 +180,7 @@ public sealed class AbilitySimulation
         if (!float.IsFinite(delta) || delta <= 0) throw new ArgumentException("Invalid ability tick delta.");
         _delta = delta;
         _time = StatMath.Add(_time, delta); _hits.Clear(); _states.Clear(); _practice.Clear(); _practiced.Clear();
+        RecoverMana(delta); // NC: independent of incoming commands.
         // Advance only active effects, not every idle player or their cooldown slots.
         for (var i = _effects.Count - 1; i >= 0; i--)
         {
@@ -227,6 +232,8 @@ public sealed class AbilitySimulation
             : combatant.IsCasting ? AbilityOutcome.Busy
             : _time < actor.ReadyAt[index] ? AbilityOutcome.Cooldown
             : actor.Mana < actor.Profiles[index].ManaCost ? AbilityOutcome.NoMana
+            : actor.Profiles[index].Form==AbilityForm.Dash && !_combat.CanDodge(id) ? AbilityOutcome.NoStamina
+            : actor.Profiles[index].Form!=AbilityForm.Dash && _combat.IsDefending(id) ? AbilityOutcome.Busy
             : _effects.Count >= _options.MaxAbilityEffects || _nextEffectId == 0 ? AbilityOutcome.Capacity
             : AbilityOutcome.Accepted;
         if (outcome != AbilityOutcome.Accepted) { _results[id] = new(command.Sequence, tick, outcome); return; }
@@ -249,7 +256,9 @@ public sealed class AbilitySimulation
             _results[id] = new(command.Sequence, tick, AbilityOutcome.InvalidAim); return;
         }
         if(profile.Form!=AbilityForm.Dash)_combat.PlayerAction?.Invoke(id);
+        else _combat.SpendDodge(id);
         actor.Mana = Math.Max(0, actor.Mana - profile.ManaCost);
+        RefreshManaRecovery(id); // NC
         actor.ReadyAt[index] = StatMath.Add(_time, profile.CooldownSeconds);
         combatant.IsCasting = true;
         var effect = new AbilityEffect
@@ -359,7 +368,9 @@ public sealed class AbilitySimulation
         for (var i=0;i<next.Profiles.Length;i++)
             if (next.Profiles[i].Form == AbilityForm.Dash) next.Profiles[i] = next.Profiles[i] with { Speed = next.Profiles[i].Speed * (float)PowerFactor(next,next.Profiles[i].Id) };
         next.Mana = Math.Min(old.Mana,next.MaxMana); next.LastSeenSequence = old.LastSeenSequence; next.LastRequestTick = old.LastRequestTick;
+        next.RecoveryElapsed = old.RecoveryElapsed; // NC
         _actors[id] = next; _dirty.Add(id);
+        RefreshManaRecovery(id); // NC
     }
     private readonly record struct Pending(AbilityCommand Command, float CompensationSeconds);
 }

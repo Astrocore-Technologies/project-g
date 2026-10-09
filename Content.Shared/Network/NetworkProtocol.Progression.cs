@@ -2,20 +2,51 @@ using LiteNetLib.Utils;
 namespace Content.Shared.Network;
 public static partial class NetworkProtocol
 {
-    private static bool ValidProgressionCommand(ProgressionCommand c) => c.Sequence != 0 && Enum.IsDefined(c.Action) && c.StatIndex < 6 && c.Slot <= NetworkConstants.MaxAbilitySlots && c.Action switch
-    { ProgressionAction.AllocateStat => c.SkillId == 0 && c.Slot == 0,
-      ProgressionAction.LearnSkill => c.SkillId != 0 && c.StatIndex == 0 && c.Slot == 0,
-      ProgressionAction.AssignSlot => c.SkillId != 0 && c.StatIndex == 0, _ => false };
+    public static bool ValidProgressionCommand(ProgressionCommand c) => c.Sequence != 0 && Enum.IsDefined(c.Action) && c.StatIndex < 6 && c.Slot <= NetworkConstants.MaxAbilitySlots && c.Action switch
+    { ProgressionAction.AllocateStat => c.Allocation is null && c.SkillId == 0 && c.Slot == 0,
+      ProgressionAction.LearnSkill => c.Allocation is null && c.SkillId != 0 && c.StatIndex == 0 && c.Slot == 0,
+      ProgressionAction.AssignSlot => c.Allocation is null && c.SkillId != 0 && c.StatIndex == 0,
+      ProgressionAction.PreviewStats or ProgressionAction.AllocateStats => c.StatIndex == 0 && c.SkillId == 0 && c.Slot == 0 && ValidAllocation(c), _ => false };
+    private static bool ValidAllocation(ProgressionCommand c)
+    {
+        if (c.Allocation is not { Length: 6 }) return false;
+        var total = 0;
+        foreach (var value in c.Allocation) { if (value is < 0 or > 100000) return false; total += value; }
+        return total <= 100000 && (total > 0 || c.Action == ProgressionAction.PreviewStats);
+    }
     public static NetDataWriter Write(ProgressionCommand c)
     {
         if (!ValidProgressionCommand(c)) throw new ArgumentException("Invalid progression intention.");
-        var w = CreateWriter(NetworkMessageType.ProgressionCommand); w.Put(c.Sequence); w.Put((byte)c.Action); w.Put(c.StatIndex); w.Put(c.SkillId); w.Put(c.Slot); return w;
+        var w = CreateWriter(NetworkMessageType.ProgressionCommand); w.Put(c.Sequence); w.Put((byte)c.Action); w.Put(c.StatIndex); w.Put(c.SkillId); w.Put(c.Slot);
+        if (c.Allocation is not null) foreach (var value in c.Allocation) w.Put(value);
+        return w;
     }
     public static bool TryReadProgressionCommand(NetDataReader r, out ProgressionCommand c)
     {
         c = default;
-        if (r.AvailableBytes != 9 || !r.TryGetUInt(out var seq) || !r.TryGetByte(out var action) || !r.TryGetByte(out var stat) || !r.TryGetUShort(out var skill) || !r.TryGetByte(out var slot)) return false;
-        var v = new ProgressionCommand(seq,(ProgressionAction)action,stat,skill,slot); if (!ValidProgressionCommand(v)) return false; c = v; return true;
+        if (r.AvailableBytes is not (9 or 33) || !r.TryGetUInt(out var seq) || !r.TryGetByte(out var action) || !r.TryGetByte(out var stat) || !r.TryGetUShort(out var skill) || !r.TryGetByte(out var slot)) return false;
+        int[]? allocation = null;
+        if ((ProgressionAction)action is ProgressionAction.PreviewStats or ProgressionAction.AllocateStats)
+        { allocation = new int[6]; for (var i = 0; i < 6; i++) if (!r.TryGetInt(out allocation[i])) return false; }
+        var v = new ProgressionCommand(seq,(ProgressionAction)action,stat,skill,slot,allocation); if (r.AvailableBytes != 0 || !ValidProgressionCommand(v)) return false; c = v; return true;
+    }
+    public static NetDataWriter Write(StatPreview value)
+    {
+        if (value.Sequence == 0 || !ValidDisplayStats(value.Current) || !ValidDisplayStats(value.Projected)) throw new ArgumentException("Invalid stat preview.");
+        var w = CreateWriter(NetworkMessageType.StatPreview); w.Put(value.Sequence); w.Put(value.ServerTick);
+        foreach (var stat in value.Current) w.Put(stat);
+        foreach (var stat in value.Projected) w.Put(stat);
+        return w;
+    }
+    private static bool ValidDisplayStats(double[] values) => values is { Length: 17 } && values.All(double.IsFinite);
+    public static bool TryReadStatPreview(NetDataReader r, out StatPreview value)
+    {
+        value = default;
+        if (r.AvailableBytes != 280 || !r.TryGetUInt(out var seq) || seq == 0 || !r.TryGetUInt(out var tick)) return false;
+        var current = new double[17]; var projected = new double[17];
+        for (var i = 0; i < 17; i++) if (!r.TryGetDouble(out current[i]) || !double.IsFinite(current[i])) return false;
+        for (var i = 0; i < 17; i++) if (!r.TryGetDouble(out projected[i]) || !double.IsFinite(projected[i])) return false;
+        value = new(seq,tick,current,projected); return true;
     }
     public static NetDataWriter Write(ProgressionResult c)
     {

@@ -36,6 +36,7 @@ public sealed partial class GameServerService
         public WorldNodeCommand? NodeSecond;
         public MoveCommand? Move;
         public AttackCommand? Attack;
+        public DefenseCommand? Defense;
         public AbilityCommand? Ability;
         public InventoryCommand? Inventory;
         public PickupCommand? Pickup;
@@ -123,6 +124,7 @@ public sealed partial class GameServerService
             if (intentions.NodeSecond is { } nodeSecond) world.TryQueueWorldNode(connection,nodeSecond);
             if (intentions.Move is { } move) world.TryApplyMove(connection, move);
             if (intentions.Attack is { } attack) world.TryQueueAttack(connection, attack);
+            if (intentions.Defense is { } defense) world.TryQueueDefense(connection,defense);
             if (intentions.Ability is { } ability) world.TryQueueAbility(connection, ability, _peers[connection].Ping);
             if (intentions.Inventory is { } inventory) world.TryQueueInventory(connection, inventory);
             if (intentions.Pickup is { } pickup) world.TryQueuePickup(connection, pickup);

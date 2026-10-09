@@ -16,7 +16,7 @@ public partial class NetworkClient
         CurrentRegion = entry;
         KnownPlayers.Clear(); CraftRecipes.Clear(); ResourceNodes.Clear();
         Navigation = null; LatestServerTick = 0;
-        LatestWorldNode = null; LatestStarterZone = null; LatestPvpZone = null;
+        LatestWorldNode = null; LatestStarterZone = null; LatestPvpZone = null; LatestDefense = null;
         CanDevelopmentRevive = false;
         // Listeners detach old presentation synchronously, before the next packet in this poll.
         RegionChanged?.Invoke();

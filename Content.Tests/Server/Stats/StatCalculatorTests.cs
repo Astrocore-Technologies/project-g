@@ -44,7 +44,7 @@ public sealed class StatCalculatorTests
         Assert.Equal(1.2, result.HealthItemMultiplier, 10);
         Assert.Equal(1.1, result.ManaItemMultiplier, 10);
         Assert.Equal(1.125, result.AttackSpeedMultiplier, 10);
-        Assert.Equal(1.15, result.CastSpeedMultiplier, 10);
+        Assert.Equal(1.1, result.CastSpeedMultiplier, 10);
 
         var custom = new StatCalculator(_catalog.Balance with { MeleeAttack = new StatWeights { Strength = 2 } });
         Assert.Equal(20, custom.Calculate(new BaseStats(10, 0, 0, 0, 0, 0), 100, 50, 0, 0).MeleeAttack);
@@ -73,7 +73,7 @@ public sealed class StatCalculatorTests
             MaxMana = -100, HealthRecovery = -2, ManaRecovery = -2,
             AttackSpeedMultiplier = -2, CastSpeedMultiplier = -2,
             HealthItemMultiplier = -2, ManaItemMultiplier = -2,
-            MeleeWeaponMultiplier = -2, RangedWeaponMultiplier = -2, CriticalChance = -1
+            MeleeWeaponMultiplier = -2, RangedWeaponMultiplier = -2, CriticalChance = -1, BlockDamage = -1
         });
         foreach (var property in typeof(DerivedStats).GetProperties())
         {

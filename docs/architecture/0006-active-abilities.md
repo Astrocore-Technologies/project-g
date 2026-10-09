@@ -2,6 +2,8 @@
 
 ## Status and scope
 
+Update (2026-10-09): the no-mana-regeneration assumption below is superseded by the approved progression rules in `../design/gameplay-contract.md`. The server now restores mana on fixed simulation ticks for living, connected players; only actors with missing mana are scheduled for recovery. Authority and wire contracts are unchanged.
+
 Stages 5 and 6 accepted by the user. Stage 7 extends the target policy to hostile NPCs; see ADR 0007. No engine, authority, persistence or process-boundary change. This is a training slice, not final skill/PvP/death design.
 
 Explicit temporary assumptions: Q projectile, W cursor-ground AoE, Space cursor-direction dash; only training targets receive damage. No spell critical RNG, mana regeneration, invulnerability, interrupt refunds or auto-approach. An existing RMB route may continue during a spell. Dash cancels that route; a new RMB during dash is sent repeatedly and executes after dash ends. Cast blocks starting another ability or basic attack; already released projectiles remain independent.

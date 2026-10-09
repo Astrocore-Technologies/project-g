@@ -19,7 +19,7 @@ public sealed class AbilitySimulationTests
         Assert.Equal(hp, f.Health);
         f.Step();
         Assert.Equal(AbilityOutcome.Accepted, f.Result);
-        Assert.Equal(50, f.Abilities.Loadout(f.Player.EntityId, f.World.Tick).Mana, 8);
+        Assert.Equal(45.5, f.Abilities.Loadout(f.Player.EntityId, f.World.Tick).Mana, 8);
         Assert.Equal(AbilityPhase.Telegraph, Assert.Single(f.Abilities.ActiveStates).Phase);
         Assert.Equal(hp, f.Health);
         for (var i = 0; i < 80; i++) f.Step();
@@ -40,7 +40,7 @@ public sealed class AbilitySimulationTests
         for (var i = 0; i < 15; i++) f.Step();
         f.Queue(3, 1, Vector2.UnitY); f.Step();
         Assert.Equal(AbilityOutcome.Cooldown, f.Result);
-        Assert.Equal(50, f.Abilities.Loadout(f.Player.EntityId, f.World.Tick).Mana, 8);
+        Assert.Equal(45.5, f.Abilities.Loadout(f.Player.EntityId, f.World.Tick).Mana, 8);
     }
 
     [Theory]
@@ -54,7 +54,7 @@ public sealed class AbilitySimulationTests
         f.World.TryQueueAbility(42, new(1, future ? 1000u : 0u, (ushort)id, new(x, z)), 100000);
         f.Step();
         Assert.NotEqual(AbilityOutcome.Accepted, f.Result);
-        Assert.Equal(55, f.Abilities.Loadout(f.Player.EntityId, f.World.Tick).Mana, 8);
+        Assert.Equal(50.5, f.Abilities.Loadout(f.Player.EntityId, f.World.Tick).Mana, 8);
         Assert.Empty(f.Abilities.ActiveStates);
         Assert.Empty(f.Hits);
         Assert.False(f.World.TryQueueAbility(999, new(1, 0, 1, Vector2.UnitY), 0));
@@ -74,7 +74,7 @@ public sealed class AbilitySimulationTests
         Assert.Single(f.Hits);
         Assert.True(f.Health < hp);
         Assert.Equal(f.World.Combat.Get(second.EntityId).Stats.MaxHealth, f.World.Combat.Get(second.EntityId).Health);
-        Assert.Equal(45, f.Abilities.Loadout(f.Player.EntityId, f.World.Tick).Mana, 8);
+        Assert.Equal(40.5 + 2 * (1 + 1d / 36), f.Abilities.Loadout(f.Player.EntityId, f.World.Tick).Mana, 8);
     }
 
     [Fact]
@@ -83,6 +83,8 @@ public sealed class AbilitySimulationTests
         var f = new Fixture();
         var start = f.Player.Position;
         f.Queue(1, 3, Vector2.UnitX); f.Step();
+        Assert.Equal(80,f.World.Combat!.DefenseState(f.Player.EntityId,f.World.Tick).Stamina);
+        Assert.Equal(50.5,f.Abilities.Loadout(f.Player.EntityId,f.World.Tick).Mana,8);
         Assert.Equal(start, f.Player.Position);
         f.Step();
         Assert.Equal(start + new Vector2(0.75f, 0), f.Player.Position);
@@ -122,7 +124,7 @@ public sealed class AbilitySimulationTests
         Assert.Single(effects.Changes);
         f.World.TryQueueAbility(43, new(1, 0, 2, new(-7, 3)), 0); f.Step();
         Assert.Equal(AbilityOutcome.Capacity, f.Abilities.Results[second.EntityId].Outcome);
-        Assert.Equal(55, f.Abilities.Loadout(second.EntityId, f.World.Tick).Mana, 8);
+        Assert.Equal(50.5, f.Abilities.Loadout(second.EntityId, f.World.Tick).Mana, 8);
         for (var i = 0; i < 50; i++) f.Step();
         f.World.UpdateInterest(43, view); f.World.UpdateAbilityInterest(43, view, effects);
         Assert.Equal(AbilityPhase.Finished, Assert.Single(effects.Changes).Phase);
@@ -156,7 +158,8 @@ public sealed class AbilitySimulationTests
     [Fact]
     public void ExhaustedManaRejectsCastWithoutNegativeResourceOrCooldown()
     {
-        var f = new Fixture();
+        // NC: isolate exhaustion validation from the independently tested recovery mechanic.
+        var f = new Fixture(noRecovery: true);
         for (uint sequence = 1; sequence <= 5; sequence++)
         {
             f.Queue(sequence, 2, new(-7, 3)); f.Step();
@@ -166,7 +169,7 @@ public sealed class AbilitySimulationTests
         f.Queue(6, 2, new(-7, 3)); f.Step();
         Assert.Equal(AbilityOutcome.NoMana, f.Result);
         var loadout = f.Abilities.Loadout(f.Player.EntityId, f.World.Tick);
-        Assert.Equal(5, loadout.Mana, 8);
+        Assert.Equal(0.5, loadout.Mana, 8);
         Assert.Equal(0, loadout.Abilities.Single(slot => slot.Id == 2).ReadyInSeconds);
     }
 
@@ -210,10 +213,18 @@ public sealed class AbilitySimulationTests
         public double Health => World.Combat!.Get(World.TrainingTargetId).Health;
         public List<AbilityHit> Hits { get; } = new();
         public AbilityOutcome Result => Abilities.Results[Player.EntityId].Outcome;
-        public Fixture(CombatOptions? options = null)
+        public Fixture(CombatOptions? options = null, bool noRecovery = false)
         {
+            var catalog = ContentCatalogTests.Load();
+            if (noRecovery)
+            {
+                var json = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(ContentCatalogTests.DataPath))!;
+                json["creatures"]![0]!["baseManaRecovery"] = 0;
+                json["balance"]!["manaRecovery"]!["intelligence"] = 0;
+                catalog = Content.Server.Data.ContentCatalog.Parse(System.Text.Encoding.UTF8.GetBytes(json.ToJsonString()));
+            }
             World = new(Options.Create(new MovementOptions()), Options.Create(new InterestOptions()),
-                catalog: ContentCatalogTests.Load(), combat: Options.Create(options ?? new CombatOptions()));
+                catalog: catalog, combat: Options.Create(options ?? new CombatOptions()));
             Player = World.AddPlayer(42, new(1));
         }
         public bool Queue(uint seq, ushort id, Vector2 aim) => World.TryQueueAbility(42, new(seq, 0, id, aim), 0);

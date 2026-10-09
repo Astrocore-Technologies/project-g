@@ -4,6 +4,26 @@
 
 Stage 5 accepted by the user. Stage 6 extends this baseline; see ADR 0006.
 
+2026-10-09 amendment: the user approved selected-target repeated basic attacks and automatic approach,
+RMB-held movement, Tab guard, Shift parry and stamina. The old manual-only input restrictions below
+are historical, superseded by `docs/design/gameplay-contract.md` (Combat).
+Authority, fixed ticks, geometry validation and spatial queries remain unchanged.
+Protocol v27 appends optional target ID to AttackCommand (body 24 bytes), GuardImpact to AttackEvent
+(62 bytes), and adds DefenseCommand 84 (13 bytes) / owner-only DefenseState 85 (86 bytes).
+Guard heartbeats and resource snapshots are Unreliable; parry/release use ReliableOrdered.
+Guard expires after a bounded lease if updates stop. Costs/cooldowns are checked on the server tick.
+Additive SavedDefense v1 in CharacterState stores stamina and remaining recovery/parry timers;
+legacy characters start full, reconnect cannot refill, database schema is unchanged. Snapshots still
+follow the durable publication barrier. Old client/server pairs are rejected by protocol version.
+
+Verification of the amendment (2026-10-09):
+- `dotnet build Game.slnx --no-restore -m:1 -p:OutputPath=D:/projects/project-g/.artifacts/defense-tests-final/`: passed. The ordinary server output was locked by an existing server, which was left running.
+- `dotnet test Content.Tests/Content.Tests.csproj --no-restore -m:1 -p:OutputPath=D:/projects/project-g/.artifacts/defense-tests-final/ --logger "console;verbosity=minimal"`: 466 passed, 7 skipped (live PostgreSQL and opt-in development database copy). One earlier concurrent run timed out in the child-process SQLite test; its isolated rerun and two subsequent full runs passed.
+- Server `--validate-content`: passed. Existing NU1903 SQLitePCLRaw vulnerability and NU1900 audit-access warnings remain outside this change.
+- Godot 4.7.1 headless `Tests/UI/PlayerHudSmoke.tscn`: passed against isolated SQLite server/profile, including resource bars and allocation preview/apply. Percentage formatting also passed.
+- D3D12 Mobile `Tests/UI/CombatInputSmoke.tscn`: initial graphical run passed parry, guard release, automatic approach/repeat, RMB cancellation, recovery and dash cost. The later extended cursor-tracking/reconnect run closed without its completion marker and is not counted as passed; defense serialization/restore and reconnect-without-refill are covered by server tests. HUD screenshot was inspected and overlapping sidebar labels repositioned.
+- Fixed-tick validation and owner-only wire tests cover frontal/back hits, one-hit parry, cooldown, insufficient stamina, expired guard, magic bypass, regen, requested-target validation and malformed/truncated packets.
+
 ## Scope and explicit prototype assumptions
 
 A melee training sword and one stationary training target in the flat test region. This is not a permanent PvP/death rule or the NPC/AI stage. Players cannot damage other players in this training slice. A click on empty ground still swings. There is no auto-walk, automatic repeat, resource cost, windup, regeneration, respawn, loot or attack-induced movement stop. An existing RMB route may continue while swinging. Holding LMB does not repeat in this implementation.

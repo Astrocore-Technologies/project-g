@@ -13,7 +13,7 @@ public partial class PvpPresentation:CanvasLayer
     public void Initialize(NetworkClient network,PlayerController player)
     {
         _network=network;_player=player;Layer=8;
-        _hud=new(){Position=new Vector2(18,100),Text="PvP / смерть — V"};AddChild(_hud);
+        _hud=new(){Position=new Vector2(24,354),Text="PvP / смерть — V",MouseFilter=Control.MouseFilterEnum.Ignore};AddChild(_hud);
         _panel=new(){Position=new Vector2(100,100),CustomMinimumSize=new Vector2(520,360),Visible=false};AddChild(_panel);
         var body=new VBoxContainer();_panel.AddChild(body);body.AddChild(new Label(){Text="PvP, репутация и смерть — V"});
         _details=new(){AutowrapMode=TextServer.AutowrapMode.WordSmart};body.AddChild(_details);

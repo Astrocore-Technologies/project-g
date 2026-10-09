@@ -19,18 +19,18 @@ public partial class StarterZonePresentation : Node3D
     private Node3D _bridge=null!;
     private double _refresh;
     private readonly HashSet<ushort> _places=new();
-    private static readonly string[] Steps=["ПКМ — пройти по дороге", "ЛКМ — ударить тренировочную цель", "QWER / ASDF — умения; Space — рывок", "T / Y / U — ручная способность Эхо", "Исследовать окрестности", "H у хранителя — помочь переправе", "P — проверить доступные профессии"];
+    private static readonly string[] Steps=["ПКМ / удержание — движение", "ЛКМ по цели — подход и автоатака", "QWER / ASDF — умения; Space — рывок", "T / Y / U — способность Эхо; Tab — блок; Shift — парирование", "Исследовать окрестности", "H у хранителя — помочь переправе", "P — проверить доступные профессии"];
     public void Initialize(NetworkClient network, PlayerController player, StarterZoneState zone, bool buildLegacyScenery = true)
     {
         _network=network; _player=player; _zone=zone;
         _network.ExplorationReceived+=Apply; _network.WorldNodeReceived+=WorldChanged;
         var canvas=new CanvasLayer { Layer=4 }; AddChild(canvas);
-        _mapPanel=new PanelContainer { AnchorLeft=1,AnchorRight=1,AnchorTop=1,AnchorBottom=1,OffsetLeft=-238,OffsetRight=-12,OffsetTop=-330,OffsetBottom=-12,MouseFilter=Control.MouseFilterEnum.Ignore };
+        _mapPanel=new PanelContainer { Theme=ProjectG.UI.GameUi.CreateTheme(),AnchorLeft=1,AnchorRight=1,OffsetLeft=-262,OffsetRight=-16,OffsetTop=16,MouseFilter=Control.MouseFilterEnum.Stop };
         canvas.AddChild(_mapPanel);
         var column=new VBoxContainer { MouseFilter=Control.MouseFilterEnum.Ignore }; _mapPanel.AddChild(column);
-        _location=new Label { Text=zone.RegionName+"\nС ↑  В →  Ю ↓  З ←",MouseFilter=Control.MouseFilterEnum.Ignore }; column.AddChild(_location);
+        _location=new Label { Text=zone.RegionName,CustomMinimumSize=new(220,0),AutowrapMode=TextServer.AutowrapMode.WordSmart,MouseFilter=Control.MouseFilterEnum.Ignore }; column.AddChild(_location);
         _map=new StarterMap { CustomMinimumSize=new(220,220),MouseFilter=Control.MouseFilterEnum.Ignore }; column.AddChild(_map);
-        column.AddChild(new Label { Text="M — карта   V — PvP/смерть; F1 — обучение",MouseFilter=Control.MouseFilterEnum.Ignore });
+        column.AddChild(ProjectG.UI.GameUi.Text("M — размер  ·  F1 — помощь",14));
         _guide=new PanelContainer { AnchorLeft=0.5f,AnchorRight=0.5f,OffsetLeft=-260,OffsetRight=260,OffsetTop=100,MouseFilter=Control.MouseFilterEnum.Stop,Visible=false }; canvas.AddChild(_guide);
         var guideColumn=new VBoxContainer(); _guide.AddChild(guideColumn);
         _guideText=new Label { AutowrapMode=TextServer.AutowrapMode.WordSmart,CustomMinimumSize=new(500,0) }; guideColumn.AddChild(_guideText);
@@ -43,7 +43,7 @@ public partial class StarterZonePresentation : Node3D
         var text=_zone.GuideName+"\nДобро пожаловать в "+_zone.TownName+"!\n\n";
         var flags=_exploration?.Tutorial ?? 0;
         for(var i=0;i<Steps.Length;i++) text+=((flags&(1<<i))!=0 ? "✓ " : "○ ")+Steps[i]+"\n";
-        _guideText.Text=text+"\nI — вещи, K — характеристики и навыки, C — добыча, крафт и ремонт.\nB — обмен, J — кузница, монеты и местный рынок.\nИсследуй мир и пробуй разные действия: новые возможности\nпоявляются по мере твоего пути. Подсказки не дают наград.\nV — PvP/смерть; F1 — открыть или закрыть эту памятку.";
+        _guideText.Text=text+"\nI — вещи, K — характеристики и навыки, C — добыча, крафт и ремонт.\nB — обмен, J — кузница, монеты и местный рынок.\nN — группа, O — гильдия.\nИсследуй мир и пробуй разные действия: новые возможности\nпоявляются по мере твоего пути. Подсказки не дают наград.\nV — PvP/смерть; F1 — открыть или закрыть эту памятку.";
     }
     public override void _UnhandledInput(InputEvent input)
     {
@@ -53,7 +53,7 @@ public partial class StarterZonePresentation : Node3D
         {
             var large=_map.CustomMinimumSize.X<300;
             _map.CustomMinimumSize=large ? new(380,380) : new(220,220);
-            _mapPanel.OffsetLeft=large ? -398 : -238; _mapPanel.OffsetTop=large ? -490 : -330; GetViewport().SetInputAsHandled();
+            _mapPanel.OffsetLeft=large ? -422 : -262; _mapPanel.Size=new(large ? 406 : 246,0); GetViewport().SetInputAsHandled();
         }
     }
     public override void _Process(double delta)

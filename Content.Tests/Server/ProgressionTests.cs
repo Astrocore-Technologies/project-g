@@ -85,7 +85,7 @@ public sealed class ProgressionTests
         Assert.Equal(60,next.ProgressionState(restored.EntityId,next.Tick).Experience); Assert.Equal(1,Skill(next,restored,5).Level);
         saved = next.CaptureCharacter(42) with { X = 9,Z = 6 }; var third = World(); var final = third.AddPlayer(42,new(1),saved);
         third.TryApplyMove(42,new(1,0,new(9,5))); Step(third,30);
-        var result = third.ProgressionState(final.EntityId,third.Tick); Assert.Equal(2,result.Level); Assert.Equal(20,result.Experience); Assert.Equal(3,result.StatPoints);
+        var result = third.ProgressionState(final.EntityId,third.Tick); Assert.Equal(2,result.Level); Assert.Equal(20,result.Experience); Assert.Equal(10,result.StatPoints);
     }
     [Fact]
     public void StatAllocationKeepsEquipmentHealthManaAndCooldownWhileReplayAndFloodAreRejected()

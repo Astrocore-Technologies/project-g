@@ -1,7 +1,20 @@
 {
   "schemaVersion": 3,
   "balanceVersion": 3,
+  "defense": {
+    "maxStamina": 100,
+    "recoveryPerSecond": 15,
+    "recoveryDelay": 1,
+    "blockCost": 10,
+    "parryCost": 10,
+    "dodgeCost": 20,
+    "parryWindow": 0.25,
+    "parryCooldown": 0.5,
+    "blockMovementMultiplier": 0.5,
+    "guardLeaseSeconds": 0.5
+  },
   "balance": {
+    "baseBlockDamage": 0.3,
     "meleeAttack": {
       "strength": 1,
       "dexterity": 0.2,
@@ -55,8 +68,7 @@
       "dexterity": 0.0025
     },
     "castSpeed": {
-      "dexterity": 0.01,
-      "intelligence": 0.005
+      "dexterity": 0.01
     },
     "criticalOdds": {
       "luck": 0.06315789473684211
@@ -228,12 +240,12 @@
     {
       "id": "test_adventurer",
       "stats": {
-        "strength": 10,
-        "agility": 10,
-        "vitality": 10,
-        "intelligence": 10,
-        "dexterity": 10,
-        "luck": 10
+        "strength": 1,
+        "agility": 1,
+        "vitality": 1,
+        "intelligence": 1,
+        "dexterity": 1,
+        "luck": 1
       },
       "baseHealth": 100,
       "baseMana": 50,
@@ -288,9 +300,10 @@
     }
   ],
   "progression": {
-    "levelCap": 10,
+    "levelCap": 30,
+    "initialStatPoints": 5,
     "experiencePerLevel": 100,
-    "statPointsPerLevel": 3,
+    "statPointsPerLevel": 5,
     "discoveryExperience": 60,
     "practicePerLevel": 3,
     "skillLevelCap": 10,

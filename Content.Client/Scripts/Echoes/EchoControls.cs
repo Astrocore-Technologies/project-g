@@ -17,15 +17,17 @@ public partial class EchoControls : CanvasLayer
     public void Initialize(NetworkClient network)
     {
         _network = network;
-        var panel = new VBoxContainer { Position = new(16, 80) }; AddChild(panel);
+        Layer = 3;
+        var panel = new VBoxContainer { Theme=ProjectG.UI.GameUi.CreateTheme(), AnchorLeft=.5f,AnchorRight=.5f,AnchorTop=1,AnchorBottom=1,OffsetLeft=-230,OffsetRight=230,OffsetTop=-162,OffsetBottom=-100 }; AddChild(panel);
+        var commands = new HBoxContainer { Alignment=BoxContainer.AlignmentMode.Center }; panel.AddChild(commands);
         for (var i = 0; i < _buttons.Length; i++)
         {
             var slot = (byte)(i + 1);
-            var button = new Button { Visible = false };
+            var button = new Button { Visible = false, CustomMinimumSize=new(144,32), FocusMode=Control.FocusModeEnum.None, TooltipText="Направьте курсор в мир и нажмите клавишу Эхо" };
             button.Pressed += () => Request(slot);
-            panel.AddChild(button); _buttons[i] = button;
+            commands.AddChild(button); _buttons[i] = button;
         }
-        _status = new Label { Text = "Мира: рядом. Помогу, когда понадобится." }; panel.AddChild(_status);
+        _status = ProjectG.UI.GameUi.Text("T / Y / U — способности Эхо",12); _status.HorizontalAlignment=HorizontalAlignment.Center; panel.AddChild(_status);
     }
     public void Apply(EchoLoadout value)
     {
@@ -50,7 +52,7 @@ public partial class EchoControls : CanvasLayer
         {
             _cooldowns[i] = Math.Max(0, _cooldowns[i] - delta);
             _buttons[i].Disabled = !_alive || _pending || _cooldowns[i] > 0;
-            _buttons[i].Text = $"Signature Эхо {i + 1} [{Keys[i]}] {_cooldowns[i]:0.0}s";
+            _buttons[i].Text = $"{Keys[i]} · Эхо {i + 1} · "+(_cooldowns[i]>0 ? $"{_cooldowns[i]:0.0}с" : "Готово");
         }
     }
     public override void _UnhandledInput(InputEvent input)

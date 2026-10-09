@@ -32,6 +32,7 @@ public partial class WorldController : Node3D
     private readonly Dictionary<NetworkEntityId, EchoPresentation> _echoes = new();
     private EchoControls? _echoControls;
     private ProjectG.Progression.ProgressionPresentation? _progression;
+    private ProjectG.UI.PlayerHud? _hud;
     private ProjectG.Progression.ProfessionPresentation? _profession;
     private ProjectG.WorldStory.WorldNodePresentation? _worldNode;
     private ProjectG.StarterZone.StarterZonePresentation? _starter;
@@ -149,6 +150,8 @@ public partial class WorldController : Node3D
             _inventory = new InventoryPresentation(); AddChild(_inventory); _inventory.Initialize(_network,_localEntityId);
             _echoControls = new(); AddChild(_echoControls); _echoControls.Initialize(_network);
             _progression = new(); AddChild(_progression); _progression.Initialize(_network);
+            _hud = new(); AddChild(_hud); _hud.Initialize(_localEntityId,()=>_progression?.Toggle());
+            var defense = new DefensePresentation(); player.AddChild(defense); defense.Initialize(player,_network,_hud);
             _profession = new(); AddChild(_profession); _profession.Initialize(_network);
             if(_network.LatestWorldNode is not null) { _worldNode=new(); AddChild(_worldNode); _worldNode.Initialize(_network,player); }
         }
@@ -231,7 +234,7 @@ public partial class WorldController : Node3D
             local.ApplyResult(result);
     }
 
-    private void OnAbilityLoadout(AbilityLoadout value) => _abilities?.ApplyLoadout(value);
+    private void OnAbilityLoadout(AbilityLoadout value) { _abilities?.ApplyLoadout(value); _hud?.Apply(value); }
     private void OnAbilityResult(AbilityResult value) => _abilities?.ApplyResult(value);
     private void OnInventory(InventoryState value)
     {
@@ -253,6 +256,7 @@ public partial class WorldController : Node3D
 
     private void RefreshAlive(NetworkEntityId id)
     {
+        if (id == _localEntityId && _combat.TryGetValue(id,out var hudOwner)) _hud?.Health(hudOwner.Health,hudOwner.MaxHealth);
         if (id == _localEntityId && _combat.TryGetValue(id, out var local))
             { _inventory?.ApplyAlive(local.IsAlive); _progression?.ApplyAlive(local.IsAlive); _profession?.ApplyAlive(local.IsAlive); _worldNode?.ApplyAlive(local.IsAlive); }
         if (id == _localEntityId && _combat.TryGetValue(id, out var owner)) _echoControls?.ApplyAlive(owner.IsAlive);
@@ -328,6 +332,7 @@ public partial class WorldController : Node3D
         _effects.Clear(); _abilities = null;
         DetachPresentation(_inventory); _inventory = null;
         DetachPresentation(_progression); _progression = null;
+        DetachPresentation(_hud); _hud = null;
         DetachPresentation(_profession); _profession = null;
         DetachPresentation(_worldNode); _worldNode=null;
         DetachPresentation(_starter); _starter=null;
@@ -348,7 +353,7 @@ public partial class WorldController : Node3D
     private void OnProfession(ProfessionState value) { if (value.OwnerId == _localEntityId) _profession?.Apply(value); }
     private void OnProfessionResult(ProfessionResult value) => _profession?.Result(value);
     private void OnProgression(ProgressionState value)
-    { if (value.OwnerId == _localEntityId) { _progression?.Apply(value); _abilities?.ApplyProgression(value); } }
+    { if (value.OwnerId == _localEntityId) { _progression?.Apply(value); _abilities?.ApplyProgression(value); _hud?.Apply(value); } }
     private void OnProgressionResult(ProgressionResult value) => _progression?.Result(value);
     private void OnEchoSpawn(EchoSpawn value)
     {

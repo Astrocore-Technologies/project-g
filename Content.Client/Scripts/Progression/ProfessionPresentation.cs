@@ -4,7 +4,7 @@ using ProjectG.Networking;
 namespace ProjectG.Progression;
 public partial class ProfessionPresentation : CanvasLayer
 {
-    private readonly Label _summary=new() { Position=new(16,40),MouseFilter=Control.MouseFilterEnum.Ignore };
+    private readonly Label _summary=new() { Position=new(24,326),MouseFilter=Control.MouseFilterEnum.Ignore };
     private readonly PanelContainer _panel=new() { Position=new(460,62),CustomMinimumSize=new(410,0),Visible=false };
     private readonly VBoxContainer _rows=new();
     private NetworkClient _network=null!;

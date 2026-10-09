@@ -21,7 +21,7 @@ public sealed class ContentCatalogTests
         var actor = catalog.Creatures["test_adventurer"];
         Assert.True(catalog.Weapons.ContainsKey(actor.WeaponId));
         Assert.All(actor.AbilityIds, id => Assert.True(catalog.Abilities.ContainsKey(id)));
-        Assert.Equal(110, new StatCalculator(catalog.Balance).Calculate(actor).MaxHealth, 8);
+        Assert.Equal(101, new StatCalculator(catalog.Balance).Calculate(actor).MaxHealth, 8);
     }
 
     [Theory]

@@ -25,7 +25,7 @@ public partial class WorldNodePresentation : Node3D
     {
         _network=network; _player=player;
         _ui=new CanvasLayer(); AddChild(_ui);
-        _rumor=new Label { Position=new(16,66),Text="H — поговорить с хранителем переправы",MouseFilter=Control.MouseFilterEnum.Ignore }; _ui.AddChild(_rumor);
+        _rumor=new Label { Position=new(24,410),Size=new(300,52),AutowrapMode=TextServer.AutowrapMode.WordSmart,Text="H — поговорить с хранителем переправы",MouseFilter=Control.MouseFilterEnum.Ignore }; _ui.AddChild(_rumor);
         _panel=new PanelContainer { Position=new(530,260),CustomMinimumSize=new(440,210),Visible=false }; _ui.AddChild(_panel);
         var list=new VBoxContainer(); _panel.AddChild(list);
         list.AddChild(new Label { Text="Переправа • общий сюжет мира" });

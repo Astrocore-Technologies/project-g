@@ -8,6 +8,7 @@ namespace Content.Server.Data;
 /// <summary>Validated server-only snapshot; never send the catalog to clients.</summary>
 public sealed class ContentCatalog
 {
+    public Content.Server.Combat.DefenseBalance Defense { get; }
     public Content.Server.WorldStory.WorldNodeDefinition? WorldNode { get; }
     public Content.Server.StarterZone.StarterZoneDefinition? StarterZone { get; }
     public Content.Server.Crafting.CraftingDefinition? Crafting { get; }
@@ -31,6 +32,7 @@ public sealed class ContentCatalog
             throw new ArgumentException("Unsupported schemaVersion or invalid balanceVersion.");
         ArgumentNullException.ThrowIfNull(document.Balance);
         document.Balance.Validate();
+        ArgumentNullException.ThrowIfNull(document.Defense); document.Defense.Validate(); Defense=document.Defense;
         document.StarterZone?.Validate(); StarterZone=document.StarterZone;
         document.WorldNode?.Validate(); WorldNode = document.WorldNode;
         Balance = document.Balance;

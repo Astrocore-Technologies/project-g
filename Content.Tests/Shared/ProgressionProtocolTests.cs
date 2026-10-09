@@ -20,6 +20,27 @@ public sealed class ProgressionProtocolTests
         Assert.InRange(data.Length,1,NetworkConstants.MaxGamePacketBytes);
     }
     [Fact]
+    public void BatchAndPreviewAreBoundedAndRejectMalformedPayloads()
+    {
+        foreach (var action in new[] { ProgressionAction.PreviewStats,ProgressionAction.AllocateStats })
+        {
+            var command = new ProgressionCommand(7,action,0,0,0,[1,0,2,1,1,0]);
+            var bytes = NetworkProtocol.Write(command).CopyData();
+            Check(bytes,r=>NetworkProtocol.TryReadProgressionCommand(r,out _));
+            Assert.True(NetworkProtocol.TryReadProgressionCommand(Body(bytes),out var result));
+            Assert.Equal(command.Allocation,result.Allocation);
+            foreach (var allocation in new int[][] { [-1,0,0,0,0,0], [int.MaxValue,0,0,0,0,0], [100000,1,0,0,0,0], [1,2] })
+                Assert.Throws<ArgumentException>(()=>NetworkProtocol.Write(command with { Allocation=allocation }));
+            bytes[^1]=255; Assert.False(NetworkProtocol.TryReadProgressionCommand(Body(bytes),out _));
+        }
+        var preview = new StatPreview(7,42,Enumerable.Repeat(1d,17).ToArray(),Enumerable.Repeat(2d,17).ToArray());
+        var data = NetworkProtocol.Write(preview).CopyData(); Check(data,r=>NetworkProtocol.TryReadStatPreview(r,out _));
+        Assert.True(NetworkProtocol.TryReadStatPreview(Body(data),out var decoded)); Assert.Equal(preview.Projected,decoded.Projected);
+        Assert.InRange(data.Length,1,NetworkConstants.MaxGamePacketBytes);
+        BitConverter.GetBytes(double.NaN).CopyTo(data,10); Assert.False(NetworkProtocol.TryReadStatPreview(Body(data),out _));
+        Assert.Throws<ArgumentException>(()=>NetworkProtocol.Write(new ProgressionCommand(1,ProgressionAction.AllocateStats,0,0,0,new int[6])));
+    }
+    [Fact]
     public void RejectsInvalidCommandsEnumsNumbersDuplicateSkillsAndSlots()
     {
         Assert.Throws<ArgumentException>(() => NetworkProtocol.Write(new ProgressionCommand(0,ProgressionAction.AllocateStat,0,0,0)));

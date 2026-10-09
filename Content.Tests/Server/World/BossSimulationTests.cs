@@ -106,7 +106,12 @@ public sealed class BossSimulationTests
     [InlineData(false)] [InlineData(true)]
     public void FixedHealthBossCanBeDefeatedSoloOrTogetherWithoutAutoscale(bool together)
     {
-        var f = new Fixture(); var hp = f.World.Combat!.Get(f.Boss.Id).Stats.MaxHealth;
+        // NC: this encounter test uses an established build, not the new level-one starting stats.
+        var json = JsonNode.Parse(File.ReadAllText(ContentCatalogTests.DataPath))!;
+        var stats = json["creatures"]![0]!["stats"]!.AsObject();
+        foreach (var key in stats.Select(pair => pair.Key).ToArray()) stats[key] = 10;
+        var f = new Fixture(catalog: ContentCatalog.Parse(Encoding.UTF8.GetBytes(json.ToJsonString())));
+        var hp = f.World.Combat!.Get(f.Boss.Id).Stats.MaxHealth;
         if (together) f.World.AddPlayer(43, new(2));
         Assert.Equal(242, hp, 8);
         Assert.Equal(hp, f.World.Combat.Get(f.Boss.Id).Health);

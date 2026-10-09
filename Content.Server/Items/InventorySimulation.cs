@@ -135,5 +135,15 @@ public sealed partial class InventorySimulation(ContentCatalog catalog, CombatSi
     internal bool IsTrading(NetworkEntityId id)=>_actors[id].TradeSession!=0;
     internal Action<NetworkEntityId>? ActionStarted {get;set;}
     internal void RefreshStats(NetworkEntityId id) => Apply(id, _actors[id], null, EquipmentSlot.None);
+    // Preview uses the same ordered, condition-aware equipment modifiers without changing any actor.
+    internal Content.Server.Stats.DerivedStats PreviewStats(NetworkEntityId id, Content.Server.Stats.BaseStats stats)
+    {
+        var equipment = new List<ItemDefinition>(2);
+        foreach (var item in _actors[id].Items)
+            if (item.Saved.EquippedSlot != EquipmentSlot.None && item.Saved.Condition?.Current != 0)
+                equipment.Add(EffectiveDefinition(item));
+        equipment.Sort((left, right) => left.Slot.CompareTo(right.Slot));
+        return combat.PrepareEquipment(stats, equipment).Stats;
+    }
     public void ClearResults() { _dirty.Clear(); _results.Clear(); }
 }

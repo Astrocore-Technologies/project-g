@@ -7,4 +7,4 @@ public readonly record struct DerivedStats(
     double PhysicalDefense, double MagicDefense,
     double MaxHealth, double MaxMana, double HealthRecovery, double ManaRecovery,
     double HealthItemMultiplier, double ManaItemMultiplier,
-    double AttackSpeedMultiplier, double CastSpeedMultiplier, double CriticalChance);
+    double AttackSpeedMultiplier, double CastSpeedMultiplier, double CriticalChance, double BlockDamage = .3);

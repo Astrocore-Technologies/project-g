@@ -37,10 +37,10 @@ public sealed class CombatProtocolTests
     }
 
     [Fact]
-    public void CommandCannotContainClaimedOriginTargetOrDamage()
+    public void CommandCanRequestTargetButCannotClaimOriginOrDamage()
     {
         var command = Sample(15).CopyData();
-        Assert.Equal(18, command.Length);
+        Assert.Equal(26, command.Length);
         var forged = new byte[command.Length + 8];
         command.CopyTo(forged, 0);
         Assert.False(NetworkProtocol.TryReadAttackCommand(new NetDataReader(forged, 2, forged.Length - 2), out _));
@@ -61,7 +61,7 @@ public sealed class CombatProtocolTests
         state[14] = 255;
         Assert.False(Read(18, new NetDataReader(state, 2, state.Length - 2)));
         var action = Sample(17).CopyData();
-        action[^1] = 2;
+        action[^2] = 2;
         Assert.False(Read(17, new NetDataReader(action, 2, action.Length - 2)));
         var dead = new CombatState(new(1), 1, CombatEntityKind.TrainingTarget, Vector2.Zero, 0, 100, 1, 2, 0.5f);
         Assert.True(NetworkProtocol.TryReadCombatState(Body(NetworkProtocol.Write(dead)), out _));

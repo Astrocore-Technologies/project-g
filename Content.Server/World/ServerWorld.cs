@@ -174,6 +174,7 @@ public sealed partial class ServerWorld
                 actor.Health = saved.Health;
                 actor.ReadyAt = Combat.Time + Math.Max(0, saved.AttackCooldownSeconds - offline);
                 Abilities!.Restore(entityId, saved, offline);
+                Combat.RestoreDefense(entityId,saved.Defense);
             }
             AddPvp(entityId,saved?.Progression?.Pvp);
             Echoes?.Add(entityId,saved?.Echoes ?? Echoes.CreateStarter(),saved?.OfflineSeconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()) ?? 0,AllocateEntityId);
@@ -213,6 +214,7 @@ public sealed partial class ServerWorld
             X = player.Position.X, Z = player.Position.Y, Health = actor.Health,
             Mana = Abilities!.Mana(player.EntityId), Cooldowns = Abilities.CaptureCooldowns(player.EntityId),
             AttackCooldownSeconds = Math.Max(0, actor.ReadyAt - Combat.Time),
+            Defense = Combat.CaptureDefense(player.EntityId),
             SavedAtUnixMilliseconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
         };
     }
@@ -279,6 +281,8 @@ public sealed partial class ServerWorld
     public bool TryQueueAttack(int connectionId, AttackCommand command) =>
         _playersByConnection.TryGetValue(connectionId, out var player) &&
         Combat?.Queue(player.EntityId, command, Tick) == true;
+    public bool TryQueueDefense(int connectionId, DefenseCommand command) =>
+        _playersByConnection.TryGetValue(connectionId,out var player) && Combat?.QueueDefense(player.EntityId,command,Tick)==true;
 
     public bool TryQueueAbility(int connectionId, AbilityCommand command, int measuredRttMilliseconds) =>
         _playersByConnection.TryGetValue(connectionId, out var player) &&
@@ -332,7 +336,7 @@ public sealed partial class ServerWorld
             if (Combat is not null && Combat.Get(player.EntityId).Health <= 0)
                 player.Motion.Reset(player.Position, player.Position);
             var previousPosition=player.Position;
-            player.Motion.Step(fixedDeltaSeconds);
+            player.Motion.Step(fixedDeltaSeconds*(player.Motion.IsDashing ? 1 : Combat?.DefenseMovement(player.EntityId) ?? 1));
             _spatial.Move(player.EntityId, player.Position);
             Combat?.Move(player.EntityId, player.Position);
             VisitDiscoveries(player);
@@ -377,6 +381,7 @@ public sealed partial class ServerWorld
         if (Inventory is { } inventory) foreach (var id in inventory.Dirty) MarkPersistent(id);
         if (Combat is { } combat)
         {
+            foreach (var id in combat.DefenseDirty) MarkPersistent(id);
             foreach (var action in combat.Events)
             {
                 MarkPersistent(action.AttackerId);

@@ -165,12 +165,16 @@ public sealed partial class ServerWorld
     public void ClearPvpResults(){_pvpDirty.Clear();_pvpResults.Clear();}
     private void RemovePvp(int connection,NetworkEntityId id){_pvp.Remove(id);_pvpIdentities.Remove(id);_pvpPending.Remove(connection);_pvpRequests.Remove(connection);_pvpDirty.Remove(id);_pvpTimed.Remove(id);_lethal.Remove(id);_pvpResults.Remove(id);}
     public void DisconnectPvp(int connection){if(!_playersByConnection.TryGetValue(connection,out var p))return;
+        Abilities?.SetManaRecoveryConnected(p.EntityId, false); // NC: logout bodies do not recover.
+        Combat?.SetDefenseConnected(p.EntityId,false);
         RemoveCraftPlayer(connection,p.EntityId);RemoveRepairPlayer(connection,p.EntityId);RemoveEconomyPlayer(connection,p.EntityId);_nodePending.Remove(connection);_nodeSequences.Remove(connection);_progressionPending.Remove(p.EntityId);_professionPending.Remove(p.EntityId);
 GroundItems?.CancelChannel(p.EntityId,Tick);_pvpPending.Remove(connection);if(_playerTrades.TryGetValue(p.EntityId,out var key)&&_trades.TryGetValue(key,out var trade))CloseTrade(trade,TradePhase.Cancelled);p.Motion.Reset(p.Position,p.Position);_movingPlayers.Remove(connection);}
     public ServerPlayer GetPlayer(int connection)=>_playersByConnection[connection];
     public void RebindConnection(int oldConnection,int newConnection,PlayerId player)
     {
         var p=_playersByConnection[oldConnection];_playersByConnection.Remove(oldConnection);p.ConnectionId=newConnection;p.PlayerId=player;_playersByConnection.Add(newConnection,p);
+        Abilities?.SetManaRecoveryConnected(p.EntityId, newConnection >= 0); // NC
+        Combat?.SetDefenseConnected(p.EntityId,newConnection>=0);
         if(_persistentActors.Remove(oldConnection,out var identity))_persistentActors[newConnection]=identity;
         if(newConnection>=0){p.LastProcessedSequence=0;p.LastPathRequestTick=null;Combat!.ResetSession(p.EntityId);Abilities!.ResetSession(p.EntityId);Inventory!.ResetSession(p.EntityId);Echoes?.ResetSession(p.EntityId);GroundItems!.RemovePlayer(p.EntityId);_progressionSequences.Remove(p.EntityId);_professionSequences.Remove(p.EntityId);_tradeRequests.Remove(oldConnection);}
         _movingPlayers.Remove(oldConnection);_persistenceDirty.Remove(oldConnection);_pvpRequests.Remove(oldConnection);_pvpPending.Remove(oldConnection);MarkPersistent(p.EntityId);

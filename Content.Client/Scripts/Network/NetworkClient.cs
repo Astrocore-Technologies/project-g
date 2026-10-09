@@ -105,6 +105,11 @@ public partial class NetworkClient : Node
     { if (_handshakeComplete) SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered); }
     public event Action<ProgressionState>? ProgressionReceived;
     public event Action<ProgressionResult>? ProgressionResultReceived;
+    public event Action<StatPreview>? StatPreviewReceived;
+    public event Action<DefenseState>? DefenseReceived;
+    public DefenseState? LatestDefense { get; private set; }
+    public void SendDefense(DefenseCommand command)
+    { if (_handshakeComplete) SendGame(NetworkProtocol.Write(command),command.Action==DefenseAction.Block ? DeliveryMethod.Unreliable : DeliveryMethod.ReliableOrdered); }
     public void SendProgression(ProgressionCommand command)
     { if (_handshakeComplete) SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered); }
     public event Action<EchoSpawn>? EchoSpawned;
@@ -261,7 +266,7 @@ public partial class NetworkClient : Node
         CurrentRegion = null;
         KnownPlayers.Clear();
         CanDevelopmentRevive = false;
-        Navigation = null; LatestWorldNode=null; LatestStarterZone=null; LatestPvpZone=null;CraftRecipes.Clear(); ResourceNodes.Clear();
+        Navigation = null; LatestWorldNode=null; LatestStarterZone=null; LatestPvpZone=null; LatestDefense=null; CraftRecipes.Clear(); ResourceNodes.Clear();
         LatestServerTick = 0;
         if (TryReadDisconnectRejection(disconnectInfo, out var rejection))
         {
@@ -395,6 +400,14 @@ public partial class NetworkClient : Node
                 case NetworkMessageType.ProfessionResult:
                     if (_handshakeComplete && NetworkProtocol.TryReadProfessionResult(reader,out var professionResult)) ProfessionResultReceived?.Invoke(professionResult);
                     else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.DefenseState:
+                    if (_handshakeComplete && NetworkProtocol.TryReadDefenseState(reader,out var defense) &&
+                        (LatestDefense is not { } previousDefense || previousDefense.OwnerId!=defense.OwnerId || Content.Shared.Movement.MovementSimulation.IsSequenceNewer(defense.ServerTick,previousDefense.ServerTick)))
+                    { LatestDefense=defense; DefenseReceived?.Invoke(defense); }
+                    break;
+                case NetworkMessageType.StatPreview:
+                    if (_handshakeComplete && NetworkProtocol.TryReadStatPreview(reader,out var statPreview)) StatPreviewReceived?.Invoke(statPreview);
                     break;
                 case NetworkMessageType.ProgressionState:
                     if (_handshakeComplete && NetworkProtocol.TryReadProgressionState(reader,out var progression)) ProgressionReceived?.Invoke(progression);

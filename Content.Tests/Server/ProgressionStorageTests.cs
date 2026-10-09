@@ -37,7 +37,7 @@ public sealed class ProgressionStorageTests
         await Assert.ThrowsAsync<InvalidOperationException>(() => store.SaveAsync([new(first,changed),new(second,second.State)],CancellationToken.None));
         using var c = Connect(store.DatabasePath); using var q = c.CreateCommand();
         q.CommandText = "SELECT state FROM character_progression WHERE character_id = $id"; q.Parameters.AddWithValue("$id",first.CharacterId.ToString());
-        Assert.Equal(0,SavedProgression.Deserialize((string)q.ExecuteScalar()!).StatPoints);
+        Assert.Equal(initial.Progression!.StatPoints,SavedProgression.Deserialize((string)q.ExecuteScalar()!).StatPoints);
         q.CommandText = "SELECT state FROM characters WHERE character_id = $id"; Assert.Equal(initial.Health,CharacterState.Deserialize((string)q.ExecuteScalar()!).Health);
     }
     [Fact]

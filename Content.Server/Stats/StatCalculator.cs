@@ -41,7 +41,7 @@ public sealed class StatCalculator
             StatMath.PositiveScale(_balance.HealthItem.Evaluate(stats)),
             StatMath.PositiveScale(_balance.ManaItem.Evaluate(stats)),
             StatMath.PositiveScale(_balance.AttackSpeed.Evaluate(stats)),
-            StatMath.PositiveScale(_balance.CastSpeed.Evaluate(stats)), critical);
+            StatMath.PositiveScale(_balance.CastSpeed.Evaluate(stats)), critical, _balance.BaseBlockDamage);
         return modifiers?.Apply(result) ?? result;
     }
 

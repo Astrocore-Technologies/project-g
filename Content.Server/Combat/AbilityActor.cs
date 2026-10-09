@@ -13,6 +13,7 @@ internal sealed class AbilityActor(AbilityDefinition[] definitions, AbilityProfi
     public double[] ReadyAt { get; } = new double[definitions.Length];
     public double Mana { get; set; } = maximumMana;
     public double MaxMana { get; } = maximumMana;
+    internal double RecoveryElapsed { get; set; } // online simulation time; not persisted.
     public uint LastSeenSequence { get; set; }
     public uint? LastRequestTick { get; set; }
 }

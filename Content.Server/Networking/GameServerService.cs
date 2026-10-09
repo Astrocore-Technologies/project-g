@@ -216,6 +216,19 @@ public sealed partial class GameServerService : BackgroundService
                 else BufferIntentions(peer.Id).Move = command;
                 return;
             }
+            if (messageType == NetworkMessageType.DefenseCommand &&
+                NetworkProtocol.TryReadDefenseCommand(reader,out var defense) &&
+                (deliveryMethod==DeliveryMethod.ReliableOrdered || defense.Action==DefenseAction.Block && deliveryMethod==DeliveryMethod.Unreliable))
+            {
+                if (_characters is null) world.TryQueueDefense(peer.Id,defense);
+                else
+                {
+                    var buffered=BufferIntentions(peer.Id);
+                    // Keep a deliberate parry over subsequent facing heartbeats during an in-flight save.
+                    if (buffered.Defense is not { Action: DefenseAction.Parry } || defense.Action==DefenseAction.Release)
+                        buffered.Defense=defense;
+                }
+            }
             if (messageType == NetworkMessageType.AttackCommand &&
                 deliveryMethod == DeliveryMethod.ReliableOrdered &&
                 NetworkProtocol.TryReadAttackCommand(reader, out var attack))
@@ -501,10 +514,14 @@ public sealed partial class GameServerService : BackgroundService
             SendGame(peer, NetworkProtocol.Write(world.ExplorationState(explorationOwner)),DeliveryMethod.ReliableOrdered);
         if (world.HasProgression && world.TryGetOwnedEntity(peer.Id,out var progressionOwner))
         {
+            if (world.Combat is { } defenses && (view.Entered.Contains(progressionOwner) || world.Tick%5==0 || defenses.DefenseDirty.Contains(progressionOwner)))
+                SendGame(peer,NetworkProtocol.Write(defenses.DefenseState(progressionOwner,world.Tick)),DeliveryMethod.Unreliable);
             if (view.Entered.Contains(progressionOwner) || world.IsProgressionDirty(progressionOwner))
                 SendGame(peer, NetworkProtocol.Write(world.ProgressionState(progressionOwner,world.Tick)),DeliveryMethod.ReliableOrdered);
             if (world.ProgressionResults.TryGetValue(progressionOwner,out var progressionResult))
                 SendGame(peer, NetworkProtocol.Write(progressionResult),DeliveryMethod.ReliableOrdered);
+            if (world.StatPreviews.TryGetValue(progressionOwner,out var statPreview))
+                SendGame(peer, NetworkProtocol.Write(statPreview),DeliveryMethod.ReliableOrdered);
         }
         if (world.HasProgression && world.TryGetOwnedEntity(peer.Id,out var professionOwner))
         {

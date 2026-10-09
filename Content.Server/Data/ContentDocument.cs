@@ -8,6 +8,7 @@ public sealed record ContentDocument
     public required int SchemaVersion { get; init; }
     public required int BalanceVersion { get; init; }
     public required StatBalance Balance { get; init; }
+    public Content.Server.Combat.DefenseBalance Defense { get; init; } = new();
     public Content.Server.Progression.ProgressionBalance Progression { get; init; } = new();
     public Content.Server.Professions.ProfessionDefinition[] Professions { get; init; } = [];
     public Content.Server.WorldStory.WorldNodeDefinition? WorldNode { get; init; }

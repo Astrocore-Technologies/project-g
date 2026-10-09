@@ -63,4 +63,7 @@ public enum NetworkMessageType : ushort
     SocialCommand = 76, SocialResult = 77, SocialRoster = 78, SocialInvites = 79, PartyPresence = 80,
     RegionEnter = 81,
     RegionPacket = 82,
+    StatPreview = 83,
+    DefenseCommand = 84,
+    DefenseState = 85,
 }

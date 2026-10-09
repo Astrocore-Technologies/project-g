@@ -24,6 +24,8 @@ public sealed record CharacterState
     public required float Z { get; init; }
     public required double Health { get; init; }
     public required double Mana { get; init; }
+    // Optional additive v1 extension: legacy characters start with a full resource, never reset existing data.
+    public SavedDefense? Defense { get; init; }
     public required double AttackCooldownSeconds { get; init; }
     public required SavedCooldown[] Cooldowns { get; init; }
     public required long SavedAtUnixMilliseconds { get; init; }
@@ -37,6 +39,7 @@ public sealed record CharacterState
 
     public void Validate()
     {
+        Defense?.Validate();
         if (Version != CurrentVersion || WorldLayoutVersion is < 0 or > 1 || !ValidRegion(RegionId) ||
             string.IsNullOrWhiteSpace(ProfileId) || ProfileId.Length > 64 ||
             !float.IsFinite(X) || !float.IsFinite(Z) ||
@@ -76,3 +79,13 @@ public sealed record CharacterState
 }
 
 public sealed record SavedCooldown(string AbilityId, double Seconds);
+public sealed record SavedDefense(int Version, double Stamina, double ParryCooldown, double RecoveryDelay)
+{
+    public void Validate()
+    {
+        if (Version!=1 || !double.IsFinite(Stamina) || Stamina<0 ||
+            !double.IsFinite(ParryCooldown) || ParryCooldown is <0 or >86400 ||
+            !double.IsFinite(RecoveryDelay) || RecoveryDelay is <0 or >86400)
+            throw new InvalidDataException("Invalid saved defense state.");
+    }
+}

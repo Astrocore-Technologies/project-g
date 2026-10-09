@@ -15,9 +15,11 @@ public sealed partial class ServerWorld
     private readonly Dictionary<NetworkEntityId,(uint Sequence,uint Tick)> _progressionSequences = new();
     private readonly HashSet<NetworkEntityId> _progressionDirty = new();
     private readonly Dictionary<NetworkEntityId,ProgressionResult> _progressionResults = new();
+    private readonly Dictionary<NetworkEntityId,StatPreview> _statPreviews = new();
+    public IReadOnlyDictionary<NetworkEntityId,StatPreview> StatPreviews => _statPreviews;
     public IReadOnlyDictionary<NetworkEntityId,ProgressionResult> ProgressionResults => _progressionResults;
     public bool IsProgressionDirty(NetworkEntityId id) => _progressionDirty.Contains(id);
-    public void ClearProgressionResults() { _progressionDirty.Clear(); _progressionResults.Clear(); }
+    public void ClearProgressionResults() { _progressionDirty.Clear(); _progressionResults.Clear(); _statPreviews.Clear(); }
     private void AddProgression(NetworkEntityId id, SavedProgression? saved)
     {
         if (_progressionCatalog is not { } catalog) return;
@@ -51,8 +53,8 @@ public sealed partial class ServerWorld
     public bool HasProgression => _progressionCatalog is not null;
     public bool TryQueueProgression(int connectionId, ProgressionCommand command)
     {
-        if (!_playersByConnection.TryGetValue(connectionId,out var player) || !_progression.ContainsKey(player.EntityId) || command.Sequence == 0 ||
-            !Enum.IsDefined(command.Action) || command.StatIndex > 5 || command.Slot > NetworkConstants.MaxAbilitySlots) return false;
+        if (!_playersByConnection.TryGetValue(connectionId,out var player) || !_progression.ContainsKey(player.EntityId) ||
+            !NetworkProtocol.ValidProgressionCommand(command)) return false;
         var id = player.EntityId;
         if (_progressionSequences.TryGetValue(id,out var last))
         {
@@ -63,7 +65,9 @@ public sealed partial class ServerWorld
                 _progressionResults[id] = new(command.Sequence,Tick,ProgressionOutcome.RateLimited); return false;
             }
         }
-        GroundItems?.CancelChannel(id,Tick); _progressionSequences[id] = (command.Sequence,Tick); _progressionPending[id] = command; return true;
+        if (command.Action != ProgressionAction.PreviewStats) GroundItems?.CancelChannel(id,Tick);
+        _progressionSequences[id] = (command.Sequence,Tick);
+        _progressionPending[id] = command with { Allocation = command.Allocation is null ? null : (int[])command.Allocation.Clone() }; return true;
     }
     private void GrantExperience(NetworkEntityId id, int amount)
     {
@@ -116,24 +120,34 @@ public sealed partial class ServerWorld
         }
         foreach (var (id,command) in _progressionPending)
         {
+            if (command.Action == ProgressionAction.PreviewStats)
+            {
+                var previewOutcome = PreviewAllocation(id,command);
+                _progressionResults[id] = new(command.Sequence,Tick,previewOutcome);
+                continue;
+            }
             var actor = Combat.Get(id); var value = _progression[id]; var outcome = actor.Health <= 0 ? ProgressionOutcome.InvalidState
                 : actor.IsCasting || Abilities.HasActiveEffects(id) ? ProgressionOutcome.Busy : ProgressionOutcome.Accepted;
             if (outcome == ProgressionOutcome.Accepted)
             {
-                if (command.Action == ProgressionAction.AllocateStat)
+                if (command.Action is ProgressionAction.AllocateStat or ProgressionAction.AllocateStats)
                 {
-                    if (value.StatPoints <= 0) outcome = ProgressionOutcome.NoPoints;
+                    var allocation = command.Allocation ?? new int[6];
+                    if (command.Action == ProgressionAction.AllocateStat) allocation[command.StatIndex] = 1;
+                    var total = allocation.Sum();
+                    if (value.StatPoints < total) outcome = ProgressionOutcome.NoPoints;
                     else
                     {
                         var player = _playersByEntity[id]; var old = player.BaseStats;
-                        double[] stats = [old.Strength,old.Agility,old.Vitality,old.Intelligence,old.Dexterity,old.Luck]; stats[command.StatIndex]++;
+                        double[] stats = [old.Strength,old.Agility,old.Vitality,old.Intelligence,old.Dexterity,old.Luck];
+                        for (var i = 0; i < 6; i++) stats[i] += allocation[i];
                         player.BaseStats = new(stats[0],stats[1],stats[2],stats[3],stats[4],stats[5]);
                         try
                         {
                             if (Inventory is not null) Inventory.RefreshStats(id);
                             else
                             { var profile = Combat.PrepareEquipment(player.BaseStats,[]); var resources = Abilities.PrepareEquipment(id,profile.Stats); Combat.ApplyEquipment(id,profile); Abilities.ApplyEquipment(id,resources); }
-                            _progression[id] = value with { StatPoints = value.StatPoints - 1 };
+                            _progression[id] = value with { StatPoints = value.StatPoints - total };
                         }
                         catch (ArgumentException) { player.BaseStats = old; outcome = ProgressionOutcome.InvalidState; }
                     }
@@ -163,5 +177,21 @@ public sealed partial class ServerWorld
         _progressionPending.Clear();
     }
     private void RemoveProgression(NetworkEntityId id)
-    { RemoveProfession(id); _progression.Remove(id); _progressionPending.Remove(id); _progressionSequences.Remove(id); _progressionDirty.Remove(id); _progressionResults.Remove(id); }
+    { RemoveProfession(id); _progression.Remove(id); _progressionPending.Remove(id); _progressionSequences.Remove(id); _progressionDirty.Remove(id); _progressionResults.Remove(id); _statPreviews.Remove(id); }
+    private ProgressionOutcome PreviewAllocation(NetworkEntityId id, ProgressionCommand command)
+    {
+        if (command.Allocation!.Sum() > _progression[id].StatPoints) return ProgressionOutcome.NoPoints;
+        var stats = _playersByEntity[id].BaseStats; var a = command.Allocation!;
+        var proposed = new BaseStats(stats.Strength+a[0],stats.Agility+a[1],stats.Vitality+a[2],stats.Intelligence+a[3],stats.Dexterity+a[4],stats.Luck+a[5]);
+        try
+        {
+            var projected = Inventory?.PreviewStats(id,proposed) ?? Combat!.PrepareEquipment(proposed,[]).Stats;
+            _statPreviews[id] = new(command.Sequence,Tick,DisplayStats(Combat!.Get(id).Stats),DisplayStats(projected));
+            return ProgressionOutcome.Accepted;
+        }
+        catch (ArgumentException) { return ProgressionOutcome.InvalidState; }
+    }
+    private static double[] DisplayStats(DerivedStats s) => [s.MeleeAttack,s.RangedAttack,s.MagicAttack,s.MeleeWeaponMultiplier,s.RangedWeaponMultiplier,
+        s.PhysicalDefense,s.MagicDefense,s.MaxHealth,s.MaxMana,s.HealthRecovery,s.ManaRecovery,s.HealthItemMultiplier,s.ManaItemMultiplier,
+        s.AttackSpeedMultiplier,s.CastSpeedMultiplier,s.CriticalChance,s.BlockDamage];
 }

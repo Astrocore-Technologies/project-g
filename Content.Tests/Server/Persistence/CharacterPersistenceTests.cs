@@ -29,6 +29,7 @@ public sealed class CharacterPersistenceTests
         {
             X = -6, Z = 2, Stats = new BaseStats(20, 4, 10, 10, 10, 1), Health = 0, Mana = 12,
             AttackCooldownSeconds = 60,
+            Defense = new SavedDefense(1,42,.4,.8),
             Cooldowns = world.CreateInitialCharacter().Cooldowns.Select(item => item with { Seconds = 60 }).ToArray()
         };
         var restored = CharacterState.Deserialize(saved.Serialize());
@@ -37,6 +38,7 @@ public sealed class CharacterPersistenceTests
         Assert.Equal(new Vector2(-6, 2), player.Position);
         Assert.Equal(saved.Stats, actual.Stats);
         Assert.Equal(0, actual.Health); Assert.Equal(12, actual.Mana);
+        Assert.Equal(saved.Defense,actual.Defense);
         Assert.InRange(actual.AttackCooldownSeconds, 58, 60);
         Assert.All(actual.Cooldowns, item => Assert.InRange(item.Seconds, 58, 60));
         Assert.False(world.TryApplyMove(10, new MoveCommand(1, 0, new Vector2(-5, 2))));
