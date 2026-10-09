@@ -1,0 +1,196 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Theme" path="res://themes/adventurer_theme.tres" id="theme"]
+
+[node name="GuildPanel" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+theme = ExtResource("theme")
+
+[node name="Shade" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.04, 0.10, 0.14, 0.65)
+mouse_filter = 0
+
+[node name="Window" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_left = 70.0
+offset_top = 76.0
+offset_right = 1850.0
+offset_bottom = 1003.0
+theme_type_variation = "Parchment"
+mouse_filter = 0
+
+[node name="Content" type="Control" parent="Window"]
+layout_mode = 2
+custom_minimum_size = Vector2(1748, 903)
+mouse_filter = 2
+
+[node name="Title" type="Label" parent="Window/Content"]
+layout_mode = 0
+offset_left = 15.0
+offset_top = 4.0
+offset_right = 1415.0
+offset_bottom = 64.0
+text = "Гильдия Авантюристов"
+mouse_filter = 2
+theme_type_variation = "Header"
+
+[node name="Close" type="Button" parent="Window/Content"]
+layout_mode = 0
+offset_left = 1670.0
+offset_top = 4.0
+offset_right = 1726.0
+offset_bottom = 54.0
+text = "×"
+theme_type_variation = "SecondaryButton"
+mouse_default_cursor_shape = 2
+metadata/action = "close"
+
+[node name="Subtitle" type="Label" parent="Window/Content"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 67.0
+offset_right = 1666.0
+offset_bottom = 103.0
+text = "Отделение Ривермута · Ранг F · Местное доверие: новичок"
+mouse_filter = 2
+theme_type_variation = "Muted"
+
+[node name="Quest0" type="Button" parent="Window/Content"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 146.0
+offset_right = 726.0
+offset_bottom = 237.0
+text = "F · Лесная дорога"
+theme_type_variation = "SecondaryButton"
+mouse_default_cursor_shape = 2
+metadata/action = "quest_0"
+
+[node name="Quest1" type="Button" parent="Window/Content"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 263.0
+offset_right = 726.0
+offset_bottom = 354.0
+text = "F · Лекарства для лечебницы"
+theme_type_variation = "SecondaryButton"
+mouse_default_cursor_shape = 2
+metadata/action = "quest_1"
+
+[node name="Quest2" type="Button" parent="Window/Content"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 380.0
+offset_right = 726.0
+offset_bottom = 471.0
+text = "E · Пропавший караван"
+theme_type_variation = "SecondaryButton"
+mouse_default_cursor_shape = 2
+metadata/action = "quest_2"
+
+[node name="Quest3" type="Button" parent="Window/Content"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 497.0
+offset_right = 726.0
+offset_bottom = 588.0
+text = "D · Следы у старой мельницы"
+theme_type_variation = "SecondaryButton"
+mouse_default_cursor_shape = 2
+metadata/action = "quest_3"
+
+[node name="Rank" type="Button" parent="Window/Content"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 677.0
+offset_right = 726.0
+offset_bottom = 733.0
+text = "Повышение ранга: F → S"
+theme_type_variation = "GoldButton"
+mouse_default_cursor_shape = 2
+metadata/action = "rank"
+
+[node name="QuestTitle" type="Label" parent="Window/Content"]
+layout_mode = 0
+offset_left = 777.0
+offset_top = 136.0
+offset_right = 1671.0
+offset_bottom = 189.0
+text = "Лесная дорога"
+mouse_filter = 2
+theme_type_variation = "Header"
+
+[node name="InfoStatus" type="Label" parent="Window/Content"]
+layout_mode = 0
+offset_left = 777.0
+offset_top = 199.0
+offset_right = 1670.0
+offset_bottom = 237.0
+text = "Ранг F · Сведения предварительные"
+mouse_filter = 2
+theme_type_variation = "Muted"
+
+[node name="Body" type="Label" parent="Window/Content"]
+layout_mode = 0
+offset_left = 777.0
+offset_top = 265.0
+offset_right = 1691.0
+offset_bottom = 506.0
+text = "Доставьте материалы смотрителю дороги\nи выясните, почему больше нет отчётов.\n\nТочное местонахождение не подтверждено.\n\nОтчёт о новой опасности — полезный результат."
+mouse_filter = 2
+theme_override_font_sizes/font_size = 23
+
+[node name="Reward" type="Label" parent="Window/Content"]
+layout_mode = 0
+offset_left = 777.0
+offset_top = 547.0
+offset_right = 1676.0
+offset_bottom = 597.0
+text = "Награда: 180 монет и запись в послужном списке."
+mouse_filter = 2
+theme_override_font_sizes/font_size = 22
+
+[node name="Accept" type="Button" parent="Window/Content"]
+layout_mode = 0
+offset_left = 777.0
+offset_top = 644.0
+offset_right = 1669.0
+offset_bottom = 704.0
+text = "Принять поручение"
+theme_type_variation = "PrimaryButton"
+mouse_default_cursor_shape = 2
+metadata/action = "accept"
+
+[node name="Journal" type="Button" parent="Window/Content"]
+layout_mode = 0
+offset_left = 777.0
+offset_top = 730.0
+offset_right = 1669.0
+offset_bottom = 782.0
+text = "Мои контракты"
+theme_type_variation = "SecondaryButton"
+mouse_default_cursor_shape = 2
+metadata/action = "journal"
+
+[node name="Footer" type="Label" parent="Window/Content"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 834.0
+offset_right = 1674.0
+offset_bottom = 876.0
+text = "Это локальная демонстрация. При интеграции право на контракт и награду проверяет сервер."
+mouse_filter = 2
+theme_type_variation = "Muted"
+theme_override_font_sizes/font_size = 18

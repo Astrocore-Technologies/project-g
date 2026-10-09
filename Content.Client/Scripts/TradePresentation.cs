@@ -1,13 +1,14 @@
 using Content.Shared.Network;
 using Godot;
 using ProjectG.Networking;
+using ProjectG.UI;
 using ProjectG.Gameplay;
 namespace ProjectG.Trading;
 public partial class TradePresentation:CanvasLayer
 {
     private NetworkClient _network=null!;
     private PlayerController _player=null!;
-    private PanelContainer _panel=null!;
+    private UiWindow _panel=null!;
     private VBoxContainer _body=null!;
     private Label _status=null!;
     private InventoryState _inventory;
@@ -21,9 +22,8 @@ public partial class TradePresentation:CanvasLayer
     public void Initialize(NetworkClient network,PlayerController player)
     {
         _network=network; _player=player; Layer=6;
-        _panel=new(){Position=new Vector2(25,100),CustomMinimumSize=new Vector2(540,380),Visible=false}; AddChild(_panel);
-        var scroll=new ScrollContainer(){CustomMinimumSize=new Vector2(540,380)}; _panel.AddChild(scroll);
-        _body=new(){SizeFlagsHorizontal=Control.SizeFlags.ExpandFill}; scroll.AddChild(_body);
+        _panel=new UiWindow { ToggleKey=Key.B }; AddChild(_panel); _panel.Build("Обмен с игроком",new(1080,650)); _panel.CloseRequested+=_panel.Close;
+        _body=UiComposition.Scroll(_panel.Body);
         _network.InventoryReceived+=Inventory; _network.CraftStateReceived+=Materials;
         _network.TradeStateReceived+=State; _network.TradeResultReceived+=Result;
         _network.PlayerSpawned+=Spawn; _network.PlayerDespawned+=Despawn;
@@ -37,7 +37,8 @@ public partial class TradePresentation:CanvasLayer
         _network.PlayerSpawned-=Spawn; _network.PlayerDespawned-=Despawn;
     }
     public override void _UnhandledKeyInput(InputEvent e)
-    { if(e is InputEventKey {Pressed:true,Echo:false,PhysicalKeycode:Key.B}) { _panel.Visible=!_panel.Visible; GetViewport().SetInputAsHandled(); Render(); } }
+    { if(e is InputEventKey {Pressed:true,Echo:false,PhysicalKeycode:Key.B}) { if(GameUi.GameplayModalOpen)return; Toggle(); GetViewport().SetInputAsHandled(); Render(); } }
+    public void Toggle() { if(_panel.Visible) _panel.Close(); else _panel.Open(); }
     private void Inventory(InventoryState s){if(s.EntityId!=_player.EntityId)return; _inventory=s; _selected.RemoveWhere(h=>!s.Items.Any(i=>i.Handle==h&&!i.Equipped));Render();}
     private void Materials(CraftState s){if(s.OwnerId!=_player.EntityId)return;_materials=s;Render();}
     private void Spawn(PlayerSpawn s){Render();}
@@ -45,7 +46,7 @@ public partial class TradePresentation:CanvasLayer
     private void State(TradeState s)
     {
         if(s.OwnerId!=_player.EntityId)return;
-        _trade=s; _waiting=false; _panel.Visible=true;
+        _trade=s; _waiting=false; _panel.Open();
         if(s.Phase is TradePhase.Completed or TradePhase.Cancelled){_selected.Clear();_quantities.Clear();_invitedByMe=false;}
         Render();
     }

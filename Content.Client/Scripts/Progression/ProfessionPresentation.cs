@@ -1,11 +1,12 @@
 using Content.Shared.Network;
 using Godot;
 using ProjectG.Networking;
+using ProjectG.UI;
 namespace ProjectG.Progression;
 public partial class ProfessionPresentation : CanvasLayer
 {
     private readonly Label _summary=new() { Position=new(24,326),MouseFilter=Control.MouseFilterEnum.Ignore };
-    private readonly PanelContainer _panel=new() { Position=new(460,62),CustomMinimumSize=new(410,0),Visible=false };
+    private readonly UiWindow _panel=new() { ToggleKey=Key.P };
     private readonly VBoxContainer _rows=new();
     private NetworkClient _network=null!;
     private ProfessionState _state;
@@ -14,7 +15,7 @@ public partial class ProfessionPresentation : CanvasLayer
     private bool _alive=true;
     private string _feedback="";
     public void Initialize(NetworkClient network)
-    { _network=network; AddChild(_summary); AddChild(_panel); _panel.AddChild(_rows); }
+    { _network=network; Layer=24; AddChild(_summary); _summary.Hide(); AddChild(_panel); _panel.Build("Профессия",new(820,560)); _panel.Body.AddChild(_rows); _panel.CloseRequested+=Close; }
     public void Apply(ProfessionState state) { if (_state.OfferedId != state.OfferedId) _confirmation=0; _state=state; Rebuild(); }
     public void ApplyAlive(bool alive) { if (_alive == alive) return; _alive=alive; if (!alive) _confirmation=0; Rebuild(); }
     public void Result(ProfessionResult result)
@@ -22,7 +23,7 @@ public partial class ProfessionPresentation : CanvasLayer
         if (result.Sequence != _pending) return;
         _pending=0; _confirmation=result.Confirmation;
         _feedback=result.Outcome switch { ProfessionOutcome.Prepared=>"Решение ещё не принято",ProfessionOutcome.Accepted=>"Профессия сохранена",ProfessionOutcome.Cancelled=>"Переход отменён",ProfessionOutcome.InvalidConfirmation=>"Подтверждение истекло. Начните снова",ProfessionOutcome.Busy=>"Завершите действие",ProfessionOutcome.InvalidState=>"Недоступно в этом состоянии",_=>"Переход сейчас недоступен" };
-        if (_confirmation != 0) _panel.Visible=true;
+
         Rebuild();
     }
     public override void _Process(double delta)
@@ -30,10 +31,11 @@ public partial class ProfessionPresentation : CanvasLayer
     public override void _UnhandledInput(InputEvent ev)
     {
         if (ev is not InputEventKey { Pressed:true,Echo:false,PhysicalKeycode:Key.P }) return;
-        _panel.Visible=!_panel.Visible;
-        if (!_panel.Visible && _confirmation != 0) Cancel();
+        if(GameUi.GameplayModalOpen) return; Toggle();
         GetViewport().SetInputAsHandled();
     }
+    public void Toggle() { if(_panel.Visible) Close(); else _panel.Open(); }
+    private void Close() { _panel.Close(); if(_confirmation!=0) Cancel(); }
     private void Send(ProfessionAction action,ushort id=0,uint confirmation=0)
     {
         if (_pending != 0 || (!_alive && action != ProfessionAction.Cancel)) return;

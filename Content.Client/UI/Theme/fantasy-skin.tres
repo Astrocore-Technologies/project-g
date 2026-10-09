@@ -1,0 +1,301 @@
+[gd_resource type="Resource" script_class="UiSkin" load_steps=36 format=3]
+
+[ext_resource type="Script" path="res://Scripts/UI/Assets/UiSkin.cs" id="skin"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Textures/SourceKit/panel_parchment.svg" id="panel_parchment"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Textures/SourceKit/panel_dark.svg" id="panel_dark"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Textures/SourceKit/button_default.svg" id="button_default"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Textures/SourceKit/button_hover.svg" id="button_hover"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Textures/SourceKit/button_pressed.svg" id="button_pressed"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Textures/SourceKit/button_disabled.svg" id="button_disabled"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Textures/SourceKit/button_focus.svg" id="button_focus"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Textures/SourceKit/button_gold.svg" id="button_gold"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Textures/SourceKit/button_secondary.svg" id="button_secondary"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Textures/SourceKit/item_default.svg" id="item_default"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Textures/SourceKit/item_selected.svg" id="item_selected"]
+
+[sub_resource type="StyleBoxTexture" id="PaperPanel"]
+texture = ExtResource("panel_parchment")
+texture_margin_left = 20.0
+content_margin_left = 18.0
+texture_margin_top = 20.0
+content_margin_top = 18.0
+texture_margin_right = 20.0
+content_margin_right = 18.0
+texture_margin_bottom = 20.0
+content_margin_bottom = 18.0
+
+[sub_resource type="StyleBoxTexture" id="DarkPanel"]
+texture = ExtResource("panel_dark")
+texture_margin_left = 20.0
+content_margin_left = 12.0
+texture_margin_top = 20.0
+content_margin_top = 12.0
+texture_margin_right = 20.0
+content_margin_right = 12.0
+texture_margin_bottom = 20.0
+content_margin_bottom = 12.0
+
+[sub_resource type="StyleBoxTexture" id="ButtonNormal"]
+texture = ExtResource("button_default")
+texture_margin_left = 14.0
+content_margin_left = 10.0
+texture_margin_top = 14.0
+content_margin_top = 10.0
+texture_margin_right = 14.0
+content_margin_right = 10.0
+texture_margin_bottom = 14.0
+content_margin_bottom = 10.0
+
+[sub_resource type="StyleBoxTexture" id="ButtonHover"]
+texture = ExtResource("button_hover")
+texture_margin_left = 14.0
+content_margin_left = 10.0
+texture_margin_top = 14.0
+content_margin_top = 10.0
+texture_margin_right = 14.0
+content_margin_right = 10.0
+texture_margin_bottom = 14.0
+content_margin_bottom = 10.0
+
+[sub_resource type="StyleBoxTexture" id="ButtonPressed"]
+texture = ExtResource("button_pressed")
+texture_margin_left = 14.0
+content_margin_left = 10.0
+texture_margin_top = 14.0
+content_margin_top = 10.0
+texture_margin_right = 14.0
+content_margin_right = 10.0
+texture_margin_bottom = 14.0
+content_margin_bottom = 10.0
+
+[sub_resource type="StyleBoxTexture" id="ButtonDisabled"]
+texture = ExtResource("button_disabled")
+texture_margin_left = 14.0
+content_margin_left = 10.0
+texture_margin_top = 14.0
+content_margin_top = 10.0
+texture_margin_right = 14.0
+content_margin_right = 10.0
+texture_margin_bottom = 14.0
+content_margin_bottom = 10.0
+
+[sub_resource type="StyleBoxTexture" id="ButtonFocus"]
+texture = ExtResource("button_focus")
+texture_margin_left = 14.0
+content_margin_left = 0.0
+texture_margin_top = 14.0
+content_margin_top = 0.0
+texture_margin_right = 14.0
+content_margin_right = 0.0
+texture_margin_bottom = 14.0
+content_margin_bottom = 0.0
+
+[sub_resource type="StyleBoxTexture" id="SlotNormal"]
+texture = ExtResource("item_default")
+texture_margin_left = 14.0
+content_margin_left = 4.0
+texture_margin_top = 14.0
+content_margin_top = 4.0
+texture_margin_right = 14.0
+content_margin_right = 4.0
+texture_margin_bottom = 14.0
+content_margin_bottom = 4.0
+
+[sub_resource type="StyleBoxTexture" id="SlotSelected"]
+texture = ExtResource("item_selected")
+texture_margin_left = 14.0
+content_margin_left = 4.0
+texture_margin_top = 14.0
+content_margin_top = 4.0
+texture_margin_right = 14.0
+content_margin_right = 4.0
+texture_margin_bottom = 14.0
+content_margin_bottom = 4.0
+
+[sub_resource type="StyleBoxTexture" id="SlotHover"]
+texture = ExtResource("item_selected")
+texture_margin_left = 14.0
+content_margin_left = 4.0
+texture_margin_top = 14.0
+content_margin_top = 4.0
+texture_margin_right = 14.0
+content_margin_right = 4.0
+texture_margin_bottom = 14.0
+content_margin_bottom = 4.0
+
+[sub_resource type="StyleBoxTexture" id="TabNormal"]
+texture = ExtResource("button_default")
+texture_margin_left = 14.0
+content_margin_left = 10.0
+texture_margin_top = 14.0
+content_margin_top = 10.0
+texture_margin_right = 14.0
+content_margin_right = 10.0
+texture_margin_bottom = 14.0
+content_margin_bottom = 10.0
+
+[sub_resource type="StyleBoxTexture" id="TabSelected"]
+texture = ExtResource("button_gold")
+texture_margin_left = 14.0
+content_margin_left = 10.0
+texture_margin_top = 14.0
+content_margin_top = 10.0
+texture_margin_right = 14.0
+content_margin_right = 10.0
+texture_margin_bottom = 14.0
+content_margin_bottom = 10.0
+
+[sub_resource type="StyleBoxTexture" id="TabDisabled"]
+texture = ExtResource("button_disabled")
+texture_margin_left = 14.0
+content_margin_left = 10.0
+texture_margin_top = 14.0
+content_margin_top = 10.0
+texture_margin_right = 14.0
+content_margin_right = 10.0
+texture_margin_bottom = 14.0
+content_margin_bottom = 10.0
+
+[sub_resource type="StyleBoxTexture" id="InputNormal"]
+texture = ExtResource("button_secondary")
+texture_margin_left = 14.0
+content_margin_left = 10.0
+texture_margin_top = 14.0
+content_margin_top = 10.0
+texture_margin_right = 14.0
+content_margin_right = 10.0
+texture_margin_bottom = 14.0
+content_margin_bottom = 10.0
+
+[sub_resource type="StyleBoxTexture" id="InputFocus"]
+texture = ExtResource("button_focus")
+texture_margin_left = 14.0
+content_margin_left = 0.0
+texture_margin_top = 14.0
+content_margin_top = 0.0
+texture_margin_right = 14.0
+content_margin_right = 0.0
+texture_margin_bottom = 14.0
+content_margin_bottom = 0.0
+
+[sub_resource type="StyleBoxTexture" id="TooltipPanel"]
+texture = ExtResource("panel_dark")
+texture_margin_left = 20.0
+content_margin_left = 12.0
+texture_margin_top = 20.0
+content_margin_top = 12.0
+texture_margin_right = 20.0
+content_margin_right = 12.0
+texture_margin_bottom = 20.0
+content_margin_bottom = 12.0
+
+[sub_resource type="StyleBoxFlat" id="GaugeBackground"]
+bg_color = Color(0.113725, 0.188235, 0.227451, 1.000000)
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_left = 5
+corner_radius_bottom_right = 5
+
+[sub_resource type="StyleBoxFlat" id="HealthFill"]
+bg_color = Color(0.219608, 0.474510, 0.341176, 1.000000)
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_left = 5
+corner_radius_bottom_right = 5
+
+[sub_resource type="StyleBoxFlat" id="ManaFill"]
+bg_color = Color(0.313725, 0.584314, 0.686275, 1.000000)
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_left = 5
+corner_radius_bottom_right = 5
+
+[sub_resource type="StyleBoxFlat" id="StaminaFill"]
+bg_color = Color(0.952941, 0.850980, 0.607843, 1.000000)
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_left = 5
+corner_radius_bottom_right = 5
+
+[sub_resource type="StyleBoxFlat" id="ExperienceFill"]
+bg_color = Color(0.713725, 0.541176, 0.262745, 1.000000)
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_left = 5
+corner_radius_bottom_right = 5
+
+[sub_resource type="SystemFont" id="BodyFont"]
+font_names = PackedStringArray("Arial", "Liberation Sans", "DejaVu Sans")
+
+[sub_resource type="SystemFont" id="HeadingFont"]
+font_names = PackedStringArray("Georgia", "Liberation Serif", "DejaVu Serif")
+
+[resource]
+script = ExtResource("skin")
+Font = SubResource("BodyFont")
+HeadingFont = SubResource("HeadingFont")
+FontSize = 16
+Spacing = 8
+Paper = Color(0.960784, 0.921569, 0.839216, 1.000000)
+Ink = Color(0.152941, 0.239216, 0.286275, 1.000000)
+Navy = Color(0.113725, 0.188235, 0.227451, 0.900000)
+LightText = Color(1.000000, 0.976471, 0.917647, 1.000000)
+Gold = Color(0.952941, 0.850980, 0.607843, 1.000000)
+MutedInk = Color(0.435294, 0.458824, 0.427451, 1.000000)
+DisabledText = Color(0.435294, 0.458824, 0.427451, 1.000000)
+IconTint = Color(0.152941, 0.294118, 0.392157, 1.000000)
+Health = Color(0.219608, 0.474510, 0.341176, 1.000000)
+Mana = Color(0.313725, 0.584314, 0.686275, 1.000000)
+Stamina = Color(0.952941, 0.850980, 0.607843, 1.000000)
+PaperPanel = SubResource("PaperPanel")
+DarkPanel = SubResource("DarkPanel")
+ButtonNormal = SubResource("ButtonNormal")
+ButtonHover = SubResource("ButtonHover")
+ButtonPressed = SubResource("ButtonPressed")
+ButtonDisabled = SubResource("ButtonDisabled")
+ButtonFocus = SubResource("ButtonFocus")
+SlotNormal = SubResource("SlotNormal")
+SlotSelected = SubResource("SlotSelected")
+SlotHover = SubResource("SlotHover")
+TabNormal = SubResource("TabNormal")
+TabSelected = SubResource("TabSelected")
+TabDisabled = SubResource("TabDisabled")
+InputNormal = SubResource("InputNormal")
+InputFocus = SubResource("InputFocus")
+TooltipPanel = SubResource("TooltipPanel")
+GaugeBackground = SubResource("GaugeBackground")
+HealthFill = SubResource("HealthFill")
+ManaFill = SubResource("ManaFill")
+StaminaFill = SubResource("StaminaFill")
+ExperienceFill = SubResource("ExperienceFill")

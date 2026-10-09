@@ -1,0 +1,849 @@
+{
+  "package": "Project G — UI Source Kit",
+  "version": "0.1",
+  "design_screens": 8,
+  "component_sheets": 1,
+  "individual_components": 21,
+  "icons": 40,
+  "native_godot_screens": 3,
+  "browser_checks_passed": 39,
+  "static_checks_passed": 124,
+  "godot_runtime_tested": false,
+  "files": [
+    {
+      "path": "Preview.html",
+      "bytes": 12630176,
+      "sha256": "95f28562465569ae672bfe3bac7f4f81520dad492f698ec11767e4fdbf9c7e15"
+    },
+    {
+      "path": "README_RU.md",
+      "bytes": 9918,
+      "sha256": "8f5cb8202951f41abbbc5bb2de7369a5bd555edf609143d0d0b6cd9ab711668c"
+    },
+    {
+      "path": "assets/art/barton_art.png",
+      "bytes": 75142,
+      "sha256": "d0d7bb71029723fc5d40a3c46fb2b40e0253ba79d50ff1d896c7e6e1244fabbf"
+    },
+    {
+      "path": "assets/art/barton_portrait.png",
+      "bytes": 20117,
+      "sha256": "0f41b44593d0332363b23eaeea678ee9c2ace3839c9bd03bcc5f96636258a1d8"
+    },
+    {
+      "path": "assets/art/echo_art.png",
+      "bytes": 72176,
+      "sha256": "e7a997c6ee8802718d8b27213e663d3838d3dedf514aee73b1cfa400b333925c"
+    },
+    {
+      "path": "assets/art/echo_portrait.png",
+      "bytes": 14734,
+      "sha256": "b811142587b951d271f600d8b783561df2033cadbea5bc4b2a80507a99fc6e9d"
+    },
+    {
+      "path": "assets/art/hero_cutout.png",
+      "bytes": 94737,
+      "sha256": "ab1d50c6ebb2a32ec097ca5032cfa077c4cc7a890f07fad61b1686623fad7d79"
+    },
+    {
+      "path": "assets/art/hero_portrait.png",
+      "bytes": 13548,
+      "sha256": "03c626b697efa096de4f274dba9a95ebe71e4e117bf659e1ca786baa86f1c5c6"
+    },
+    {
+      "path": "assets/art/world.jpg",
+      "bytes": 526980,
+      "sha256": "1377f3bd488c9e58d986600ef34939ce48e94fdc83343b2c1c86c82ec1460be6"
+    },
+    {
+      "path": "assets/icons/bag.svg",
+      "bytes": 280,
+      "sha256": "e142b53b4c26b589945c700e8cfec0f0ffea834dff29682217132cf4ed6f49e2"
+    },
+    {
+      "path": "assets/icons/bolt.svg",
+      "bytes": 232,
+      "sha256": "3b9033218b45bcb41e3a497ec71a1b7efacd3a548a40463e089c68b366953f8a"
+    },
+    {
+      "path": "assets/icons/book.svg",
+      "bytes": 312,
+      "sha256": "a1ead5beebbfefa615dd040be9d61a3335236ae352ab29e8a923468d085dc7fa"
+    },
+    {
+      "path": "assets/icons/boot.svg",
+      "bytes": 255,
+      "sha256": "5c85f8327ddc39d9c49a33f787764f569f102d844f4e208d303d8e421c10d14f"
+    },
+    {
+      "path": "assets/icons/bow.svg",
+      "bytes": 269,
+      "sha256": "bbab8dd84b4701b5b296f3ecebb0eb6137102d9d2412b4f9870afe976a5b80d5"
+    },
+    {
+      "path": "assets/icons/chat.svg",
+      "bytes": 246,
+      "sha256": "0728c5ad4430f67e98b66b2aa3ee0d470407985006c3edb2673238eb07f805fe"
+    },
+    {
+      "path": "assets/icons/check.svg",
+      "bytes": 219,
+      "sha256": "90c76850a3eb83d07e9b585f4fdf2440b87106ed6b8afc6064201c1d797cd319"
+    },
+    {
+      "path": "assets/icons/chevron.svg",
+      "bytes": 220,
+      "sha256": "d3d3bc4f7c94b44296418df4ef74748aacdb570bbc6d299f005cf1cddcf6f0a3"
+    },
+    {
+      "path": "assets/icons/clock.svg",
+      "bytes": 249,
+      "sha256": "5486ae6fbedfe36d5367f7f3135dde8b25581439bb4482958a9ec97cf63a612b"
+    },
+    {
+      "path": "assets/icons/close.svg",
+      "bytes": 227,
+      "sha256": "a0fa4a7cb178fcd36ea7259be5fd3b325ae05b37fa0d3c00aa9236bb03a9f70a"
+    },
+    {
+      "path": "assets/icons/coin.svg",
+      "bytes": 306,
+      "sha256": "f7769f9e14e98ed24a43f101fb712f48e5383eac5be7db4b6e78516ff70b522f"
+    },
+    {
+      "path": "assets/icons/compass.svg",
+      "bytes": 288,
+      "sha256": "db38ca1d572b8f9e8236c841930f8ff87a4ec4e8a2890f364092b92e1013f2b7"
+    },
+    {
+      "path": "assets/icons/dash.svg",
+      "bytes": 253,
+      "sha256": "991e09c47b870b59ace98a9c5c77da4b2bb12b4331fa4a306f86463ed005f91c"
+    },
+    {
+      "path": "assets/icons/eye.svg",
+      "bytes": 274,
+      "sha256": "205052c31a227538a008f50cab25b3052eb7138ea9357dfada7339c9870f2c12"
+    },
+    {
+      "path": "assets/icons/feather.svg",
+      "bytes": 272,
+      "sha256": "a63899759c2f0a537b2fb039a3e44472b57f3368680c0363375399dbddc1c233"
+    },
+    {
+      "path": "assets/icons/flame.svg",
+      "bytes": 282,
+      "sha256": "cc122bf998bb4cdc568bc990feffe823a1ccabbb39bad0d1d386e876cc3c037a"
+    },
+    {
+      "path": "assets/icons/gem.svg",
+      "bytes": 278,
+      "sha256": "e54234ef7f35d8ee1f2dc08520427ca64a34f39399b6f46f1f10c85467887d74"
+    },
+    {
+      "path": "assets/icons/group.svg",
+      "bytes": 303,
+      "sha256": "90116b8b759438195124d2f2c633804923ea1a183d2638b1b956ea5b643e5021"
+    },
+    {
+      "path": "assets/icons/guild.svg",
+      "bytes": 275,
+      "sha256": "ee55958588ad406a40941b8ae37ab8067f29cf7c0d881fef75fe0dbbb1fe3c4d"
+    },
+    {
+      "path": "assets/icons/hammer.svg",
+      "bytes": 260,
+      "sha256": "19c8231e4728a013981af01475e0a580e6dcf28c92273c4a86fed902799d4413"
+    },
+    {
+      "path": "assets/icons/heart.svg",
+      "bytes": 269,
+      "sha256": "2b7ce1ca264111f1072a8e05848e6920051efb7c9dcf1da009ae613e7664d9ae"
+    },
+    {
+      "path": "assets/icons/helmet.svg",
+      "bytes": 263,
+      "sha256": "641098365e90c8e2d7c6948441d29b045eaa2c8f08e0168bf68d99a7a29e8cc2"
+    },
+    {
+      "path": "assets/icons/leaf.svg",
+      "bytes": 274,
+      "sha256": "2c416b21a0d097a20f3840cfc7ba05cfb8db9ee705c93deb7eb5d562de212a53"
+    },
+    {
+      "path": "assets/icons/lock.svg",
+      "bytes": 288,
+      "sha256": "4e1799049df3cc9fab543d93326bb86dc19e98c0fdf18777172fae8b1eeff6c5"
+    },
+    {
+      "path": "assets/icons/map.svg",
+      "bytes": 286,
+      "sha256": "f75c747aab006a5c0da49a5692f43a093043dc55ab7a7625e3b589cabb2dfe36"
+    },
+    {
+      "path": "assets/icons/menu.svg",
+      "bytes": 227,
+      "sha256": "6abe41aabf13d668ba70668d7ce8e7a502002a0e4f37387d1f21833eb44c4262"
+    },
+    {
+      "path": "assets/icons/moon.svg",
+      "bytes": 257,
+      "sha256": "ff2f6c66cc3b0a717979a31ae15b97674d71b9707a5e517e88112c1ddc76b276"
+    },
+    {
+      "path": "assets/icons/person.svg",
+      "bytes": 270,
+      "sha256": "6c05d6f5c3f0e4bcbc119da70c99c2372ba7cf9d046402279f4828ab061bbe0f"
+    },
+    {
+      "path": "assets/icons/pin.svg",
+      "bytes": 285,
+      "sha256": "8d7cb050fea4f6dd6249ffcc0f92a217f819bbf33e1db7add4929ab5008cd497"
+    },
+    {
+      "path": "assets/icons/potion.svg",
+      "bytes": 278,
+      "sha256": "4fa0970fe1e130f83545a3da10003e7a39190aee7de09eb766d008e4b92f6ca9"
+    },
+    {
+      "path": "assets/icons/scale.svg",
+      "bytes": 259,
+      "sha256": "fbebaf1a726a5e7e9c2a57b9126ec4bc5bac12eff512b76cc57a288331343116"
+    },
+    {
+      "path": "assets/icons/scroll.svg",
+      "bytes": 306,
+      "sha256": "0866ce3cb7269460f4b6f321caed78fd4a1f984601a59907500fce191901608b"
+    },
+    {
+      "path": "assets/icons/search.svg",
+      "bytes": 247,
+      "sha256": "d4423e2e2bbbfa7f75ea4be6c835a4defbbc11102b5791b329b5ac8a28c70936"
+    },
+    {
+      "path": "assets/icons/settings.svg",
+      "bytes": 375,
+      "sha256": "9537f998e6fea9c0baf4404893e46d437f774f07abf0714317e7ed84fdbe9d72"
+    },
+    {
+      "path": "assets/icons/shield.svg",
+      "bytes": 283,
+      "sha256": "dfb6ca86695e1852d755547d118e8f658f019707dbd6d1adbac7841936d82c22"
+    },
+    {
+      "path": "assets/icons/snow.svg",
+      "bytes": 316,
+      "sha256": "abd560d3043b8959d9344a3eb3cd625537e721757d421f20ba089f864c8970c4"
+    },
+    {
+      "path": "assets/icons/star.svg",
+      "bytes": 244,
+      "sha256": "ea8c28631ebf71a4afc72166e9748b3c017100404f7b2266a6bcab1d781aa1b7"
+    },
+    {
+      "path": "assets/icons/sun.svg",
+      "bytes": 302,
+      "sha256": "1a5a974a0ead9c261b4f6823aae431f51b36db79dc8b316863cc08e26249b16e"
+    },
+    {
+      "path": "assets/icons/sword.svg",
+      "bytes": 260,
+      "sha256": "c8e55d8829c195f6b96e96fc2b22b69f67501b3a276587632d111da1c1fcf8ec"
+    },
+    {
+      "path": "assets/icons/warning.svg",
+      "bytes": 259,
+      "sha256": "b62ec10f51e1279d751878a9bf2181da8af4da2310e9ead76a3bd638c90d12fb"
+    },
+    {
+      "path": "design/components/09_components.svg",
+      "bytes": 32716,
+      "sha256": "b801bdb5c3b97ffe38bf74f8c7bb1a9d4fa2efbd4eeef142a42ed6cf1cd29091"
+    },
+    {
+      "path": "design/components/button_default.svg",
+      "bytes": 1676,
+      "sha256": "f73c588bee1c6c1373d5ab6ba1291230d7286996a2131234315a18dfa3b041f6"
+    },
+    {
+      "path": "design/components/button_disabled.svg",
+      "bytes": 1669,
+      "sha256": "ebad9ff58ae260f3e2d24e4804c1421bf3047315d87612ef02be7159d38924db"
+    },
+    {
+      "path": "design/components/button_focus.svg",
+      "bytes": 1781,
+      "sha256": "194ea158ef44266051bb3a5186ed0622fc245ab7f0d3eaf33773efbf1c7aa851"
+    },
+    {
+      "path": "design/components/button_gold.svg",
+      "bytes": 1670,
+      "sha256": "65bc40b13ca328b66d1e4df137e6812a2f362020ca6fd93f1bcc7e520df93245"
+    },
+    {
+      "path": "design/components/button_hover.svg",
+      "bytes": 1663,
+      "sha256": "81732fab318485c660134dee945997951fba32212594dca35d2975a6c4441abe"
+    },
+    {
+      "path": "design/components/button_pressed.svg",
+      "bytes": 1667,
+      "sha256": "2664b8972fab4d4b46af0565ef3be52854a48fdefb0f4967746b0616d76cc2b6"
+    },
+    {
+      "path": "design/components/button_secondary.svg",
+      "bytes": 1671,
+      "sha256": "24d123e5580f40a5fe65ac6b5208be7ffdbe31f97abe1650ac04fe20a83a589e"
+    },
+    {
+      "path": "design/components/item_default.svg",
+      "bytes": 1808,
+      "sha256": "e3df252d9f4ed4fdee1f59638b607d9f4ace77a4fc8bd0c4d002897b66ce8385"
+    },
+    {
+      "path": "design/components/item_legendary.svg",
+      "bytes": 1812,
+      "sha256": "7625492565182e188e5e130394135b1d329e9cf3effc943282f0e08805f3ba28"
+    },
+    {
+      "path": "design/components/item_selected.svg",
+      "bytes": 1810,
+      "sha256": "65396f0f8912175cdd1450362544f9f1e4604d24d95b69a4a72590bb9a433b8e"
+    },
+    {
+      "path": "design/components/panel_dark.svg",
+      "bytes": 1729,
+      "sha256": "5f181bba105e0c6dc9401faabb55eb54665b1cd3c9d46d02f988aca186dc1941"
+    },
+    {
+      "path": "design/components/panel_parchment.svg",
+      "bytes": 1735,
+      "sha256": "02536e3f9c68704630c1270c4767206d5bc48cf3cf1868a7b0d442333ccb8202"
+    },
+    {
+      "path": "design/components/rank_A.svg",
+      "bytes": 1620,
+      "sha256": "c1e1737fa1254e16f17f6dfab3725d50d1ee84018e4c786104439fecd463d939"
+    },
+    {
+      "path": "design/components/rank_B.svg",
+      "bytes": 1620,
+      "sha256": "96153112ad78b797469361fbc7650823f65a5b9df0ba19a69355c5ad84b81a57"
+    },
+    {
+      "path": "design/components/rank_C.svg",
+      "bytes": 1620,
+      "sha256": "0a7874fc2680d6de0fab51bdfc99af942dff1a7ba27176f1085f3fd6658909e9"
+    },
+    {
+      "path": "design/components/rank_D.svg",
+      "bytes": 1620,
+      "sha256": "99b851c9f7535919baed2f750cbbf06de00c5d0dd10c1739c1e40d8dcb36ce0b"
+    },
+    {
+      "path": "design/components/rank_E.svg",
+      "bytes": 1620,
+      "sha256": "2416e83bef4eb5812e0672d32c256ab922c4af6556fbafbfd8fadbd63c1daf75"
+    },
+    {
+      "path": "design/components/rank_F.svg",
+      "bytes": 1620,
+      "sha256": "5eab9719a35aac971b3e13fc4de9c83e592e5bd46a29c0cd74733f9bfb76e770"
+    },
+    {
+      "path": "design/components/rank_S.svg",
+      "bytes": 1620,
+      "sha256": "ee6a68989b6be6d11ceac90455af5eb8e32aa8a2af01305ce7cf0713bf313e93"
+    },
+    {
+      "path": "design/components/skill_cooldown.svg",
+      "bytes": 2445,
+      "sha256": "70b5e635bb64e40d86c26cbd973ca2978d9a920c4896e09b948d7a4e92cb29b5"
+    },
+    {
+      "path": "design/components/skill_ready.svg",
+      "bytes": 2183,
+      "sha256": "18395f19b2daf1f5013a091cd8cb40053bfd96ed44fbbe49260a799b2deddee0"
+    },
+    {
+      "path": "design/screens/01_hud.svg",
+      "bytes": 1814232,
+      "sha256": "2e1310998f841d7ae3b933fa8f68f1453611a5e7ecea26e4246c4e00cbcc8081"
+    },
+    {
+      "path": "design/screens/02_character.svg",
+      "bytes": 1676429,
+      "sha256": "1ab825bd79ae4966cdbb73a8dd0fe1a94e173fbb249c7c55a38fb6c57ed08a92"
+    },
+    {
+      "path": "design/screens/03_inventory.svg",
+      "bytes": 1431961,
+      "sha256": "96c023521cd53f91f65e68940cd3ea3c459a0a089d1d82680af789a7a765df2e"
+    },
+    {
+      "path": "design/screens/04_echoes.svg",
+      "bytes": 1741345,
+      "sha256": "333a3ec60392a050b5f8a3d96c9fba138622a9d3e6da4c93b75e12203182b951"
+    },
+    {
+      "path": "design/screens/05_guild.svg",
+      "bytes": 1422401,
+      "sha256": "f30bbaf8c7fee1a38b78c02d6d7b2cab2eee6963c9af85a15acb06d89cff4e88"
+    },
+    {
+      "path": "design/screens/06_map.svg",
+      "bytes": 1424634,
+      "sha256": "b01ec5276c9b957edadba777d904baba74d521282d104776445398ef9e106f86"
+    },
+    {
+      "path": "design/screens/07_journal.svg",
+      "bytes": 1418139,
+      "sha256": "c1194f61d32718008cce2e01b2360bf6cc76aae1a678d71ecf189d21b7a29544"
+    },
+    {
+      "path": "design/screens/08_dialogue.svg",
+      "bytes": 1612487,
+      "sha256": "044c256056ec99d6072908a1f8ed9054dcc25c76c72752082f3bef09901a1cac"
+    },
+    {
+      "path": "design/tokens.json",
+      "bytes": 1071,
+      "sha256": "75d9e9827687018dbbbb8c3d6b7fdef135fd2dd6134fee24a01a86b5b5f7313f"
+    },
+    {
+      "path": "docs/ASSET_PROVENANCE.md",
+      "bytes": 2987,
+      "sha256": "c3efb8d42411e629c92b1d500c6d7c1d5037ac03fc74a213f6dbb77c00a445df"
+    },
+    {
+      "path": "docs/EDITING_GUIDE.md",
+      "bytes": 4779,
+      "sha256": "edeef493fd7cf612b43dc22b1ab1fea762871922fd933b2f73cbe4fd8265ca6f"
+    },
+    {
+      "path": "docs/GODOT_INTEGRATION.md",
+      "bytes": 7335,
+      "sha256": "26198036dcd8490fd91d07f5fc360df60b4dbc69034e8e2891f1501447e80b5c"
+    },
+    {
+      "path": "docs/QA_REPORT.md",
+      "bytes": 3231,
+      "sha256": "97c22d298072ea204a182af2e5061c9edb52819f557e86cb4bfc8fe060700f62"
+    },
+    {
+      "path": "docs/UX_RULES.md",
+      "bytes": 6309,
+      "sha256": "8c7d7860c29a8a57acd7ffbf9ecf7001a4c5f7e2853726cb27c46d90dbfb6e82"
+    },
+    {
+      "path": "godot/Main.tscn",
+      "bytes": 1801,
+      "sha256": "a7d1508cb2e2f3805dc3ea9000ac860e1e85c1618a87c5bb3cfeee0ced5f8e2a"
+    },
+    {
+      "path": "godot/art/barton_portrait.png",
+      "bytes": 20117,
+      "sha256": "0f41b44593d0332363b23eaeea678ee9c2ace3839c9bd03bcc5f96636258a1d8"
+    },
+    {
+      "path": "godot/art/echo_portrait.png",
+      "bytes": 14734,
+      "sha256": "b811142587b951d271f600d8b783561df2033cadbea5bc4b2a80507a99fc6e9d"
+    },
+    {
+      "path": "godot/art/hero_cutout.png",
+      "bytes": 94737,
+      "sha256": "ab1d50c6ebb2a32ec097ca5032cfa077c4cc7a890f07fad61b1686623fad7d79"
+    },
+    {
+      "path": "godot/art/hero_portrait.png",
+      "bytes": 13548,
+      "sha256": "03c626b697efa096de4f274dba9a95ebe71e4e117bf659e1ca786baa86f1c5c6"
+    },
+    {
+      "path": "godot/art/world.jpg",
+      "bytes": 526980,
+      "sha256": "1377f3bd488c9e58d986600ef34939ce48e94fdc83343b2c1c86c82ec1460be6"
+    },
+    {
+      "path": "godot/icons/bag.svg",
+      "bytes": 280,
+      "sha256": "066b6313d28dc7d62dcb3107aaea78a31a81a3f5d99311ecc1ca268e7e41cc21"
+    },
+    {
+      "path": "godot/icons/bolt.svg",
+      "bytes": 232,
+      "sha256": "0713ab7ebbe63c40c6e39fc9d5fc6bd1c927d434bb8cfb48acef40e641faf620"
+    },
+    {
+      "path": "godot/icons/book.svg",
+      "bytes": 312,
+      "sha256": "8793af7d7802995a29ab8bbaa96149a0799ca4ca2b6e832b0ddadc6a8224ecf7"
+    },
+    {
+      "path": "godot/icons/boot.svg",
+      "bytes": 255,
+      "sha256": "95be7540b4291c24e2365cb18240334a622bf50e0ea749ce05ae0e93deffd07a"
+    },
+    {
+      "path": "godot/icons/bow.svg",
+      "bytes": 269,
+      "sha256": "f9abdae7584fabbc06ee3a4d06949a81e1115adb761199859e3206b3aa1d8c50"
+    },
+    {
+      "path": "godot/icons/chat.svg",
+      "bytes": 246,
+      "sha256": "3a9021a7e46f322e4633b152750144dcf77d52178fe729fe9dadbb572194af88"
+    },
+    {
+      "path": "godot/icons/check.svg",
+      "bytes": 219,
+      "sha256": "d5d0cadeb901d6e040665f69f580115562e2de46c05fa4d81cbbf5f504c04bcd"
+    },
+    {
+      "path": "godot/icons/chevron.svg",
+      "bytes": 220,
+      "sha256": "7699da28d974adf278bd6a00547221fbf205a577ff760125d0604ebaea96ddeb"
+    },
+    {
+      "path": "godot/icons/clock.svg",
+      "bytes": 249,
+      "sha256": "9a320c518e2fd2e82299def2ebe00b76a66fbd01a2f77784eff5267afb3df91b"
+    },
+    {
+      "path": "godot/icons/close.svg",
+      "bytes": 227,
+      "sha256": "e3599a04c49841c879754a95fb261df745d390afc2f72fa434b7cc41a43f3e3f"
+    },
+    {
+      "path": "godot/icons/coin.svg",
+      "bytes": 306,
+      "sha256": "6e429c108159f4b14e3f1a8becffb9b9e5ace708f5cc27d6225f4424df571c39"
+    },
+    {
+      "path": "godot/icons/compass.svg",
+      "bytes": 288,
+      "sha256": "1ae217e8ed6bc50ac9ac02f96a74ee9b23617ccec10a32ee3afc758a738b84a7"
+    },
+    {
+      "path": "godot/icons/dash.svg",
+      "bytes": 253,
+      "sha256": "9ff5d59d16c0fd766f0e0f449af3f747614035caf49d6f62fd8424323b8e7451"
+    },
+    {
+      "path": "godot/icons/eye.svg",
+      "bytes": 274,
+      "sha256": "2cfa4cd8078592920d005b3d71a52a9b5c8649a1a347b8f978acbc8335dd2ba1"
+    },
+    {
+      "path": "godot/icons/feather.svg",
+      "bytes": 272,
+      "sha256": "ebfdbf5d596eb7764fa2b924b447b22d7b543437b3430386d0e32b0e23252aa0"
+    },
+    {
+      "path": "godot/icons/flame.svg",
+      "bytes": 282,
+      "sha256": "115e3eb08f725a90dac38645eae2979cb3b7c4a56efdc227a0723640e7eabb41"
+    },
+    {
+      "path": "godot/icons/gem.svg",
+      "bytes": 278,
+      "sha256": "c0646d11c0885bcf164f7a1fa45be4c36ea0e6d0f01018204bf4edb631e497a9"
+    },
+    {
+      "path": "godot/icons/group.svg",
+      "bytes": 303,
+      "sha256": "020f0656791ba01859a7b5bba83776efe5776c78b883a6162a8b471ea8113aa6"
+    },
+    {
+      "path": "godot/icons/guild.svg",
+      "bytes": 275,
+      "sha256": "1c36518717a94f234d0458d232c7e0e9b7087d98a6050a0a88a8dd09b8f27516"
+    },
+    {
+      "path": "godot/icons/hammer.svg",
+      "bytes": 260,
+      "sha256": "102992def76481943dc2ba27b8ff8e1be2a83128667b5bfa3568f729b81eeb44"
+    },
+    {
+      "path": "godot/icons/heart.svg",
+      "bytes": 269,
+      "sha256": "243b3140f207c376919c0ecec04361a94f991aa0d23b72e29d764263ff400695"
+    },
+    {
+      "path": "godot/icons/helmet.svg",
+      "bytes": 263,
+      "sha256": "3ca742c6fe46de62cff36ef45ee29693bf55cd3e40ebc61fa6eddf20e81de6e3"
+    },
+    {
+      "path": "godot/icons/leaf.svg",
+      "bytes": 274,
+      "sha256": "e18354fcec8d5b16d589fff13c8e7fc0e1d36f3e2347174dacf9e4e1a01b9e97"
+    },
+    {
+      "path": "godot/icons/lock.svg",
+      "bytes": 288,
+      "sha256": "4b50ac3c7a4684baa5d5cfea737a7e44d07299e40e3339fd5434af7e4fd2d0f4"
+    },
+    {
+      "path": "godot/icons/map.svg",
+      "bytes": 286,
+      "sha256": "85f5672b802ae9737254fd9c7c0fa427f614c447ea385ccc2ccb6edb5da94efc"
+    },
+    {
+      "path": "godot/icons/menu.svg",
+      "bytes": 227,
+      "sha256": "a33e3a53dba9436fc66ec553a958afadbecbff5fd42d40477f63362a20088956"
+    },
+    {
+      "path": "godot/icons/moon.svg",
+      "bytes": 257,
+      "sha256": "2face936509b2f59774d71929988c585d4f8190ce091f0ec065947fc17e3fe1a"
+    },
+    {
+      "path": "godot/icons/person.svg",
+      "bytes": 270,
+      "sha256": "9f609985b9b258e664a4f718b69c96a05b5e06eadc1c095e1a1f14c236ad510a"
+    },
+    {
+      "path": "godot/icons/pin.svg",
+      "bytes": 285,
+      "sha256": "a2252311bf7859c25dc30cbb677d3333ec52155058b3585797cf78d84aeb2578"
+    },
+    {
+      "path": "godot/icons/potion.svg",
+      "bytes": 278,
+      "sha256": "97a94501f41bf8212324e1dabbc54598eddbcd0cb547ddbe5a7a9feed99df34c"
+    },
+    {
+      "path": "godot/icons/scale.svg",
+      "bytes": 259,
+      "sha256": "891d12c07a8afb4ffeaabcedc211a429be25ee85464c893bab98b2c890f4cbdf"
+    },
+    {
+      "path": "godot/icons/scroll.svg",
+      "bytes": 306,
+      "sha256": "359c8b1f49f32fb8f181af58dedb4b6a2fc80f4a2039c119ef1e78d5ad42f263"
+    },
+    {
+      "path": "godot/icons/search.svg",
+      "bytes": 247,
+      "sha256": "d76c502212da94c06e8122cc11f1ad237215ad91d7ca89824b166883dab0fb31"
+    },
+    {
+      "path": "godot/icons/settings.svg",
+      "bytes": 375,
+      "sha256": "7c64f257244eacae5060e867d7c2957775b076e2398346417a43a8d5c451b190"
+    },
+    {
+      "path": "godot/icons/shield.svg",
+      "bytes": 283,
+      "sha256": "fafc155862d6ec550df75d99acfe7532f12180c1e8a192fa92601f2d40b2b21e"
+    },
+    {
+      "path": "godot/icons/snow.svg",
+      "bytes": 316,
+      "sha256": "fa9882b87fd9507be97407f20ca43a53a2bbdb837105f2907994c3a548f2199a"
+    },
+    {
+      "path": "godot/icons/star.svg",
+      "bytes": 244,
+      "sha256": "fed92de63efee24dd7fc13268291cbdb44b7bf65d95f041a7fb2907eff9ab199"
+    },
+    {
+      "path": "godot/icons/sun.svg",
+      "bytes": 302,
+      "sha256": "c7bb43db39f2e02a91c9144f6e66078d2bab0e42af7f8afdbb33d863cbf730b2"
+    },
+    {
+      "path": "godot/icons/sword.svg",
+      "bytes": 260,
+      "sha256": "47336c9a29b9cb11031332ee8e6e7af6a744943b795e032b32963b2f25e0a1bc"
+    },
+    {
+      "path": "godot/icons/warning.svg",
+      "bytes": 259,
+      "sha256": "c47cd5a441942f4bdb3e6625f3b97e1a7c5d4ad5bce4e54a44dbdfae83bb3a5b"
+    },
+    {
+      "path": "godot/project.godot",
+      "bytes": 586,
+      "sha256": "979a434676dbdae78895ce29c2fe23cb484ca6f18cf692f445fc682840b61bbf"
+    },
+    {
+      "path": "godot/scripts/main.gd",
+      "bytes": 9485,
+      "sha256": "e654bf9f6ddc5d7f27709a8d7363a022367873df13b9bfd7dee19fefc19f73dd"
+    },
+    {
+      "path": "godot/scripts/skill_slot.gd",
+      "bytes": 571,
+      "sha256": "8f6f4873e9b658c42fe5cb8be7fd7e804d4c16e4208125a9b0d79720b3bca8ec"
+    },
+    {
+      "path": "godot/themes/adventurer_theme.tres",
+      "bytes": 10997,
+      "sha256": "3dfd76dfcfbd8c3378377e4e18b26da0af34753488ef1e495bdac793ad1e73d9"
+    },
+    {
+      "path": "godot/ui/components/ParchmentPanel.tscn",
+      "bytes": 441,
+      "sha256": "f62d3e2d5981ad90439326dd9f6aecf1644072acffea3314cbd7fd7770d3ffc1"
+    },
+    {
+      "path": "godot/ui/components/PrimaryButton.tscn",
+      "bytes": 337,
+      "sha256": "c52926a6aa991260d57e90f576051fd965fa30beb4f8e524ba98e3db63e93998"
+    },
+    {
+      "path": "godot/ui/components/SkillSlot.tscn",
+      "bytes": 891,
+      "sha256": "bafd21d9368c9fe21752fcb2ceddee679beda4bf1f4d270f66b6872f078954cf"
+    },
+    {
+      "path": "godot/ui/screens/GuildPanel.tscn",
+      "bytes": 5606,
+      "sha256": "d86d856ba5606e0c47bc085aca161a1f0bc930747466339270079ef09287f1b5"
+    },
+    {
+      "path": "godot/ui/screens/InventoryPanel.tscn",
+      "bytes": 8851,
+      "sha256": "f975733bf5a6f4c7de8240885d273a5bedc5b621dcdef949eeb4e3684ec30c9d"
+    },
+    {
+      "path": "godot/ui/screens/NativeHud.tscn",
+      "bytes": 10657,
+      "sha256": "1f8dd5c20a34c30cd7e6a005862d1a6ce738c3e3e18b02883462df6bf7db585b"
+    },
+    {
+      "path": "previews/character.png",
+      "bytes": 1061174,
+      "sha256": "605b6d2b5f41b7f99758db715d26f57ccdf0d15b32803513cd9ad48fd006e935"
+    },
+    {
+      "path": "previews/components.png",
+      "bytes": 198025,
+      "sha256": "d92ed15dd8d3c57deb7569ddd5e3a809e7ff3062b6c1d9acab4de649c9cd9352"
+    },
+    {
+      "path": "previews/dialogue.png",
+      "bytes": 1903893,
+      "sha256": "923cb08c56750cf9e64391efb25f0cafcc833d949bf3f9858b8512c44c32b2e8"
+    },
+    {
+      "path": "previews/echoes.png",
+      "bytes": 1108448,
+      "sha256": "4c2880d21fc084dbcdf143bcfd0415612ebef262adc6ff27be9f875cac3ce028"
+    },
+    {
+      "path": "previews/guild.png",
+      "bytes": 954067,
+      "sha256": "abd83deafc148139d0c574f69beb61f94045b60e5b3c0ab8b437b071203f8d8e"
+    },
+    {
+      "path": "previews/hud.png",
+      "bytes": 2562440,
+      "sha256": "c55f51ff86455a0c3946fe4b0ed23637caaa3afdfaea1bc28396965619471cc7"
+    },
+    {
+      "path": "previews/inventory.png",
+      "bytes": 890516,
+      "sha256": "990393bed41bf0b8fbe866f43283304d8db81ff5813a3b5d8566d4f07693a6fc"
+    },
+    {
+      "path": "previews/journal.png",
+      "bytes": 891709,
+      "sha256": "b7a6570a2ffdcfe5d88ba67650b6f9a7dbc89a3cb9fe7b481831a79d44b8d36e"
+    },
+    {
+      "path": "previews/map.png",
+      "bytes": 762697,
+      "sha256": "5a4867b769855ed42aeae7ef3102f74d43b3fa525a35cc333c07e153d2ca1f89"
+    },
+    {
+      "path": "previews/overview.jpg",
+      "bytes": 689741,
+      "sha256": "c7123c9a4c4b8a0d7fb62c5eb9a0c4011e227df265d6df372f6998f83b8def14"
+    },
+    {
+      "path": "prototype/app.js",
+      "bytes": 30527,
+      "sha256": "d7be26e3290eeb3cf598f478d85d434dad5de282cfb297cbb5fb236525d99dc9"
+    },
+    {
+      "path": "prototype/index.html",
+      "bytes": 2597,
+      "sha256": "10abc0013928a3566183b5ac4a5a142f5b3865e9823dc158db2900403c008e92"
+    },
+    {
+      "path": "prototype/screens.js",
+      "bytes": 192944,
+      "sha256": "96c0bcb5c660a83b4595555e53a19fbb21063d4983144066331ef5e487d027be"
+    },
+    {
+      "path": "prototype/styles.css",
+      "bytes": 5390,
+      "sha256": "1b070b1e742a10ea332f3e29c3a0a578dac0bd690ef575ccc828730860bc2ab0"
+    },
+    {
+      "path": "prototype/tokens.css",
+      "bytes": 452,
+      "sha256": "db505aeb8150ba56a2c7703d817782784b9271f55fd96ae027b1f63013dd7684"
+    },
+    {
+      "path": "references/concept_board.png",
+      "bytes": 2544267,
+      "sha256": "5a86d14c219d679d41198ff130b4cd0879a22e0da4ff1727f7af172281d31204"
+    },
+    {
+      "path": "references/world_reference.png",
+      "bytes": 2630913,
+      "sha256": "269848446ef7112029d83149df3cb91f17807744dcf2d137c5821df2e751ea7e"
+    },
+    {
+      "path": "requirements.txt",
+      "bytes": 11,
+      "sha256": "53233e8dfbed17a27fb6404f34b68fe2a8d00d68c743c4e6f4ac073b2833bab2"
+    },
+    {
+      "path": "src/build_components.py",
+      "bytes": 1526,
+      "sha256": "32305084441253000adc394508ced80aa90177ae8b874c0792934d209fb10290"
+    },
+    {
+      "path": "src/build_design.py",
+      "bytes": 46907,
+      "sha256": "8825e2bd8143b4743cac55afb61520c3af067b57173b95cd227d2a65b70190e6"
+    },
+    {
+      "path": "src/build_godot.py",
+      "bytes": 18895,
+      "sha256": "ce22a8b53828ddbd992ff44d055e31eede3bf412b72f792a33d43aed2f7e175a"
+    },
+    {
+      "path": "src/build_standalone.py",
+      "bytes": 935,
+      "sha256": "0c0e4fb75c3e45ae556c06c4874fde0c141682d86f7270e3b6b349340549a05e"
+    },
+    {
+      "path": "tests/prototype_results.json",
+      "bytes": 3544,
+      "sha256": "89081c6a83e32013a824f530c50ccaac1d228261a119bca686c2fb81849f23da"
+    },
+    {
+      "path": "tests/static_results.json",
+      "bytes": 12401,
+      "sha256": "7ae42f7db905533b9c299d9e5a1517960db959a490518e91ce73eb21a08da032"
+    },
+    {
+      "path": "tests/test_prototype.py",
+      "bytes": 6133,
+      "sha256": "f6c9e817a9a869b91ddb9c29288117075ccafa4b2145dfe7c4a93f6c7ded654a"
+    },
+    {
+      "path": "tests/validate_sources.py",
+      "bytes": 1853,
+      "sha256": "6c4e901e0b0ea23b604884f234df9710c3ef26f4611859de2b71fc0b5244e18c"
+    }
+  ]
+}

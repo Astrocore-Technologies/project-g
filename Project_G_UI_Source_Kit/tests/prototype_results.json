@@ -1,0 +1,197 @@
+[
+  {
+    "check": "Standalone preview initialized",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Text within canvas: hud",
+    "passed": true,
+    "detail": "[]"
+  },
+  {
+    "check": "Text within canvas: character",
+    "passed": true,
+    "detail": "[]"
+  },
+  {
+    "check": "Text within canvas: inventory",
+    "passed": true,
+    "detail": "[]"
+  },
+  {
+    "check": "Text within canvas: echoes",
+    "passed": true,
+    "detail": "[]"
+  },
+  {
+    "check": "Text within canvas: guild",
+    "passed": true,
+    "detail": "[]"
+  },
+  {
+    "check": "Text within canvas: map",
+    "passed": true,
+    "detail": "[]"
+  },
+  {
+    "check": "Text within canvas: journal",
+    "passed": true,
+    "detail": "[]"
+  },
+  {
+    "check": "Text within canvas: dialogue",
+    "passed": true,
+    "detail": "[]"
+  },
+  {
+    "check": "Text within canvas: components",
+    "passed": true,
+    "detail": "[]"
+  },
+  {
+    "check": "Eight skill slots",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Three Echo command controls",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Keyboard B opens inventory",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Search finds two swords",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Search result selects item",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Armor filter: three visible items",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Legendary PvP protection shown",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Sale lock toggled",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Comparison deltas shown",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Local equipment changed",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Quest selection preserves list title",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Rank qualification warning shown",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Quest accepted after confirmation",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Quest pinned",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Entire rumor layer hides",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Settlement layer hides",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "User pin escaped safely",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Echo removed without hero switch",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Typing does not trigger gameplay shortcut",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Modal focus trapped",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Escape closes modal",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Escape returns to HUD",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "PvP demo toggles explicitly",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "No horizontal browser overflow 1280x720",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "No horizontal browser overflow 1920x1080",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "No horizontal browser overflow 2560x1440",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "No horizontal browser overflow 3440x1440",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "No external requests",
+    "passed": true,
+    "detail": "[]"
+  },
+  {
+    "check": "No JavaScript runtime errors",
+    "passed": true,
+    "detail": "[]"
+  }
+]

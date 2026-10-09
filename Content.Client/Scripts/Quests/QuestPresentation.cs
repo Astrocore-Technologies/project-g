@@ -13,7 +13,15 @@ public partial class QuestPresentation : CanvasLayer
     private PlayerController _player = null!;
     private readonly Dictionary<NetworkEntityId, (QuestNpcSpawn State, Node3D Visual)> _npcs = new();
     private Control _overlay = null!;
-    private PanelContainer _panel = null!;
+    private VBoxContainer _shortcuts = null!;
+    private UiWindow _dialogue=null!,_journalWindow=null!;
+    private UiModelPreview _speakerVisual=null!;
+    private VBoxContainer _entries=null!;
+    private Label _journalTitle=null!,_journalText=null!,_reward=null!,_journalStatus=null!,_tracker=null!;
+    private Button _track=null!;
+    private bool _tracking=true;
+    private int _filter;
+
     private Label _title = null!, _body = null!, _status = null!;
     private Button _accept = null!, _deliver = null!, _talk = null!;
     private uint _sequence, _pending;
@@ -26,19 +34,37 @@ public partial class QuestPresentation : CanvasLayer
     {
         _network = network; _player = player; Layer = 21;
         var root = new Control { Theme = GameUi.CreateTheme(), MouseFilter = Control.MouseFilterEnum.Ignore }; AddChild(root); root.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        var shortcuts = new VBoxContainer { AnchorLeft = 1, AnchorRight = 1, AnchorTop = 1, AnchorBottom = 1, OffsetLeft = -246, OffsetRight = -16, OffsetTop = -178, OffsetBottom = -106 }; root.AddChild(shortcuts);
+        var shortcuts = _shortcuts = new VBoxContainer { AnchorLeft = 1, AnchorRight = 1, AnchorTop = 1, AnchorBottom = 1, OffsetLeft = -246, OffsetRight = -16, OffsetTop = -178, OffsetBottom = -106 }; root.AddChild(shortcuts);
         _talk = GameUi.Button("F2 · Поговорить", () => Send(QuestAction.Talk, _nearest)); _talk.FocusMode = Control.FocusModeEnum.None; shortcuts.AddChild(_talk);
         var journal = GameUi.Button("L · Журнал поручений", OpenJournal); journal.FocusMode = Control.FocusModeEnum.None; shortcuts.AddChild(journal);
-        _overlay = new Control { Visible = false, MouseFilter = Control.MouseFilterEnum.Stop }; root.AddChild(_overlay); _overlay.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        var shade = new ColorRect { Color = new(0, 0, 0, .5f), MouseFilter = Control.MouseFilterEnum.Ignore }; _overlay.AddChild(shade); shade.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        _panel = new PanelContainer(); _overlay.AddChild(_panel);
-        var column = new VBoxContainer(); _panel.AddChild(column);
-        _title = GameUi.Text("Поручения", 24); column.AddChild(_title);
-        _body = GameUi.Text("", 18); _body.AutowrapMode = TextServer.AutowrapMode.WordSmart; _body.SizeFlagsVertical = Control.SizeFlags.ExpandFill; column.AddChild(_body);
-        _status = GameUi.Text("", 14); _status.AutowrapMode = TextServer.AutowrapMode.WordSmart; column.AddChild(_status);
-        _accept = GameUi.Button("Взяться за доставку", () => Send(QuestAction.Accept, _speaker)); column.AddChild(_accept);
-        _deliver = GameUi.Button("Передать материалы", () => Send(QuestAction.Deliver, _speaker)); column.AddChild(_deliver);
-        column.AddChild(GameUi.Button("Закрыть · Esc", Close));
+        _dialogue=new UiWindow { ToggleKey=Key.F2 }; root.AddChild(_dialogue); _dialogue.Build("Разговор",new(1140,620)); _dialogue.CloseRequested+=Close;
+        _overlay=_dialogue;
+        var scene=new HBoxContainer { SizeFlagsVertical=Control.SizeFlags.ExpandFill }; _dialogue.Body.AddChild(scene);
+        var portrait=UiComposition.Card(scene,380);
+        _speakerVisual=new UiModelPreview { SizeFlagsVertical=Control.SizeFlags.ExpandFill,CustomMinimumSize=new(320,280) }; portrait.AddChild(_speakerVisual);
+        _title=GameUi.Text("Собеседник",24); portrait.AddChild(_title);
+        var dialogue=UiComposition.Card(scene,340);
+        _body=UiComposition.Paragraph(dialogue,"",20); _body.SizeFlagsVertical=Control.SizeFlags.ExpandFill;
+        _status=UiComposition.Paragraph(dialogue,"",14);
+        _accept=GameUi.Button("Взяться за доставку",()=>Send(QuestAction.Accept,_speaker)); dialogue.AddChild(_accept);
+        _deliver=GameUi.Button("Передать материалы",()=>Send(QuestAction.Deliver,_speaker)); dialogue.AddChild(_deliver);
+        dialogue.AddChild(GameUi.Button("Вернусь позже",Close));
+        _journalWindow=new UiWindow { ToggleKey=Key.L }; root.AddChild(_journalWindow); _journalWindow.Build("Журнал путешествия",new(1180,656)); _journalWindow.CloseRequested+=Close;
+        var page=UiComposition.Page(_journalWindow,"journal");
+        var filters=new HBoxContainer(); page.AddChild(filters);
+        string[] names=["Текущие","Завершённые","Слухи"];
+        for(var i=0;i<names.Length;i++) { var index=i; filters.AddChild(GameUi.Button(names[i],()=> { _filter=index; RenderJournal(); })); }
+        var journalColumns=new HBoxContainer { SizeFlagsVertical=Control.SizeFlags.ExpandFill }; page.AddChild(journalColumns);
+        var list=UiComposition.Card(journalColumns,230); _entries=UiComposition.Scroll(list);
+        var detail=UiComposition.Card(journalColumns,360);
+        _journalTitle=UiComposition.Paragraph(detail,"Журнал поручений",24);
+        _journalText=UiComposition.Paragraph(detail,"Получение журнала…",17); _journalText.SizeFlagsVertical=Control.SizeFlags.ExpandFill;
+        _reward=UiComposition.Paragraph(detail,"",16);
+        _track=GameUi.Button("Закрепить в HUD",()=> { _tracking=!_tracking; RenderJournal(); }); detail.AddChild(_track);
+        detail.AddChild(GameUi.Button("Открыть карту",()=>GameUi.Navigate("map")));
+        _journalStatus=UiComposition.Paragraph(page,"",14);
+        var trackerPanel=new PanelContainer { Position=new(16,240),CustomMinimumSize=new(282,0),MouseFilter=Control.MouseFilterEnum.Ignore }; root.AddChild(trackerPanel);
+        _tracker=UiComposition.Paragraph(trackerPanel,"",14); _tracker.CustomMinimumSize=new(254,0);
         network.QuestNpcReceived += Spawn; network.PlayerDespawned += Despawn;
         network.QuestReplyReceived += Reply; network.QuestJournalReceived += Journal;
         foreach (var npc in network.QuestNpcs.Values) Spawn(npc);
@@ -67,17 +93,9 @@ public partial class QuestPresentation : CanvasLayer
     }
     public override void _Input(InputEvent ev)
     {
-        if (_overlay.Visible)
-        {
-            if (ev is InputEventKey { Pressed: true, Echo: false } key)
-            {
-                if (key.PhysicalKeycode is Key.Escape or Key.L) Close();
-                if (key.PhysicalKeycode != Key.Tab) GetViewport().SetInputAsHandled();
-            }
-            return;
-        }
+        if(GameUi.GameplayModalOpen) return;
         // NPC clicks are consumed before combat. GUI clicks cannot hit NPCs behind a panel.
-        if (GameUi.CharacterWindowOpen || !_player.IsAlive || ev is not InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } mouse || GetViewport().GuiGetHoveredControl() is not null) return;
+        if (GameUi.GameplayModalOpen || !_player.IsAlive || ev is not InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } mouse || GetViewport().GuiGetHoveredControl() is not null) return;
         var camera = GetViewport().GetCamera3D(); if (camera is null) return;
         foreach (var (id, npc) in _npcs)
         {
@@ -88,26 +106,34 @@ public partial class QuestPresentation : CanvasLayer
     }
     public override void _UnhandledInput(InputEvent ev)
     {
-        if (GameUi.CharacterWindowOpen || ev is not InputEventKey { Pressed: true, Echo: false } key) return;
+        if (GameUi.GameplayModalOpen || ev is not InputEventKey { Pressed: true, Echo: false } key) return;
         if (key.PhysicalKeycode == Key.L) { OpenJournal(); GetViewport().SetInputAsHandled(); }
         else if (key.PhysicalKeycode == Key.F2 && _nearest.IsValid && _player.IsAlive) { Send(QuestAction.Talk, _nearest); GetViewport().SetInputAsHandled(); }
     }
-    private void Show(bool journal)
+    private bool Show(bool journal)
     {
-        _journalMode = journal; _overlay.Visible = true; GameUi.QuestWindowOpen = true;
-        _accept.Visible = false; _deliver.Visible = false;
+        var target=journal?_journalWindow:_dialogue;
+        if(!target.Open()) return false;
+        _journalMode=journal; _overlay=target; GameUi.QuestWindowOpen=true;
+        _accept.Visible=false; _deliver.Visible=false;
         _player.StopMovement(); _player.GetNodeOrNull<CombatPresentation>("CombatPresentation")?.CancelAutoAttack();
+        return true;
     }
-    private void Close() { _overlay.Visible = false; GameUi.QuestWindowOpen = false; }
-    private void OpenJournal()
+    private void Close() { _dialogue.Close(); _journalWindow.Close(); GameUi.QuestWindowOpen=false; }
+    public void OpenJournal()
     {
-        if (_pending != 0 || GameUi.CharacterWindowOpen) return;
-        Show(true); RenderJournal(); Send(QuestAction.Journal, default);
+        if(_journalWindow.Visible) { Close(); return; }
+        if(_pending!=0 || !Show(true)) return;
+        RenderJournal(); Send(QuestAction.Journal,default);
     }
     private void Send(QuestAction action, NetworkEntityId npc)
     {
-        if (GameUi.CharacterWindowOpen || _pending != 0 || action != QuestAction.Journal && (!npc.IsValid || !_player.IsAlive)) return;
-        if (action != QuestAction.Journal) { Show(false); _speaker = npc; _title.Text = "Разговор"; _body.Text = ""; }
+        if (GameUi.GameplayModalOpen && !_overlay.Visible || _pending != 0 || action != QuestAction.Journal && (!npc.IsValid || !_player.IsAlive)) return;
+        if(action!=QuestAction.Journal)
+        {
+            if(!Show(false)) return; _speaker=npc; _title.Text="Разговор"; _body.Text="";
+            if(_npcs.TryGetValue(npc,out var known)) { _title.Text=known.State.Name; var mesh=known.Visual.GetChildren().OfType<MeshInstance3D>().FirstOrDefault(); if(mesh is not null) _speakerVisual.SetMesh(mesh.Mesh,mesh.MaterialOverride); }
+        }
         if (++_sequence == 0) ++_sequence; _pending = _sequence; _pendingAction = action; _sentAt = Now(); _status.Text = "Ожидание ответа…";
         _accept.Disabled = true; _deliver.Disabled = true; _network.SendQuest(new(_sequence, action, npc));
     }
@@ -129,29 +155,46 @@ public partial class QuestPresentation : CanvasLayer
             QuestOutcome.AlreadyProcessed => "Это действие уже выполнено.",
             _ => "Сейчас действие недоступно."
         };
-        if (_journalMode) { RenderJournal(); return; }
+        if (_journalMode) { _journalStatus.Text=_status.Text; RenderJournal(); return; }
         _title.Text = reply.Speaker; _body.Text = reply.Text;
         _accept.Visible = (reply.Choices & 1) != 0; _deliver.Visible = (reply.Choices & 2) != 0;
         _accept.Disabled = false; _deliver.Disabled = false;
     }
     private void Journal(QuestJournal journal)
-    { if (journal.OwnerId != _player.EntityId) return; _journal = journal; if (_journalMode) RenderJournal(); }
+    { if (journal.OwnerId != _player.EntityId) return; _journal = journal; RenderJournal(); }
     private void RenderJournal()
     {
-        if (_journal is not { } j) { _title.Text = "Журнал поручений"; _body.Text = "Получение журнала…"; return; }
-        _title.Text = j.Title;
-        _body.Text = j.Status == QuestStatus.Unknown ? j.Objective :
-            (j.Status == QuestStatus.Completed ? "Выполнено\n\n" : "В работе\n\n") + j.Objective +
-            $"\n\n{j.Material}: {(j.Status == QuestStatus.Completed ? j.Required : j.Carried)} / {j.Required}\n{(j.Status == QuestStatus.Completed ? "Награда получена" : "Награда")}: {j.Experience} EXP";
+        foreach(var child in _entries.GetChildren()) { _entries.RemoveChild(child); child.QueueFree(); }
+        _reward.Text=""; _track.Visible=false;
+        if(_journal is not {} j) { _journalTitle.Text="Поручения"; _journalText.Text="Получение журнала…"; return; }
+        _tracker.Text=_tracking && j.Status==QuestStatus.Active?$"◆ {j.Title}\n{j.Objective}\n{j.Material}: {j.Carried} / {j.Required}":"L · Журнал путешествия";
+        if(_filter==2)
+        {
+            _journalTitle.Text="Слухи в окрестностях";
+            _journalText.Text=_network.LatestWorldNode is {} node?node.Rumor:"Пока нет известных слухов. Исследуйте мир и разговаривайте с жителями.";
+            UiComposition.Paragraph(_entries,"Известные сведения",16); return;
+        }
+        var matches=_filter==0?j.Status==QuestStatus.Active:j.Status==QuestStatus.Completed;
+        if(!matches)
+        {
+            _journalTitle.Text=_filter==0?"Текущие поручения":"Завершённые поручения";
+            _journalText.Text=j.Status==QuestStatus.Unknown && _filter==0?j.Objective:_filter==0?"Сейчас нет активных поручений. Новую работу можно найти у жителей мира.":"Вы ещё не завершили поручений.";
+            UiComposition.Paragraph(_entries,"Здесь пока пусто",14); return;
+        }
+        _entries.AddChild(GameUi.Button(j.Title,()=>RenderJournal()));
+        _journalTitle.Text=j.Title;
+        _journalText.Text=(j.Status==QuestStatus.Completed?"✓ Выполнено\n\n":"В работе\n\n")+j.Objective+$"\n\n{j.Material}: {(j.Status==QuestStatus.Completed?j.Required:j.Carried)} / {j.Required}";
+        _reward.Text=$"{(j.Status==QuestStatus.Completed?"Награда получена":"Награда")}: {j.Experience} EXP";
+        _track.Visible=j.Status==QuestStatus.Active; _track.Text=_tracking?"Убрать из HUD":"Закрепить в HUD";
     }
     public override void _Process(double delta)
     {
+        _shortcuts.Visible = !GameUi.GameplayModalOpen; _tracker.GetParent<Control>().Visible=!GameUi.GameplayModalOpen;
         if (_overlay.Visible)
         {
-            var screen = GetViewport().GetVisibleRect().Size; _panel.Size = new(Math.Min(620, screen.X - 32), Math.Min(430, screen.Y - 32)); _panel.Position = (screen - _panel.Size) / 2;
             if (!_player.IsAlive && !_journalMode) Close();
         }
-        if (_pending != 0 && Now() - _sentAt > 5) { _pending = 0; _status.Text = "Нет ответа. Закройте окно и попробуйте снова."; }
+        if (_pending != 0 && Now() - _sentAt > 5) { _pending = 0; _status.Text = "Нет ответа. Закройте окно и попробуйте снова."; _journalStatus.Text=_status.Text; }
         if ((_refresh += delta) < .15) return; _refresh = 0;
         _nearest = default; var distance = 2.5f * 2.5f;
         foreach (var (id, npc) in _npcs)

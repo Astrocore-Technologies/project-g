@@ -40,12 +40,13 @@ public partial class CombatInputSmoke : Node
             var destination=player.GlobalPosition+new Vector3(3,-1,0);
             point=camera.UnprojectPosition(destination); Input.WarpMouse(point); Mouse(MouseButton.Right,true,point);
             await Delay(.3);
-            var follow=player.GlobalPosition+new Vector3(0,-1,3);
+            // Aim above the avatar: the bottom resource HUD intentionally consumes mouse input.
+            var follow=player.GlobalPosition+new Vector3(0,-1,-3);
             var beforeFollow=player.PredictedPosition;
             Input.WarpMouse(camera.UnprojectPosition(follow)); await Delay(.4);
             Mouse(MouseButton.Right,false,camera.UnprojectPosition(follow)); await Delay(.3);
             var hits=_hits; await Delay(1.1); if (_hits!=hits) throw new Exception("RMB did not cancel autoattack.");
-            if (player.PredictedPosition.Y-beforeFollow.Y<1) throw new Exception("Held RMB did not follow the changed cursor destination.");
+            if (beforeFollow.Y-player.PredictedPosition.Y<1) throw new Exception("Held RMB did not follow the changed cursor destination.");
             await Wait(()=>network.LatestDefense is { Stamina:>=99.9 },"stamina regeneration");
             var directions=new[] { System.Numerics.Vector2.UnitX,System.Numerics.Vector2.UnitY,-System.Numerics.Vector2.UnitX,-System.Numerics.Vector2.UnitY };
             var dashDirection=directions.First(d=>network.Navigation!.CanTraverse(player.PredictedPosition,player.PredictedPosition+d*3));

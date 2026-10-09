@@ -2,11 +2,12 @@ using Content.Shared.Network;
 using Godot;
 using ProjectG.Gameplay;
 using ProjectG.Networking;
+using ProjectG.UI;
 namespace ProjectG.Social;
 public partial class SocialPresentation : CanvasLayer
 {
     private NetworkClient network=null!; private PlayerController player=null!;
-    private PanelContainer panel=null!; private VBoxContainer body=null!; private Label hud=null!,status=null!;
+    private UiWindow panel=null!; private VBoxContainer body=null!; private Label hud=null!,status=null!;
     private ScrollContainer partyHud=null!;
     private readonly Dictionary<SocialKind,SocialRoster> rosters=new();
     private readonly Dictionary<(SocialKind,byte),SocialMember[]> pages=new();
@@ -16,16 +17,21 @@ public partial class SocialPresentation : CanvasLayer
     public void Initialize(NetworkClient n,PlayerController p)
     {
         network=n;player=p;Layer=9;
-        partyHud=new(){Position=new Vector2(24,472),Size=new Vector2(240,168),Visible=false};AddChild(partyHud);
-        hud=new(){Text="",MouseFilter=Control.MouseFilterEnum.Ignore};partyHud.AddChild(hud);
-        panel=new(){Position=new Vector2(80,80),CustomMinimumSize=new Vector2(520,480),Visible=false};AddChild(panel);
-        var outer=new VBoxContainer();panel.AddChild(outer);status=new(){AutowrapMode=TextServer.AutowrapMode.WordSmart};outer.AddChild(status);
-        var scroll=new ScrollContainer(){CustomMinimumSize=new Vector2(500,440)};outer.AddChild(scroll);body=new(){SizeFlagsHorizontal=Control.SizeFlags.ExpandFill};scroll.AddChild(body);
+        var root=new Control { Theme=GameUi.CreateTheme(),MouseFilter=Control.MouseFilterEnum.Ignore }; AddChild(root); root.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+        partyHud=new() { AnchorTop=1,AnchorBottom=1,OffsetLeft=16,OffsetRight=290,OffsetTop=-206,OffsetBottom=-16,Visible=false,HorizontalScrollMode=ScrollContainer.ScrollMode.Disabled }; root.AddChild(partyHud);
+        hud=GameUi.Text("",13); hud.AutowrapMode=TextServer.AutowrapMode.WordSmart; partyHud.AddChild(hud);
+        panel=new UiWindow(); root.AddChild(panel); panel.Build("Группа и гильдия игроков",new(1180,656)); panel.CloseRequested+=panel.Close;
+        var page=UiComposition.Page(panel,"clan");
+        var tabs=new HBoxContainer(); page.AddChild(tabs);
+        tabs.AddChild(GameUi.Button("Группа · N",()=> { selected=SocialKind.Party; Render(); }));
+        tabs.AddChild(GameUi.Button("Гильдия игроков · O",()=> { selected=SocialKind.Guild; Render(); }));
+        status=UiComposition.Paragraph(page,"",14); body=UiComposition.Scroll(page);
         n.SocialRosterReceived+=Roster;n.SocialInvitesReceived+=Invites;n.SocialResultReceived+=Result;n.PartyPresenceReceived+=Presence;
     }
     public override void _ExitTree(){if(network is null)return;network.SocialRosterReceived-=Roster;network.SocialInvitesReceived-=Invites;network.SocialResultReceived-=Result;network.PartyPresenceReceived-=Presence;}
     public override void _UnhandledKeyInput(InputEvent e)
-    { if(rosters.Count>0 && e is InputEventKey{Pressed:true,Echo:false} k&&k.PhysicalKeycode is Key.N or Key.O) { selected=k.PhysicalKeycode==Key.N?SocialKind.Party:SocialKind.Guild;panel.Visible=!panel.Visible;Render();GetViewport().SetInputAsHandled(); } }
+    { if(rosters.Count>0 && e is InputEventKey{Pressed:true,Echo:false} k&&k.PhysicalKeycode is Key.N or Key.O) { if(GameUi.GameplayModalOpen)return; Toggle(k.PhysicalKeycode==Key.N?SocialKind.Party:SocialKind.Guild);GetViewport().SetInputAsHandled(); } }
+    public void Toggle(SocialKind kind) { selected=kind; panel.ToggleKey=kind==SocialKind.Party?Key.N:Key.O; if(panel.Visible) panel.Close(); else { Render(); panel.Open(); } }
     private void Roster(SocialRoster r)
     {
         if(r.Owner!=player.EntityId)return;
@@ -85,9 +91,9 @@ public partial class SocialPresentation : CanvasLayer
     {
         clock+=delta;if(pending is {} c&&clock-sent>=2){sent=clock;network.SendSocial(c);}
         if(clock<refresh)return;refresh=clock+.5;
-        hud.Text="Группа · N"; partyHud.Visible=rosters.TryGetValue(SocialKind.Party,out var party)&&party.Id!=0;
+        hud.Text="Группа · N"; partyHud.Visible=!GameUi.GameplayModalOpen && rosters.TryGetValue(SocialKind.Party,out var party)&&party.Id!=0;
         if(rosters.TryGetValue(SocialKind.Party,out var r)&&r.Id!=0)
         {foreach(var m in Members(SocialKind.Party)){var text="#"+m.Handle+": ";if(presence.TryGetValue(m.Handle,out var p)&&clock-p.At<3)text+=(p.State.Flags&1)==0?((p.State.Flags&4)!=0?"отключён в бою":"офлайн"):(p.State.Flags&2)!=0?"погиб":p.State.Health.ToString("0")+"/"+p.State.MaxHealth.ToString("0")+" | "+p.State.Position.X.ToString("0")+", "+p.State.Position.Y.ToString("0");else text+="нет свежих данных";hud.Text+="\n"+text;}}
-        var size=GetViewport().GetVisibleRect().Size;panel.Position=new Vector2(Math.Max(12,size.X-550),12);
+
     }
 }

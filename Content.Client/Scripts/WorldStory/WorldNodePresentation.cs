@@ -2,6 +2,7 @@ using Content.Shared.Network;
 using Godot;
 using ProjectG.Gameplay;
 using ProjectG.Networking;
+using ProjectG.UI;
 namespace ProjectG.WorldStory;
 /// <summary>Public keeper/lore presentation. Intentions do not predict world consequences.</summary>
 public partial class WorldNodePresentation : Node3D
@@ -10,7 +11,7 @@ public partial class WorldNodePresentation : Node3D
     private PlayerController _player=null!;
     private WorldNodeState? _state;
     private CanvasLayer _ui=null!;
-    private PanelContainer _panel=null!;
+    private UiWindow _panel=null!;
     private Label _rumor=null!;
     private Label _line=null!;
     private Label _result=null!;
@@ -24,16 +25,16 @@ public partial class WorldNodePresentation : Node3D
     public void Initialize(NetworkClient network,PlayerController player)
     {
         _network=network; _player=player;
-        _ui=new CanvasLayer(); AddChild(_ui);
-        _rumor=new Label { Position=new(24,410),Size=new(300,52),AutowrapMode=TextServer.AutowrapMode.WordSmart,Text="H — поговорить с хранителем переправы",MouseFilter=Control.MouseFilterEnum.Ignore }; _ui.AddChild(_rumor);
-        _panel=new PanelContainer { Position=new(530,260),CustomMinimumSize=new(440,210),Visible=false }; _ui.AddChild(_panel);
-        var list=new VBoxContainer(); _panel.AddChild(list);
+        _ui=new CanvasLayer { Layer=23 }; AddChild(_ui);
+        _rumor=new Label { Position=new(24,410),Size=new(300,52),AutowrapMode=TextServer.AutowrapMode.WordSmart,Text="H — поговорить с хранителем переправы",MouseFilter=Control.MouseFilterEnum.Ignore }; _ui.AddChild(_rumor); _rumor.Hide();
+        _panel=new UiWindow { ToggleKey=Key.H }; _ui.AddChild(_panel); _panel.Build("Хранитель переправы",new(900,580)); _panel.CloseRequested+=_panel.Close;
+        var list=UiComposition.Scroll(_panel.Body);
         list.AddChild(new Label { Text="Переправа • общий сюжет мира" });
         _line=new Label { CustomMinimumSize=new(425,0),AutowrapMode=TextServer.AutowrapMode.WordSmart }; list.AddChild(_line);
         _repair=new Button { Text="Помочь ремонту" }; _repair.Pressed+=()=>Send(WorldNodeAction.Repair); list.AddChild(_repair);
         _patrol=new Button { Text="Помочь дозору (после боя с восточным монстром)" }; _patrol.Pressed+=()=>Send(WorldNodeAction.Patrol); list.AddChild(_patrol);
         _result=new Label { CustomMinimumSize=new(425,0),AutowrapMode=TextServer.AutowrapMode.WordSmart }; list.AddChild(_result);
-        var close=new Button { Text="Закрыть" }; close.Pressed+=()=>_panel.Hide(); list.AddChild(close);
+        var close=new Button { Text="Закрыть" }; close.Pressed+=()=>_panel.Close(); list.AddChild(close);
         var actor=new Node3D(); AddChild(actor);
         actor.AddChild(new MeshInstance3D { Position=new(0,0.8f,0),Mesh=new CapsuleMesh { Radius=0.35f,Height=1.6f },MaterialOverride=new StandardMaterial3D { AlbedoColor=new(0.1f,0.65f,0.75f) } });
         actor.AddChild(new MeshInstance3D { Position=new(0,0.05f,0),Mesh=new CylinderMesh { TopRadius=1.1f,BottomRadius=1.1f,Height=0.06f },MaterialOverride=new StandardMaterial3D { AlbedoColor=new(0.15f,0.45f,0.7f) } });
@@ -47,7 +48,7 @@ public partial class WorldNodePresentation : Node3D
         _keeper.Text=state.KeeperName+"\n"+state.KeeperLine;
         _line.Text=state.KeeperLine; _rumor.Text="Слух: "+state.Rumor+"  •  H — хранитель";
     }
-    public void ApplyAlive(bool alive) { _alive=alive; if(!alive) _panel.Hide(); }
+    public void ApplyAlive(bool alive) { _alive=alive; if(!alive) _panel.Close(); }
     public override void _Process(double delta)
     {
         if(_pending!=0 && Time.GetTicksMsec()/1000d>=_pendingUntil) { _pending=0; _result.Text="Ответ задерживается. Мир обновится после подтверждения сервера."; }
@@ -58,8 +59,9 @@ public partial class WorldNodePresentation : Node3D
     public override void _UnhandledInput(InputEvent input)
     {
         if(input is InputEventKey { Pressed:true,Echo:false,Keycode:Key.H })
-        { _panel.Visible=!_panel.Visible; if(_panel.Visible) _result.Text="Для участия остановитесь рядом с хранителем. Ваш вклад учитывается один раз."; GetViewport().SetInputAsHandled(); }
+        { if(GameUi.GameplayModalOpen)return; Toggle(); if(_panel.Visible) _result.Text="Для участия остановитесь рядом с хранителем. Ваш вклад учитывается один раз."; GetViewport().SetInputAsHandled(); }
     }
+    public void Toggle() { if(_panel.Visible) _panel.Close(); else _panel.Open(); }
     private void Send(WorldNodeAction action)
     {
         if(!_alive || _pending!=0) return;

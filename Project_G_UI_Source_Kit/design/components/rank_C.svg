@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="52" height="36" viewBox="0 0 52 36" role="img" aria-label="Rank / C"><title>Rank / C</title><desc>Project G — editable UI source. Text, panels and icons are separate objects. Illustrations are raster concept placeholders.</desc><defs>
+<linearGradient id="paper" x2="1" y2="1"><stop stop-color="#FFF8E8"/><stop offset="1" stop-color="#F5EBD6"/></linearGradient>
+<linearGradient id="paperTop" x2="1" y2="0"><stop stop-color="#FFF9EA"/><stop offset="1" stop-color="#EEDDBB"/></linearGradient>
+<linearGradient id="buttonBlue" x2="0" y2="1"><stop stop-color="#365E77"/><stop offset="1" stop-color="#274B64"/></linearGradient>
+<linearGradient id="buttonGold" x2="0" y2="1"><stop stop-color="#F3D99B"/><stop offset="1" stop-color="#B68A43"/></linearGradient>
+<linearGradient id="darkPanel" x2="0" y2="1"><stop stop-color="#213B4B" stop-opacity=".92"/><stop offset="1" stop-color="#203744" stop-opacity=".86"/></linearGradient>
+<radialGradient id="portraitBg"><stop stop-color="#D5E6CF"/><stop offset="1" stop-color="#ADBFAA"/></radialGradient>
+<clipPath id="portrait-round"><circle cx="96" cy="96" r="92"/></clipPath>
+<clipPath id="mapClip"><rect x="76" y="203" width="1270" height="738" rx="12"/></clipPath>
+</defs><rect x="2" y="2" width="48" height="32" rx="5" fill="#F3D99B" stroke="none" stroke-width="1" opacity="1"/><text x="16" y="24" fill="#604A28" font-family="Arial, Liberation Sans, sans-serif" font-size="17" font-weight="600" text-anchor="start">C</text></svg>

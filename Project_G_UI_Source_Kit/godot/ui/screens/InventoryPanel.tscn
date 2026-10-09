@@ -1,0 +1,316 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Theme" path="res://themes/adventurer_theme.tres" id="theme"]
+
+[node name="InventoryPanel" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+theme = ExtResource("theme")
+
+[node name="Shade" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.04, 0.10, 0.14, 0.65)
+mouse_filter = 0
+
+[node name="Window" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_left = 70.0
+offset_top = 76.0
+offset_right = 1850.0
+offset_bottom = 1003.0
+theme_type_variation = "Parchment"
+mouse_filter = 0
+
+[node name="Content" type="Control" parent="Window"]
+layout_mode = 2
+custom_minimum_size = Vector2(1748, 903)
+mouse_filter = 2
+
+[node name="Title" type="Label" parent="Window/Content"]
+layout_mode = 0
+offset_left = 15.0
+offset_top = 4.0
+offset_right = 1415.0
+offset_bottom = 64.0
+text = "Инвентарь и снаряжение"
+mouse_filter = 2
+theme_type_variation = "Header"
+
+[node name="Close" type="Button" parent="Window/Content"]
+layout_mode = 0
+offset_left = 1670.0
+offset_top = 4.0
+offset_right = 1726.0
+offset_bottom = 54.0
+text = "×"
+theme_type_variation = "SecondaryButton"
+mouse_default_cursor_shape = 2
+metadata/action = "close"
+
+[node name="Subtitle" type="Label" parent="Window/Content"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 67.0
+offset_right = 1656.0
+offset_bottom = 104.0
+text = "Каэль · Мечник · Уровень 24 · Ранг авантюриста F"
+mouse_filter = 2
+theme_type_variation = "Muted"
+
+[node name="Search" type="LineEdit" parent="Window/Content"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 131.0
+offset_right = 737.0
+offset_bottom = 185.0
+placeholder_text = "Поиск по названию... (нативный элемент)"
+max_length = 64
+
+[node name="Item0" type="Button" parent="Window/Content"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 210.0
+offset_right = 245.0
+offset_bottom = 285.0
+text = "Дорожный клинок +3"
+theme_type_variation = "SecondaryButton"
+mouse_default_cursor_shape = 2
+metadata/action = "item_0"
+
+[node name="Item1" type="Button" parent="Window/Content"]
+layout_mode = 0
+offset_left = 259.0
+offset_top = 210.0
+offset_right = 488.0
+offset_bottom = 285.0
+text = "Клинок стражи +2"
+theme_type_variation = "SecondaryButton"
+mouse_default_cursor_shape = 2
+metadata/action = "item_1"
+
+[node name="Item2" type="Button" parent="Window/Content"]
+layout_mode = 0
+offset_left = 502.0
+offset_top = 210.0
+offset_right = 731.0
+offset_bottom = 285.0
+text = "Щит дозора"
+theme_type_variation = "SecondaryButton"
+mouse_default_cursor_shape = 2
+metadata/action = "item_2"
+
+[node name="Item3" type="Button" parent="Window/Content"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 300.0
+offset_right = 245.0
+offset_bottom = 375.0
+text = "Шлем странника"
+theme_type_variation = "SecondaryButton"
+mouse_default_cursor_shape = 2
+metadata/action = "item_3"
+
+[node name="Item4" type="Button" parent="Window/Content"]
+layout_mode = 0
+offset_left = 259.0
+offset_top = 300.0
+offset_right = 488.0
+offset_bottom = 375.0
+text = "Лесная трава"
+theme_type_variation = "SecondaryButton"
+mouse_default_cursor_shape = 2
+metadata/action = "item_4"
+
+[node name="Item5" type="Button" parent="Window/Content"]
+layout_mode = 0
+offset_left = 502.0
+offset_top = 300.0
+offset_right = 731.0
+offset_bottom = 375.0
+text = "Малое зелье"
+theme_type_variation = "SecondaryButton"
+mouse_default_cursor_shape = 2
+metadata/action = "item_5"
+
+[node name="Item6" type="Button" parent="Window/Content"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 390.0
+offset_right = 245.0
+offset_bottom = 465.0
+text = "Осколок памяти"
+theme_type_variation = "SecondaryButton"
+mouse_default_cursor_shape = 2
+metadata/action = "item_6"
+
+[node name="Item7" type="Button" parent="Window/Content"]
+layout_mode = 0
+offset_left = 259.0
+offset_top = 390.0
+offset_right = 488.0
+offset_bottom = 465.0
+text = "Сапоги следопыта"
+theme_type_variation = "SecondaryButton"
+mouse_default_cursor_shape = 2
+metadata/action = "item_7"
+
+[node name="Item8" type="Button" parent="Window/Content"]
+layout_mode = 0
+offset_left = 502.0
+offset_top = 390.0
+offset_right = 731.0
+offset_bottom = 465.0
+text = "Полевой дневник"
+theme_type_variation = "SecondaryButton"
+mouse_default_cursor_shape = 2
+metadata/action = "item_8"
+
+[node name="Item9" type="Button" parent="Window/Content"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 480.0
+offset_right = 245.0
+offset_bottom = 555.0
+text = "Свет Старого пути"
+theme_type_variation = "SecondaryButton"
+mouse_default_cursor_shape = 2
+metadata/action = "item_9"
+
+[node name="Item10" type="Button" parent="Window/Content"]
+layout_mode = 0
+offset_left = 259.0
+offset_top = 480.0
+offset_right = 488.0
+offset_bottom = 555.0
+text = "Медный знак"
+theme_type_variation = "SecondaryButton"
+mouse_default_cursor_shape = 2
+metadata/action = "item_10"
+
+[node name="Item11" type="Button" parent="Window/Content"]
+layout_mode = 0
+offset_left = 502.0
+offset_top = 480.0
+offset_right = 731.0
+offset_bottom = 555.0
+text = "Карта переправы"
+theme_type_variation = "SecondaryButton"
+mouse_default_cursor_shape = 2
+metadata/action = "item_11"
+
+[node name="Hint" type="Label" parent="Window/Content"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 637.0
+offset_right = 728.0
+offset_bottom = 707.0
+text = "Поиск фильтрует доступные в демо предметы.\nНативная сетка: отдельные Button-узлы, не картинка."
+mouse_filter = 2
+theme_type_variation = "Muted"
+theme_override_font_sizes/font_size = 19
+
+[node name="ItemName" type="Label" parent="Window/Content"]
+layout_mode = 0
+offset_left = 794.0
+offset_top = 137.0
+offset_right = 1684.0
+offset_bottom = 192.0
+text = "Дорожный клинок +3"
+mouse_filter = 2
+theme_type_variation = "Header"
+theme_override_font_sizes/font_size = 31
+
+[node name="ItemOrigin" type="Label" parent="Window/Content"]
+layout_mode = 0
+offset_left = 794.0
+offset_top = 198.0
+offset_right = 1684.0
+offset_bottom = 240.0
+text = "Авторская работа · мастер Тален"
+mouse_filter = 2
+theme_type_variation = "Muted"
+
+[node name="Stats" type="Label" parent="Window/Content"]
+layout_mode = 0
+offset_left = 794.0
+offset_top = 268.0
+offset_right = 1684.0
+offset_bottom = 413.0
+text = "Урон                              148\nМодификатор защиты                −12\nПрочность                         68 / 80"
+mouse_filter = 2
+theme_override_font_sizes/font_size = 23
+
+[node name="RiskInfo" type="Label" parent="Window/Content"]
+layout_mode = 0
+offset_left = 794.0
+offset_top = 449.0
+offset_right = 1684.0
+offset_bottom = 544.0
+text = "Нелегендарная экипировка может выпасть\nпри PvP-смерти с включённым тегом."
+mouse_filter = 2
+theme_override_font_sizes/font_size = 23
+
+[node name="Compare" type="Button" parent="Window/Content"]
+layout_mode = 0
+offset_left = 794.0
+offset_top = 578.0
+offset_right = 1226.0
+offset_bottom = 636.0
+text = "Сравнить с надетым"
+theme_type_variation = "SecondaryButton"
+mouse_default_cursor_shape = 2
+metadata/action = "compare"
+
+[node name="Equip" type="Button" parent="Window/Content"]
+layout_mode = 0
+offset_left = 1244.0
+offset_top = 578.0
+offset_right = 1676.0
+offset_bottom = 636.0
+text = "Экипировать"
+theme_type_variation = "PrimaryButton"
+mouse_default_cursor_shape = 2
+metadata/action = "equip"
+
+[node name="Lock" type="Button" parent="Window/Content"]
+layout_mode = 0
+offset_left = 794.0
+offset_top = 661.0
+offset_right = 1676.0
+offset_bottom = 719.0
+text = "Защитить от случайной продажи"
+theme_type_variation = "SecondaryButton"
+mouse_default_cursor_shape = 2
+metadata/action = "lock"
+
+[node name="LockInfo" type="Label" parent="Window/Content"]
+layout_mode = 0
+offset_left = 794.0
+offset_top = 748.0
+offset_right = 1684.0
+offset_bottom = 788.0
+text = "Защита от продажи не меняет правила PvP-дропа."
+mouse_filter = 2
+theme_type_variation = "Muted"
+theme_override_font_sizes/font_size = 19
+
+[node name="Footer" type="Label" parent="Window/Content"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 834.0
+offset_right = 1676.0
+offset_bottom = 874.0
+text = "Esc — закрыть. Онлайн-мир не останавливается; серверная логика в комплект не входит."
+mouse_filter = 2
+theme_type_variation = "Muted"
+theme_override_font_sizes/font_size = 18

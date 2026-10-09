@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<title>Project G — Хроники странника / UI sources</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="studio-header">
+  <div class="brand"><span class="brand-mark" aria-hidden="true">✧</span><div><h1>Хроники странника</h1><p>PROJECT G / PC UI KIT 01</p></div></div>
+  <div class="status"><span class="status-dot"></span> Интерактивный макет · без сервера</div>
+</header>
+<nav class="screen-nav" aria-label="Экраны прототипа">
+  <button data-screen="hud">01 <span>Мир</span></button>
+  <button data-screen="character">02 <span>Персонаж</span></button>
+  <button data-screen="inventory">03 <span>Инвентарь</span></button>
+  <button data-screen="echoes">04 <span>Эхо</span></button>
+  <button data-screen="guild">05 <span>Гильдия</span></button>
+  <button data-screen="map">06 <span>Карта</span></button>
+  <button data-screen="journal">07 <span>Журнал</span></button>
+  <button data-screen="dialogue">08 <span>Диалог</span></button>
+  <button data-screen="components">09 <span>UI-kit</span></button>
+</nav>
+<main>
+  <div id="screen-shell"><div id="screen" aria-label="Макет интерфейса"></div></div>
+  <div class="caption-bar"><p id="screen-hint"></p><button id="reset-demo" class="quiet-button">Сбросить демо</button></div>
+  <p class="source-note">Панели, текст и иконки — отдельные SVG-объекты. Иллюстрации — растровые заготовки из концепта. Имена, награды и числа демонстрационные; новая игровая механика не утверждается.</p>
+</main>
+<div class="modal-backdrop" id="modal-backdrop" hidden>
+  <section class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1">
+    <button id="modal-close" class="modal-close" aria-label="Закрыть">×</button>
+    <p class="eyebrow">PROJECT G / ПРОТОТИП</p>
+    <h2 id="modal-title"></h2>
+    <div id="modal-body"></div>
+    <div id="modal-actions" class="modal-actions"></div>
+  </section>
+</div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<script src="screens.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

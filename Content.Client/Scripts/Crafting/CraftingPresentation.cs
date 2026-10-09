@@ -2,13 +2,14 @@ using Content.Shared.Network;
 using Godot;
 using ProjectG.Gameplay;
 using ProjectG.Networking;
+using ProjectG.UI;
 namespace ProjectG.Crafting;
 /// <summary>Buttons send intentions. Materials, stock, crafted items and operation IDs come from the server.</summary>
 public partial class CraftingPresentation : Node3D
 {
     private NetworkClient _network=null!;
     private PlayerController _player=null!;
-    private PanelContainer _panel=null!;
+    private UiWindow _panel=null!;
     private VBoxContainer _content=null!;
     private Label _status=null!;
     private CraftState? _state;
@@ -27,13 +28,9 @@ public partial class CraftingPresentation : Node3D
         _network.CraftStateReceived+=Apply; _network.CraftResultReceived+=Result;
         _network.ResourceNodeReceived+=Resource; _network.ResourceNodeLeft+=Remove;
         var canvas=new CanvasLayer { Layer=5 }; AddChild(canvas);
-        _panel=new PanelContainer { AnchorLeft=0.5f,AnchorRight=0.5f,OffsetLeft=-260,OffsetRight=260,OffsetTop=70,Visible=false }; canvas.AddChild(_panel);
-        var column=new VBoxContainer(); _panel.AddChild(column);
-        column.AddChild(new Label { Text="Добыча и крафт [C]",HorizontalAlignment=HorizontalAlignment.Center });
-        var scroll=new ScrollContainer { CustomMinimumSize=new(500,380) }; column.AddChild(scroll);
-        _content=new VBoxContainer { SizeFlagsHorizontal=Control.SizeFlags.ExpandFill }; scroll.AddChild(_content);
-        _status=new Label { Text="Ожидание сервера",AutowrapMode=TextServer.AutowrapMode.WordSmart,CustomMinimumSize=new(500,45) }; column.AddChild(_status);
-        var close=new Button { Text="Закрыть" }; close.Pressed+=()=>_panel.Hide(); column.AddChild(close);
+        _panel=new UiWindow { ToggleKey=Key.C }; canvas.AddChild(_panel); _panel.Build("Ремесло и материалы",new(1080,650)); _panel.CloseRequested+=_panel.Close;
+        _content=UiComposition.Scroll(_panel.Body);
+        _status=UiComposition.Paragraph(_panel.Body,"Ожидание сервера",14);
         foreach(var resource in network.ResourceNodes.Values) Resource(resource);
         var station=network.CraftRecipes.Values.First();
         AddChild(new MeshInstance3D { Position=new(station.StationPosition.X,0.55f,station.StationPosition.Y),Mesh=new BoxMesh { Size=new(1.1f,0.2f,0.7f) },MaterialOverride=new StandardMaterial3D { AlbedoColor=new(0.55f,0.34f,0.16f) } });
@@ -146,7 +143,8 @@ public partial class CraftingPresentation : Node3D
         { _retry+=delta; if(_retry>=2) { _retry=0; if(_pending is { } craft) _network.SendCraft(craft); else if(_repairPending is { } repair) _network.SendRepair(repair); } }
     }
     public override void _UnhandledInput(InputEvent input)
-    { if(input is InputEventKey { Pressed:true,Echo:false,Keycode:Key.C }) { _panel.Visible=!_panel.Visible; GetViewport().SetInputAsHandled(); } }
+    { if(input is InputEventKey { Pressed:true,Echo:false,Keycode:Key.C }) { if(GameUi.GameplayModalOpen)return; Toggle(); GetViewport().SetInputAsHandled(); } }
+    public void Toggle() { if(_panel.Visible) _panel.Close(); else _panel.Open(); }
     public override void _ExitTree()
     { if(_network is not null) { _network.ItemConditionReceived-=Condition; _network.InventoryReceived-=Inventory; _network.RepairQuoteReceived-=Quote; _network.RepairResultReceived-=RepairResult; _network.CraftStateReceived-=Apply; _network.CraftResultReceived-=Result; _network.ResourceNodeReceived-=Resource; _network.ResourceNodeLeft-=Remove; } }
 }

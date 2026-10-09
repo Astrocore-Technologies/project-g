@@ -1,0 +1,622 @@
+[
+  {
+    "check": "XML: design/components/panel_dark.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: design/components/rank_B.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: design/components/button_pressed.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: design/components/09_components.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: design/components/skill_ready.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: design/components/rank_S.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: design/components/panel_parchment.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: design/components/button_focus.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: design/components/rank_D.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: design/components/item_legendary.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: design/components/button_hover.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: design/components/skill_cooldown.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: design/components/button_gold.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: design/components/rank_E.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: design/components/item_selected.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: design/components/rank_C.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: design/components/item_default.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: design/components/button_secondary.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: design/components/button_default.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: design/components/button_disabled.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: design/components/rank_A.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: design/components/rank_F.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: design/screens/07_journal.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: design/screens/03_inventory.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: design/screens/04_echoes.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: design/screens/06_map.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: design/screens/05_guild.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: design/screens/02_character.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: design/screens/08_dialogue.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: design/screens/01_hud.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/boot.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/book.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/menu.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/person.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/search.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/leaf.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/moon.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/map.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/flame.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/warning.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/group.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/shield.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/lock.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/scale.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/compass.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/pin.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/clock.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/sun.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/potion.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/snow.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/dash.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/close.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/settings.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/eye.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/chat.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/helmet.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/check.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/coin.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/bag.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/scroll.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/bow.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/chevron.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/feather.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/star.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/sword.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/hammer.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/heart.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/bolt.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/gem.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "XML: assets/icons/guild.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Godot resource Main.tscn",
+    "passed": true,
+    "detail": "godot/project.godot"
+  },
+  {
+    "check": "Godot resource themes/adventurer_theme.tres",
+    "passed": true,
+    "detail": "godot/Main.tscn"
+  },
+  {
+    "check": "Godot resource art/world.jpg",
+    "passed": true,
+    "detail": "godot/Main.tscn"
+  },
+  {
+    "check": "Godot resource scripts/main.gd",
+    "passed": true,
+    "detail": "godot/Main.tscn"
+  },
+  {
+    "check": "Godot resource ui/screens/NativeHud.tscn",
+    "passed": true,
+    "detail": "godot/Main.tscn"
+  },
+  {
+    "check": "Godot resource ui/screens/InventoryPanel.tscn",
+    "passed": true,
+    "detail": "godot/Main.tscn"
+  },
+  {
+    "check": "Godot resource ui/screens/GuildPanel.tscn",
+    "passed": true,
+    "detail": "godot/Main.tscn"
+  },
+  {
+    "check": "Resource count: Main.tscn",
+    "passed": true,
+    "detail": "expected 7"
+  },
+  {
+    "check": "Resource count: adventurer_theme.tres",
+    "passed": true,
+    "detail": "expected 16"
+  },
+  {
+    "check": "Godot resource themes/adventurer_theme.tres",
+    "passed": true,
+    "detail": "godot/ui/components/PrimaryButton.tscn"
+  },
+  {
+    "check": "Resource count: PrimaryButton.tscn",
+    "passed": true,
+    "detail": "expected 2"
+  },
+  {
+    "check": "Godot resource themes/adventurer_theme.tres",
+    "passed": true,
+    "detail": "godot/ui/components/ParchmentPanel.tscn"
+  },
+  {
+    "check": "Resource count: ParchmentPanel.tscn",
+    "passed": true,
+    "detail": "expected 2"
+  },
+  {
+    "check": "Godot resource themes/adventurer_theme.tres",
+    "passed": true,
+    "detail": "godot/ui/components/SkillSlot.tscn"
+  },
+  {
+    "check": "Godot resource scripts/skill_slot.gd",
+    "passed": true,
+    "detail": "godot/ui/components/SkillSlot.tscn"
+  },
+  {
+    "check": "Resource count: SkillSlot.tscn",
+    "passed": true,
+    "detail": "expected 3"
+  },
+  {
+    "check": "Godot resource themes/adventurer_theme.tres",
+    "passed": true,
+    "detail": "godot/ui/screens/InventoryPanel.tscn"
+  },
+  {
+    "check": "Resource count: InventoryPanel.tscn",
+    "passed": true,
+    "detail": "expected 2"
+  },
+  {
+    "check": "Godot resource themes/adventurer_theme.tres",
+    "passed": true,
+    "detail": "godot/ui/screens/NativeHud.tscn"
+  },
+  {
+    "check": "Godot resource art/hero_cutout.png",
+    "passed": true,
+    "detail": "godot/ui/screens/NativeHud.tscn"
+  },
+  {
+    "check": "Godot resource ui/components/SkillSlot.tscn",
+    "passed": true,
+    "detail": "godot/ui/screens/NativeHud.tscn"
+  },
+  {
+    "check": "Godot resource icons/sword.svg",
+    "passed": true,
+    "detail": "godot/ui/screens/NativeHud.tscn"
+  },
+  {
+    "check": "Godot resource icons/bolt.svg",
+    "passed": true,
+    "detail": "godot/ui/screens/NativeHud.tscn"
+  },
+  {
+    "check": "Godot resource icons/snow.svg",
+    "passed": true,
+    "detail": "godot/ui/screens/NativeHud.tscn"
+  },
+  {
+    "check": "Godot resource icons/shield.svg",
+    "passed": true,
+    "detail": "godot/ui/screens/NativeHud.tscn"
+  },
+  {
+    "check": "Godot resource icons/flame.svg",
+    "passed": true,
+    "detail": "godot/ui/screens/NativeHud.tscn"
+  },
+  {
+    "check": "Godot resource icons/bow.svg",
+    "passed": true,
+    "detail": "godot/ui/screens/NativeHud.tscn"
+  },
+  {
+    "check": "Godot resource icons/star.svg",
+    "passed": true,
+    "detail": "godot/ui/screens/NativeHud.tscn"
+  },
+  {
+    "check": "Godot resource icons/dash.svg",
+    "passed": true,
+    "detail": "godot/ui/screens/NativeHud.tscn"
+  },
+  {
+    "check": "Resource count: NativeHud.tscn",
+    "passed": true,
+    "detail": "expected 12"
+  },
+  {
+    "check": "Godot resource themes/adventurer_theme.tres",
+    "passed": true,
+    "detail": "godot/ui/screens/GuildPanel.tscn"
+  },
+  {
+    "check": "Resource count: GuildPanel.tscn",
+    "passed": true,
+    "detail": "expected 2"
+  },
+  {
+    "check": "No bundled .ttf fonts",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "No bundled .otf fonts",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "No bundled .woff fonts",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "No bundled .woff2 fonts",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Eight design screens",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Forty independent icons",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Editable text 07_journal.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Portable art 07_journal.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Editable text 03_inventory.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Portable art 03_inventory.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Editable text 04_echoes.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Portable art 04_echoes.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Editable text 06_map.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Portable art 06_map.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Editable text 05_guild.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Portable art 05_guild.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Editable text 02_character.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Portable art 02_character.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Editable text 08_dialogue.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Portable art 08_dialogue.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Editable text 01_hud.svg",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "check": "Portable art 01_hud.svg",
+    "passed": true,
+    "detail": ""
+  }
+]

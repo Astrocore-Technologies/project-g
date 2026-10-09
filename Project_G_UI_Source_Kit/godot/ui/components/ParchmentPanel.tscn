@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Theme" path="res://themes/adventurer_theme.tres" id="theme"]
+
+[node name="ParchmentPanel" type="PanelContainer"]
+custom_minimum_size = Vector2(360, 180)
+offset_right = 360.0
+offset_bottom = 180.0
+theme = ExtResource("theme")
+theme_type_variation = "Parchment"
+
+[node name="Text" type="Label" parent="."]
+layout_mode = 2
+text = "Панель · содержимое заменяется"

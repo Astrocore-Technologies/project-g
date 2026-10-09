@@ -1,0 +1,399 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Theme" path="res://themes/adventurer_theme.tres" id="theme"]
+[ext_resource type="Texture2D" path="res://art/hero_cutout.png" id="hero"]
+[ext_resource type="PackedScene" path="res://ui/components/SkillSlot.tscn" id="slot"]
+[ext_resource type="Texture2D" path="res://icons/sword.svg" id="icon0"]
+[ext_resource type="Texture2D" path="res://icons/bolt.svg" id="icon1"]
+[ext_resource type="Texture2D" path="res://icons/snow.svg" id="icon2"]
+[ext_resource type="Texture2D" path="res://icons/shield.svg" id="icon3"]
+[ext_resource type="Texture2D" path="res://icons/flame.svg" id="icon4"]
+[ext_resource type="Texture2D" path="res://icons/bow.svg" id="icon5"]
+[ext_resource type="Texture2D" path="res://icons/star.svg" id="icon6"]
+[ext_resource type="Texture2D" path="res://icons/dash.svg" id="icon7"]
+
+[node name="NativeHud" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme = ExtResource("theme")
+
+[node name="Region" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_left = 35.0
+offset_top = 30.0
+offset_right = 550.0
+offset_bottom = 197.0
+theme_type_variation = "DarkPanel"
+mouse_filter = 0
+
+[node name="Content" type="Control" parent="Region"]
+layout_mode = 2
+custom_minimum_size = Vector2(483, 143)
+mouse_filter = 2
+
+[node name="Name" type="Label" parent="Region/Content"]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 0.0
+offset_right = 473.0
+offset_bottom = 42.0
+text = "Ривермут"
+mouse_filter = 2
+theme_type_variation = "OnDarkHeader"
+
+[node name="Safety" type="Label" parent="Region/Content"]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 48.0
+offset_right = 468.0
+offset_bottom = 76.0
+text = "Город · безопасная зона"
+mouse_filter = 2
+theme_type_variation = "OnDark"
+
+[node name="Risk" type="Button" parent="Region/Content"]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 85.0
+offset_right = 468.0
+offset_bottom = 127.0
+text = "PvP-тег выключен"
+theme_type_variation = "SecondaryButton"
+mouse_default_cursor_shape = 2
+metadata/action = "pvp"
+
+[node name="Nav0" type="Button" parent="."]
+layout_mode = 0
+offset_left = 1085.0
+offset_top = 36.0
+offset_right = 1238.0
+offset_bottom = 88.0
+text = "C  Персонаж"
+theme_type_variation = "PrimaryButton"
+mouse_default_cursor_shape = 2
+metadata/action = "character"
+
+[node name="Nav1" type="Button" parent="."]
+layout_mode = 0
+offset_left = 1249.0
+offset_top = 36.0
+offset_right = 1402.0
+offset_bottom = 88.0
+text = "B  Инвентарь"
+theme_type_variation = "PrimaryButton"
+mouse_default_cursor_shape = 2
+metadata/action = "inventory"
+
+[node name="Nav2" type="Button" parent="."]
+layout_mode = 0
+offset_left = 1413.0
+offset_top = 36.0
+offset_right = 1566.0
+offset_bottom = 88.0
+text = "N  Эхо"
+theme_type_variation = "PrimaryButton"
+mouse_default_cursor_shape = 2
+metadata/action = "echoes"
+
+[node name="Nav3" type="Button" parent="."]
+layout_mode = 0
+offset_left = 1577.0
+offset_top = 36.0
+offset_right = 1730.0
+offset_bottom = 88.0
+text = "J  Журнал"
+theme_type_variation = "PrimaryButton"
+mouse_default_cursor_shape = 2
+metadata/action = "journal"
+
+[node name="Nav4" type="Button" parent="."]
+layout_mode = 0
+offset_left = 1741.0
+offset_top = 36.0
+offset_right = 1894.0
+offset_bottom = 88.0
+text = "M  Карта"
+theme_type_variation = "PrimaryButton"
+mouse_default_cursor_shape = 2
+metadata/action = "map"
+
+[node name="Quest" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_left = 36.0
+offset_top = 243.0
+offset_right = 434.0
+offset_bottom = 384.0
+theme_type_variation = "DarkPanel"
+mouse_filter = 0
+
+[node name="Content" type="Control" parent="Quest"]
+layout_mode = 2
+custom_minimum_size = Vector2(366, 117)
+mouse_filter = 2
+
+[node name="Title" type="Label" parent="Quest/Content"]
+layout_mode = 0
+offset_left = 6.0
+offset_top = 0.0
+offset_right = 366.0
+offset_bottom = 34.0
+text = "Лесная дорога"
+mouse_filter = 2
+theme_type_variation = "OnDarkHeader"
+theme_override_font_sizes/font_size = 25
+
+[node name="Body" type="Label" parent="Quest/Content"]
+layout_mode = 0
+offset_left = 6.0
+offset_top = 43.0
+offset_right = 372.0
+offset_bottom = 109.0
+text = "Передать материалы смотрителю.\nТочное место пока неизвестно."
+mouse_filter = 2
+theme_type_variation = "OnDark"
+theme_override_font_sizes/font_size = 18
+
+[node name="Echoes" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_left = 1632.0
+offset_top = 268.0
+offset_right = 1879.0
+offset_bottom = 517.0
+theme_type_variation = "DarkPanel"
+mouse_filter = 0
+
+[node name="Content" type="Control" parent="Echoes"]
+layout_mode = 2
+custom_minimum_size = Vector2(215, 225)
+mouse_filter = 2
+
+[node name="Echo0" type="Button" parent="Echoes/Content"]
+layout_mode = 0
+offset_left = 2.0
+offset_top = 5.0
+offset_right = 212.0
+offset_bottom = 65.0
+text = "1 · Сиэль — готова"
+theme_type_variation = "SecondaryButton"
+mouse_default_cursor_shape = 2
+metadata/action = "echo_1"
+
+[node name="Echo1" type="Button" parent="Echoes/Content"]
+layout_mode = 0
+offset_left = 2.0
+offset_top = 77.0
+offset_right = 212.0
+offset_bottom = 137.0
+text = "2 · Каэн — готов"
+theme_type_variation = "SecondaryButton"
+mouse_default_cursor_shape = 2
+metadata/action = "echo_2"
+
+[node name="Echo2" type="Button" parent="Echoes/Content"]
+layout_mode = 0
+offset_left = 2.0
+offset_top = 149.0
+offset_right = 212.0
+offset_bottom = 209.0
+text = "3 · Торен — 12 с"
+theme_type_variation = "SecondaryButton"
+mouse_default_cursor_shape = 2
+metadata/action = "echo_3"
+
+[node name="Hero" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 909.0
+offset_top = 555.0
+offset_right = 1006.0
+offset_bottom = 728.0
+texture = ExtResource("hero")
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+
+[node name="Chat" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_left = 35.0
+offset_top = 827.0
+offset_right = 468.0
+offset_bottom = 1029.0
+theme_type_variation = "DarkPanel"
+mouse_filter = 0
+
+[node name="Content" type="Control" parent="Chat"]
+layout_mode = 2
+custom_minimum_size = Vector2(401, 178)
+mouse_filter = 2
+
+[node name="Channels" type="Label" parent="Chat/Content"]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 0.0
+offset_right = 394.0
+offset_bottom = 28.0
+text = "Общий   Мир   Группа   Гильдия"
+mouse_filter = 2
+theme_type_variation = "OnDark"
+theme_override_font_sizes/font_size = 17
+
+[node name="Messages" type="Label" parent="Chat/Content"]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 39.0
+offset_right = 394.0
+offset_bottom = 108.0
+text = "[Группа] Лира: встречаемся у моста.\n[Группа] Марк: припасы уже у меня."
+mouse_filter = 2
+theme_type_variation = "OnDark"
+theme_override_font_sizes/font_size = 17
+
+[node name="Input" type="LineEdit" parent="Chat/Content"]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 123.0
+offset_right = 391.0
+offset_bottom = 163.0
+placeholder_text = "Enter · сообщение (демо)"
+max_length = 120
+
+[node name="Actionbar" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_left = 570.0
+offset_top = 844.0
+offset_right = 1394.0
+offset_bottom = 1029.0
+theme_type_variation = "DarkPanel"
+mouse_filter = 0
+
+[node name="Content" type="Control" parent="Actionbar"]
+layout_mode = 2
+custom_minimum_size = Vector2(792, 161)
+mouse_filter = 2
+
+[node name="Name" type="Label" parent="Actionbar/Content"]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 0.0
+offset_right = 784.0
+offset_bottom = 25.0
+text = "Каэль · Ур. 24 · Мечник"
+mouse_filter = 2
+theme_type_variation = "OnDark"
+theme_override_font_sizes/font_size = 18
+
+[node name="Health" type="ProgressBar" parent="Actionbar/Content"]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 35.0
+offset_right = 788.0
+offset_bottom = 55.0
+value = 87.0
+show_percentage = false
+mouse_filter = 2
+
+[node name="HealthText" type="Label" parent="Actionbar/Content"]
+layout_mode = 0
+offset_left = 312.0
+offset_top = 29.0
+offset_right = 492.0
+offset_bottom = 59.0
+text = "2 480 / 2 850"
+mouse_filter = 2
+theme_type_variation = "OnDark"
+theme_override_font_sizes/font_size = 16
+
+[node name="SkillQ" parent="Actionbar/Content" instance=ExtResource("slot")]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 72.0
+offset_right = 80.0
+offset_bottom = 148.0
+hotkey = "Q"
+icon_texture = ExtResource("icon0")
+metadata/action = "skill_q"
+
+[node name="SkillW" parent="Actionbar/Content" instance=ExtResource("slot")]
+layout_mode = 0
+offset_left = 102.0
+offset_top = 72.0
+offset_right = 178.0
+offset_bottom = 148.0
+hotkey = "W"
+icon_texture = ExtResource("icon1")
+metadata/action = "skill_w"
+
+[node name="SkillE" parent="Actionbar/Content" instance=ExtResource("slot")]
+layout_mode = 0
+offset_left = 200.0
+offset_top = 72.0
+offset_right = 276.0
+offset_bottom = 148.0
+hotkey = "E"
+icon_texture = ExtResource("icon2")
+metadata/action = "skill_e"
+
+[node name="SkillR" parent="Actionbar/Content" instance=ExtResource("slot")]
+layout_mode = 0
+offset_left = 298.0
+offset_top = 72.0
+offset_right = 374.0
+offset_bottom = 148.0
+hotkey = "R"
+icon_texture = ExtResource("icon3")
+metadata/action = "skill_r"
+
+[node name="SkillA" parent="Actionbar/Content" instance=ExtResource("slot")]
+layout_mode = 0
+offset_left = 396.0
+offset_top = 72.0
+offset_right = 472.0
+offset_bottom = 148.0
+hotkey = "A"
+icon_texture = ExtResource("icon4")
+metadata/action = "skill_a"
+
+[node name="SkillS" parent="Actionbar/Content" instance=ExtResource("slot")]
+layout_mode = 0
+offset_left = 494.0
+offset_top = 72.0
+offset_right = 570.0
+offset_bottom = 148.0
+hotkey = "S"
+icon_texture = ExtResource("icon5")
+metadata/action = "skill_s"
+
+[node name="SkillD" parent="Actionbar/Content" instance=ExtResource("slot")]
+layout_mode = 0
+offset_left = 592.0
+offset_top = 72.0
+offset_right = 668.0
+offset_bottom = 148.0
+hotkey = "D"
+icon_texture = ExtResource("icon6")
+metadata/action = "skill_d"
+
+[node name="SkillF" parent="Actionbar/Content" instance=ExtResource("slot")]
+layout_mode = 0
+offset_left = 690.0
+offset_top = 72.0
+offset_right = 766.0
+offset_bottom = 148.0
+hotkey = "F"
+icon_texture = ExtResource("icon7")
+metadata/action = "skill_f"
+
+[node name="CombatHints" type="Label" parent="."]
+layout_mode = 0
+offset_left = 580.0
+offset_top = 1034.0
+offset_right = 1690.0
+offset_bottom = 1066.0
+text = "ЛКМ — атака    ПКМ — движение    Shift — парирование    Tab — блок    Space — уклонение"
+mouse_filter = 2
+theme_type_variation = "OnDark"
+theme_override_font_sizes/font_size = 18

@@ -8,8 +8,8 @@ namespace ProjectG.Progression;
 public partial class ProgressionPresentation : CanvasLayer
 {
     private NetworkClient _network = null!;
+    private UiWindow _window=null!;
     private Control _overlay = null!;
-    private PanelContainer _panel = null!;
     private VBoxContainer _skills = null!;
     private Label _points = null!, _feedback = null!;
     private readonly Label[] _stats = new Label[6], _derived = new Label[17];
@@ -23,7 +23,8 @@ public partial class ProgressionPresentation : CanvasLayer
     private int _version, _sentVersion, _previewVersion = -1;
     private bool _alive = true, _needsPreview;
     private double _sentAt, _previewAfter;
-    private Vector2 _lastScreen;
+    private UiModelPreview _modelPreview=null!;
+    public void SetPreviewMesh(Mesh mesh,Material? material) => _modelPreview.SetMesh(mesh,material);
     private static readonly string[] Keys = ["Q","W","E","R","A","S","D","F"];
     private static readonly string[] StatNames = ["STR · Сила","AGI · Ловкость","VIT · Живучесть","INT · Интеллект","DEX · Сноровка","LUK · Удача"];
     private static readonly string[] Descriptions = [
@@ -39,19 +40,20 @@ public partial class ProgressionPresentation : CanvasLayer
         _network = network; Layer = 20;
         _network.StatPreviewReceived += Preview; _network.InventoryReceived += EquipmentChanged;
         _network.ItemConditionReceived += ConditionChanged;
-        _overlay = new Control { Visible = false, MouseFilter = Control.MouseFilterEnum.Stop, Theme = GameUi.CreateTheme() };
-        AddChild(_overlay); _overlay.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        var shade = new ColorRect { Color = new(0,0,0,.48f), MouseFilter = Control.MouseFilterEnum.Ignore };
-        _overlay.AddChild(shade); shade.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        _panel = new PanelContainer(); _overlay.AddChild(_panel);
-        var body = new VBoxContainer(); _panel.AddChild(body);
-        var header = new HBoxContainer(); body.AddChild(header);
-        var title = GameUi.Text("Персонаж",24); title.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill; header.AddChild(title);
-        header.AddChild(GameUi.Button("Закрыть · K / Esc",Toggle));
+        _window=new UiWindow { ToggleKey=Key.K }; AddChild(_window); _window.Build("Персонаж",new(1180,656)); _overlay=_window;
+        _window.CloseRequested+=()=> { _window.Close(); GameUi.CharacterWindowOpen=false; };
+        var body=UiComposition.Page(_window,"character");
         _points = GameUi.Text(""); body.AddChild(_points);
-        var tabs = new TabContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill }; body.AddChild(tabs);
-        var scroll = new ScrollContainer { Name = "Характеристики" }; tabs.AddChild(scroll);
-        var columns = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill }; scroll.AddChild(columns);
+        var content=new HBoxContainer { SizeFlagsVertical=Control.SizeFlags.ExpandFill }; body.AddChild(content);
+        var appearance=UiComposition.Card(content,270);
+        appearance.AddChild(GameUi.Text("Облик персонажа",20));
+        _modelPreview=new UiModelPreview { SizeFlagsVertical=Control.SizeFlags.ExpandFill,CustomMinimumSize=new(240,240) }; appearance.AddChild(_modelPreview);
+        UiComposition.Paragraph(appearance,"ЛКМ — поворот · колесо — масштаб",12);
+        appearance.AddChild(GameUi.Button("Экипировка · I",()=>GameUi.Navigate("inventory")));
+        appearance.AddChild(GameUi.Button("Профессия · P",()=>GameUi.Navigate("profession")));
+        var tabs=new TabContainer { SizeFlagsHorizontal=Control.SizeFlags.ExpandFill }; content.AddChild(tabs);
+        var scroll=new ScrollContainer { Name="Характеристики",HorizontalScrollMode=ScrollContainer.ScrollMode.Disabled }; tabs.AddChild(scroll);
+        var columns=new VBoxContainer { SizeFlagsHorizontal=Control.SizeFlags.ExpandFill }; scroll.AddChild(columns);
         var primary = new VBoxContainer { CustomMinimumSize = new(330,0) }; columns.AddChild(primary);
         primary.AddChild(GameUi.Text("БАЗОВЫЕ ХАРАКТЕРИСТИКИ",14));
         for (var i=0; i<6; i++)
@@ -102,7 +104,7 @@ public partial class ProgressionPresentation : CanvasLayer
     {
         if (value.Sequence != _pending || _pendingAction != ProgressionAction.PreviewStats) return;
         _pending = 0;
-        if (_sentVersion == _version) { _preview = value; _previewVersion = _version; _feedback.Text = "Предпросмотр рассчитан сервером · очки ещё не потрачены"; }
+        if (_sentVersion == _version) { _preview = value; _previewVersion = _version; _feedback.Text = "Предпросмотр готов · очки ещё не потрачены"; }
         Refresh(); RebuildSkills();
     }
     private void Invalidate() { _version++; _previewVersion = -1; _needsPreview = true; _previewAfter = Now()+.15; }
@@ -113,14 +115,10 @@ public partial class ProgressionPresentation : CanvasLayer
         _draft[index] += amount; Invalidate(); Refresh();
     }
     private void Cancel() { Array.Clear(_draft); Invalidate(); Refresh(); }
-    public void Toggle() { if(GameUi.QuestWindowOpen) return; _overlay.Visible = !_overlay.Visible; GameUi.CharacterWindowOpen=_overlay.Visible; if (_overlay.Visible) { Invalidate(); Layout(); } }
-    // Modal gameplay keys are consumed before unhandled game input; GUI mouse events still reach buttons.
-    public override void _Input(InputEvent ev)
+    public void Toggle()
     {
-        if (!_overlay.Visible || ev is not InputEventKey { Pressed: true, Echo: false } key) return;
-        if (key.PhysicalKeycode is Key.K or Key.Escape) { Toggle(); GetViewport().SetInputAsHandled(); }
-        else if (key.PhysicalKeycode is Key.Q or Key.W or Key.E or Key.R or Key.A or Key.S or Key.D or Key.F or Key.Space or Key.T or Key.Y or Key.U or Key.I or Key.P or Key.N or Key.O or Key.V or Key.C or Key.B or Key.J or Key.H or Key.M or Key.F1)
-            GetViewport().SetInputAsHandled();
+        if(_window.Visible) { _window.RequestClose(); return; }
+        if(_window.Open()) { GameUi.CharacterWindowOpen=true; Invalidate(); }
     }
     public override void _UnhandledInput(InputEvent ev)
     { if (ev is InputEventKey { Pressed:true,Echo:false,PhysicalKeycode:Key.K }) { Toggle(); GetViewport().SetInputAsHandled(); } }
@@ -130,12 +128,7 @@ public partial class ProgressionPresentation : CanvasLayer
         { _pending = 0; _previewVersion = -1; _feedback.Text = "Нет ответа. Закройте и откройте окно для обновления"; Refresh(); RebuildSkills(); }
         if (_overlay.Visible) { Layout(); if (_needsPreview && _pending == 0 && _state.Stats is not null && Now() >= _previewAfter) { _needsPreview = false; Send(ProgressionAction.PreviewStats); } }
     }
-    private void Layout()
-    {
-        var screen = GetViewport().GetVisibleRect().Size;
-        if (screen == _lastScreen) return; _lastScreen = screen;
-        _panel.Size = new(Math.Min(860,screen.X-32),Math.Min(604,screen.Y-32)); _panel.Position = (screen-_panel.Size)/2;
-    }
+    private void Layout() => _window.Layout();
     private void Send(ProgressionAction action, ushort skill = 0, byte slot = 0)
     {
         if (_pending != 0 || (!_alive && action != ProgressionAction.PreviewStats)) return;
@@ -178,9 +171,9 @@ public partial class ProgressionPresentation : CanvasLayer
         _skills.AddChild(GameUi.Text("8 ячеек навыков · рывок Space — отдельно"));
         foreach (var skill in _state.Skills)
         {
-            var row = new HBoxContainer(); _skills.AddChild(row);
+            var row = new VBoxContainer(); _skills.AddChild(row);
             var name = GameUi.Text(GameUi.SkillName(skill.Id)+(skill.Level == 0 ? " · не изучен" : $" · ур. {skill.Level} · освоение {skill.Practice}/{skill.NextPractice}"));
-            name.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill; row.AddChild(name);
+            name.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill; name.AutowrapMode=TextServer.AutowrapMode.WordSmart; row.AddChild(name);
             if (skill.Id == 3) { row.AddChild(GameUi.Text("Space")); continue; }
             if (skill.Level == 0)
             { var learn = GameUi.Button("Изучить",()=>Send(ProgressionAction.LearnSkill,skill.Id)); learn.Disabled = !skill.Learnable || _pending != 0 || !_alive; row.AddChild(learn); continue; }

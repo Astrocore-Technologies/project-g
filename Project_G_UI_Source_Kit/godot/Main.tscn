@@ -1,0 +1,58 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Theme" path="res://themes/adventurer_theme.tres" id="theme"]
+[ext_resource type="Texture2D" path="res://art/world.jpg" id="world"]
+[ext_resource type="Script" path="res://scripts/main.gd" id="script"]
+[ext_resource type="PackedScene" path="res://ui/screens/NativeHud.tscn" id="NativeHud"]
+[ext_resource type="PackedScene" path="res://ui/screens/InventoryPanel.tscn" id="InventoryPanel"]
+[ext_resource type="PackedScene" path="res://ui/screens/GuildPanel.tscn" id="GuildPanel"]
+
+[node name="UIStarter" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("theme")
+script = ExtResource("script")
+mouse_filter = 2
+
+[node name="WorldReference" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("world")
+expand_mode = 1
+stretch_mode = 6
+mouse_filter = 2
+
+[node name="NativeHud" parent="." instance=ExtResource("NativeHud")]
+layout_mode = 1
+
+[node name="InventoryPanel" parent="." instance=ExtResource("InventoryPanel")]
+visible = false
+layout_mode = 1
+
+[node name="GuildPanel" parent="." instance=ExtResource("GuildPanel")]
+visible = false
+layout_mode = 1
+
+[node name="Message" type="AcceptDialog" parent="."]
+title = "Project G · UI demo"
+initial_position = 2
+size = Vector2i(610, 260)
+dialog_text = "Демонстрация интерфейса"
+
+[node name="Toast" type="Label" parent="."]
+layout_mode = 0
+offset_left = 560.0
+offset_top = 749.0
+offset_right = 1410.0
+offset_bottom = 808.0
+text = "Нативный UI starter · B — инвентарь · G — Гильдия"
+horizontal_alignment = 1
+theme_type_variation = "OnDark"

@@ -1,0 +1,35 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Theme" path="res://themes/adventurer_theme.tres" id="theme"]
+[ext_resource type="Script" path="res://scripts/skill_slot.gd" id="script"]
+
+[node name="SkillSlot" type="Button"]
+custom_minimum_size = Vector2(76, 76)
+offset_right = 76.0
+offset_bottom = 76.0
+theme = ExtResource("theme")
+theme_type_variation = "SkillButton"
+script = ExtResource("script")
+mouse_default_cursor_shape = 2
+
+[node name="Icon" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 10.0
+offset_right = 60.0
+offset_bottom = 54.0
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+modulate = Color(0.96, 0.86, 0.64, 1)
+
+[node name="Key" type="Label" parent="."]
+layout_mode = 0
+offset_left = 18.0
+offset_top = 52.0
+offset_right = 58.0
+offset_bottom = 76.0
+text = "Q"
+horizontal_alignment = 1
+theme_type_variation = "OnDark"
+mouse_filter = 2

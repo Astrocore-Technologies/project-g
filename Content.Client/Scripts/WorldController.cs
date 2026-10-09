@@ -33,6 +33,7 @@ public partial class WorldController : Node3D
     private EchoControls? _echoControls;
     private ProjectG.Progression.ProgressionPresentation? _progression;
     private ProjectG.UI.PlayerHud? _hud;
+    private ProjectG.UI.GameNavigation? _uiNavigation;
     private ProjectG.Quests.QuestPresentation? _quests;
     private ProjectG.Progression.ProfessionPresentation? _profession;
     private ProjectG.WorldStory.WorldNodePresentation? _worldNode;
@@ -47,6 +48,7 @@ public partial class WorldController : Node3D
 
     public override void _Ready()
     {
+        ProjectG.UI.GameUi.ModalOpened+=StopForMenu;
         _network = GetNode<NetworkClient>("NetworkClient");
         _network.PlayerSpawned += OnPlayerSpawned;
         _network.PlayerDespawned += OnPlayerDespawned;
@@ -83,6 +85,7 @@ public partial class WorldController : Node3D
 
     public override void _ExitTree()
     {
+        ProjectG.UI.GameUi.ModalOpened-=StopForMenu;
         if (_network is null)
             return;
 
@@ -118,6 +121,11 @@ public partial class WorldController : Node3D
         _network.EchoSignatureResultReceived -= OnEchoResult;
     }
 
+    private void StopForMenu()
+    {
+        if(!_players.TryGetValue(_localEntityId,out var player)) return;
+        player.StopMovement(); player.GetNodeOrNull<CombatPresentation>("CombatPresentation")?.CancelAutoAttack();
+    }
     private void OnNavigationReceived(NavigationGrid grid)
     {
         if (!_contentReady) return;
@@ -149,18 +157,35 @@ public partial class WorldController : Node3D
             player.AddChild(_abilities);
             _abilities.Initialize(player, _network);
             _inventory = new InventoryPresentation(); AddChild(_inventory); _inventory.Initialize(_network,_localEntityId);
-            _echoControls = new(); AddChild(_echoControls); _echoControls.Initialize(_network);
+            _echoControls = new(); AddChild(_echoControls); _echoControls.Initialize(_network,_localEntityId);
             _progression = new(); AddChild(_progression); _progression.Initialize(_network);
+            var avatarMesh=player.GetNode<MeshInstance3D>("MeshInstance3D"); _progression.SetPreviewMesh(avatarMesh.Mesh,avatarMesh.MaterialOverride);
             _hud = new(); AddChild(_hud); _hud.Initialize(_localEntityId,()=>_progression?.Toggle());
             _quests=new(); AddChild(_quests); _quests.Initialize(_network,player);
             var defense = new DefensePresentation(); player.AddChild(defense); defense.Initialize(player,_network,_hud);
             _profession = new(); AddChild(_profession); _profession.Initialize(_network);
             if(_network.LatestWorldNode is not null) { _worldNode=new(); AddChild(_worldNode); _worldNode.Initialize(_network,player); }
+            ProjectG.UI.GameUi.ClearRoutes();
+            ProjectG.UI.GameUi.RegisterRoute("character",()=>_progression?.Toggle());
+            ProjectG.UI.GameUi.RegisterRoute("inventory",()=>_inventory?.Toggle());
+            ProjectG.UI.GameUi.RegisterRoute("echo",()=>_echoControls?.Toggle());
+            ProjectG.UI.GameUi.RegisterRoute("journal",()=>_quests?.OpenJournal());
+            ProjectG.UI.GameUi.RegisterRoute("profession",()=>_profession?.Toggle());
+            if(_starter is not null) { ProjectG.UI.GameUi.RegisterRoute("map",_starter.ToggleMap); ProjectG.UI.GameUi.RegisterRoute("guide",_starter.ToggleGuide); }
+            if(_crafting is not null) ProjectG.UI.GameUi.RegisterRoute("craft",_crafting.Toggle);
+            if(_trade is not null) ProjectG.UI.GameUi.RegisterRoute("trade",_trade.Toggle);
+            if(_economy is not null) ProjectG.UI.GameUi.RegisterRoute("market",_economy.Toggle);
+            if(_worldNode is not null) ProjectG.UI.GameUi.RegisterRoute("keeper",_worldNode.Toggle);
+            if(_pvp is not null) ProjectG.UI.GameUi.RegisterRoute("pvp",_pvp.Toggle);
+            if(_social is not null) { ProjectG.UI.GameUi.RegisterRoute("party",()=>_social.Toggle(SocialKind.Party)); ProjectG.UI.GameUi.RegisterRoute("clan",()=>_social.Toggle(SocialKind.Guild)); }
+            _uiNavigation=new(); AddChild(_uiNavigation); _uiNavigation.Initialize(_network,_localEntityId);
+
         }
     }
 
     private void OnPlayerDespawned(PlayerDespawn despawn)
     {
+        _echoControls?.Remove(despawn.EntityId);
         _combat.Remove(despawn.EntityId);
         _pvpLabels.Remove(despawn.EntityId);
         if (_echoes.Remove(despawn.EntityId, out var echo)) echo.QueueFree();
@@ -319,6 +344,7 @@ public partial class WorldController : Node3D
 
     private void ClearWorld()
     {
+        ProjectG.UI.GameUi.ClearRoutes(); DetachPresentation(_uiNavigation); _uiNavigation=null;
         DetachPresentation(_quests); _quests=null;
         _worldReady = false; // NC: a new region/session must become ready independently.
         UnloadAuthoredRegion();
@@ -362,6 +388,7 @@ public partial class WorldController : Node3D
     {
         if (_echoes.ContainsKey(value.EntityId)) return;
         var echo = new EchoPresentation(); AddChild(echo); echo.Initialize(value, _network.Navigation!); _echoes.Add(value.EntityId, echo);
+        var mesh=echo.GetChildren().OfType<MeshInstance3D>().First(); _echoControls?.Observe(value,mesh.Mesh,mesh.MaterialOverride);
     }
     private void OnEchoLoadout(EchoLoadout value) { if (value.OwnerId == _localEntityId) _echoControls?.Apply(value); }
     private void OnEchoResult(EchoSignatureResult value) => _echoControls?.Result(value);

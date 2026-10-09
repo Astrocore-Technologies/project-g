@@ -1,0 +1,407 @@
+[gd_resource type="Resource" script_class="UiArtCatalog" load_steps=96 format=3]
+
+[ext_resource type="Script" path="res://Scripts/UI/Assets/UiArtCatalog.cs" id="catalog"]
+
+[ext_resource type="Script" path="res://Scripts/UI/Assets/UiArtEntry.cs" id="entry"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/bag.svg" id="bag"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/bolt.svg" id="bolt"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/book.svg" id="book"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/boot.svg" id="boot"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/bow.svg" id="bow"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/chat.svg" id="chat"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/check.svg" id="check"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/chevron.svg" id="chevron"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/clock.svg" id="clock"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/close.svg" id="close"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/coin.svg" id="coin"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/compass.svg" id="compass"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/dash.svg" id="dash"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/eye.svg" id="eye"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/feather.svg" id="feather"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/flame.svg" id="flame"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/gem.svg" id="gem"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/group.svg" id="group"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/guild.svg" id="guild"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/hammer.svg" id="hammer"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/heart.svg" id="heart"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/helmet.svg" id="helmet"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/leaf.svg" id="leaf"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/lock.svg" id="lock"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/map.svg" id="map"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/menu.svg" id="menu"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/moon.svg" id="moon"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/person.svg" id="person"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/pin.svg" id="pin"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/potion.svg" id="potion"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/scale.svg" id="scale"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/scroll.svg" id="scroll"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/search.svg" id="search"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/settings.svg" id="settings"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/shield.svg" id="shield"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/snow.svg" id="snow"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/star.svg" id="star"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/sun.svg" id="sun"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/sword.svg" id="sword"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/warning.svg" id="warning"]
+
+[sub_resource type="Resource" id="art_0"]
+script = ExtResource("entry")
+Key = "icon.bag"
+Texture = ExtResource("bag")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_1"]
+script = ExtResource("entry")
+Key = "icon.bolt"
+Texture = ExtResource("bolt")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_2"]
+script = ExtResource("entry")
+Key = "icon.book"
+Texture = ExtResource("book")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_3"]
+script = ExtResource("entry")
+Key = "icon.boot"
+Texture = ExtResource("boot")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_4"]
+script = ExtResource("entry")
+Key = "icon.bow"
+Texture = ExtResource("bow")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_5"]
+script = ExtResource("entry")
+Key = "icon.chat"
+Texture = ExtResource("chat")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_6"]
+script = ExtResource("entry")
+Key = "icon.check"
+Texture = ExtResource("check")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_7"]
+script = ExtResource("entry")
+Key = "icon.chevron"
+Texture = ExtResource("chevron")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_8"]
+script = ExtResource("entry")
+Key = "icon.clock"
+Texture = ExtResource("clock")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_9"]
+script = ExtResource("entry")
+Key = "icon.close"
+Texture = ExtResource("close")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_10"]
+script = ExtResource("entry")
+Key = "icon.coin"
+Texture = ExtResource("coin")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_11"]
+script = ExtResource("entry")
+Key = "icon.compass"
+Texture = ExtResource("compass")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_12"]
+script = ExtResource("entry")
+Key = "icon.dash"
+Texture = ExtResource("dash")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_13"]
+script = ExtResource("entry")
+Key = "icon.eye"
+Texture = ExtResource("eye")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_14"]
+script = ExtResource("entry")
+Key = "icon.feather"
+Texture = ExtResource("feather")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_15"]
+script = ExtResource("entry")
+Key = "icon.flame"
+Texture = ExtResource("flame")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_16"]
+script = ExtResource("entry")
+Key = "icon.gem"
+Texture = ExtResource("gem")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_17"]
+script = ExtResource("entry")
+Key = "icon.group"
+Texture = ExtResource("group")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_18"]
+script = ExtResource("entry")
+Key = "icon.guild"
+Texture = ExtResource("guild")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_19"]
+script = ExtResource("entry")
+Key = "icon.hammer"
+Texture = ExtResource("hammer")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_20"]
+script = ExtResource("entry")
+Key = "icon.heart"
+Texture = ExtResource("heart")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_21"]
+script = ExtResource("entry")
+Key = "icon.helmet"
+Texture = ExtResource("helmet")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_22"]
+script = ExtResource("entry")
+Key = "icon.leaf"
+Texture = ExtResource("leaf")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_23"]
+script = ExtResource("entry")
+Key = "icon.lock"
+Texture = ExtResource("lock")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_24"]
+script = ExtResource("entry")
+Key = "icon.map"
+Texture = ExtResource("map")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_25"]
+script = ExtResource("entry")
+Key = "icon.menu"
+Texture = ExtResource("menu")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_26"]
+script = ExtResource("entry")
+Key = "icon.moon"
+Texture = ExtResource("moon")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_27"]
+script = ExtResource("entry")
+Key = "icon.person"
+Texture = ExtResource("person")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_28"]
+script = ExtResource("entry")
+Key = "icon.pin"
+Texture = ExtResource("pin")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_29"]
+script = ExtResource("entry")
+Key = "icon.potion"
+Texture = ExtResource("potion")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_30"]
+script = ExtResource("entry")
+Key = "icon.scale"
+Texture = ExtResource("scale")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_31"]
+script = ExtResource("entry")
+Key = "icon.scroll"
+Texture = ExtResource("scroll")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_32"]
+script = ExtResource("entry")
+Key = "icon.search"
+Texture = ExtResource("search")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_33"]
+script = ExtResource("entry")
+Key = "icon.settings"
+Texture = ExtResource("settings")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_34"]
+script = ExtResource("entry")
+Key = "icon.shield"
+Texture = ExtResource("shield")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_35"]
+script = ExtResource("entry")
+Key = "icon.snow"
+Texture = ExtResource("snow")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_36"]
+script = ExtResource("entry")
+Key = "icon.star"
+Texture = ExtResource("star")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_37"]
+script = ExtResource("entry")
+Key = "icon.sun"
+Texture = ExtResource("sun")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_38"]
+script = ExtResource("entry")
+Key = "icon.sword"
+Texture = ExtResource("sword")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_39"]
+script = ExtResource("entry")
+Key = "icon.warning"
+Texture = ExtResource("warning")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_40"]
+script = ExtResource("entry")
+Key = "equipment.weapon"
+Texture = ExtResource("sword")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_41"]
+script = ExtResource("entry")
+Key = "equipment.armor"
+Texture = ExtResource("shield")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_42"]
+script = ExtResource("entry")
+Key = "equipment.unknown"
+Texture = ExtResource("bag")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_43"]
+script = ExtResource("entry")
+Key = "nav.character"
+Texture = ExtResource("person")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_44"]
+script = ExtResource("entry")
+Key = "nav.inventory"
+Texture = ExtResource("bag")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_45"]
+script = ExtResource("entry")
+Key = "nav.map"
+Texture = ExtResource("map")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_46"]
+script = ExtResource("entry")
+Key = "nav.quests"
+Texture = ExtResource("scroll")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_47"]
+script = ExtResource("entry")
+Key = "nav.menu"
+Texture = ExtResource("menu")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_48"]
+script = ExtResource("entry")
+Key = "skill.1"
+Texture = ExtResource("bolt")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_49"]
+script = ExtResource("entry")
+Key = "skill.2"
+Texture = ExtResource("sun")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_50"]
+script = ExtResource("entry")
+Key = "skill.3"
+Texture = ExtResource("dash")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_51"]
+script = ExtResource("entry")
+Key = "skill.5"
+Texture = ExtResource("bolt")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[sub_resource type="Resource" id="art_52"]
+script = ExtResource("entry")
+Key = "skill.6"
+Texture = ExtResource("star")
+Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+
+[resource]
+script = ExtResource("catalog")
+Entries = Array[ExtResource("entry")]([SubResource("art_0"), SubResource("art_1"), SubResource("art_2"), SubResource("art_3"), SubResource("art_4"), SubResource("art_5"), SubResource("art_6"), SubResource("art_7"), SubResource("art_8"), SubResource("art_9"), SubResource("art_10"), SubResource("art_11"), SubResource("art_12"), SubResource("art_13"), SubResource("art_14"), SubResource("art_15"), SubResource("art_16"), SubResource("art_17"), SubResource("art_18"), SubResource("art_19"), SubResource("art_20"), SubResource("art_21"), SubResource("art_22"), SubResource("art_23"), SubResource("art_24"), SubResource("art_25"), SubResource("art_26"), SubResource("art_27"), SubResource("art_28"), SubResource("art_29"), SubResource("art_30"), SubResource("art_31"), SubResource("art_32"), SubResource("art_33"), SubResource("art_34"), SubResource("art_35"), SubResource("art_36"), SubResource("art_37"), SubResource("art_38"), SubResource("art_39"), SubResource("art_40"), SubResource("art_41"), SubResource("art_42"), SubResource("art_43"), SubResource("art_44"), SubResource("art_45"), SubResource("art_46"), SubResource("art_47"), SubResource("art_48"), SubResource("art_49"), SubResource("art_50"), SubResource("art_51"), SubResource("art_52")])

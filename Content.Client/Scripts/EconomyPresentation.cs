@@ -1,12 +1,13 @@
 using Content.Shared.Network;
 using Godot;
 using ProjectG.Networking;
+using ProjectG.UI;
 using ProjectG.Gameplay;
 namespace ProjectG.Economy;
 public partial class EconomyPresentation:CanvasLayer
 {
     private NetworkClient _network=null!;private PlayerController _player=null!;
-    private PanelContainer _panel=null!;private VBoxContainer _body=null!;
+    private UiWindow _panel=null!;private VBoxContainer _body=null!;
     private EconomyState _state;private InventoryState _inventory;private CraftState _materials;private MarketState _market;
     private readonly Dictionary<ulong,ItemConditionEntry> _conditions=new();
     private EconomyCommand? _pending;private EconomyQuote? _quote;private double _clock,_sentAt;private Vector2 _lastViewport;
@@ -14,29 +15,20 @@ public partial class EconomyPresentation:CanvasLayer
     public void Initialize(NetworkClient network,PlayerController player)
     {
         _network=network;_player=player;Layer=7;
-        _panel=new(){Position=new Vector2(80,70),CustomMinimumSize=new Vector2(640,480),Visible=false};AddChild(_panel);
-        var scroll=new ScrollContainer(){CustomMinimumSize=new Vector2(640,480)};_panel.AddChild(scroll);_body=new(){SizeFlagsHorizontal=Control.SizeFlags.ExpandFill};scroll.AddChild(_body);
+        _panel=new UiWindow { ToggleKey=Key.J }; AddChild(_panel); _panel.Build("Кузница и местный рынок",new(1080,650)); _panel.CloseRequested+=_panel.Close;
+        _body=UiComposition.Scroll(_panel.Body);
         network.EconomyStateReceived+=State;network.EconomyQuoteReceived+=Quote;network.EconomyResultReceived+=Result;network.MarketStateReceived+=Market;
         network.InventoryReceived+=Inventory;network.CraftStateReceived+=Materials;network.ItemConditionReceived+=Condition;Render();
     }
     public override void _ExitTree(){if(_network is null)return;_network.EconomyStateReceived-=State;_network.EconomyQuoteReceived-=Quote;_network.EconomyResultReceived-=Result;_network.MarketStateReceived-=Market;_network.InventoryReceived-=Inventory;_network.CraftStateReceived-=Materials;_network.ItemConditionReceived-=Condition;}
-    public override void _UnhandledKeyInput(InputEvent e){if(e is InputEventKey{Pressed:true,Echo:false,PhysicalKeycode:Key.J}){_panel.Visible=!_panel.Visible;GetViewport().SetInputAsHandled();Render();}}
+    public override void _UnhandledKeyInput(InputEvent e){if(e is InputEventKey{Pressed:true,Echo:false,PhysicalKeycode:Key.J}){if(GameUi.GameplayModalOpen)return; Toggle();GetViewport().SetInputAsHandled();Render();}}
     public override void _Process(double delta)
     {
         _clock+=delta;
-        var viewport=GetViewport().GetVisibleRect().Size;
-        if(viewport!=_lastViewport)
-        {
-            _lastViewport=viewport;
-            var size=new Vector2(Math.Max(200,Math.Min(640,viewport.X-24)),Math.Max(160,Math.Min(480,viewport.Y-24)));
-            _panel.Position=new Vector2(Math.Min(80,Math.Max(12,viewport.X-size.X-12)),Math.Min(70,Math.Max(12,viewport.Y-size.Y-12)));
-            _panel.CustomMinimumSize=size;
-            if(_panel.GetChild(0) is ScrollContainer scroll)scroll.CustomMinimumSize=size;
-            _panel.Size=size;
-        }
         if(_pending is {} c && _quote is null && _clock-_sentAt>=2){_sentAt=_clock;_network.SendEconomy(c);}
         if(_quote is {} q && _clock-_sentAt>=q.ValidSeconds){_quote=null;_pending=null;_status="Расчёт истёк. Запросите новый.";Render();}
     }
+    public void Toggle() { if(_panel.Visible) _panel.Close(); else _panel.Open(); }
     private void State(EconomyState s){if(s.OwnerId!=_player.EntityId)return;_state=s;Render();}
     private void Inventory(InventoryState s){if(s.EntityId!=_player.EntityId)return;_inventory=s;Render();}
     private void Materials(CraftState s){if(s.OwnerId!=_player.EntityId)return;_materials=s;Render();}

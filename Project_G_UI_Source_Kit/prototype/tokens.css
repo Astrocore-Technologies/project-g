@@ -1,0 +1,23 @@
+/* Generated from design/tokens.json */
+:root {
+  --ink: #273D49;
+  --muted: #6F756D;
+  --paper: #F5EBD6;
+  --paper2: #E8D9B9;
+  --light: #FFF8E8;
+  --line: #C9B48A;
+  --gold: #B68A43;
+  --goldLight: #F3D99B;
+  --navy: #274B64;
+  --navy2: #365E77;
+  --dark: #1D303A;
+  --white: #FFF9EA;
+  --green: #387957;
+  --blue: #5095AF;
+  --red: #A1443D;
+  --purple: #806994;
+  --dim: #AFB6AA;
+  --radius: 9px;
+  --motion-fast: 100ms;
+  --motion-normal: 160ms;
+}
