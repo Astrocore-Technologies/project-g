@@ -7,7 +7,7 @@
     ],
     "Movement": { "MinX": -40, "MaxX": 40, "MinZ": -32, "MaxZ": 32, "SpawnX": -12, "SpawnZ": 18, "WorldLayoutVersion": 1 },
     "Navigation": { "GeometryFile": "Data/Regions/river-landing.json" },
-    "Npc": { "Enabled": true, "DefinitionId": "test_creature", "X": -23, "Z": -22 },
+    "Npc": { "Enabled": true, "SpawnId": "npc", "RespawnSeconds": 30, "DefinitionId": "test_creature", "X": -23, "Z": -22 },
     "WorldNode": { "X": 15, "Z": -10 },
     "StarterZone": {
       "RegionName": "Окраина Речной пристани", "TownName": "Речная пристань", "GuideName": "Проводник",
@@ -32,7 +32,7 @@
         { "X": 3, "Z": 3, "Width": 4, "Height": 2 }
       ]
     },
-    "Npc": { "Enabled": true, "DefinitionId": "test_creature", "X": 9, "Z": 2 },
+    "Npc": { "Enabled": true, "SpawnId": "npc", "RespawnSeconds": 30, "DefinitionId": "test_creature", "X": 9, "Z": 2 },
     "WorldNode": { "Key": "outskirts-crossing", "KeeperName": "Смотритель окраины" },
     "StarterZone": {
       "RegionName": "Восточная окраина", "TownName": "Дорожный лагерь", "GuideName": "Разведчик окраины",

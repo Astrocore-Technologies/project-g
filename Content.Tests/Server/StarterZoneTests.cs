@@ -50,7 +50,7 @@ public sealed class StarterZoneTests
     }
     [Fact] public void TutorialUsesConfirmedHitAbilityAndManualEchoInsteadOfClientClaims()
     {
-        var w=World(true); var p=w.AddPlayer(42,new(1),w.CreateInitialCharacter()); w.Simulate(0.05f);
+        var w=World(true); var p=w.AddPlayer(42,new(1),EchoTests.WithEcho(w)); w.Simulate(0.05f);
         w.TryQueueAttack(42,new(1,0,-Vector2.UnitY)); w.Simulate(0.05f); Assert.Equal(0,w.ExplorationState(p.EntityId).Tutorial&2);
         ProfessionTests.Step(w,40); w.TryQueueAttack(42,new(2,0,Vector2.UnitY)); w.Simulate(0.05f); Assert.Equal(2,w.ExplorationState(p.EntityId).Tutorial&2);
         w.TryQueueAbility(42,new(1,w.Tick,65535,Vector2.UnitY),0); w.Simulate(0.05f); Assert.Equal(0,w.ExplorationState(p.EntityId).Tutorial&4);

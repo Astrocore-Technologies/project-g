@@ -17,12 +17,60 @@ public sealed class EchoTests
 {
     private static ServerWorld World(NavigationOptions? navigation = null) => new(Options.Create(new MovementOptions()), Options.Create(new InterestOptions()),
         navigation: Options.Create(navigation ?? new()), catalog: ContentCatalogTests.Load(), echoes: Options.Create(new EchoOptions { Enabled = true }));
+    // Echo mechanics are tested with explicit ownership, never through a starter/login grant.
+    internal static CharacterState WithEcho(ServerWorld world) => world.CreateInitialCharacter() with
+    { Echoes = new() { Active = [new(Guid.NewGuid(), "test_guardian_echo", 1, null, null)] } };
     private static void Step(ServerWorld world)
     { world.Combat!.ClearResults(); world.Abilities!.ClearResults(); world.Echoes!.ClearResults(); world.Simulate(.05f); }
     [Fact]
+    public void NewAndLegacyCharactersStartAloneEvenWhenEchoEngineIsEnabled()
+    {
+        var world = World(); var initial = world.CreateInitialCharacter();
+        Assert.Empty(initial.Echoes!.Active);
+        var players = new[] { world.AddPlayer(1, new(1)), world.AddPlayer(2, new(2), initial),
+            world.AddPlayer(3, new(3), initial with { Echoes = null }) };
+        foreach (var player in players) Assert.Empty(world.Echoes!.Loadout(player.EntityId, 0).Slots);
+        world.TryApplyMove(1, new(1, 0, new(-7, 2)));
+        world.Echoes!.Alert(players[0].EntityId, world.TrainingTargetId);
+        Assert.True(world.TryQueueEchoSignature(1, new(1, 0, 1, new(-7, 3)))); Step(world);
+        Assert.Equal(EchoCommandOutcome.NotOwned, world.Echoes.Results[players[0].EntityId].Outcome);
+        Assert.Empty(world.Echoes.Actions);
+        var saved = world.CaptureCharacter(1); Assert.Empty(saved.Echoes!.Active);
+        world.RemovePlayer(1); var restored = world.AddPlayer(1, new(4), saved);
+        Assert.Empty(world.Echoes.Loadout(restored.EntityId, world.Tick).Slots);
+    }
+
+    [Fact]
+    public async Task DisabledEchoesSuppressOldCompanionWithoutErasingStoredOwnershipOrProgress()
+    {
+        var store = new SqliteCharacterStore(); await store.InitializeAsync(default);
+        var old = WithEcho(World()) with { Health = 17, Mana = 9 };
+        var disabled = new ServerWorld(Options.Create(new MovementOptions()), Options.Create(new InterestOptions()),
+            catalog: ContentCatalogTests.Load(), echoes: Options.Create(new EchoOptions { Enabled = false }));
+        string credential;
+        await using (var session = await store.OpenAsync("", old, default))
+        {
+            credential = session.IssuedToken;
+            disabled.AddPlayer(42, new(1), session.State);
+            Assert.Null(disabled.Echoes);
+            Assert.False(disabled.TryQueueEchoSignature(42, new(1, 0, 1, new(-7, 3))));
+            var saved = disabled.CaptureCharacter(42);
+            Assert.Null(saved.Echoes); // Null means no update to the separate Echo table, not an empty overwrite.
+            await store.SaveAsync([new(session, saved)], default);
+        }
+        var reopened = new SqliteCharacterStore(store.DatabasePath); await reopened.InitializeAsync(default);
+        await using var restored = await reopened.OpenAsync(credential, disabled.CreateInitialCharacter(), default);
+        Assert.Equal(old.Echoes!.Serialize(), restored.State.Echoes!.Serialize());
+        Assert.Equal(old.Stats, restored.State.Stats); Assert.Equal(old.Progression!.Serialize(), restored.State.Progression!.Serialize());
+        Assert.Equal(17, restored.State.Health); Assert.Equal(9, restored.State.Mana);
+        await using var fresh = await reopened.OpenAsync("", disabled.CreateInitialCharacter(), default);
+        Assert.Empty(fresh.State.Echoes!.Active);
+    }
+
+    [Fact]
     public void FollowsWithoutTeleportingThenSleepsAndDisconnectRemovesActor()
     {
-        var world = World(); var player = world.AddPlayer(1, new(1)); var echoId = Assert.Single(world.Echoes!.Loadout(player.EntityId, 0).Slots).EntityId;
+        var world = World(); var player = world.AddPlayer(1, new(1), WithEcho(world)); var echoId = Assert.Single(world.Echoes!.Loadout(player.EntityId, 0).Slots).EntityId;
         Assert.True(world.TryApplyMove(1, new(1, 0, new(6, 4))));
         for (var i = 0; i < 180; i++)
         {
@@ -38,7 +86,7 @@ public sealed class EchoTests
     [Fact]
     public void SignatureIsManualBoundedOwnerOnlyAndCooldownPersists()
     {
-        var world = World(); var initial = world.CreateInitialCharacter() with { X = -7, Z = 2 };
+        var world = World(); var initial = WithEcho(world) with { X = -7, Z = 2 };
         var player = world.AddPlayer(1, new(1), initial); var echo = world.Echoes!; var target = world.Combat!.Get(world.TrainingTargetId);
         Step(world); Assert.Empty(echo.Actions); var hp = target.Health;
         Assert.False(world.TryQueueEchoSignature(999, new(1, 0, 1, target.Position)));
@@ -59,7 +107,7 @@ public sealed class EchoTests
     [InlineData(1, 0, 15, EchoCommandOutcome.OutOfRange)]
     public void InvalidSignaturesDoNotSpendCooldown(byte slot, uint clientTick, float x, EchoCommandOutcome outcome)
     {
-        var world = World(); var player = world.AddPlayer(1, new(1));
+        var world = World(); var player = world.AddPlayer(1, new(1), WithEcho(world));
         Assert.True(world.TryQueueEchoSignature(1, new(1, clientTick, slot, new(x, 0)))); Step(world);
         Assert.Equal(outcome, world.Echoes!.Results[player.EntityId].Outcome);
         Assert.Equal(0, Assert.Single(world.Echoes.Capture(player.EntityId).Active).SignatureCooldownSeconds);
@@ -79,7 +127,7 @@ public sealed class EchoTests
     [Fact]
     public void AssistRequiresCombatAndDeathStopsActionsUntilRevive()
     {
-        var world = World(); var player = world.AddPlayer(1, new(1), world.CreateInitialCharacter() with { X = -7, Z = 2 });
+        var world = World(); var player = world.AddPlayer(1, new(1), WithEcho(world) with { X = -7, Z = 2 });
         Step(world); Assert.Empty(world.Echoes!.Actions);
         world.Echoes.Alert(player.EntityId, world.TrainingTargetId); Step(world);
         Assert.Contains(world.Echoes.Actions, action => action.Kind == EchoActionKind.BasicAttack);
@@ -93,7 +141,7 @@ public sealed class EchoTests
     [Fact]
     public async Task SQLiteRestoresEchoIdentityPositionAndCooldownWithoutSecondGrant()
     {
-        var store = new SqliteCharacterStore(); await store.InitializeAsync(default); var world = World(); var initial = world.CreateInitialCharacter();
+        var store = new SqliteCharacterStore(); await store.InitializeAsync(default); var world = World(); var initial = WithEcho(world);
         string token; SavedEchoes saved;
         await using (var session = await store.OpenAsync("", initial, default))
         {
@@ -108,7 +156,7 @@ public sealed class EchoTests
     public void NavigationDetoursAndSignatureCannotCrossWall()
     {
         var world = World(new() { BlockedAreas = [new() { X = 14, Z = 10, Width = 2, Height = 10 }] });
-        var saved = world.CreateInitialCharacter() with { X = -3, Z = 0 };
+        var saved = WithEcho(world) with { X = -3, Z = 0 };
         var player = world.AddPlayer(1, new(1), saved); var id = world.Echoes!.Loadout(player.EntityId, 0).Slots[0].EntityId;
         Assert.True(world.TryQueueEchoSignature(1, new(1, 0, 1, new(1.5f, 0)))); Step(world);
         Assert.Equal(EchoCommandOutcome.Blocked, world.Echoes.Results[player.EntityId].Outcome);
@@ -125,7 +173,7 @@ public sealed class EchoTests
     [Fact]
     public void FloodCancelsPendingSignatureWithoutDamageOrCooldown()
     {
-        var world = World(); var player = world.AddPlayer(1, new(1));
+        var world = World(); var player = world.AddPlayer(1, new(1), WithEcho(world));
         Assert.True(world.TryQueueEchoSignature(1, new(1, 0, 1, new(-7, 3))));
         Assert.False(world.TryQueueEchoSignature(1, new(2, 0, 1, new(-7, 3))));
         // Clear only previous published output, not the pending command.
@@ -137,11 +185,14 @@ public sealed class EchoTests
     public async Task TwoLossyClientsObserveEchoesAndSignatureOnlyAfterCommit()
     {
         var store = new SqliteCharacterStore(); await store.InitializeAsync(default); var world = World();
+        string firstToken, secondToken;
+        await using (var seed = await store.OpenAsync("", WithEcho(world), default)) firstToken = seed.IssuedToken;
+        await using (var seed = await store.OpenAsync("", WithEcho(world), default)) secondToken = seed.IssuedToken;
         var port = CharacterPersistenceTests.FreePort();
         using var server = new GameServerService(Options.Create(new ServerOptions { Port = port, NetworkPollIntervalMilliseconds = 1 }),
             new HandshakeCoordinator(), world, NullLogger<GameServerService>.Instance, store);
         await server.StartAsync(default);
-        using var first = new NetworkMovementIntegrationTests.TestClient(port); using var second = new NetworkMovementIntegrationTests.TestClient(port);
+        using var first = new NetworkMovementIntegrationTests.TestClient(port, firstToken); using var second = new NetworkMovementIntegrationTests.TestClient(port, secondToken);
         TaskCompletionSource? gate = null;
         async Task Poll(Func<bool> condition)
         {
@@ -172,7 +223,7 @@ public sealed class EchoTests
         finally { gate?.TrySetResult(); await server.StopAsync(default); }
     }
     [Fact]
-    public async Task SchemaThreeMigrationPreservesCharacterAndBootstrapsEchoOnlyOnce()
+    public async Task SchemaThreeMigrationPreservesCharacterWithoutGrantingEcho()
     {
         var store = new SqliteCharacterStore(); var world = World(); var initial = world.CreateInitialCharacter() with { X = 8, Z = 7, Health = 17 };
         var id = Guid.NewGuid(); var token = Convert.ToHexString(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
@@ -196,7 +247,7 @@ public sealed class EchoTests
         {
             Assert.Equal(17, session.State.Health); Assert.Equal(8, session.State.X);
             var player = world.AddPlayer(1, new(1), session.State); var placed = world.CaptureCharacter(1);
-            echoes = placed.Echoes!.Active; Assert.Single(echoes); Assert.InRange(echoes[0].X!.Value, 6, 8);
+            echoes = placed.Echoes!.Active; Assert.Empty(echoes);
             await store.SaveAsync([new(session, placed)], default); world.RemovePlayer(1);
         }
         await using var reopened = await store.OpenAsync(token, world.CreateInitialCharacter(), default);

@@ -65,7 +65,8 @@ public sealed class NpcSimulation
         _storyAggroRadius=radius;
         if (TargetId.IsValid) Return(tick);
     }
-    public NetworkEntityId Id { get; }
+    public NetworkEntityId Id { get; private set; }
+    internal NpcOptions Options => _options;
     public Vector2 Home { get; }
     public NavigationMover Motion { get; }
     public NetworkEntityId TargetId { get; private set; }
@@ -203,11 +204,28 @@ public sealed class NpcSimulation
         Motion.Reset(Motion.Position, Home);
     }
 
-    private void Defeat(uint tick)
+    internal void Defeat(uint tick)
     {
         if (Behavior == NpcBehavior.Defeated) return;
         EndTelegraph(tick); EndArea(tick); _castingArea = false; TargetId = default; Behavior = NpcBehavior.Defeated;
         Motion.Reset(Motion.Position, Motion.Position);
+    }
+
+    internal void BeginNewLife(NetworkEntityId id)
+    {
+        // The slot and its world-story modifiers survive, but no combat identity or intent does.
+        Id = id;
+        TargetId = default;
+        Behavior = NpcBehavior.Idle;
+        Motion.Reset(Home, Home);
+        _decisionRemaining = _windupRemaining = 0;
+        _direction = default;
+        _sequence = 0;
+        _nextArea = _castingArea = false;
+        Telegraph = null;
+        Area = null;
+        WindupVersion++;
+        AreaVersion++;
     }
 
     private void EndTelegraph(uint tick)

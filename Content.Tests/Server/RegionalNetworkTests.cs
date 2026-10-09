@@ -22,7 +22,7 @@ public sealed class RegionalNetworkTests
     internal static RegionalWorlds Worlds() => RegionalWorlds.Load(Path.Combine(AppContext.BaseDirectory, "Fixtures", "legacy-regions.json"),
         new ConfigurationBuilder().AddJsonFile(Path.Combine(AppContext.BaseDirectory, "appsettings.json"))
             // These fixtures predate River Landing and intentionally keep their old 30x30 geometry.
-            .AddInMemoryCollection(new Dictionary<string,string?> { ["Quests:Enabled"]="false" }).Build(), ContentCatalogTests.Load());
+            .AddInMemoryCollection(new Dictionary<string,string?> { ["Quests:Enabled"]="false", ["Echoes:Enabled"]="true" }).Build(), ContentCatalogTests.Load());
 
     private static GameServerService Server(int port, RegionalWorlds worlds, SqliteCharacterStore store) => new(
         Options.Create(new ServerOptions { Port = port, NetworkPollIntervalMilliseconds = 1 }), new(), worlds.Primary,
@@ -223,10 +223,14 @@ public sealed class RegionalNetworkTests
             try
             {
                 using var client = new Client(port, token);
-                await Poll(() => client.Region?.Region == "outskirts" && client.Spawns.Count == 1 && client.Echoes.Count == 3, client);
+                await Poll(() => client.Region?.Region == "outskirts" && client.Spawns.Count == 1 && client.Inventories.Count == 1, client);
+                // The real executable has companions disabled, including previously saved owners.
+                Assert.Empty(client.Echoes); Assert.Empty(client.EchoLoadouts);
                 Assert.Equal(new Vector2(-12, 10), client.LocalSpawn.Position); Assert.Equal(1, store.Count);
             }
             finally { if (!restarted.HasExited) restarted.Kill(entireProcessTree: true); await restarted.WaitForExitAsync(); }
         }
+        await using var preserved = await store.OpenAsync(token, worlds.Primary.CreateInitialCharacter(), default);
+        Assert.Equal(3, preserved.State.Echoes!.Active.Length);
     }
 }

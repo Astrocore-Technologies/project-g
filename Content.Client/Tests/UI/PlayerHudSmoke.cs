@@ -43,6 +43,22 @@ public partial class PlayerHudSmoke : Node
             var hud=world.GetChildren().OfType<PlayerHud>().Single();
             await ToSignal(GetTree().CreateTimer(.7),SceneTreeTimer.SignalName.Timeout);
             if (hud.FindChildren("*","ProgressBar",true,false).Count!=4) throw new Exception("Missing resource bars.");
+            if (OS.GetCmdlineUserArgs().Contains("--solo"))
+            {
+                if (world.GetChildren().OfType<ProjectG.Echoes.EchoPresentation>().Any()) throw new Exception("Unacquired Echo was spawned.");
+                var echoes=world.GetChildren().OfType<ProjectG.Echoes.EchoControls>().Single();
+                if (((Control)echoes.FindChild("CompanionHud",true,false)).Visible) throw new Exception("Empty companion HUD is visible.");
+                echoes.Toggle(); await Frames(3);
+                if (!echoes.FindChildren("*","Label",true,false).Cast<Label>().Any(l=>l.Text.StartsWith("У вас пока нет Эхо.")))
+                    throw new Exception("Missing unowned companion explanation.");
+                echoes.Toggle(); await Frames(2);
+                var guide=world.GetChildren().OfType<ProjectG.StarterZone.StarterZonePresentation>().Single();
+                guide.ToggleGuide(); await Frames(2);
+                if (guide.FindChildren("*","Label",true,false).Cast<Label>().Any(l=>l.Text.Contains("способность Эхо")))
+                    throw new Exception("Unobtainable Echo tutorial is visible.");
+                guide.ToggleGuide(); await Frames(2);
+                GD.Print("SOLO_START_OK: no companion, hidden empty HUD, no Echo tutorial, empty collection remains accessible.");
+            }
             await Capture("hud-1280");
             character.Toggle(); await Wait(()=>_previews>0); await Frames(3);
             var buttons=character.FindChildren("*","Button",true,false).Cast<Button>().ToArray();

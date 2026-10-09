@@ -37,7 +37,8 @@ public sealed partial class CombatSimulation
         if (tickRate is < 1 or > 120 || !float.IsFinite(options.HalfAngleDegrees) ||
             options.HalfAngleDegrees is <= 0 or > 180 || !double.IsFinite(options.CriticalMultiplier) ||
             options.CriticalMultiplier < 1 || !catalog.Creatures.ContainsKey(options.PlayerDefinitionId) ||
-            !catalog.Creatures.ContainsKey(options.TargetDefinitionId))
+            !catalog.Creatures.ContainsKey(options.TargetDefinitionId) ||
+            !double.IsFinite(options.HealthRecoveryIntervalSeconds) || options.HealthRecoveryIntervalSeconds is <= 0 or > 60)
             throw new ArgumentException("Invalid prototype combat settings or definition references.");
         _catalog = catalog;
         _calculator = new StatCalculator(catalog.Balance);
@@ -46,6 +47,7 @@ public sealed partial class CombatSimulation
         _playerDefinition = options.PlayerDefinitionId;
         _targetDefinition = options.TargetDefinitionId;
         _minimumInterval = 1d / tickRate;
+        _healthRecoveryInterval = options.HealthRecoveryIntervalSeconds;
         _criticalMultiplier = options.CriticalMultiplier;
         _halfAngle = options.HalfAngleDegrees * MathF.PI / 180;
         _maxQueryRange = cellSize * 32;
@@ -68,7 +70,16 @@ public sealed partial class CombatSimulation
         if(DamagePermission is not null)return DamagePermission(source,target);
         return _actors.TryGetValue(source,out var owner)&&IsNpc(owner.Kind)?victim.Kind==CombatEntityKind.Player:IsHostileTarget(victim.Kind);
     }
-    private void NotifyDamage(NetworkEntityId source,NetworkEntityId target,double amount, bool direct=true){if(amount<=0)return;_damageSerial[target]=checked(DamageSerial(target)+1);DamageApplied?.Invoke(source,target,amount);if(direct)DirectlyDamaged?.Invoke(target);}
+    internal event Action<NetworkEntityId>? Defeated;
+    private void NotifyDamage(NetworkEntityId source,NetworkEntityId target,double amount, bool direct=true)
+    {
+        if(amount<=0)return;
+        _damageSerial[target]=checked(DamageSerial(target)+1);
+        RefreshHealthRecovery(target);
+        DamageApplied?.Invoke(source,target,amount);
+        if(direct)DirectlyDamaged?.Invoke(target);
+        if (_actors[target].Health <= 0) Defeated?.Invoke(target);
+    }
     internal void ResetSession(NetworkEntityId id){var a=_actors[id];a.LastSequence=0;a.LastAbilitySequence=0;a.LastRequestTick=null;_pending.Remove(id);_results.Remove(id);if(_defense.TryGetValue(id,out var d)){d.Sequence=0;d.RequestTick=null;SetDefenseConnected(id,true);}}
     internal void Respawn(NetworkEntityId id){var a=_actors[id];a.Health=a.Stats.MaxHealth;a.IsCasting=false;a.StationaryCast=false;a.StunnedUntil=a.SlowUntil=0;_equipmentDirty.Add(id);SetDefenseConnected(id,true);}
     internal Func<NetworkEntityId,bool>? WeaponUsable { get; set; }
@@ -100,6 +111,7 @@ public sealed partial class CombatSimulation
         actor.Stats = profile.Stats; actor.Weapon = profile.Weapon; actor.AttackInterval = profile.Interval;
         // Changing maxima cannot heal; existing ReadyAt is deliberately preserved.
         actor.Health = Math.Min(actor.Health, profile.Stats.MaxHealth);
+        RefreshHealthRecovery(id);
         _equipmentDirty.Add(id);
     }
     internal void DevelopmentRevive(NetworkEntityId id)
@@ -153,6 +165,7 @@ public sealed partial class CombatSimulation
         _actors.Remove(id); _damageSerial.Remove(id); _pending.Remove(id); _results.Remove(id); _equipmentDirty.Remove(id);
         _defense.Remove(id); _defenseActive.Remove(id); _defensePending.Remove(id); _defenseDirty.Remove(id);
         _swords.Remove(id);
+        _recoveringHealth.Remove(id); _healthRecovered.Remove(id);
     }
 
     public void Move(NetworkEntityId id, Vector2 position) => _actors[id].Position = position;
@@ -185,6 +198,7 @@ public sealed partial class CombatSimulation
             throw new ArgumentException("Simulation delta must be finite and positive.");
         _events.Clear();
         _time = StatMath.Add(_time, delta);
+        RecoverHealth(delta);
         SimulateDefense(delta);
         foreach (var (id, command) in _pending)
         {
@@ -200,7 +214,7 @@ public sealed partial class CombatSimulation
         _pending.Clear();
     }
 
-    public void ClearResults() { _results.Clear(); _equipmentDirty.Clear(); _defenseDirty.Clear(); }
+    public void ClearResults() { _results.Clear(); _equipmentDirty.Clear(); _defenseDirty.Clear(); _healthRecovered.Clear(); }
 
     /// <summary>Server AI only; no client command can select a monster actor.</summary>
     public bool ExecuteNpcAttack(NetworkEntityId id, uint sequence, Vector2 direction, uint tick)

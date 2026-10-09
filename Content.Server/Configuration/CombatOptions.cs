@@ -15,4 +15,5 @@ public sealed class CombatOptions
     public float MaxAbilityLifetimeSeconds { get; set; } = 10;
     public float ImpactSeconds { get; set; } = 0.15f;
     public double ManaRecoveryIntervalSeconds { get; set; } = 1; // coalesce durable updates.
+    public double HealthRecoveryIntervalSeconds { get; set; } = 1;
 }

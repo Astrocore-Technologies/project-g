@@ -126,6 +126,7 @@ public sealed partial class ServerWorld
         InitializeCrafting(crafting?.Value,catalog?.Crafting); InitializePvp();
         InitializeQuests(quests?.Value.Enabled==true);
         InitializeSwordTraining(scenePlacements);
+        InitializeNpcRespawns();
     }
 
     public uint Tick { get; private set; }
@@ -180,12 +181,13 @@ public sealed partial class ServerWorld
                     throw new InvalidDataException("Saved HP exceeds current maximum; content migration is required.");
                 var offline = saved.OfflineSeconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
                 actor.Health = saved.Health;
+                Combat.RefreshHealthRecovery(entityId);
                 actor.ReadyAt = Combat.Time + Math.Max(0, saved.AttackCooldownSeconds - offline);
                 Abilities!.Restore(entityId, saved, offline);
                 Combat.RestoreDefense(entityId,saved.Defense);
             }
             AddPvp(entityId,saved?.Progression?.Pvp);
-            Echoes?.Add(entityId,saved?.Echoes ?? Echoes.CreateStarter(),saved?.OfflineSeconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()) ?? 0,AllocateEntityId);
+            Echoes?.Add(entityId,saved?.Echoes ?? SavedEchoes.Empty,saved?.OfflineSeconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()) ?? 0,AllocateEntityId);
         }
         catch { RemovePlayer(connectionId); throw; }
         return player;
@@ -201,7 +203,8 @@ public sealed partial class ServerWorld
         {
             RegionId = RegionId, ProfileId = definition.Id, Stats = definition.Stats, WorldLayoutVersion = _worldLayoutVersion,
             Inventory = Inventory is not null ? InventorySimulation.CreateStarter(definition) : null,
-            Echoes = Echoes?.CreateStarter(),
+            // Companions require acquisition; login and legacy saves must never grant one.
+            Echoes = SavedEchoes.Empty,
             Progression = SavedProgression.Starter(definition,_progressionCatalog!),
             X = spawn.X, Z = spawn.Y, Health = stats.MaxHealth, Mana = Math.Max(0, stats.MaxMana),
             AttackCooldownSeconds = 0, Cooldowns = definition.AbilityIds.Select(id => new SavedCooldown(id, 0)).ToArray(),
@@ -396,9 +399,11 @@ public sealed partial class ServerWorld
         SimulateQuests();
         SimulateEconomy();
         SimulateStarterZone();
+        SimulateNpcRespawns();
         if (Inventory is { } inventory) foreach (var id in inventory.Dirty) MarkPersistent(id);
         if (Combat is { } combat)
         {
+            foreach (var id in combat.HealthRecovered) MarkPersistent(id);
             foreach (var id in combat.DefenseDirty) MarkPersistent(id);
             foreach (var action in combat.Events)
             {

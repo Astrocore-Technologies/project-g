@@ -8,6 +8,8 @@ Server owns targeting, alternation, locked geometry, deadlines, damage and HP. S
 
 ## Data and simulation
 
+Update 2026-10-09: the approved gameplay contract replaces the historical no-respawn restriction with a configurable 120-second boss respawn. The stable spawn key/deadline survives regional checkpoints and restarts. A new runtime identity at home resets combat, statuses, motion, target, cone/area sequence and alternation. See the update in `0007-first-pve.md`; no new boss attack, scaling, reward or wire message is introduced.
+
 Existing immutable schema 2 gains `test_boss`, `boss_claw` and `boss_ground_area`; no data-schema or database migration. Boss base HP 220 and VIT 10 give 242 HP. STR 8 / INT 5 / DEX 5 affect the existing formulas. Claw range 2.5, weapon attack 12, base interval 1.5 seconds. Area: power 12 + MATK × 0.5, radius 2, range 8, base cast 1.5 seconds, cooldown 3, zero resource cost. These are temporary data-driven balance, not permanent boss design. Player count is never a formula input.
 
 `BossOptions.Actor` configures the separate actor at (7,-8), speed 2.5, aggro 5, leash 8, decision interval 0.2 and directional windup 1.2. Area reference must belong to the selected creature. Definition references, supported form/zero cost, float ranges, spatial-query budget, effective cast [0.2,10] and impact lifetime validate before UDP startup. Disabled bosses are not instantiated; test arenas opt in explicitly.

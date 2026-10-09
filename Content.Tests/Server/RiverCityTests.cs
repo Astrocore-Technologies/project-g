@@ -37,6 +37,7 @@ public sealed class RiverCityTests
         Assert.Equal("river_city",city.RegionId); Assert.Equal("prototype",worlds.Primary.RegionId);
         Assert.Equal(3,worlds.Worlds.Count); Assert.Equal(2,worlds.Routes.Count(r=>r.Source==city.RegionId));
         Assert.True(city.HasWorldNode); Assert.False(city.HasWorldEvent); Assert.Null(city.Npc); Assert.Null(city.Boss);
+        Assert.All(worlds.Worlds, world => { Assert.Null(world.Echoes); Assert.Empty(world.CreateInitialCharacter().Echoes!.Active); });
         var placements=JsonSerializer.Deserialize<Dictionary<string,float[]>>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory,"Data/Regions/river-city-placements.json")))!;
         var initial=city.CreateInitialCharacter(); var pathfinder=new NavigationPathfinder(city.Navigation); var path=new List<Vector2>();
         foreach(var (name,p) in placements) Assert.True(pathfinder.TryFindPath(new(initial.X,initial.Z),new(p[0],p[1]),path),name);
@@ -113,7 +114,7 @@ public sealed class RiverCityTests
                 var after=realm.World(42).CaptureCharacter(42);
                 Assert.Equal(before.Inventory!.Serialize(),after.Inventory!.Serialize());
                 Assert.Equal(before.Stats,after.Stats); Assert.Equal(before.Health,after.Health);
-                Assert.Equal(before.Echoes!.Active.Select(e=>e.InstanceId),after.Echoes!.Active.Select(e=>e.InstanceId));
+                Assert.Null(before.Echoes); Assert.Null(after.Echoes);
                 Assert.Equal(destination,store.SingleState.RegionId);
                 realm.Simulate(.05f);
             }

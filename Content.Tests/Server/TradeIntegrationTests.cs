@@ -27,7 +27,9 @@ public sealed class TradeIntegrationTests
                 await Poll(a,b,()=>a.Inventories.Count==1&&b.Inventories.Count==1);var handle=a.Inventories.Values.Single().Items[0].Handle;
                 a.Trade(new(1,TradeAction.Invite,0,b.LocalSpawn.EntityId,0,[],[]));await Poll(a,b,()=>b.TradeStates.Count==1);
                 var s=b.TradeStates.Last();b.Trade(new(1,TradeAction.Accept,s.SessionId,a.LocalSpawn.EntityId,s.Revision,[],[]));await Poll(a,b,()=>a.TradeStates.Last().Phase==TradePhase.Negotiating);
-                s=a.TradeStates.Last();a.Trade(new(2,TradeAction.Offer,s.SessionId,b.LocalSpawn.EntityId,s.Revision,[handle],[new(1,2)]));await Poll(a,b,()=>b.TradeStates.Last().PartnerItems.Count==1);
+                s=a.TradeStates.Last();a.Trade(new(2,TradeAction.Offer,s.SessionId,b.LocalSpawn.EntityId,s.Revision,[handle],[new(1,2)]));
+                // Lossy peers receive independent streams: Alice must learn the new revision before accepting it.
+                await Poll(a,b,()=>b.TradeStates.Last().PartnerItems.Count==1 && a.TradeStates.Last().OwnItems.Count==1 && a.TradeStates.Last().Revision==b.TradeStates.Last().Revision);
                 s=a.TradeStates.Last();a.Trade(new(3,TradeAction.Accept,s.SessionId,b.LocalSpawn.EntityId,s.Revision,[],[]));await Poll(a,b,()=>b.TradeStates.Last().PartnerAccepted);
                 var gate=store.PauseSaves();
                 try

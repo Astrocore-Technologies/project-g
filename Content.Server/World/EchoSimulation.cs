@@ -62,7 +62,6 @@ public sealed class EchoSimulation
     }
     private static bool Finite(double value, double min, double max) => double.IsFinite(value) && value >= min && value <= max;
     internal string DefinitionId => _options.DefinitionId;
-    public SavedEchoes CreateStarter() => new() { Active = [new(Guid.NewGuid(), _options.DefinitionId, 1, null, null)] };
     private Vector2 Offset(byte slot) => slot switch { 1 => new(-_options.FollowDistance,0), 2 => new(_options.FollowDistance,0), _ => new(0,_options.FollowDistance) };
     public void Add(NetworkEntityId owner, SavedEchoes saved, double offlineSeconds, Func<NetworkEntityId> allocate)
     {

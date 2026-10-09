@@ -30,7 +30,7 @@ public partial class EchoControls : CanvasLayer
     {
         _network=network; _owner=owner; Layer=22;
         var root=new Control { Theme=GameUi.CreateTheme(),MouseFilter=Control.MouseFilterEnum.Ignore }; AddChild(root); root.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        var panel=new VBoxContainer { AnchorLeft=1,AnchorRight=1,OffsetLeft=-172,OffsetRight=-16,OffsetTop=136 }; root.AddChild(panel); _hud=panel;
+        var panel=new VBoxContainer { Name="CompanionHud",Visible=false,AnchorLeft=1,AnchorRight=1,OffsetLeft=-172,OffsetRight=-16,OffsetTop=136 }; root.AddChild(panel); _hud=panel;
         for(var i=0;i<_buttons.Length;i++)
         {
             var slot=(byte)(i+1); var button=new Button { Visible=false,CustomMinimumSize=new(144,62),FocusMode=Control.FocusModeEnum.None,Icon=UiAssets.Texture("icon.star"),ExpandIcon=true };
@@ -61,7 +61,7 @@ public partial class EchoControls : CanvasLayer
     {
         foreach(var child in _list.GetChildren()) { _list.RemoveChild(child); child.QueueFree(); }
         foreach(var entry in _known.OrderBy(p=>p.Key)) { var slot=entry.Key; _list.AddChild(GameUi.Button(entry.Value.State.Name,()=> { _selected=slot; Render(); })); }
-        if(!_known.TryGetValue(_selected,out var echo)) { _preview.Visible=false; _name.Text="Эхо Прошлого"; _details.Text="Рядом пока нет известных Эхо. Спутники появятся здесь во время путешествия."; return; }
+        if(!_known.TryGetValue(_selected,out var echo)) { _preview.Visible=false; _name.Text="Эхо Прошлого"; _details.Text="У вас пока нет Эхо. Сначала нужно получить спутника."; return; }
         _preview.Visible=true; _preview.SetMesh(echo.Mesh,echo.Material);
         _name.Text=echo.State.Name;
         var ability=_loadout.Slots?.FirstOrDefault(s=>s.Slot==_selected);
@@ -87,7 +87,7 @@ public partial class EchoControls : CanvasLayer
     }
     public override void _Process(double delta)
     {
-        _hud.Visible=!GameUi.GameplayModalOpen;
+        _hud.Visible=_known.Count>0 && _loadout.Slots is { Count: > 0 } && !GameUi.GameplayModalOpen;
         _readiness.Visible=_known.ContainsKey(_selected);
         _readiness.Text=!_alive?"Ожидает вашего восстановления":_cooldowns[_selected-1]>0?$"Готовность через {_cooldowns[_selected-1]:0.0} с":"Способность готова";
         if(_pending && Time.GetTicksMsec()/1000d-_sentAt>10) { _pending=false; _status.Text="Нет ответа. Попробуйте снова."; }

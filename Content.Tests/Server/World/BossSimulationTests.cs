@@ -24,7 +24,15 @@ public sealed class BossSimulationTests
             World = new(Options.Create(new MovementOptions()), Options.Create(new InterestOptions()),
                 Options.Create(navigation ?? new NavigationOptions()), catalog ?? ContentCatalogTests.Load(),
                 boss: Options.Create(options ?? new BossOptions { Actor = new NpcOptions { Enabled = true, DefinitionId = "test_boss", X = -3, Z = 0 } }));
-            Player = World.AddPlayer(42, new(1));
+            Player = AddPlayer(42, 1);
+        }
+        public ServerPlayer AddPlayer(int connection, ulong id)
+        {
+            var player = World.AddPlayer(connection, new(id));
+            var actor = World.Combat!.Get(player.EntityId);
+            // Isolate boss damage/cancellation assertions from the independently tested passive heal.
+            World.Combat.ApplyEquipment(player.EntityId, (actor.Stats with { HealthRecovery = 0 }, actor.Weapon, actor.AttackInterval));
+            return player;
         }
         public void Step() { World.Simulate(0.05f); Events.AddRange(World.Combat!.Events); }
         public void Wait(Func<bool> predicate)
@@ -71,7 +79,7 @@ public sealed class BossSimulationTests
     [Fact]
     public void AreaHitsEachPlayerOnceButNeverNpcAndIgnoresApplicationReplay()
     {
-        var f = new Fixture(); var second = f.World.AddPlayer(43, new(2));
+        var f = new Fixture(); var second = f.AddPlayer(43, 2);
         f.World.TryApplyMove(43, new(1, 0, f.Player.Position));
         f.Wait(() => f.Boss.Area is { Phase: NpcAreaPhase.Telegraph });
         var area = f.Boss.Area!.Value;
@@ -112,7 +120,7 @@ public sealed class BossSimulationTests
         foreach (var key in stats.Select(pair => pair.Key).ToArray()) stats[key] = 10;
         var f = new Fixture(catalog: ContentCatalog.Parse(Encoding.UTF8.GetBytes(json.ToJsonString())));
         var hp = f.World.Combat!.Get(f.Boss.Id).Stats.MaxHealth;
-        if (together) f.World.AddPlayer(43, new(2));
+        if (together) f.AddPlayer(43, 2);
         Assert.Equal(242, hp, 8);
         Assert.Equal(hp, f.World.Combat.Get(f.Boss.Id).Health);
         for (uint seq = 1; seq <= 20 && f.World.Combat.Get(f.Boss.Id).Health > 0; seq++)

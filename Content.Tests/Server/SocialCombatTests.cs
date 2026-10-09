@@ -6,7 +6,9 @@ public sealed class SocialCombatTests
 {
     [Theory][InlineData(1)][InlineData(2)]public void PartyBlocksRealProjectileAndAreaDamageAndKeepsPersonalExp(ushort skill)
     {
-        var w=PvpTests.World();w.EnableSocial([]);var a=w.AddPlayer(42,new(1),PvpTests.Initial(w));var b=w.AddPlayer(43,new(2),PvpTests.Initial(w,-5,-4));var ai=Guid.NewGuid();var bi=Guid.NewGuid();w.BindWorldActor(42,ai);w.BindWorldActor(43,bi);w.BindSocial(42,ai);w.BindSocial(43,bi);var s=w.Social!;
+        var w=PvpTests.World();w.EnableSocial([]);var a=w.AddPlayer(42,new(1),PvpTests.Initial(w));
+        // Full health makes unchanged HP a friendly-fire assertion, independent of passive recovery.
+        var b=w.AddPlayer(43,new(2),PvpTests.Initial(w,-5,-4) with { Health=w.CreateInitialCharacter().Health });var ai=Guid.NewGuid();var bi=Guid.NewGuid();w.BindWorldActor(42,ai);w.BindWorldActor(43,bi);w.BindSocial(42,ai);w.BindSocial(43,bi);var s=w.Social!;
         SocialTests.Command(s,ai,SocialAction.Create);SocialTests.Command(s,ai,SocialAction.Invite,target:bi);SocialTests.Command(s,bi,SocialAction.Accept,invite:Assert.Single(s.Invitations(bi)));
         PvpTests.Command(w,42,1,PvpMode.Criminal);PvpTests.Command(w,43,1,PvpMode.Voluntary);var hp=w.Combat!.Get(b.EntityId).Health;var xp=w.CaptureCharacter(42).Progression!.Experience;
         Assert.True(w.TryQueueAbility(42,new(1,w.Tick,skill,skill==1?Vector2.UnitY:b.Position),0));for(var i=0;i<80;i++)w.Simulate(.05f);

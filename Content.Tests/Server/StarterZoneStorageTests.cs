@@ -7,7 +7,7 @@ public sealed class StarterZoneStorageTests
 {
     [Fact] public async Task ExploredMapAndTutorialSurviveSqliteRestartWithoutDuplicatingEchoOrRewards()
     {
-        var store=new SqliteCharacterStore(); await store.InitializeAsync(CancellationToken.None); var w=StarterZoneTests.World(true); var initial=w.CreateInitialCharacter();
+        var store=new SqliteCharacterStore(); await store.InitializeAsync(CancellationToken.None); var w=StarterZoneTests.World(true); var initial=EchoTests.WithEcho(w);
         var session=await store.OpenAsync("",initial,CancellationToken.None); var token=session.IssuedToken; var id=session.CharacterId;
         var p=w.AddPlayer(42,new(1),session.State); StarterZoneTests.Walk(w,42,new(-9,-6)); var state=w.CaptureCharacter(42);
         await store.SaveAsync([new(session,state)],CancellationToken.None); await session.DisposeAsync();

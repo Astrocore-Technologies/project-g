@@ -33,6 +33,7 @@ public sealed partial class CombatSimulation
         if (!_defense.TryGetValue(id,out var a)) return;
         a.Connected=connected; a.GuardUntil=0; a.ParryUntil=0; _defensePending.Remove(id);
         if (connected) _defenseActive.Add(id); else _defenseActive.Remove(id);
+        RefreshHealthRecovery(id);
     }
     internal void RestoreDefense(NetworkEntityId id,SavedDefense? saved)
     {
