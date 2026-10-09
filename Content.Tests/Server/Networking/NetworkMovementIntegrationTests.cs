@@ -405,6 +405,10 @@ public sealed class NetworkMovementIntegrationTests
         private PlayerId _playerId;
 
         public Dictionary<NetworkEntityId, PlayerSpawn> Spawns { get; } = new();
+        public Dictionary<NetworkEntityId,QuestNpcSpawn> QuestNpcs {get;}=new();
+        public Dictionary<NetworkEntityId,QuestJournal> QuestJournals {get;}=new();
+        public List<QuestReply> QuestReplies {get;}=new();
+        public void Quest(QuestCommand command)=>SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
         public Dictionary<NetworkEntityId,ItemConditionState> Conditions { get; }=new();
         public List<RepairQuote> RepairQuotes { get; }=new();
         public List<RepairResult> RepairResults { get; }=new();
@@ -526,6 +530,7 @@ public sealed class NetworkMovementIntegrationTests
                         Inventories.Clear(); Loadouts.Clear(); Navigation = null; WorldNode = null;
                         SocialRosters.Clear(); SocialInvitations.Clear(); PartyPresences.Clear();
                         Recipes.Clear(); Resources.Clear(); GroundItems.Clear();
+                        QuestNpcs.Clear(); QuestJournals.Clear(); QuestReplies.Clear();
                         _states.Clear(); _ticks.Clear(); _snapshotCoverage.Clear();
                         return;
                     }
@@ -600,6 +605,12 @@ public sealed class NetworkMovementIntegrationTests
                             Assert.True(NetworkProtocol.TryReadProfessionResult(reader,out var professionResult)); ProfessionResults.Add(professionResult); break;
                         case NetworkMessageType.StatPreview:
                             Assert.True(NetworkProtocol.TryReadStatPreview(reader,out var statPreview)); StatPreviews.Add(statPreview); break;
+                        case NetworkMessageType.QuestNpcSpawn:
+                            Assert.True(NetworkProtocol.TryReadQuestNpcSpawn(reader,out var questNpc)); QuestNpcs[questNpc.EntityId]=questNpc; break;
+                        case NetworkMessageType.QuestReply:
+                            Assert.True(NetworkProtocol.TryReadQuestReply(reader,out var questReply)); QuestReplies.Add(questReply); break;
+                        case NetworkMessageType.QuestJournal:
+                            Assert.True(NetworkProtocol.TryReadQuestJournal(reader,out var questJournal)); Assert.Equal(LocalSpawn.EntityId,questJournal.OwnerId); QuestJournals[questJournal.OwnerId]=questJournal; break;
                         case NetworkMessageType.DefenseState:
                             Assert.True(NetworkProtocol.TryReadDefenseState(reader,out var defense)); Defenses[defense.OwnerId]=defense; break;
                         case NetworkMessageType.ProgressionState:
@@ -640,6 +651,7 @@ public sealed class NetworkMovementIntegrationTests
                         case NetworkMessageType.PlayerDespawn:
                             Assert.True(NetworkProtocol.TryReadPlayerDespawn(reader, out var despawn));
                             Spawns.Remove(despawn.EntityId);
+                            QuestNpcs.Remove(despawn.EntityId);
                             Echoes.Remove(despawn.EntityId);
                             _states.Remove(despawn.EntityId);
                             _ticks.Remove(despawn.EntityId);

@@ -66,4 +66,8 @@ public enum NetworkMessageType : ushort
     StatPreview = 83,
     DefenseCommand = 84,
     DefenseState = 85,
+    QuestNpcSpawn = 86,
+    QuestCommand = 87,
+    QuestReply = 88,
+    QuestJournal = 89,
 }

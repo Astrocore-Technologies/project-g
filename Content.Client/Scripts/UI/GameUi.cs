@@ -5,6 +5,8 @@ namespace ProjectG.UI;
 public static class GameUi
 {
     public static bool CharacterWindowOpen { get; set; }
+    public static bool QuestWindowOpen {get;set;}
+    public static bool GameplayModalOpen=>CharacterWindowOpen || QuestWindowOpen;
     public static readonly Color Accent = new("85d6b0");
     public static StyleBoxFlat Box(Color color, int padding = 12) => new()
     {

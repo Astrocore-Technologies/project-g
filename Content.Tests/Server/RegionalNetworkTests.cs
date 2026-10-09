@@ -20,7 +20,9 @@ namespace Content.Tests.Server;
 public sealed class RegionalNetworkTests
 {
     internal static RegionalWorlds Worlds() => RegionalWorlds.Load(Path.Combine(AppContext.BaseDirectory, "Fixtures", "legacy-regions.json"),
-        new ConfigurationBuilder().AddJsonFile(Path.Combine(AppContext.BaseDirectory, "appsettings.json")).Build(), ContentCatalogTests.Load());
+        new ConfigurationBuilder().AddJsonFile(Path.Combine(AppContext.BaseDirectory, "appsettings.json"))
+            // These fixtures predate River Landing and intentionally keep their old 30x30 geometry.
+            .AddInMemoryCollection(new Dictionary<string,string?> { ["Quests:Enabled"]="false" }).Build(), ContentCatalogTests.Load());
 
     private static GameServerService Server(int port, RegionalWorlds worlds, SqliteCharacterStore store) => new(
         Options.Create(new ServerOptions { Port = port, NetworkPollIntervalMilliseconds = 1 }), new(), worlds.Primary,

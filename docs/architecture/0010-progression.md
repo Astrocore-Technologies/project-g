@@ -36,6 +36,57 @@ Live PostgreSQL и копирование пользовательской devel
 
 ## Решение
 
+### Дополнение: личное поручение (2026-10-09)
+
+Первый delivery slice использует текущие границы, без нового сервиса, БД или quest framework.
+Server загружает одну bounded definition, помещает двух статических NPC в существующий AOI,
+проверяет намерения на fixed tick и хранит результат в optional `SavedProgression.DeliveryQuest`.
+Receipt v1 содержит stable definition ID и Active/Completed, без session sequence/runtime entity ID.
+Отсутствие поля совместимо со старыми сохранениями; explicit null, неизвестная версия/definition и
+недопустимый status отвергаются. Смена stable ID требует миграции контента; старый бинарник до дополнения
+не умеет читать новый receipt. SQL schema не меняется.
+
+Выдача/списание материалов, receipt и EXP входят в один существующий fenced character checkpoint.
+Reply, journal, inventory и progression публикуются после commit по ADR 0008/0009.
+Повторное принятие/сдача не мутирует состояние. При путешествии receipt остаётся частью персонажа;
+NPC есть только в заданном регионе, журнал доступен в обоих. Pending actions очищаются при logout/rebind.
+
+Protocol v28 требует совместного обновления клиента и сервера. Новые ReliableOrdered сообщения:
+
+| ID | Сообщение | Поля тела / границы |
+| --- | --- | --- |
+| 86 | QuestNpcSpawn | entity u64, tick u32, position 2×float, name/role: каждое ≤32 символов/96 UTF-8 bytes; ≤216 bytes |
+| 87 | QuestCommand | sequence u32, action u8, NPC u64; 13 bytes; Journal требует NPC=0, другие действия NPC≠0 |
+| 88 | QuestReply | sequence/tick u32, NPC u64, outcome/choices u8, speaker ≤32/96, text ≤200/600; ≤718 bytes |
+| 89 | QuestJournal | owner u64, tick u32, status u8, title ≤48/144, objective ≤180/540, material ≤24/72, required/carried u16, EXP i32; ≤783 bytes |
+
+Размеры без message ID и регионального envelope. Все парсеры проверяют хвост/усечение, enums, конечные
+координаты и bounds. NPC — AOI-only, удаляется обычным PlayerDespawn. Reply/journal — owner-only,
+без полного каталога/условий; журнал непринятого поручения пуст. Команды ограничены одной pending
+на игрока/tick; старые sequence не исполняются. Snapshot transport не изменён.
+
+Godot показывает серверные NPC и modal UI, отправляя только намерения. Кэш узлов, отписка событий,
+очистка региональной сессии; нет глобальных world scans или новых per-frame сетевых сообщений.
+Позиции остаются в существующем серверном JSON для этого малого прототипа; универсальный редактор
+NPC/квестов и перенос размещения в scene-authoring pipeline здесь не вводятся.
+
+Проверка дополнения:
+
+- `dotnet build Game.slnx --no-restore -m:1 -p:OutputPath=D:/projects/project-g/.artifacts/quest-tests/` — 0 ошибок.
+  Отдельная сборка `dotnet build Content.Client/Project-G.csproj --no-restore -m:1` — 0 ошибок/предупреждений.
+- `dotnet test Content.Tests/Content.Tests.csproj --no-build --no-restore -p:OutputPath=D:/projects/project-g/.artifacts/quest-tests/`
+  — 476 passed, 7 skipped. Включены 10 новых quest tests: wire truncation/bounds, проверки намерений,
+  однократность, legacy/corrupt receipt, SQLite reopen/rollback, owner-only AOI и publish-after-commit.
+  Live PostgreSQL и копия пользовательской development-БД не запускались (opt-in).
+- `dotnet .artifacts/quest-tests/Content.Server.dll --validate-content` — успешно.
+- `Tests/UI/QuestSmoke.tscn` — headless и D3D12 Mobile на отдельном Development server/profile.
+  Финальный графический прогон проверил F2 и ЛКМ по NPC, реальные GUI-кнопки принятия/сдачи,
+  L/журнал, отсутствие движения и парирования через modal, reconnect и cleanup. Скриншоты проверены при 1280×720.
+- `git diff --check` — успешно. Существующие предупреждения NuGet: NU1903 для SQLitePCLRaw 2.1.11,
+  NU1900 при недоступном audit endpoint. Editor import сообщил об устаревшей ссылке в `MainMenu.tscn`
+  на `res://_NC/App/MainMenu.cs` и shutdown-предупреждениях GodotTools; игровые smoke-прогоны прошли без этих ошибок.
+  Ссылка главного меню впоследствии исправлена на `res://Scripts/App/MainMenu.cs` после переноса файлов пользователем.
+
 Сервер начисляет EXP/освоение из подтверждённых fixed-tick событий, а открытия — при движении через
 маркеры с persistent bit flags. Клиент передаёт только bounded intentions. Повтор команды не создаёт награду.
 Изученные навыки, уровни освоения и восемь bar slots отделены от доступных execution profiles;

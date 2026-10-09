@@ -73,7 +73,7 @@ public partial class CombatPresentation : Node3D
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (!_local || !IsAlive || ProjectG.UI.GameUi.CharacterWindowOpen || @event is not InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } mouse)
+        if (!_local || !IsAlive || ProjectG.UI.GameUi.GameplayModalOpen || @event is not InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } mouse)
             return;
         CancelAutoAttack();
         var selected=PickTarget(mouse.Position);
@@ -134,7 +134,7 @@ public partial class CombatPresentation : Node3D
         if (_autoTarget is null || _player is null) return;
         if (!GodotObject.IsInstanceValid(_autoTarget) || !_autoTarget.IsInsideTree() || !_autoTarget.IsAlive || !IsAlive || !GetWindow().HasFocus())
         { CancelAutoAttack(); _player.StopMovement(); return; }
-        if(ProjectG.UI.GameUi.CharacterWindowOpen) { _player.StopMovement(); return; }
+        if(ProjectG.UI.GameUi.GameplayModalOpen) { _player.StopMovement(); return; }
         if (_player.DefenseHeld || _player.IsDashing) return;
         var targetPosition=_autoTarget._actor.GlobalPosition; var point=new NumericsVector2(targetPosition.X,targetPosition.Z);
         var offset=point-_player.PredictedPosition;

@@ -41,6 +41,7 @@ public partial class AbilityPresentation : Node3D
 
     public override void _UnhandledInput(InputEvent @event)
     {
+        if(ProjectG.UI.GameUi.GameplayModalOpen) return;
         if (!_player.IsAlive || @event is not InputEventKey { Pressed: true, Echo: false } key || _pending != 0 || _loadout.Abilities is null) return;
         var index = Array.IndexOf(BarKeys,key.PhysicalKeycode);
         if (key.PhysicalKeycode != Key.Space && index < 0) return;

@@ -209,6 +209,13 @@ public sealed partial class GameServerService : BackgroundService
             }
             var world = WorldFor(peer.Id);
 
+            if(messageType==NetworkMessageType.QuestCommand && deliveryMethod==DeliveryMethod.ReliableOrdered && NetworkProtocol.TryReadQuestCommand(reader,out var quest))
+            {
+                if(_characters is null) world.TryQueueQuest(peer.Id,quest);
+                else BufferIntentions(peer.Id).Quest ??= quest;
+                return;
+            }
+
             if (messageType == NetworkMessageType.MoveCommand &&
                 NetworkProtocol.TryReadMoveCommand(reader, out var command))
             {
@@ -384,6 +391,7 @@ public sealed partial class GameServerService : BackgroundService
         foreach (var world in _worlds)
         {
             world.Combat?.ClearResults();
+            world.ClearQuestResults();
             world.Abilities?.ClearResults();
             world.Inventory?.ClearResults();
             world.GroundItems?.ClearResults();
@@ -431,6 +439,8 @@ public sealed partial class GameServerService : BackgroundService
             SendGame(peer, NetworkProtocol.Write(new PlayerDespawn(id)), DeliveryMethod.ReliableOrdered);
         foreach (var id in view.Entered)
         {
+            if(world.TryGetQuestNpc(id,out var questNpc))
+            { SendGame(peer,NetworkProtocol.Write(questNpc),DeliveryMethod.ReliableOrdered); continue; }
             if (world.Echoes?.TryGet(id,out _) == true)
             {
                 SendGame(peer, NetworkProtocol.Write(world.Echoes.Spawn(id,world.Tick)),DeliveryMethod.ReliableOrdered);
@@ -462,6 +472,13 @@ public sealed partial class GameServerService : BackgroundService
             }
         }
         SendSocial(peer);
+        if(world.HasQuests && world.TryGetOwnedEntity(peer.Id,out var questOwner))
+        {
+            if(view.Entered.Contains(questOwner) || world.IsProgressionDirty(questOwner) || world.Inventory!.IsDirty(questOwner) || world.QuestReplies.ContainsKey(questOwner))
+                SendGame(peer,NetworkProtocol.Write(world.QuestJournal(questOwner)),DeliveryMethod.ReliableOrdered);
+            if(world.QuestReplies.TryGetValue(questOwner,out var questReply))
+                SendGame(peer,NetworkProtocol.Write(questReply),DeliveryMethod.ReliableOrdered);
+        }
         if (world.Inventory is { } inventory && world.TryGetOwnedEntity(peer.Id, out var inventoryOwner))
         {
             if (view.Entered.Contains(inventoryOwner) || inventory.IsDirty(inventoryOwner))

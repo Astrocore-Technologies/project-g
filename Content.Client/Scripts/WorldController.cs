@@ -33,6 +33,7 @@ public partial class WorldController : Node3D
     private EchoControls? _echoControls;
     private ProjectG.Progression.ProgressionPresentation? _progression;
     private ProjectG.UI.PlayerHud? _hud;
+    private ProjectG.Quests.QuestPresentation? _quests;
     private ProjectG.Progression.ProfessionPresentation? _profession;
     private ProjectG.WorldStory.WorldNodePresentation? _worldNode;
     private ProjectG.StarterZone.StarterZonePresentation? _starter;
@@ -151,6 +152,7 @@ public partial class WorldController : Node3D
             _echoControls = new(); AddChild(_echoControls); _echoControls.Initialize(_network);
             _progression = new(); AddChild(_progression); _progression.Initialize(_network);
             _hud = new(); AddChild(_hud); _hud.Initialize(_localEntityId,()=>_progression?.Toggle());
+            _quests=new(); AddChild(_quests); _quests.Initialize(_network,player);
             var defense = new DefensePresentation(); player.AddChild(defense); defense.Initialize(player,_network,_hud);
             _profession = new(); AddChild(_profession); _profession.Initialize(_network);
             if(_network.LatestWorldNode is not null) { _worldNode=new(); AddChild(_worldNode); _worldNode.Initialize(_network,player); }
@@ -317,6 +319,7 @@ public partial class WorldController : Node3D
 
     private void ClearWorld()
     {
+        DetachPresentation(_quests); _quests=null;
         _worldReady = false; // NC: a new region/session must become ready independently.
         UnloadAuthoredRegion();
         DetachPresentation(_regionExit); _regionExit = null;

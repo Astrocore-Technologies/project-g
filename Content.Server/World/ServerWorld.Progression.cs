@@ -24,6 +24,7 @@ public sealed partial class ServerWorld
     {
         if (_progressionCatalog is not { } catalog) return;
         var value = saved ?? SavedProgression.Starter(_playerDefinition!,catalog); value.Validate(); ValidateProfession(value);
+        if(value.DeliveryQuest is { } quest && quest.DefinitionId!=catalog.DeliveryQuest?.Id) throw new InvalidDataException("Quest content migration required.");
         var balance = catalog.Progression;
         if (value.Level > balance.LevelCap || (value.Level == balance.LevelCap ? value.Experience != 0 : value.Experience >= balance.LevelThreshold(value.Level)))
             throw new InvalidDataException("Saved level curve requires migration.");

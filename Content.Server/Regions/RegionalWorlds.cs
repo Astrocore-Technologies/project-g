@@ -42,6 +42,8 @@ public sealed class RegionalWorlds
             ?? throw new InvalidDataException("Missing regional content.");
         if (definitions.Length != 2 || definitions[0].Id != "prototype")
             throw new InvalidDataException("Expected prototype and one adjoining region.");
+        if(configuration.GetValue<bool>("Quests:Enabled") && (catalog.DeliveryQuest is not {} quest || !definitions.Any(d=>d.Id==quest.RegionId)))
+            throw new InvalidDataException("Delivery quest references an unavailable region.");
         var ids = new RuntimeEntityAllocator();
         IOptions<T> Settings<T>(string key) where T : class, new() => Options.Create(configuration.GetSection(key).Get<T>() ?? new());
         var worlds = new List<ServerWorld>(2);
@@ -57,7 +59,7 @@ public sealed class RegionalWorlds
                 Settings<InventoryOptions>("Inventory"), primary ? Settings<GroundItemOptions>("GroundItems") :
                     Options.Create(new GroundItemOptions { Enabled = true, PickupRange = Settings<GroundItemOptions>("GroundItems").Value.PickupRange }),
                 Settings<EchoOptions>("Echoes"), Settings<WorldStoryOptions>("WorldStory"), Settings<StarterZoneOptions>("StarterZone"),
-                Settings<CraftingOptions>("Crafting"), definition.Id, ids, definition.WorldNode, definition.StarterZone));
+                Settings<CraftingOptions>("Crafting"), definition.Id, ids, definition.WorldNode, definition.StarterZone,Settings<QuestOptions>("Quests")));
         }
         return new(worlds, definitions.Select(d => new RegionBoundary(d.Id, d.Destination,
             new Vector2(d.ExitX, d.ExitZ), new Vector2(d.ArrivalX, d.ArrivalZ), d.Radius)).ToArray());

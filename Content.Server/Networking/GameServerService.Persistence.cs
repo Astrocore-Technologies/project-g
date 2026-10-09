@@ -37,6 +37,7 @@ public sealed partial class GameServerService
         public MoveCommand? Move;
         public AttackCommand? Attack;
         public DefenseCommand? Defense;
+        public QuestCommand? Quest;
         public AbilityCommand? Ability;
         public InventoryCommand? Inventory;
         public PickupCommand? Pickup;
@@ -125,6 +126,7 @@ public sealed partial class GameServerService
             if (intentions.Move is { } move) world.TryApplyMove(connection, move);
             if (intentions.Attack is { } attack) world.TryQueueAttack(connection, attack);
             if (intentions.Defense is { } defense) world.TryQueueDefense(connection,defense);
+            if (intentions.Quest is { } quest) world.TryQueueQuest(connection,quest);
             if (intentions.Ability is { } ability) world.TryQueueAbility(connection, ability, _peers[connection].Ping);
             if (intentions.Inventory is { } inventory) world.TryQueueInventory(connection, inventory);
             if (intentions.Pickup is { } pickup) world.TryQueuePickup(connection, pickup);

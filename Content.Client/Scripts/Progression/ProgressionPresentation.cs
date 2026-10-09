@@ -113,7 +113,7 @@ public partial class ProgressionPresentation : CanvasLayer
         _draft[index] += amount; Invalidate(); Refresh();
     }
     private void Cancel() { Array.Clear(_draft); Invalidate(); Refresh(); }
-    public void Toggle() { _overlay.Visible = !_overlay.Visible; GameUi.CharacterWindowOpen=_overlay.Visible; if (_overlay.Visible) { Invalidate(); Layout(); } }
+    public void Toggle() { if(GameUi.QuestWindowOpen) return; _overlay.Visible = !_overlay.Visible; GameUi.CharacterWindowOpen=_overlay.Visible; if (_overlay.Visible) { Invalidate(); Layout(); } }
     // Modal gameplay keys are consumed before unhandled game input; GUI mouse events still reach buttons.
     public override void _Input(InputEvent ev)
     {

@@ -17,6 +17,7 @@ public sealed record SavedProgression
     [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)] public SavedExploration[]? OtherExplorations { get; init; }
     public SavedWorldParticipation WorldParticipation { get; init; } = new();
     public SavedProfession Profession { get; init; } = new();
+    [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)] public SavedDeliveryQuest? DeliveryQuest {get;init;}
     public static SavedProgression Starter(CreatureDefinition definition, ContentCatalog catalog)
     {
         byte slot = 0;
@@ -33,6 +34,7 @@ public sealed record SavedProgression
             throw new InvalidDataException("Invalid progression model.");
         if (Profession is null) throw new InvalidDataException("Missing profession history.");
         Profession.Validate(); Exploration?.Validate(); Pvp?.Validate();
+        DeliveryQuest?.Validate();
         if (OtherExplorations is { } maps)
         {
             if (maps.Length > 1) throw new InvalidDataException("Regional map archive exceeds the two-region budget.");
@@ -66,6 +68,7 @@ public sealed record SavedProgression
         if (System.Text.Encoding.UTF8.GetByteCount(json) > 8192) throw new InvalidDataException("Progression exceeds size budget.");
         using var document = JsonDocument.Parse(json,new JsonDocumentOptions { MaxDepth = 8 });
         RejectDuplicates(document.RootElement);
+        if(document.RootElement.TryGetProperty("DeliveryQuest",out var quest) && quest.ValueKind==JsonValueKind.Null) throw new InvalidDataException("Null delivery quest receipt.");
         if(document.RootElement.TryGetProperty("Pvp",out var pvp)&&pvp.ValueKind==JsonValueKind.Null)throw new InvalidDataException("Null PvP component.");
         if(document.RootElement.TryGetProperty("Exploration",out var exploration) && exploration.ValueKind==JsonValueKind.Null) throw new InvalidDataException("Null exploration component.");
         if(document.RootElement.TryGetProperty("OtherExplorations",out var maps) && maps.ValueKind==JsonValueKind.Null) throw new InvalidDataException("Null regional map archive.");

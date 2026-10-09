@@ -46,7 +46,7 @@ public sealed partial class ServerWorld
         IOptions<GroundItemOptions>? groundItems = null, IOptions<EchoOptions>? echoes = null, IOptions<WorldStoryOptions>? worldStory = null, IOptions<StarterZoneOptions>? starterZone = null, IOptions<CraftingOptions>? crafting = null,
         string regionId = "prototype", RuntimeEntityAllocator? entityIds = null,
         Content.Server.WorldStory.WorldNodeDefinition? worldNodeDefinition = null,
-        Content.Server.StarterZone.StarterZoneDefinition? starterZoneDefinition = null)
+        Content.Server.StarterZone.StarterZoneDefinition? starterZoneDefinition = null, IOptions<QuestOptions>? quests = null)
     {
         RegionOwnership.ValidateRegion(regionId);
         RegionId = regionId;
@@ -118,6 +118,7 @@ public sealed partial class ServerWorld
         InitializeWorldNode(worldStory?.Value,worldNodeDefinition ?? catalog?.WorldNode);
         InitializeStarterZone(starterZone?.Value,starterZoneDefinition ?? catalog?.StarterZone);
         InitializeCrafting(crafting?.Value,catalog?.Crafting); InitializePvp();
+        InitializeQuests(quests?.Value.Enabled==true);
     }
 
     public uint Tick { get; private set; }
@@ -233,7 +234,7 @@ public sealed partial class ServerWorld
         RemoveEconomyPlayer(connectionId,player.EntityId);
         RemoveTradePlayer(connectionId,player.EntityId);
         RemoveExploration(player.EntityId);
-        RemovePvp(connectionId,player.EntityId); RemoveProgression(player.EntityId);
+        RemovePvp(connectionId,player.EntityId); RemoveProgression(player.EntityId); ResetQuestSession(player.EntityId);
         _playersByConnection.Remove(connectionId);
         _developmentRevives.Remove(connectionId); _developmentReviveSequences.Remove(connectionId);
         _playersByEntity.Remove(player.EntityId);
@@ -376,6 +377,7 @@ public sealed partial class ServerWorld
         SimulateCrafting();
         SimulateRepair();
         SimulateTrade();
+        SimulateQuests();
         SimulateEconomy();
         SimulateStarterZone();
         if (Inventory is { } inventory) foreach (var id in inventory.Dirty) MarkPersistent(id);
@@ -441,7 +443,7 @@ public sealed partial class ServerWorld
         foreach (var id in view.Candidates)
         {
             var position = _playersByEntity.TryGetValue(id, out var player)
-                ? player.Position : Echoes?.TryGet(id,out var echo) == true ? echo.Motion.Position : Combat!.Get(id).Position;
+                ? player.Position : _questNpcs.TryGetValue(id,out var questNpc) ? questNpc.Position : Echoes?.TryGet(id,out var echo) == true ? echo.Motion.Position : Combat!.Get(id).Position;
             if (!view.Visible.Contains(id) &&
                 Vector2.DistanceSquared(observer.Position, position) > squaredEnterRadius)
                 continue;

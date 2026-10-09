@@ -12,6 +12,7 @@ public sealed class ContentCatalog
     public Content.Server.WorldStory.WorldNodeDefinition? WorldNode { get; }
     public Content.Server.StarterZone.StarterZoneDefinition? StarterZone { get; }
     public Content.Server.Crafting.CraftingDefinition? Crafting { get; }
+    public Content.Server.Quests.DeliveryQuestDefinition? DeliveryQuest {get;}
     public Content.Server.Pvp.PvpDefinition? Pvp {get;}
     public Content.Server.Economy.EconomyDefinition? Economy { get; }
     public const int SchemaVersion = 3;
@@ -56,6 +57,7 @@ public sealed class ContentCatalog
         }
 
         document.Crafting?.Validate(this); Crafting=document.Crafting;
+        document.DeliveryQuest?.Validate(this); DeliveryQuest=document.DeliveryQuest;
         foreach(var item in Items.Values) if(item.Condition is { } condition)
         { condition.Validate(); Check(item.Slot==Content.Shared.Network.EquipmentSlot.Weapon && Crafting is not null && Crafting.Materials.Any(m=>m.Id==condition.RepairMaterialId), "Invalid durability material/slot reference."); }
         document.Economy?.Validate(this); Economy=document.Economy; document.Pvp?.Validate(); Pvp=document.Pvp;

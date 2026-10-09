@@ -41,7 +41,7 @@ public partial class DefensePresentation : Node
     }
     public override void _UnhandledInput(InputEvent ev)
     {
-        if (!_player.IsAlive || GameUi.CharacterWindowOpen || ev is not InputEventKey { Pressed:true, Echo:false } key) return;
+        if (!_player.IsAlive || GameUi.GameplayModalOpen || ev is not InputEventKey { Pressed:true, Echo:false } key) return;
         if (key.PhysicalKeycode==Key.Tab) { _held=true; Send(DefenseAction.Block); }
         else if (key.PhysicalKeycode==Key.Shift) Send(DefenseAction.Parry);
         else return;
@@ -58,7 +58,7 @@ public partial class DefensePresentation : Node
     private void Release() { _held=false; Send(DefenseAction.Release); }
     public override void _Process(double delta)
     {
-        if (_held && (!Input.IsPhysicalKeyPressed(Key.Tab) || !_player.IsAlive || !GetWindow().HasFocus() || GameUi.CharacterWindowOpen)) Release();
+        if (_held && (!Input.IsPhysicalKeyPressed(Key.Tab) || !_player.IsAlive || !GetWindow().HasFocus() || GameUi.GameplayModalOpen)) Release();
         if (_held && !_player.IsDashing && Now()>=_heartbeat) Send(DefenseAction.Block);
         _player.DefenseHeld=!_player.IsDashing && (_held || Now()<_parryUntil);
         _guard.Visible=_player.DefenseHeld && _player.IsAlive;

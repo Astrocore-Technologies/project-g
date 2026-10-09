@@ -108,6 +108,12 @@ public partial class NetworkClient : Node
     public event Action<StatPreview>? StatPreviewReceived;
     public event Action<DefenseState>? DefenseReceived;
     public DefenseState? LatestDefense { get; private set; }
+    public Dictionary<NetworkEntityId,QuestNpcSpawn> QuestNpcs {get;}=new();
+    public QuestJournal? LatestQuestJournal {get;private set;}
+    public event Action<QuestNpcSpawn>? QuestNpcReceived;
+    public event Action<QuestReply>? QuestReplyReceived;
+    public event Action<QuestJournal>? QuestJournalReceived;
+    public void SendQuest(QuestCommand command) { if(_handshakeComplete) SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered); }
     public void SendDefense(DefenseCommand command)
     { if (_handshakeComplete) SendGame(NetworkProtocol.Write(command),command.Action==DefenseAction.Block ? DeliveryMethod.Unreliable : DeliveryMethod.ReliableOrdered); }
     public void SendProgression(ProgressionCommand command)
@@ -266,7 +272,7 @@ public partial class NetworkClient : Node
         CurrentRegion = null;
         KnownPlayers.Clear();
         CanDevelopmentRevive = false;
-        Navigation = null; LatestWorldNode=null; LatestStarterZone=null; LatestPvpZone=null; LatestDefense=null; CraftRecipes.Clear(); ResourceNodes.Clear();
+        Navigation = null; LatestWorldNode=null; LatestStarterZone=null; LatestPvpZone=null; LatestDefense=null; CraftRecipes.Clear(); ResourceNodes.Clear(); QuestNpcs.Clear(); LatestQuestJournal=null;
         LatestServerTick = 0;
         if (TryReadDisconnectRejection(disconnectInfo, out var rejection))
         {
@@ -406,6 +412,16 @@ public partial class NetworkClient : Node
                         (LatestDefense is not { } previousDefense || previousDefense.OwnerId!=defense.OwnerId || Content.Shared.Movement.MovementSimulation.IsSequenceNewer(defense.ServerTick,previousDefense.ServerTick)))
                     { LatestDefense=defense; DefenseReceived?.Invoke(defense); }
                     break;
+                case NetworkMessageType.QuestNpcSpawn:
+                    if(_handshakeComplete && NetworkProtocol.TryReadQuestNpcSpawn(reader,out var questNpc) && (QuestNpcs.Count<32 || QuestNpcs.ContainsKey(questNpc.EntityId)))
+                    { QuestNpcs[questNpc.EntityId]=questNpc; QuestNpcReceived?.Invoke(questNpc); } else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.QuestReply:
+                    if(_handshakeComplete && NetworkProtocol.TryReadQuestReply(reader,out var questReply)) QuestReplyReceived?.Invoke(questReply); else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.QuestJournal:
+                    if(_handshakeComplete && NetworkProtocol.TryReadQuestJournal(reader,out var journal)) { LatestQuestJournal=journal; QuestJournalReceived?.Invoke(journal); } else DisconnectMalformed(peer);
+                    break;
                 case NetworkMessageType.StatPreview:
                     if (_handshakeComplete && NetworkProtocol.TryReadStatPreview(reader,out var statPreview)) StatPreviewReceived?.Invoke(statPreview);
                     break;
@@ -469,6 +485,7 @@ public partial class NetworkClient : Node
                 case NetworkMessageType.PlayerDespawn:
                     if (NetworkProtocol.TryReadPlayerDespawn(reader, out var despawn))
                     {
+                        QuestNpcs.Remove(despawn.EntityId);
                         KnownPlayers.Remove(despawn.EntityId);
                         PlayerDespawned?.Invoke(despawn);
                     }

@@ -105,7 +105,7 @@ public partial class PlayerController : CharacterBody3D
 
 	public override void _UnhandledInput(InputEvent @event)
 	{
-		if (ProjectG.UI.GameUi.CharacterWindowOpen) return;
+		if (ProjectG.UI.GameUi.GameplayModalOpen) return;
 		if (!_isLocal || !IsAlive ||
 			@event is not InputEventMouseButton mouseEvent ||
 			mouseEvent.ButtonIndex != MouseButton.Right ||
@@ -140,7 +140,7 @@ public partial class PlayerController : CharacterBody3D
 	{
 		if (_isLocal && _rightHeld)
 		{
-			if (!Input.IsMouseButtonPressed(MouseButton.Right) || !GetWindow().HasFocus() || ProjectG.UI.GameUi.CharacterWindowOpen) _rightHeld=false;
+			if (!Input.IsMouseButtonPressed(MouseButton.Right) || !GetWindow().HasFocus() || ProjectG.UI.GameUi.GameplayModalOpen) _rightHeld=false;
 			else if ((_cursorRefresh+=delta)>=.1 && GetViewport().GuiGetHoveredControl() is null)
 			{ _cursorRefresh=0; if (TryCursorGround(out var point)) MoveTo(point); }
 		}
