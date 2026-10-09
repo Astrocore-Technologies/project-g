@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://_NC/App/MainMenu.cs" id="1"]
+[ext_resource type="PackedScene" path="res://Scenes/World.tscn" id="2"]
+
+[node name="MainMenu" type="Node"]
+script = ExtResource("1")
+WorldScene = ExtResource("2")

@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Project-G"
-run/main_scene="uid://dmxklxo60o5gn"
+run/main_scene="res://Scenes/App/MainMenu.tscn"
 config/features=PackedStringArray("4.7", "C#", "Mobile")
 config/icon="res://icon.svg"
 

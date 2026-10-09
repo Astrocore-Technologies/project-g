@@ -57,6 +57,9 @@ public partial class NetworkClient : Node
     public event Action<GroundItemDespawn>? GroundItemDespawned;
     public event Action<PickupResult>? PickupResultReceived;
     public event Action? Disconnected;
+    // NC: player-facing errors never display credentials or raw server diagnostics.
+    public string LastConnectionError { get; private set; } = "";
+    public event Action<string>? ConnectionFailed;
     public Dictionary<ushort,CraftRecipeState> CraftRecipes { get; }=new();
     public Dictionary<ushort,ResourceNodeState> ResourceNodes { get; }=new();
     public event Action<CraftState>? CraftStateReceived;
@@ -168,7 +171,13 @@ public partial class NetworkClient : Node
 
     public void ConnectToServer()
     {
-        if (!_identityUsable || _client is null || _client.FirstPeer is not null)
+        LastConnectionError = "";
+        if (!_identityUsable || _client is null || !_client.IsRunning)
+        {
+            ReportConnectionFailure("Не удалось начать вход. Проверь локальный профиль и настройки клиента.");
+            return;
+        }
+        if (_client.FirstPeer is not null)
             return;
 
         GD.Print("Connecting to server...");
@@ -189,6 +198,7 @@ public partial class NetworkClient : Node
 
     public void RejectRegionContent()
     {
+        ReportConnectionFailure("Карта несовместима с клиентом. Обнови клиент и сервер."); // NC
         _handshakeComplete = false;
         if (_serverPeer is not null) _client?.DisconnectPeer(_serverPeer);
     }
@@ -253,14 +263,14 @@ public partial class NetworkClient : Node
         CanDevelopmentRevive = false;
         Navigation = null; LatestWorldNode=null; LatestStarterZone=null; LatestPvpZone=null;CraftRecipes.Clear(); ResourceNodes.Clear();
         LatestServerTick = 0;
-        Disconnected?.Invoke();
-
         if (TryReadDisconnectRejection(disconnectInfo, out var rejection))
         {
+            ReportConnectionFailure(RejectionMessage(rejection.Code)); // NC
             GD.PushError($"Server rejected connection ({rejection.Code}): {rejection.Reason}");
-            return;
         }
-
+        else if (LastConnectionError.Length == 0)
+            ReportConnectionFailure("Соединение с сервером потеряно или сервер недоступен. Попробуй войти снова.");
+        Disconnected?.Invoke();
         GD.Print($"Disconnected from server: {disconnectInfo.Reason}");
     }
 
@@ -584,6 +594,7 @@ public partial class NetworkClient : Node
             {
                 _identityUsable = false;
                 _handshakeComplete = false;
+                ReportConnectionFailure("Не удалось сохранить локальный профиль. Закрой другие клиенты с тем же профилем."); // NC
                 GD.PushError("Cannot safely store development identity; connection closed. Use separate profiles for two clients.");
                 _client.DisconnectPeer(peer);
                 return;
@@ -607,7 +618,10 @@ public partial class NetworkClient : Node
     private void HandleReject(NetPeer peer, NetDataReader reader)
     {
         if (NetworkProtocol.TryReadServerReject(reader, out var rejection))
+        { // NC: translate rejection codes without exposing raw diagnostic text.
+            ReportConnectionFailure(RejectionMessage(rejection.Code));
             GD.PushError($"Server rejected connection ({rejection.Code}): {rejection.Reason}");
+        }
         else
             GD.PushError("Server rejected connection with malformed details.");
 
@@ -616,6 +630,7 @@ public partial class NetworkClient : Node
 
     private void DisconnectMalformed(NetPeer peer)
     {
+        ReportConnectionFailure("Получены несовместимые данные сервера. Проверь версии клиента и сервера."); // NC
         GD.PushError("Received a malformed or unexpected server packet.");
         _client.DisconnectPeer(peer);
     }
@@ -633,6 +648,25 @@ public partial class NetworkClient : Node
                messageType == NetworkMessageType.ServerReject &&
                NetworkProtocol.TryReadServerReject(reader, out rejection);
     }
+
+    // NC start: local presentation only; the wire protocol and identity ownership are unchanged.
+    private void ReportConnectionFailure(string message)
+    {
+        LastConnectionError = message;
+        ConnectionFailed?.Invoke(message);
+    }
+
+    private static string RejectionMessage(HandshakeRejectCode code) => code switch
+    {
+        HandshakeRejectCode.UnsupportedProtocol => "Версии клиента и сервера различаются. Обнови игру.",
+        HandshakeRejectCode.InvalidIdentity => "Сервер не распознал сохранённый профиль. Профиль не был заменён.",
+        HandshakeRejectCode.CharacterInUse => "Персонаж уже в игре. Закрой другую сессию и попробуй снова.",
+        HandshakeRejectCode.PersistenceUnavailable => "Сервер не смог загрузить персонажа. Попробуй позже.",
+        HandshakeRejectCode.DevelopmentOnly => "Этот сервер поддерживает только локальный вход для разработки.",
+        HandshakeRejectCode.ServerBusy => "Сервер занят. Попробуй позже.",
+        _ => "Сервер отклонил вход. Проверь версии клиента и сервера."
+    };
+    // NC end
 
     private static void OnNetworkError(
         System.Net.IPEndPoint endpoint,

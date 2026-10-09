@@ -14,6 +14,11 @@ public partial class WorldController : Node3D
     [Export]
     public PackedScene PlayerScene { get; set; } = null!;
 
+    // NC: standalone world scenes retain automatic login; the menu starts it explicitly.
+    [Export] public bool AutoConnect { get; set; } = true;
+    public event Action? WorldReady;
+    private bool _worldReady;
+
     private readonly Dictionary<NetworkEntityId, PlayerController> _players = new();
     private readonly Dictionary<NetworkEntityId, Node3D> _targets = new();
     private readonly Dictionary<NetworkEntityId, CombatPresentation> _combat = new();
@@ -71,7 +76,7 @@ public partial class WorldController : Node3D
         _network.EchoLoadoutReceived += OnEchoLoadout;
         _network.EchoActionReceived += OnEchoAction;
         _network.EchoSignatureResultReceived += OnEchoResult;
-        _network.ConnectToServer();
+        if (AutoConnect) _network.ConnectToServer();
     }
 
     public override void _ExitTree()
@@ -292,10 +297,23 @@ public partial class WorldController : Node3D
                 npc.Apply(entity, snapshot.ServerTick);
             else if (_echoes.TryGetValue(entity.EntityId, out var echo)) echo.Apply(entity, snapshot.ServerTick);
         }
+        // NC: wait for the local avatar, validated navigation and its first authoritative snapshot.
+        if (!_worldReady && _contentReady && _network.Navigation is not null &&
+            _players.ContainsKey(_localEntityId))
+        {
+            foreach (var entity in snapshot.Entities)
+                if (entity.EntityId == _localEntityId)
+                {
+                    _worldReady = true;
+                    WorldReady?.Invoke();
+                    break;
+                }
+        }
     }
 
     private void ClearWorld()
     {
+        _worldReady = false; // NC: a new region/session must become ready independently.
         UnloadAuthoredRegion();
         DetachPresentation(_regionExit); _regionExit = null;
         foreach (var player in _players.Values)
