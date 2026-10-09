@@ -20,7 +20,17 @@ public partial class UiScreensSmoke : Node
             await Wait(()=>network.LatestQuestJournal is not null && exploration is not null); await Frames(30);
             var player=world.GetChildren().OfType<PlayerController>().Single(p=>p.GetNode<Camera3D>("CameraRig/Camera3D").Current);
             foreach(var control in Descendants(world).OfType<UiIconSlot>().Where(c=>c.IsVisibleInTree()))
+            {
                 if(!GetViewport().GetVisibleRect().Encloses(control.GetGlobalRect())) throw new Exception("HUD icon is clipped.");
+                if(!control.Size.IsEqualApprox(new(32,32))) throw new Exception("HUD navigation icon is not 32x32.");
+            }
+            var hud=world.GetChildren().OfType<PlayerHud>().Single();
+            var skillIcons=Descendants(hud).OfType<TextureRect>().ToArray();
+            if(skillIcons.Length!=9 || skillIcons.Any(icon=>!(icon.Size*icon.GetGlobalTransform().Scale).IsEqualApprox(new(13,13)))) throw new Exception("HUD skill icons are not displayed at 13x13.");
+            var mapShortcut=Descendants(world).OfType<Button>().Single(button=>button.Text=="Карта · M");
+            await Click(mapShortcut.GetGlobalTransform()*(mapShortcut.Size/2));
+            if(!GameUi.GameplayModalOpen || !Descendants(world).OfType<StarterMap>().Any(map=>map.Interactive && map.IsVisibleInTree())) throw new Exception("Compact map shortcut did not open the map.");
+            Press(Key.Escape); await Frames(3);
             await Capture("hud-1280");
             string[] routes=["character","inventory","map","journal","echo","guild","profession","craft","market","trade","party","clan","pvp","keeper","guide"];
             foreach(var route in routes)

@@ -64,7 +64,7 @@ public sealed class DatabaseCharacterStore(ICharacterDatabase database, RiverLan
     => SaveRegionalCheckpointAsync(changes,world is null ? [] : [world],null,token);
     public Task SaveRegionalCheckpointAsync(IReadOnlyList<CharacterSave> changes,IReadOnlyList<WorldNodeSave> worlds,SocialSave? social,CancellationToken token)
     {
-        if (changes.Count > 64 || worlds.Count > 2) throw new InvalidDataException("Regional checkpoint exceeds the prototype budget.");
+        if (changes.Count > 64 || worlds.Count > Content.Server.Regions.RegionalWorlds.MaxRegions) throw new InvalidDataException("Regional checkpoint exceeds the prototype budget.");
         var writes = new DatabaseSave[changes.Count];
         for (var i = 0; i < writes.Length; i++)
         {

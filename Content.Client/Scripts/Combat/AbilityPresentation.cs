@@ -49,8 +49,10 @@ public partial class AbilityPresentation : Node3D
         foreach (var slot in _loadout.Abilities)
             if (key.PhysicalKeycode == Key.Space ? slot.Form == AbilityForm.Dash : slot.Id == _bar[index]) { selected = slot; break; }
         if (selected is not { } profile || profile.ReadyInSeconds > Now() - _receivedAt || _loadout.Mana < profile.ManaCost) return;
+        if (profile.Availability != AbilityAvailability.Ready)
+        { _feedback = profile.Availability == AbilityAvailability.NeedsSword ? "Нужен надетый исправный меч" : "Сначала парируйте ближний удар"; return; }
         var form = profile.Form;
-        if (form==AbilityForm.Dash && _network.LatestDefense is { } defense && defense.Stamina<defense.DodgeCost) return;
+        if (_network.LatestDefense is { } defense && defense.Stamina<profile.StaminaCost) { _feedback="Не хватает выносливости"; return; }
         var camera = GetViewport().GetCamera3D();
         if (camera is null) return;
         var mouse = GetViewport().GetMousePosition();
@@ -60,19 +62,24 @@ public partial class AbilityPresentation : Node3D
         var position = _player.PredictedPosition;
         var aim = new NumericsVector2(point.X, point.Z);
         var offset = aim - position;
-        if (offset.LengthSquared() < 0.000001f) return;
+        if (offset.LengthSquared() < 0.000001f) { if(form != AbilityForm.Recovery) return; offset=NumericsVector2.UnitY; }
         var direction = NumericsVector2.Normalize(offset);
         if (form == AbilityForm.GroundArea && offset.LengthSquared() > profile.Range * profile.Range) return;
         if (++_sequence == 0) ++_sequence;
-        if (form == AbilityForm.Dash && !_player.PredictDash(_sequence, direction, profile.Range, profile.Speed)) return;
+        var dashDistance = form == AbilityForm.Dash ? Math.Min(profile.Range,offset.Length()) : 0;
+        if (form == AbilityForm.Dash && !_player.PredictDash(_sequence, direction, dashDistance, profile.Speed)) return;
+        if (form == AbilityForm.Recovery || profile.Id == 27)
+        { _player.GetNodeOrNull<CombatPresentation>("CombatPresentation")?.CancelAutoAttack(); _player.StopMovement(); }
         _pending = _sequence; _pendingAt = Now(); _feedback = "";
+        _player.SwordAnimation.PredictAbility(_sequence, profile.Id, direction,
+            form == AbilityForm.Dash ? dashDistance / profile.Speed : profile.CastSeconds);
         _prediction = new AbilityEffectVisual();
         // World-space preview is replaced by the single confirmed effect, not duplicated.
         GetTree().CurrentScene.AddChild(_prediction);
         _prediction.Apply(new(1, _player.EntityId, _sequence, _network.LatestServerTick, profile.Id, form,
             AbilityPhase.Telegraph, position, form == AbilityForm.GroundArea ? aim : position, direction,
             profile.Radius, profile.Speed, (float)profile.CastSeconds), predicted: true);
-        _network.SendAbility(new(_sequence, _network.LatestServerTick, profile.Id, form == AbilityForm.GroundArea ? aim : direction));
+        _network.SendAbility(new(_sequence, _network.LatestServerTick, profile.Id, form == AbilityForm.GroundArea ? aim : direction, dashDistance));
         GetViewport().SetInputAsHandled();
     }
 
@@ -88,7 +95,8 @@ public partial class AbilityPresentation : Node3D
         if (result.Sequence != _pending) return;
         if (result.Outcome == AbilityOutcome.Accepted) return; // Authoritative effect replaces the preview.
         _player.RejectDash(result.Sequence);
-        _feedback = result.Outcome.ToString(); _pending = 0;
+        _player.SwordAnimation.RejectAbility(result.Sequence);
+        _feedback = result.Outcome switch { AbilityOutcome.NoStamina=>"Не хватает выносливости",AbilityOutcome.NeedsSword=>"Нужен надетый исправный меч",AbilityOutcome.NeedsParry=>"Нужно успешное парирование",AbilityOutcome.Cooldown=>"Навык перезаряжается",AbilityOutcome.Busy=>"Завершите текущее действие",AbilityOutcome.InvalidState=>"Сейчас нельзя применить навык",_=>"Навык сейчас недоступен" }; _pending = 0;
         ClearPreview();
     }
 
@@ -96,7 +104,7 @@ public partial class AbilityPresentation : Node3D
     {
         if (_pending != 0 && Now() - _pendingAt > 2)
         {
-            _player.RejectDash(_pending); _pending = 0; ClearPreview();
+            _player.RejectDash(_pending); _player.SwordAnimation.RejectAbility(_pending); _pending = 0; ClearPreview();
         }
         if (_loadout.Abilities is null) return;
         _label.Text = _feedback;

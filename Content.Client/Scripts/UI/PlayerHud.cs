@@ -47,11 +47,12 @@ public partial class PlayerHud : CanvasLayer
             if (i == 8) { var spacer = new Control { CustomMinimumSize = new(8,0) }; bar.AddChild(spacer); }
             bar.AddChild(panel); _slots[i] = panel;
             var column = new VBoxContainer(); panel.AddChild(column); column.AddThemeConstantOverride("separation",2);
-            _slotArt[i] = new TextureRect { CustomMinimumSize=new(26,26), ExpandMode=TextureRect.ExpandModeEnum.IgnoreSize, StretchMode=TextureRect.StretchModeEnum.KeepAspectCentered, MouseFilter=Control.MouseFilterEnum.Ignore }; column.AddChild(_slotArt[i]);
+            _slotArt[i] = new TextureRect { CustomMinimumSize=new(26,26), SizeFlagsHorizontal=Control.SizeFlags.ShrinkCenter, ExpandMode=TextureRect.ExpandModeEnum.IgnoreSize, StretchMode=TextureRect.StretchModeEnum.KeepAspectCentered, MouseFilter=Control.MouseFilterEnum.Ignore }; column.AddChild(_slotArt[i]);
             var key = GameUi.Text(keys[i],14); key.Modulate = GameUi.Accent; column.AddChild(key);
             _slotNames[i] = GameUi.Text("—",12); _slotNames[i].CustomMinimumSize = new(48,0); _slotNames[i].TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis; column.AddChild(_slotNames[i]);
             _slotTimers[i] = GameUi.Text("",12); column.AddChild(_slotTimers[i]);
         }
+        GameUi.CompactHud(portraitPanel); GameUi.CompactHud(bar);
     }
     private static (ProgressBar,Label) Resource(VBoxContainer body,string name,Color color,float height,StyleBox? fill=null)
     {
@@ -93,13 +94,16 @@ public partial class PlayerHud : CanvasLayer
             AbilityProfile? found = null;
             foreach (var profile in _loadout.Abilities) if (i==8 ? profile.Form==AbilityForm.Dash : profile.Id==_bar[i]) { found=profile; break; }
             if (found is not { } skill) { _slotArt[i].Texture=null; _shownArt[i]=0; _slotNames[i].Text="—"; _slotTimers[i].Text="Пусто"; _slots[i].TooltipText="Назначьте навык в окне K"; continue; }
-            if (_shownArt[i]!=skill.Id) { _shownArt[i]=skill.Id; _slotArt[i].Texture=UiAssets.Texture(UiAssets.SkillKey(skill.Id)); }
+            if (_shownArt[i]!=skill.Id) { _shownArt[i]=skill.Id; _slotArt[i].Texture=UiAssets.Texture(UiAssets.SkillKey(skill.Id),skill.Id is >=20 and <=29 ? "equipment.weapon" : null); }
             var cooldown = Math.Max(0,skill.ReadyInSeconds-elapsed);
-            var exhausted=skill.Form==AbilityForm.Dash && _defense.Stamina<_defense.DodgeCost;
+            var exhausted=_defense.Stamina<skill.StaminaCost;
             _slotNames[i].Text=GameUi.SkillName(skill.Id); _slotTimers[i].Text=!_alive ? "—" : cooldown>0 ? $"{cooldown:0.0} с" : _loadout.Mana<skill.ManaCost ? "Нет маны" : "Готово";
             _slotTimers[i].Modulate=cooldown<=0 && _loadout.Mana>=skill.ManaCost && _alive ? GameUi.Accent : new Color("a9aeb7");
             _slots[i].TooltipText=$"{GameUi.SkillName(skill.Id)}\nМана: {skill.ManaCost:0}\nКаст: {skill.CastSeconds:0.##} с\nИспользуйте клавишу, направляя курсор в мир.";
-            if (skill.Form==AbilityForm.Dash) _slots[i].TooltipText=$"Рывок\nВыносливость: {_defense.DodgeCost:0}\nSpace · направление курсором";
+            if (skill.Form==AbilityForm.Dash) { _slotNames[i].Text=skill.Range>3 ? "Длинный рывок" : "Рывок"; _slots[i].TooltipText=$"{_slotNames[i].Text}\nВыносливость: {skill.StaminaCost:0}\nДо {skill.Range:0.#} м · {skill.CooldownSeconds:0.#} с\nSpace · до курсора, без неуязвимости"; }
+            if (skill.Id is >=20 and <=29) _slots[i].TooltipText=$"{GameUi.SkillName(skill.Id)}\n{SwordsmanUi.Description(skill.Id)}\nТекущий расход: {skill.StaminaCost:0}; перезарядка: {skill.CooldownSeconds:0.#} с";
+            if (skill.Availability!=AbilityAvailability.Ready && _alive && cooldown<=0)
+            { _slotTimers[i].Text=skill.Availability==AbilityAvailability.NeedsSword ? "Нужен меч" : "Парируй"; _slotTimers[i].Modulate=new Color("a9aeb7"); }
             if (exhausted && _alive && cooldown<=0) { _slotTimers[i].Text="Нет сил"; _slotTimers[i].Modulate=new Color("a9aeb7"); }
         }
     }

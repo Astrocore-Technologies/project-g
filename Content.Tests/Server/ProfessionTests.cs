@@ -81,12 +81,12 @@ public sealed class ProfessionTests
     }
     [Fact] public void NewProfessionReplacesOneActiveAndRetiredProfessionNeverReturns()
     {
-        var json=JsonNode.Parse(File.ReadAllText(ContentCatalogTests.DataPath))!; json["professions"]!.AsArray().Add(JsonNode.Parse("{\"id\":2,\"name\":\"Second\",\"skillId\":\"discovery_bolt\",\"discoveryMask\":3,\"successfulUses\":3}"));
+        var json=JsonNode.Parse(File.ReadAllText(ContentCatalogTests.DataPath))!; json["professions"]!.AsArray().Add(JsonNode.Parse("{\"id\":3,\"name\":\"Second\",\"skillId\":\"discovery_bolt\",\"discoveryMask\":3,\"successfulUses\":3}"));
         var w=World(ContentCatalog.Parse(System.Text.Encoding.UTF8.GetBytes(json.ToJsonString()))); var p=w.AddPlayer(42,new(1),Eligible(w));
         var prepare=Command(w,p,1,ProfessionAction.Prepare); Command(w,p,2,ProfessionAction.Confirm,token:prepare.Confirmation);
-        Assert.Equal((ushort)2,w.ProfessionState(p.EntityId,w.Tick).OfferedId);
-        prepare=Command(w,p,3,ProfessionAction.Prepare,2); Assert.Equal(ProfessionOutcome.Accepted,Command(w,p,4,ProfessionAction.Confirm,2,prepare.Confirmation).Outcome);
-        var saved=w.CaptureCharacter(42); Assert.Equal((ushort)2,saved.Progression!.Profession.ActiveId); Assert.Equal(new ushort[] { 1 },saved.Progression.Profession.RetiredIds);
+        Assert.Equal((ushort)3,w.ProfessionState(p.EntityId,w.Tick).OfferedId);
+        prepare=Command(w,p,3,ProfessionAction.Prepare,3); Assert.Equal(ProfessionOutcome.Accepted,Command(w,p,4,ProfessionAction.Confirm,3,prepare.Confirmation).Outcome);
+        var saved=w.CaptureCharacter(42); Assert.Equal((ushort)3,saved.Progression!.Profession.ActiveId); Assert.Equal(new ushort[] { 1 },saved.Progression.Profession.RetiredIds);
         Assert.Equal(ProfessionOutcome.Unavailable,Command(w,p,5,ProfessionAction.Prepare,1).Outcome); Assert.Equal((ushort)0,w.ProfessionState(p.EntityId,w.Tick).OfferedId);
         w.RemovePlayer(42); p=w.AddPlayer(42,new(1),saved); Assert.Equal(ProfessionOutcome.Unavailable,Command(w,p,1,ProfessionAction.Prepare,1).Outcome);
     }

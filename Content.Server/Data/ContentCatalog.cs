@@ -9,6 +9,7 @@ namespace Content.Server.Data;
 public sealed class ContentCatalog
 {
     public Content.Server.Combat.DefenseBalance Defense { get; }
+    public Content.Server.Professions.SwordsmanDefinition? Swordsman { get; }
     public Content.Server.WorldStory.WorldNodeDefinition? WorldNode { get; }
     public Content.Server.StarterZone.StarterZoneDefinition? StarterZone { get; }
     public Content.Server.Crafting.CraftingDefinition? Crafting { get; }
@@ -80,7 +81,11 @@ public sealed class ContentCatalog
             Positive(ability.Range, $"ability {ability.Id}.range");
             Positive(ability.Radius, $"ability {ability.Id}.radius");
             NonNegative(ability.Speed, $"ability {ability.Id}.speed");
-            Check(ability.Kind == AbilityKind.GroundArea || ability.Speed > 0, $"ability {ability.Id}: speed must be positive");
+            Check(ability.Kind is not (AbilityKind.Projectile or AbilityKind.Dash) || ability.Speed > 0, $"ability {ability.Id}: speed must be positive");
+            NonNegative(ability.StaminaCost, $"ability {ability.Id}.staminaCost");
+            Check(ability.StaminaCost <= Defense.MaxStamina, "Ability stamina exceeds capacity.");
+            Check((ability.Kind is AbilityKind.Melee or AbilityKind.Recovery) == (ability.Melee is not null), "Missing/unexpected melee technique.");
+            ability.Melee?.Validate();
             NonNegative(ability.MagicAttackScale, $"ability {ability.Id}.magicAttackScale");
         }
         Check(Abilities.Values.Any(a => a.NetworkId == Progression.DiscoverySkillId && a.Kind != AbilityKind.Dash), "progression: unknown discovery skill");
@@ -89,10 +94,14 @@ public sealed class ContentCatalog
         foreach (var profession in document.Professions)
             Check(profession is not null && profession.Id != 0 && professionIds.Add(profession.Id) &&
                 profession.Name is { Length: > 0 and <= 24 } && System.Text.Encoding.UTF8.GetByteCount(profession.Name) <= 72 &&
-                profession.DiscoveryMask is > 0 and <= 3 && profession.SuccessfulUses is > 0 and <= 10000 &&
+                (profession.RequiresTrainer || profession.DiscoveryMask is > 0 and <= 3 && profession.SuccessfulUses is > 0 and <= 10000) &&
                 profession.SkillId is not null && Abilities.TryGetValue(profession.SkillId,out var skill) && skill.Kind != AbilityKind.Dash,
                 "Invalid profession definition/reference.");
         Professions = Array.AsReadOnly((Content.Server.Professions.ProfessionDefinition[])document.Professions.Clone());
+        foreach (var profession in Professions)
+            Check(profession.AdditionalSkills is { Length: <= 9 } && profession.AllSkills.Distinct().Count() == profession.AdditionalSkills.Length + 1 &&
+                profession.AllSkills.All(id => Abilities.TryGetValue(id, out var a) && a.Kind != AbilityKind.Dash), "Invalid profession skill list.");
+        document.Swordsman?.Validate(this); Swordsman = document.Swordsman;
         foreach (var creature in Creatures.Values)
         {
             Check(creature.Modifiers is not null && creature.Modifiers.IsValid(),

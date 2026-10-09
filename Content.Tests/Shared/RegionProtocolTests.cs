@@ -7,6 +7,26 @@ namespace Content.Tests.Shared;
 public sealed class RegionProtocolTests
 {
     [Fact]
+    public void MultipleGatesAreBoundedAndRejectMalformedPayloads()
+    {
+        var value = new RegionEnter(2, "river_city", new(0,29), 2.8f, 123,
+            [new(new(-36,0),2.8f),new(new(1,1),1),new(new(2,2),1)]);
+        var bytes = NetworkProtocol.Write(value).CopyData()[2..];
+        Assert.True(NetworkProtocol.TryReadRegionEnter(new(bytes),out var restored));
+        Assert.Equal(value.AdditionalGates,restored.AdditionalGates);
+        Assert.Equal(value with { AdditionalGates=null },restored with { AdditionalGates=null });
+        for(var i=0;i<bytes.Length;i++) Assert.False(NetworkProtocol.TryReadRegionEnter(new(bytes[..i]),out _));
+        Assert.False(NetworkProtocol.TryReadRegionEnter(new([..bytes,0]),out _));
+        var countOffset=bytes.Length-36-1;
+        var invalid=(byte[])bytes.Clone(); invalid[countOffset]=255;
+        Assert.False(NetworkProtocol.TryReadRegionEnter(new(invalid),out _));
+        invalid=(byte[])bytes.Clone(); BitConverter.GetBytes(float.NaN).CopyTo(invalid,countOffset+1);
+        Assert.False(NetworkProtocol.TryReadRegionEnter(new(invalid),out _));
+        Assert.Throws<ArgumentException>(()=>NetworkProtocol.Write(value with {AdditionalGates=new RegionGate[4]}));
+        Assert.Throws<ArgumentException>(()=>NetworkProtocol.Write(value with {AdditionalGates=[new(new(0,0),0)]}));
+    }
+
+    [Fact]
     public void EntryRoundTripsAndRejectsEveryTruncationAndTrailingByte()
     {
         var value = new RegionEnter(9, "outskirts", new(-14, 10), .65f);

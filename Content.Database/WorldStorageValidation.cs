@@ -3,7 +3,8 @@ internal static class WorldStorageValidation
 {
     internal static void Batch(IReadOnlyList<DatabaseWorldSave> worlds, DatabaseSocialSave? social)
     {
-        if (worlds.Count > 2) throw new InvalidDataException("Regional checkpoint exceeds the prototype budget.");
+        // City plus the two adjoining regions can all become dirty in one realm tick.
+        if (worlds.Count > 3) throw new InvalidDataException("Regional checkpoint exceeds the prototype budget.");
         var keys = new HashSet<string>(StringComparer.Ordinal);
         foreach (var world in worlds)
         {

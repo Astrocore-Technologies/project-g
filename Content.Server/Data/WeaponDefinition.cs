@@ -5,6 +5,7 @@ public sealed record WeaponDefinition
 {
     public required string Id { get; init; }
     public required WeaponKind Kind { get; init; }
+    public bool IsSword { get; init; }
     public required double Attack { get; init; }
     public required double AttackIntervalSeconds { get; init; }
     public required double Range { get; init; }

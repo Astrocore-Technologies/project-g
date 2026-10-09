@@ -23,6 +23,12 @@ public partial class AbilityEffectVisual : Node3D
         _mesh.Mesh = projectile
             ? new SphereMesh { Radius = radius, Height = radius * 2 }
             : new CylinderMesh { TopRadius = radius, BottomRadius = radius, Height = 0.035f };
+        if (state.Form == AbilityForm.Melee)
+        {
+            var arc = state.AbilityId == 21 ? 140f : state.AbilityId == 27 ? 360f : state.AbilityId == 20 ? 24f : 70f;
+            _mesh.Mesh = CombatPresentation.BuildCone(radius,arc*MathF.PI/360);
+            Rotation = new(0,Mathf.Atan2(state.Direction.X,state.Direction.Y),0);
+        }
         if (state.Phase == AbilityPhase.Dash ||
             (state.Form == AbilityForm.Projectile && state.Phase == AbilityPhase.Telegraph))
         {

@@ -16,8 +16,9 @@ public sealed partial class ServerWorld
     internal Func<long> PvpClock {get;set;}=StableClock();
     internal long PvpNow=>PvpClock();
     internal Func<int,int> DeathRoll {get;set;}=n=>RandomNumberGenerator.GetInt32(n);
-    private Content.Server.Pvp.PvpDefinition Rules=>_progressionCatalog!.Pvp!;
-    public bool HasPvp=>HasWorldNode&&Inventory is not null&&GroundItems is not null&&_progressionCatalog?.Pvp is not null;
+    private readonly Content.Server.Pvp.PvpDefinition? _pvpDefinition;
+    private Content.Server.Pvp.PvpDefinition Rules=>_pvpDefinition!;
+    public bool HasPvp=>HasWorldNode&&Inventory is not null&&GroundItems is not null&&_pvpDefinition is not null;
     public IReadOnlyDictionary<NetworkEntityId,PvpResult> PvpResults=>_pvpResults;
     public bool IsPvpDirty(NetworkEntityId id)=>_pvpDirty.Contains(id);
     public bool IsCombatTagged(int connection)=>HasPvp&&_playersByConnection.TryGetValue(connection,out var p)&&_pvp[p.EntityId].CombatUntil>PvpClock();

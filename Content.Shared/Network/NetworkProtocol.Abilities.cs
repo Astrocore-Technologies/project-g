@@ -8,18 +8,19 @@ public static partial class NetworkProtocol
 {
     public static NetDataWriter Write(AbilityCommand value)
     {
-        if (value.Sequence == 0 || value.AbilityId == 0 || !Finite(value.Aim)) throw new ArgumentException("Invalid ability intent.");
+        if (value.Sequence == 0 || value.AbilityId == 0 || !Finite(value.Aim) || !float.IsFinite(value.DashDistance) || value.DashDistance is < 0 or > 100) throw new ArgumentException("Invalid ability intent.");
         var writer = CreateWriter(NetworkMessageType.AbilityCommand);
-        writer.Put(value.Sequence); writer.Put(value.ObservedServerTick); writer.Put(value.AbilityId); WriteVector2(writer, value.Aim);
+        writer.Put(value.Sequence); writer.Put(value.ObservedServerTick); writer.Put(value.AbilityId); WriteVector2(writer, value.Aim); writer.Put(value.DashDistance);
         return writer;
     }
 
     public static bool TryReadAbilityCommand(NetDataReader reader, out AbilityCommand value)
     {
         value = default;
-        if (reader.AvailableBytes != 18 || !reader.TryGetUInt(out var sequence) || sequence == 0 ||
-            !reader.TryGetUInt(out var tick) || !reader.TryGetUShort(out var id) || id == 0 || !TryReadVector2(reader, out var aim)) return false;
-        value = new(sequence, tick, id, aim); return true;
+        if (reader.AvailableBytes != 22 || !reader.TryGetUInt(out var sequence) || sequence == 0 ||
+            !reader.TryGetUInt(out var tick) || !reader.TryGetUShort(out var id) || id == 0 || !TryReadVector2(reader, out var aim) ||
+            !reader.TryGetFloat(out var distance) || !float.IsFinite(distance) || distance is < 0 or > 100) return false;
+        value = new(sequence, tick, id, aim, distance); return true;
     }
 
     public static NetDataWriter Write(AbilityResult value)
@@ -47,6 +48,7 @@ public static partial class NetworkProtocol
         {
             writer.Put(slot.Id); writer.Put((byte)slot.Form); writer.Put(slot.Range); writer.Put(slot.Radius); writer.Put(slot.Speed);
             writer.Put(slot.CastSeconds); writer.Put(slot.CooldownSeconds); writer.Put(slot.ManaCost); writer.Put(slot.ReadyInSeconds);
+            writer.Put(slot.StaminaCost); writer.Put((byte)slot.Availability);
         }
         return writer;
     }
@@ -56,14 +58,15 @@ public static partial class NetworkProtocol
         value = default;
         if (reader.AvailableBytes < 29 || !reader.TryGetULong(out var actor) || actor == 0 ||
             !reader.TryGetUInt(out var tick) || !reader.TryGetDouble(out var mana) || !reader.TryGetDouble(out var maximum) ||
-            !reader.TryGetByte(out var count) || count > NetworkConstants.MaxAbilityProfiles || reader.AvailableBytes != count * 47) return false;
+            !reader.TryGetByte(out var count) || count > NetworkConstants.MaxAbilityProfiles || reader.AvailableBytes != count * 56) return false;
         var slots = new AbilityProfile[count];
         for (var i = 0; i < count; i++)
         {
             if (!reader.TryGetUShort(out var id) || !reader.TryGetByte(out var form) || !reader.TryGetFloat(out var range) ||
                 !reader.TryGetFloat(out var radius) || !reader.TryGetFloat(out var speed) || !reader.TryGetDouble(out var cast) ||
-                !reader.TryGetDouble(out var cooldown) || !reader.TryGetDouble(out var cost) || !reader.TryGetDouble(out var ready)) return false;
-            slots[i] = new(id, (AbilityForm)form, range, radius, speed, cast, cooldown, cost, ready);
+                !reader.TryGetDouble(out var cooldown) || !reader.TryGetDouble(out var cost) || !reader.TryGetDouble(out var ready) ||
+                !reader.TryGetDouble(out var stamina) || !reader.TryGetByte(out var available)) return false;
+            slots[i] = new(id, (AbilityForm)form, range, radius, speed, cast, cooldown, cost, ready, stamina, (AbilityAvailability)available);
         }
         var candidate = new AbilityLoadout(new(actor), tick, mana, maximum, slots);
         if (!ValidLoadout(candidate)) return false;
@@ -99,16 +102,16 @@ public static partial class NetworkProtocol
         if (!ValidHit(value)) throw new ArgumentException("Invalid ability hit.");
         var writer = CreateWriter(NetworkMessageType.AbilityHit);
         writer.Put(value.EffectId); writer.Put(value.ActorId.Value); writer.Put(value.TargetId.Value); writer.Put(value.ServerTick);
-        writer.Put(value.Damage); writer.Put(value.TargetHealth); return writer;
+        writer.Put(value.Damage); writer.Put(value.TargetHealth); writer.Put((byte)value.Guard); return writer;
     }
 
     public static bool TryReadAbilityHit(NetDataReader reader, out AbilityHit value)
     {
         value = default;
-        if (reader.AvailableBytes != 44 || !reader.TryGetULong(out var effect) || !reader.TryGetULong(out var actor) ||
+        if (reader.AvailableBytes != 45 || !reader.TryGetULong(out var effect) || !reader.TryGetULong(out var actor) ||
             !reader.TryGetULong(out var target) || !reader.TryGetUInt(out var tick) || !reader.TryGetDouble(out var damage) ||
-            !reader.TryGetDouble(out var health)) return false;
-        var candidate = new AbilityHit(effect, new(actor), new(target), tick, damage, health);
+            !reader.TryGetDouble(out var health) || !reader.TryGetByte(out var guard)) return false;
+        var candidate = new AbilityHit(effect, new(actor), new(target), tick, damage, health, (GuardImpact)guard);
         if (!ValidHit(candidate)) return false;
         value = candidate; return true;
     }
@@ -117,10 +120,10 @@ public static partial class NetworkProtocol
     private static bool NonNegative(double value) => double.IsFinite(value) && value >= 0;
     private static bool ValidProfile(AbilityProfile value) => value.Id != 0 && Enum.IsDefined(value.Form) &&
         float.IsFinite(value.Range) && value.Range > 0 && float.IsFinite(value.Radius) && value.Radius > 0 &&
-        float.IsFinite(value.Speed) && value.Speed >= 0 && (value.Form == AbilityForm.GroundArea || value.Speed > 0) &&
+        float.IsFinite(value.Speed) && value.Speed >= 0 && (value.Form is not (AbilityForm.Projectile or AbilityForm.Dash) || value.Speed > 0) &&
         NonNegative(value.CastSeconds) && (value.Form != AbilityForm.Dash || value.CastSeconds == 0) &&
         double.IsFinite(value.CooldownSeconds) && value.CooldownSeconds > 0 &&
-        NonNegative(value.ManaCost) && NonNegative(value.ReadyInSeconds);
+        NonNegative(value.ManaCost) && NonNegative(value.ReadyInSeconds) && NonNegative(value.StaminaCost) && Enum.IsDefined(value.Availability);
 
     private static bool ValidLoadout(AbilityLoadout value)
     {
@@ -138,15 +141,16 @@ public static partial class NetworkProtocol
         value.Sequence != 0 && value.AbilityId != 0 && Enum.IsDefined(value.Form) && Enum.IsDefined(value.Phase) &&
         Finite(value.Origin) && Finite(value.Position) && BasicAttackShape.IsValidDirection(value.Direction) &&
         float.IsFinite(value.Radius) && value.Radius > 0 && float.IsFinite(value.Speed) && value.Speed >= 0 &&
-        (value.Form == AbilityForm.GroundArea || value.Speed > 0) &&
+        (value.Form is not (AbilityForm.Projectile or AbilityForm.Dash) || value.Speed > 0) &&
         (value.Phase == AbilityPhase.Finished || value.Form switch
         {
             AbilityForm.Projectile => value.Phase is AbilityPhase.Telegraph or AbilityPhase.Flying,
             AbilityForm.GroundArea => value.Phase is AbilityPhase.Telegraph or AbilityPhase.Impact,
+            AbilityForm.Melee or AbilityForm.Recovery => value.Phase is AbilityPhase.Telegraph or AbilityPhase.Impact,
             AbilityForm.Dash => value.Phase == AbilityPhase.Dash,
             _ => false
         }) && float.IsFinite(value.RemainingSeconds) && value.RemainingSeconds >= 0;
 
     private static bool ValidHit(AbilityHit value) => value.EffectId != 0 && value.ActorId.IsValid && value.TargetId.IsValid &&
-        NonNegative(value.Damage) && NonNegative(value.TargetHealth);
+        NonNegative(value.Damage) && NonNegative(value.TargetHealth) && Enum.IsDefined(value.Guard);
 }

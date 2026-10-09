@@ -41,6 +41,9 @@ public sealed class RegionalMapTests
         var world = StarterZoneTests.World(); var p = world.AddPlayer(42, new(1), world.CreateInitialCharacter());
         world.Simulate(.05f); var state = world.CaptureCharacter(42).Progression!; var map = state.Exploration!;
         Assert.Throws<InvalidDataException>(() => (state with { OtherExplorations = [map] }).Validate());
-        Assert.Throws<InvalidDataException>(() => (state with { OtherExplorations = [map with { RegionKey = "a" }, map with { RegionKey = "b" }] }).Validate());
+        var two = state with { OtherExplorations = [map with { RegionKey = "a" }, map with { RegionKey = "b" }] };
+        Assert.Equal(2, SavedProgression.Deserialize(two.Serialize()).OtherExplorations!.Length);
+        Assert.Throws<InvalidDataException>(() => (state with { OtherExplorations = [map with { RegionKey = "a" }, map with { RegionKey = "a" }] }).Validate());
+        Assert.Throws<InvalidDataException>(() => (state with { OtherExplorations = [map with { RegionKey = "a" }, map with { RegionKey = "b" }, map with { RegionKey = "c" }] }).Validate());
     }
 }

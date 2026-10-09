@@ -18,8 +18,10 @@ public sealed class DashTests
         Assert.Equal(0, time);
     }
 
-    [Fact]
-    public void StraightDashStopsAtWallRatherThanFindingDetour()
+    [Theory]
+    [InlineData(6)]
+    [InlineData(20)]
+    public void StraightDashStopsAtWallRatherThanFindingDetour(float distance)
     {
         var settings = new MovementOptions().ToSettings();
         var grid = new NavigationOptions
@@ -27,7 +29,7 @@ public sealed class DashTests
             BlockedAreas = new() { new BlockedAreaOptions { X = 14, Z = 10, Width = 2, Height = 10 } }
         }.CreateGrid(settings);
         var start = new Vector2(-2, 0);
-        Assert.True(DashGeometry.TryDestination(grid, start, Vector2.UnitX, 6, out var end));
+        Assert.True(DashGeometry.TryDestination(grid, start, Vector2.UnitX, distance, out var end));
         Assert.True(end.X < -1);
         Assert.True(grid.CanTraverse(start, end));
         var motion = new NavigationMover(grid, settings, new NavigationPathfinder(grid), start);
@@ -51,5 +53,23 @@ public sealed class DashTests
         for (var i = 0; i < 10; i++) { server.Step(0.05f); predicted.Step(0.05f); }
         Assert.Equal(server.Position, predicted.Position);
         Assert.False(predicted.IsDashing);
+    }
+
+    [Fact]
+    public void TwentyMeterDashTravelsFullDistanceAndReconcilesWithoutOvershoot()
+    {
+        var settings = new MovementOptions().ToSettings();
+        var grid = new NavigationOptions().CreateGrid(settings);
+        var start = new Vector2(-10, 0);
+        Assert.True(DashGeometry.TryDestination(grid, start, Vector2.UnitX, 20, out var destination));
+        Assert.Equal(new Vector2(10, 0), destination);
+        var server = new NavigationMover(grid, settings, new NavigationPathfinder(grid), start);
+        var predicted = new NavigationMover(grid, settings, new NavigationPathfinder(grid), start);
+        Assert.True(server.TryStartDash(destination, 15));
+        for (var i = 0; i < 7; i++) server.Step(.05f);
+        Assert.True(predicted.Restore(server.Position, server.Target, server.DashDestination, server.DashSpeed));
+        for (var i = 0; i < 30; i++) { server.Step(.05f); predicted.Step(.05f); }
+        Assert.Equal(destination, server.Position); Assert.Equal(destination, predicted.Position);
+        Assert.False(server.IsDashing); Assert.False(predicted.IsDashing);
     }
 }

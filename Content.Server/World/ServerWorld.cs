@@ -46,7 +46,8 @@ public sealed partial class ServerWorld
         IOptions<GroundItemOptions>? groundItems = null, IOptions<EchoOptions>? echoes = null, IOptions<WorldStoryOptions>? worldStory = null, IOptions<StarterZoneOptions>? starterZone = null, IOptions<CraftingOptions>? crafting = null,
         string regionId = "prototype", RuntimeEntityAllocator? entityIds = null,
         Content.Server.WorldStory.WorldNodeDefinition? worldNodeDefinition = null,
-        Content.Server.StarterZone.StarterZoneDefinition? starterZoneDefinition = null, IOptions<QuestOptions>? quests = null)
+        Content.Server.StarterZone.StarterZoneDefinition? starterZoneDefinition = null, IOptions<QuestOptions>? quests = null,
+        Content.Server.Pvp.PvpDefinition? pvpDefinition = null, IReadOnlyDictionary<string,float[]>? scenePlacements = null)
     {
         RegionOwnership.ValidateRegion(regionId);
         RegionId = regionId;
@@ -54,6 +55,8 @@ public sealed partial class ServerWorld
         _movement = options.Value.ToSettings();
         _spawn = new(options.Value.SpawnX, options.Value.SpawnZ);
         _worldLayoutVersion = options.Value.WorldLayoutVersion;
+        _pvpDefinition = pvpDefinition ?? catalog?.Pvp;
+        _pvpDefinition?.Validate();
         _interest = interest.Value;
         if (!_interest.IsValid())
             throw new ArgumentException("Invalid interest settings.", nameof(interest));
@@ -78,15 +81,18 @@ public sealed partial class ServerWorld
             if (!Navigation.IsWalkable(position))
                 throw new ArgumentException("Training target must have a walkable configured position.");
             TrainingTargetId = AllocateEntityId();
-            Combat.Add(TrainingTargetId, position, CombatEntityKind.TrainingTarget);
+            Combat.Add(TrainingTargetId, position, CombatEntityKind.TrainingTarget,
+                catalog.Swordsman is { } sword && sword.RegionId == regionId ? sword.DummyDefinitionId : null);
             _spatial.Add(TrainingTargetId, position);
             Abilities = new AbilitySimulation(catalog, Combat, _spatial, Navigation, settings, _interest.CellSize, StartDash);
+            Abilities.StopForCast = StopForSwordCast;
+            Combat.InterruptRequested += id => { StopForSwordCast(id); Npc?.Interrupt(Tick, id); Boss?.Interrupt(Tick, id); };
             if (echoes?.Value.Enabled == true)
                 Echoes = new EchoSimulation(echoes.Value,Navigation,_movement,Combat,_spatial,id =>
                 { var owner = _playersByEntity[id]; return (owner.Position,Combat.Get(id).Health > 0,owner.Motion.IsMoving); });
             if (inventory?.Value.Enabled == true)
                 Inventory = new InventorySimulation(catalog, Combat, Abilities, id => _playersByEntity[id].BaseStats);
-            if(Inventory is not null) Combat.WeaponUsable=Inventory.WeaponUsable;
+            if(Inventory is not null) { Combat.WeaponUsable=Inventory.WeaponUsable; Combat.SwordEquipped=Inventory.HasEquippedSword; }
             if (groundItems?.Value.Enabled == true)
                 GroundItems = new GroundItemSimulation(catalog, Inventory ?? throw new ArgumentException("Pickup requires inventory."),
                     Combat, Navigation, groundItems.Value, _interest.CellSize);
@@ -119,6 +125,7 @@ public sealed partial class ServerWorld
         InitializeStarterZone(starterZone?.Value,starterZoneDefinition ?? catalog?.StarterZone);
         InitializeCrafting(crafting?.Value,catalog?.Crafting); InitializePvp();
         InitializeQuests(quests?.Value.Enabled==true);
+        InitializeSwordTraining(scenePlacements);
     }
 
     public uint Tick { get; private set; }
@@ -257,6 +264,8 @@ public sealed partial class ServerWorld
             return false;
         }
 
+        Abilities?.CancelRecovery(player.EntityId);
+        if (Combat?.IsRooted(player.EntityId) == true) return false;
         if (command.Target != player.Target)
         {
             if (player.Motion.IsDashing)
@@ -306,6 +315,11 @@ public sealed partial class ServerWorld
         return true;
     }
 
+    private void StopForSwordCast(NetworkEntityId id)
+    {
+        if (_playersByEntity.TryGetValue(id, out var player)) player.Motion.Reset(player.Position, player.Position);
+    }
+
     public void UpdateAbilityInterest(int connectionId, InterestView entities, AbilityInterestView effects) =>
         Abilities?.UpdateInterest(effects, entities.Entities, _playersByConnection[connectionId].Position,
             _interest.Radius, _interest.ExitRadius, Tick);
@@ -352,6 +366,7 @@ public sealed partial class ServerWorld
         Npc?.Move(fixedDeltaSeconds, Tick);
         Boss?.Move(fixedDeltaSeconds, Tick);
         Combat?.Simulate(fixedDeltaSeconds, Tick);
+        RecordSwordTraining();
         if(Inventory is not null) foreach(var action in Combat!.Events) Inventory.Wear(action);
         Abilities?.Simulate(fixedDeltaSeconds, Tick);
         Npc?.Resolve(fixedDeltaSeconds, Tick);
@@ -367,6 +382,7 @@ public sealed partial class ServerWorld
             foreach (var owner in echoes.DirtyOwners) MarkPersistent(owner);
         }
         SimulateDeaths();
+        ResetArenaDummies();
         Inventory?.Simulate(Tick);
         GroundItems?.Simulate(Tick);
         ApplyDevelopmentRevives();

@@ -25,7 +25,7 @@ public static partial class NetworkProtocol
         s = default; if (r.AvailableBytes > 216 || !r.TryGetULong(out var id) || !r.TryGetUInt(out var tick) || !TryReadVector2(r, out var position) || !r.TryGetString(out var name) || !r.TryGetString(out var role) || r.AvailableBytes != 0) return false;
         var v = new QuestNpcSpawn(new(id), tick, position, name, role); if (!ValidQuestNpc(v)) return false; s = v; return true;
     }
-    private static bool ValidQuestReply(QuestReply s) => s.Sequence != 0 && Enum.IsDefined(s.Outcome) && s.Choices <= 3 && WorldText(s.Speaker, 32, 96) && WorldText(s.Text, 200, 600);
+    private static bool ValidQuestReply(QuestReply s) => s.Sequence != 0 && Enum.IsDefined(s.Outcome) && s.Choices <= 15 && WorldText(s.Speaker, 32, 96) && WorldText(s.Text, 200, 600);
     public static NetDataWriter Write(QuestReply s)
     {
         if (!ValidQuestReply(s)) throw new ArgumentException("Invalid quest reply.");

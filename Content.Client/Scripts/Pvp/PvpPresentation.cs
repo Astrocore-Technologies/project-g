@@ -15,6 +15,7 @@ public partial class PvpPresentation:CanvasLayer
     {
         _network=network;_player=player;Layer=8;
         _hud=new(){Position=new Vector2(16,208),Text="PvP / смерть — V",MouseFilter=Control.MouseFilterEnum.Ignore};AddChild(_hud); _hud.AddThemeFontSizeOverride("font_size",13); _hud.AddThemeConstantOverride("outline_size",4); _hud.AddThemeColorOverride("font_outline_color",new Color(0,0,0,.8f));
+        GameUi.CompactHud(_hud);
         _panel=new UiWindow { ToggleKey=Key.V }; AddChild(_panel); _panel.Build("PvP, репутация и смерть",new(960,600)); _panel.CloseRequested+=_panel.Close;
         var body=UiComposition.Scroll(_panel.Body);
         _details=new(){AutowrapMode=TextServer.AutowrapMode.WordSmart};body.AddChild(_details);

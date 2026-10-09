@@ -13,7 +13,7 @@ public sealed partial class ServerWorld
     private readonly Dictionary<NetworkEntityId, QuestCommand> _questPending = new();
     private readonly Dictionary<NetworkEntityId, (uint Sequence, uint Tick)> _questSequences = new();
     private readonly Dictionary<NetworkEntityId, QuestReply> _questReplies = new();
-    public bool HasQuests => _deliveryQuest is not null;
+    public bool HasQuests => _deliveryQuest is not null || _swordTrainer.IsValid;
     public IReadOnlyDictionary<NetworkEntityId, QuestReply> QuestReplies => _questReplies;
     private void InitializeQuests(bool enabled)
     {
@@ -54,9 +54,12 @@ public sealed partial class ServerWorld
     }
     private void SimulateQuests()
     {
-        if (_deliveryQuest is not { } q) return;
+        if (!HasQuests) return;
+        var q = _deliveryQuest;
         foreach (var (id, c) in _questPending)
         {
+            if (c.NpcId == _swordTrainer && _swordTrainer.IsValid) { TalkSwordTrainer(id, c); continue; }
+            if (q is null) continue;
             var player = _playersByEntity[id]; var actor = Combat!.Get(id); var saved = _progression[id].DeliveryQuest;
             var npc = _questNpcs.GetValueOrDefault(c.NpcId); var outcome = QuestOutcome.Accepted;
             if (c.Action != QuestAction.Journal)
@@ -82,6 +85,7 @@ public sealed partial class ServerWorld
                         GrantExperience(id, q.Experience); DirtyProgression(id);
                     }
                 }
+                else if (c.Action != QuestAction.Talk) outcome = QuestOutcome.Unavailable;
             }
             saved = _progression[id].DeliveryQuest;
             // Replies expose this conversation only. Journal and XP are published after the common commit barrier.

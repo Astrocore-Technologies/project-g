@@ -1,0 +1,591 @@
+[gd_resource type="AnimationLibrary" load_steps=14 format=3]
+
+[sub_resource type="Animation" id="basic_right"]
+resource_name = "basic_right"
+length = 1.0
+tracks/0/type = "value"
+tracks/0/path = NodePath("SwordPivot:rotation")
+tracks/0/interp = 1
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.00000, -1.65806, 0.00000), Vector3(-0.26180, -2.09440, -0.26180), Vector3(0.00000, 1.22173, 0.17453), Vector3(0.00000, 1.91986, 0.26180), Vector3(0.00000, 0.00000, 0.00000)]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath("SwordPivot:position")
+tracks/1/interp = 1
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.40000, 0.15000, 0.25000), Vector3(0.40000, 0.15000, 0.25000), Vector3(0.40000, 0.15000, 0.25000), Vector3(0.40000, 0.15000, 0.25000), Vector3(0.40000, 0.15000, 0.25000)]
+}
+tracks/2/type = "value"
+tracks/2/path = NodePath("BodyPose:rotation")
+tracks/2/interp = 1
+tracks/2/enabled = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.00000, 0.00000, 0.00000), Vector3(-0.08727, -0.31416, 0.13963), Vector3(0.20944, 0.34907, -0.10472), Vector3(0.06981, 0.20944, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+tracks/3/type = "value"
+tracks/3/path = NodePath("BodyPose:position")
+tracks/3/interp = 1
+tracks/3/enabled = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.12000), Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+
+[sub_resource type="Animation" id="basic_left"]
+resource_name = "basic_left"
+length = 1.0
+tracks/0/type = "value"
+tracks/0/path = NodePath("SwordPivot:rotation")
+tracks/0/interp = 1
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.00000, 1.57080, 0.08727), Vector3(-0.17453, 2.00713, 0.31416), Vector3(0.00000, -1.22173, -0.20944), Vector3(0.00000, -1.83260, -0.17453), Vector3(0.00000, 0.00000, 0.00000)]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath("SwordPivot:position")
+tracks/1/interp = 1
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.40000, 0.15000, 0.25000), Vector3(0.40000, 0.15000, 0.25000), Vector3(0.40000, 0.15000, 0.25000), Vector3(0.40000, 0.15000, 0.25000), Vector3(0.40000, 0.15000, 0.25000)]
+}
+tracks/2/type = "value"
+tracks/2/path = NodePath("BodyPose:rotation")
+tracks/2/interp = 1
+tracks/2/enabled = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.00000, 0.00000, 0.00000), Vector3(-0.10472, 0.31416, -0.13963), Vector3(0.20944, -0.31416, 0.12217), Vector3(0.05236, -0.17453, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+tracks/3/type = "value"
+tracks/3/path = NodePath("BodyPose:position")
+tracks/3/interp = 1
+tracks/3/enabled = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.12000), Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+
+[sub_resource type="Animation" id="thrust"]
+resource_name = "thrust"
+length = 1.0
+tracks/0/type = "value"
+tracks/0/path = NodePath("SwordPivot:rotation")
+tracks/0/interp = 1
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, -0.13963, 0.00000), Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath("SwordPivot:position")
+tracks/1/interp = 1
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.35000, 0.10000, 0.10000), Vector3(0.35000, 0.10000, -0.20000), Vector3(0.35000, 0.10000, 1.00000), Vector3(0.35000, 0.10000, 0.50000), Vector3(0.40000, 0.15000, 0.25000)]
+}
+tracks/2/type = "value"
+tracks/2/path = NodePath("BodyPose:rotation")
+tracks/2/interp = 1
+tracks/2/enabled = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.00000, 0.00000, 0.00000), Vector3(-0.20944, 0.00000, 0.00000), Vector3(0.34907, 0.00000, 0.00000), Vector3(0.17453, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+tracks/3/type = "value"
+tracks/3/path = NodePath("BodyPose:position")
+tracks/3/interp = 1
+tracks/3/enabled = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.12000), Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+
+[sub_resource type="Animation" id="sweep"]
+resource_name = "sweep"
+length = 1.0
+tracks/0/type = "value"
+tracks/0/path = NodePath("SwordPivot:rotation")
+tracks/0/interp = 1
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.00000, -1.91986, 0.00000), Vector3(-0.13963, -2.35619, 0.00000), Vector3(0.00000, 1.48353, 0.00000), Vector3(0.00000, 2.70526, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath("SwordPivot:position")
+tracks/1/interp = 1
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.40000, 0.15000, 0.25000), Vector3(0.40000, 0.15000, 0.25000), Vector3(0.20000, 0.15000, 0.25000), Vector3(0.40000, 0.15000, 0.25000), Vector3(0.40000, 0.15000, 0.25000)]
+}
+tracks/2/type = "value"
+tracks/2/path = NodePath("BodyPose:rotation")
+tracks/2/interp = 1
+tracks/2/enabled = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.00000, 0.00000, 0.00000), Vector3(-0.13963, -0.48869, 0.00000), Vector3(0.26180, 0.61087, 0.00000), Vector3(0.13963, 1.04720, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+tracks/3/type = "value"
+tracks/3/path = NodePath("BodyPose:position")
+tracks/3/interp = 1
+tracks/3/enabled = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.12000), Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+
+[sub_resource type="Animation" id="rend"]
+resource_name = "rend"
+length = 1.0
+tracks/0/type = "value"
+tracks/0/path = NodePath("SwordPivot:rotation")
+tracks/0/interp = 1
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(-0.78540, -1.13446, -0.34907), Vector3(-1.13446, -1.57080, -0.52360), Vector3(0.61087, 0.87266, 0.34907), Vector3(0.87266, 1.65806, 0.61087), Vector3(0.00000, 0.00000, 0.00000)]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath("SwordPivot:position")
+tracks/1/interp = 1
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.40000, 0.15000, 0.25000), Vector3(0.40000, 0.40000, 0.10000), Vector3(0.40000, -0.15000, 0.45000), Vector3(0.40000, -0.10000, 0.30000), Vector3(0.40000, 0.15000, 0.25000)]
+}
+tracks/2/type = "value"
+tracks/2/path = NodePath("BodyPose:rotation")
+tracks/2/interp = 1
+tracks/2/enabled = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.00000, 0.00000, 0.00000), Vector3(-0.20944, -0.31416, 0.10472), Vector3(0.38397, 0.31416, -0.13963), Vector3(0.13963, 0.20944, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+tracks/3/type = "value"
+tracks/3/path = NodePath("BodyPose:position")
+tracks/3/interp = 1
+tracks/3/enabled = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.12000), Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+
+[sub_resource type="Animation" id="breaker"]
+resource_name = "breaker"
+length = 1.0
+tracks/0/type = "value"
+tracks/0/path = NodePath("SwordPivot:rotation")
+tracks/0/interp = 1
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(-1.13446, 0.00000, 0.00000), Vector3(-1.91986, 0.00000, 0.00000), Vector3(0.61087, 0.00000, 0.00000), Vector3(0.95993, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath("SwordPivot:position")
+tracks/1/interp = 1
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.40000, 0.15000, 0.25000), Vector3(0.30000, 0.70000, -0.10000), Vector3(0.55000, 0.10000, 0.70000), Vector3(0.55000, 0.35000, 0.50000), Vector3(0.40000, 0.15000, 0.25000)]
+}
+tracks/2/type = "value"
+tracks/2/path = NodePath("BodyPose:rotation")
+tracks/2/interp = 1
+tracks/2/enabled = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.00000, 0.00000, 0.00000), Vector3(-0.34907, 0.00000, 0.00000), Vector3(0.48869, 0.00000, 0.00000), Vector3(0.26180, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+tracks/3/type = "value"
+tracks/3/path = NodePath("BodyPose:position")
+tracks/3/interp = 1
+tracks/3/enabled = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.12000), Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+
+[sub_resource type="Animation" id="pommel"]
+resource_name = "pommel"
+length = 1.0
+tracks/0/type = "value"
+tracks/0/path = NodePath("SwordPivot:rotation")
+tracks/0/interp = 1
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.00000, 2.53073, 0.00000), Vector3(-0.26180, 2.96706, 0.00000), Vector3(0.00000, 3.14159, 0.00000), Vector3(0.00000, 2.26893, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath("SwordPivot:position")
+tracks/1/interp = 1
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.40000, 0.15000, 0.25000), Vector3(0.20000, 0.30000, 0.15000), Vector3(0.20000, 0.30000, 0.95000), Vector3(0.30000, 0.20000, 0.60000), Vector3(0.40000, 0.15000, 0.25000)]
+}
+tracks/2/type = "value"
+tracks/2/path = NodePath("BodyPose:rotation")
+tracks/2/interp = 1
+tracks/2/enabled = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.00000, 0.00000, 0.00000), Vector3(-0.10472, -0.20944, 0.00000), Vector3(0.34907, 0.26180, 0.00000), Vector3(0.13963, 0.13963, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+tracks/3/type = "value"
+tracks/3/path = NodePath("BodyPose:position")
+tracks/3/interp = 1
+tracks/3/enabled = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.12000), Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+
+[sub_resource type="Animation" id="hamstring"]
+resource_name = "hamstring"
+length = 1.0
+tracks/0/type = "value"
+tracks/0/path = NodePath("SwordPivot:rotation")
+tracks/0/interp = 1
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.08727, -1.39626, 0.00000), Vector3(0.26180, -1.83260, 0.00000), Vector3(0.26180, 1.13446, 0.00000), Vector3(0.34907, 1.83260, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath("SwordPivot:position")
+tracks/1/interp = 1
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.40000, 0.15000, 0.25000), Vector3(0.40000, -0.60000, 0.20000), Vector3(0.30000, -0.65000, 0.50000), Vector3(0.40000, -0.40000, 0.30000), Vector3(0.40000, 0.15000, 0.25000)]
+}
+tracks/2/type = "value"
+tracks/2/path = NodePath("BodyPose:rotation")
+tracks/2/interp = 1
+tracks/2/enabled = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.00000, 0.00000, 0.00000), Vector3(0.38397, -0.34907, 0.13963), Vector3(0.48869, 0.43633, -0.13963), Vector3(0.26180, 0.17453, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+tracks/3/type = "value"
+tracks/3/path = NodePath("BodyPose:position")
+tracks/3/interp = 1
+tracks/3/enabled = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, -0.13000, 0.00000), Vector3(0.00000, -0.13000, 0.12000), Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+
+[sub_resource type="Animation" id="riposte"]
+resource_name = "riposte"
+length = 1.0
+tracks/0/type = "value"
+tracks/0/path = NodePath("SwordPivot:rotation")
+tracks/0/interp = 1
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(-0.78540, 1.04720, 0.00000), Vector3(-1.22173, 1.57080, 0.00000), Vector3(0.00000, -0.95993, 0.00000), Vector3(0.00000, -1.74533, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath("SwordPivot:position")
+tracks/1/interp = 1
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.40000, 0.15000, 0.25000), Vector3(0.25000, 0.50000, 0.25000), Vector3(0.35000, 0.10000, 0.90000), Vector3(0.40000, 0.10000, 0.55000), Vector3(0.40000, 0.15000, 0.25000)]
+}
+tracks/2/type = "value"
+tracks/2/path = NodePath("BodyPose:rotation")
+tracks/2/interp = 1
+tracks/2/enabled = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.00000, 0.00000, 0.00000), Vector3(-0.26180, 0.26180, 0.00000), Vector3(0.34907, -0.26180, 0.00000), Vector3(0.13963, -0.17453, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+tracks/3/type = "value"
+tracks/3/path = NodePath("BodyPose:position")
+tracks/3/interp = 1
+tracks/3/enabled = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.12000), Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+
+[sub_resource type="Animation" id="whirl"]
+resource_name = "whirl"
+length = 1.0
+tracks/0/type = "value"
+tracks/0/path = NodePath("SwordPivot:rotation")
+tracks/0/interp = 1
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.00000, -1.91986, 0.00000), Vector3(0.00000, -2.96706, 0.00000), Vector3(0.00000, 3.31613, 0.00000), Vector3(0.00000, 3.83972, 0.00000), Vector3(0.00000, 4.36332, 0.00000)]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath("SwordPivot:position")
+tracks/1/interp = 1
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.40000, 0.15000, 0.25000), Vector3(0.40000, 0.15000, 0.25000), Vector3(0.40000, 0.15000, 0.25000), Vector3(0.40000, 0.15000, 0.25000), Vector3(0.40000, 0.15000, 0.25000)]
+}
+tracks/2/type = "value"
+tracks/2/path = NodePath("BodyPose:rotation")
+tracks/2/interp = 1
+tracks/2/enabled = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.00000, 0.00000, 0.00000), Vector3(0.08727, -0.52360, 0.00000), Vector3(0.17453, 4.88692, 0.00000), Vector3(0.08727, 6.02139, 0.00000), Vector3(0.00000, 6.28319, 0.00000)]
+}
+tracks/3/type = "value"
+tracks/3/path = NodePath("BodyPose:position")
+tracks/3/interp = 1
+tracks/3/enabled = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.12000), Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+
+[sub_resource type="Animation" id="breath"]
+resource_name = "breath"
+length = 1.0
+tracks/0/type = "value"
+tracks/0/path = NodePath("SwordPivot:rotation")
+tracks/0/interp = 1
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.78540, 0.00000, 0.00000), Vector3(0.87266, 0.00000, 0.00000), Vector3(0.69813, 0.00000, 0.00000), Vector3(0.43633, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath("SwordPivot:position")
+tracks/1/interp = 1
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.50000, -0.30000, 0.00000), Vector3(0.50000, -0.40000, 0.00000), Vector3(0.50000, -0.25000, 0.00000), Vector3(0.45000, -0.10000, 0.10000), Vector3(0.40000, 0.15000, 0.25000)]
+}
+tracks/2/type = "value"
+tracks/2/path = NodePath("BodyPose:rotation")
+tracks/2/interp = 1
+tracks/2/enabled = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.24435, 0.00000, 0.00000), Vector3(0.38397, 0.00000, 0.00000), Vector3(0.20944, 0.00000, 0.00000), Vector3(0.10472, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+tracks/3/type = "value"
+tracks/3/path = NodePath("BodyPose:position")
+tracks/3/interp = 1
+tracks/3/enabled = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, -0.06000, 0.00000), Vector3(0.00000, -0.06000, 0.12000), Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+
+[sub_resource type="Animation" id="finisher"]
+resource_name = "finisher"
+length = 1.0
+tracks/0/type = "value"
+tracks/0/path = NodePath("SwordPivot:rotation")
+tracks/0/interp = 1
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(-0.95993, 0.61087, 0.00000), Vector3(-2.00713, 0.87266, -0.26180), Vector3(0.61087, -0.43633, 0.26180), Vector3(1.04720, -0.78540, 0.34907), Vector3(0.00000, 0.00000, 0.00000)]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath("SwordPivot:position")
+tracks/1/interp = 1
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.40000, 0.15000, 0.25000), Vector3(0.25000, 0.65000, 0.00000), Vector3(0.45000, 0.10000, 0.95000), Vector3(0.45000, 0.35000, 0.60000), Vector3(0.40000, 0.15000, 0.25000)]
+}
+tracks/2/type = "value"
+tracks/2/path = NodePath("BodyPose:rotation")
+tracks/2/interp = 1
+tracks/2/enabled = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.00000, 0.00000, 0.00000), Vector3(-0.43633, 0.26180, 0.00000), Vector3(0.55851, -0.26180, 0.00000), Vector3(0.27925, -0.08727, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+tracks/3/type = "value"
+tracks/3/path = NodePath("BodyPose:position")
+tracks/3/interp = 1
+tracks/3/enabled = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.12000), Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+
+[sub_resource type="Animation" id="dash"]
+resource_name = "dash"
+length = 1.0
+tracks/0/type = "value"
+tracks/0/path = NodePath("SwordPivot:rotation")
+tracks/0/interp = 1
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath("SwordPivot:position")
+tracks/1/interp = 1
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.40000, 0.15000, 0.25000), Vector3(0.40000, 0.15000, 0.25000), Vector3(0.40000, 0.15000, 0.25000), Vector3(0.40000, 0.15000, 0.25000), Vector3(0.40000, 0.15000, 0.25000)]
+}
+tracks/2/type = "value"
+tracks/2/path = NodePath("BodyPose:rotation")
+tracks/2/interp = 1
+tracks/2/enabled = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.34907, 0.00000, 0.00000), Vector3(0.61087, 0.00000, 0.00000), Vector3(0.61087, 0.00000, 0.00000), Vector3(0.26180, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+tracks/3/type = "value"
+tracks/3/path = NodePath("BodyPose:position")
+tracks/3/interp = 1
+tracks/3/enabled = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.35, 0.65, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.12000), Vector3(0.00000, 0.00000, 0.00000), Vector3(0.00000, 0.00000, 0.00000)]
+}
+
+[resource]
+_data = {
+&"basic_right": SubResource("basic_right"),
+&"basic_left": SubResource("basic_left"),
+&"thrust": SubResource("thrust"),
+&"sweep": SubResource("sweep"),
+&"rend": SubResource("rend"),
+&"breaker": SubResource("breaker"),
+&"pommel": SubResource("pommel"),
+&"hamstring": SubResource("hamstring"),
+&"riposte": SubResource("riposte"),
+&"whirl": SubResource("whirl"),
+&"breath": SubResource("breath"),
+&"finisher": SubResource("finisher"),
+&"dash": SubResource("dash")
+}
+

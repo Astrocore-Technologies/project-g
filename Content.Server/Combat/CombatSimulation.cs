@@ -68,9 +68,9 @@ public sealed partial class CombatSimulation
         if(DamagePermission is not null)return DamagePermission(source,target);
         return _actors.TryGetValue(source,out var owner)&&IsNpc(owner.Kind)?victim.Kind==CombatEntityKind.Player:IsHostileTarget(victim.Kind);
     }
-    private void NotifyDamage(NetworkEntityId source,NetworkEntityId target,double amount){if(amount<=0)return;_damageSerial[target]=checked(DamageSerial(target)+1);DamageApplied?.Invoke(source,target,amount);}
+    private void NotifyDamage(NetworkEntityId source,NetworkEntityId target,double amount, bool direct=true){if(amount<=0)return;_damageSerial[target]=checked(DamageSerial(target)+1);DamageApplied?.Invoke(source,target,amount);if(direct)DirectlyDamaged?.Invoke(target);}
     internal void ResetSession(NetworkEntityId id){var a=_actors[id];a.LastSequence=0;a.LastAbilitySequence=0;a.LastRequestTick=null;_pending.Remove(id);_results.Remove(id);if(_defense.TryGetValue(id,out var d)){d.Sequence=0;d.RequestTick=null;SetDefenseConnected(id,true);}}
-    internal void Respawn(NetworkEntityId id){var a=_actors[id];a.Health=a.Stats.MaxHealth;a.IsCasting=false;_equipmentDirty.Add(id);SetDefenseConnected(id,true);}
+    internal void Respawn(NetworkEntityId id){var a=_actors[id];a.Health=a.Stats.MaxHealth;a.IsCasting=false;a.StationaryCast=false;a.StunnedUntil=a.SlowUntil=0;_equipmentDirty.Add(id);SetDefenseConnected(id,true);}
     internal Func<NetworkEntityId,bool>? WeaponUsable { get; set; }
     public IReadOnlyList<AttackEvent> Events => _events;
     public IReadOnlyDictionary<NetworkEntityId, AttackResult> Results => _results;
@@ -107,6 +107,7 @@ public sealed partial class CombatSimulation
         var actor = _actors[id];
         if (actor.Kind != CombatEntityKind.Player || actor.Health > 0) return;
         actor.Health = actor.Stats.MaxHealth;
+        actor.StationaryCast = false; actor.IsCasting = false; actor.StunnedUntil = actor.SlowUntil = 0;
         SetDefenseConnected(id,true);
         // Publish public HP through the same durable state path; no resources/cooldowns/gear are reset.
         _equipmentDirty.Add(id);
@@ -142,7 +143,8 @@ public sealed partial class CombatSimulation
         var stats = _calculator.Calculate(baseStats is { } saved ? definition with { Stats = saved } : definition);
         var weapon = _catalog.Weapons[definition.WeaponId];
         _actors.Add(id, new Combatant(id, kind, position, stats, weapon,
-            Math.Max(_minimumInterval, _calculator.AttackInterval(weapon.AttackIntervalSeconds, stats))));
+            Math.Max(_minimumInterval, _calculator.AttackInterval(weapon.AttackIntervalSeconds, stats)))
+            { CanBleed = definition.CanBleed && kind != CombatEntityKind.TrainingTarget, CanBeStunned = definition.CanBeStunned && kind != CombatEntityKind.Boss && kind != CombatEntityKind.TrainingTarget });
         if (kind==CombatEntityKind.Player) _defense.Add(id,new DefenseActor { Stamina=_catalog.Defense.MaxStamina });
     }
 
@@ -150,6 +152,7 @@ public sealed partial class CombatSimulation
     {
         _actors.Remove(id); _damageSerial.Remove(id); _pending.Remove(id); _results.Remove(id); _equipmentDirty.Remove(id);
         _defense.Remove(id); _defenseActive.Remove(id); _defensePending.Remove(id); _defenseDirty.Remove(id);
+        _swords.Remove(id);
     }
 
     public void Move(NetworkEntityId id, Vector2 position) => _actors[id].Position = position;
@@ -171,6 +174,7 @@ public sealed partial class CombatSimulation
             return false;
         }
         actor.LastRequestTick = serverTick;
+        AttemptAction(id);
         _pending[id] = command;
         return true;
     }
@@ -185,7 +189,7 @@ public sealed partial class CombatSimulation
         foreach (var (id, command) in _pending)
         {
             var actor = _actors[id];
-            var outcome = actor.Health <= 0 || actor.IsCasting || IsDefending(id) || WeaponUsable?.Invoke(id)==false ? AttackOutcome.InvalidState
+            var outcome = actor.Health <= 0 || actor.IsCasting || IsStunned(id) || IsDefending(id) || WeaponUsable?.Invoke(id)==false ? AttackOutcome.InvalidState
                 : _time < actor.ReadyAt ? AttackOutcome.Cooldown : AttackOutcome.Accepted;
             _results[id] = new(command.Sequence, tick, outcome);
             if (outcome != AttackOutcome.Accepted)
@@ -203,7 +207,7 @@ public sealed partial class CombatSimulation
     {
         if (!_actors.TryGetValue(id, out var actor) || !IsNpc(actor.Kind) || actor.Health <= 0 ||
             !BasicAttackShape.IsValidDirection(direction) || !MovementSimulation.IsSequenceNewer(sequence, actor.LastSequence) ||
-            _time < actor.ReadyAt) return false;
+            _time < actor.ReadyAt || IsStunned(id)) return false;
         actor.LastSequence = sequence;
         actor.ReadyAt = StatMath.Add(_time, actor.AttackInterval);
         Resolve(actor, new(sequence, tick, direction), tick);
@@ -265,16 +269,19 @@ public sealed partial class CombatSimulation
         var damage = 0d;
         var critical = false;
         var guard = GuardImpact.None;
+        var focus = ConsumeFocus(actor.Id);
         if (target is not null)
         {
             critical = _roll() < StatCalculator.CriticalProbability(actor.Stats);
             var power = _calculator.WeaponPower(actor.Weapon, actor.Stats);
+            power *= focus * (IsSwordsman(actor.Id) ? 1 + _catalog.Swordsman!.BasicDamageBonus : 1);
             if (critical)
                 power = StatMath.Multiply(power, _criticalMultiplier);
             damage = Math.Min(target.Health, Defend(target,actor,direction,_calculator.ApplyDefense(power, target.Stats.PhysicalDefense),out guard));
             target.Health = Math.Max(0, target.Health - damage);
             NotifyDamage(actor.Id,target.Id,damage);
         }
+        SwordHit(actor.Id, basic: true, success: damage > 0);
         _events.Add(new(actor.Id, command.Sequence, tick, actor.Position, direction, range,
             target?.Id ?? NetworkEntityId.Invalid, damage, target?.Health ?? 0, critical,guard));
     }

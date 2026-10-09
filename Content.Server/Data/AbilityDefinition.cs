@@ -14,4 +14,7 @@ public sealed record AbilityDefinition
     public required double Radius { get; init; }
     public required double Speed { get; init; }
     public required double MagicAttackScale { get; init; }
+    public double StaminaCost { get; init; }
+    public MeleeTechnique? Melee { get; init; }
+    public bool Interruptible { get; init; } = true;
 }

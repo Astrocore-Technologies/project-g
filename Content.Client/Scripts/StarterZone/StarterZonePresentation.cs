@@ -37,6 +37,7 @@ public partial class StarterZonePresentation : Node3D
         var info=new VBoxContainer { CustomMinimumSize=new(90,0),SizeFlagsHorizontal=Control.SizeFlags.ExpandFill }; miniRow.AddChild(info);
         _location=UiComposition.Paragraph(info,zone.RegionName,14);
         info.AddChild(GameUi.Button("Карта · M",ToggleMap));
+        GameUi.CompactHud(_mapPanel);
         _worldWindow=new UiWindow { ToggleKey=Key.M }; canvas.AddChild(_worldWindow); _worldWindow.Build("Карта мира",new(1180,656)); _worldWindow.CloseRequested+=_worldWindow.Close;
         var page=UiComposition.Page(_worldWindow,"map");
         var tools=new HBoxContainer(); page.AddChild(tools);

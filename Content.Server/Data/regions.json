@@ -2,6 +2,9 @@
   {
     "Id": "prototype", "Destination": "outskirts",
     "ExitX": 37, "ExitZ": -10, "ArrivalX": -12, "ArrivalZ": 10, "Radius": 0.65,
+    "AdditionalRoutes": [
+      { "Destination": "river_city", "ExitX": -12, "ExitZ": 30, "ArrivalX": 0, "ArrivalZ": 0, "Radius": 1.5, "ArrivalAnchor": "SouthArrival" }
+    ],
     "Movement": { "MinX": -40, "MaxX": 40, "MinZ": -32, "MaxZ": 32, "SpawnX": -12, "SpawnZ": 18, "WorldLayoutVersion": 1 },
     "Navigation": { "GeometryFile": "Data/Regions/river-landing.json" },
     "Npc": { "Enabled": true, "DefinitionId": "test_creature", "X": -23, "Z": -22 },
@@ -18,6 +21,9 @@
   {
     "Id": "outskirts", "Destination": "prototype",
     "ExitX": -14, "ExitZ": 10, "ArrivalX": 34, "ArrivalZ": -10, "Radius": 0.65,
+    "AdditionalRoutes": [
+      { "Destination": "river_city", "ExitX": -10, "ExitZ": 13, "ArrivalX": 0, "ArrivalZ": 0, "Radius": 1.0, "ArrivalAnchor": "RiverArrival" }
+    ],
     "Movement": { "WorldLayoutVersion": 1 },
     "Navigation": {
       "CellSize": 1, "AgentRadius": 0.45,
@@ -35,6 +41,25 @@
         { "Id": 1, "Name": "Старые камни", "X": -7, "Z": -6 },
         { "Id": 2, "Name": "Восточный дозор", "X": 10, "Z": 7 }
       ]
+    }
+  },
+  {
+    "Id": "river_city", "Destination": "prototype",
+    "ExitX": 0, "ExitZ": 0, "ArrivalX": -12, "ArrivalZ": 26, "Radius": 2.8, "ExitAnchor": "SouthGate",
+    "AdditionalRoutes": [
+      { "Destination": "outskirts", "ExitX": 0, "ExitZ": 0, "ArrivalX": -10, "ArrivalZ": 8, "Radius": 2.8, "ExitAnchor": "RiverGate" }
+    ],
+    "PlacementsFile": "Data/Regions/river-city-placements.json",
+    "Navigation": { "GeometryFile": "Data/Regions/river-city.json" },
+    "SafeSettlement": true,
+    "Npc": { "Enabled": false },
+    "Boss": { "Actor": { "Enabled": false } },
+    "Crafting": { "Enabled": false },
+    "WorldNode": { "Key": "river-city", "Interactive": false, "OpeningCells": [] },
+    "StarterZone": {
+      "RegionName": "Речная пристань", "TownName": "Рыночная площадь", "GuideName": "Городской проводник",
+      "TownX": 0, "TownZ": 0, "GuideX": 0, "GuideZ": 0, "RevealRadiusCells": 4,
+      "Landmarks": []
     }
   }
 ]

@@ -32,7 +32,7 @@ public sealed class RegionalNetworkTests
     {
         await store.InitializeAsync(default);
         var world = worlds.Worlds.Single(w => w.RegionId == region);
-        var departure = worlds.Routes.Single(r => r.Source == region).Departure;
+        var departure = worlds.Routes.Single(r => r.Source == region && r.Destination == (region == "prototype" ? "outskirts" : "prototype")).Departure;
         var position = departure + new Vector2(region == "prototype" ? -1 : 2, 0);
         var initial = world.CreateInitialCharacter() with { RegionId = region, X = position.X, Z = position.Y,
             Echoes = new SavedEchoes { Active = Enumerable.Range(1, 3).Select(i => new SavedEcho(Guid.NewGuid(),

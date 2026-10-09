@@ -1,0 +1,52 @@
+[gd_scene load_steps=8 format=3]
+
+[sub_resource type="StandardMaterial3D" id="Wood"]
+albedo_color = Color(0.38, 0.23, 0.12, 1)
+roughness = 1.0
+
+[sub_resource type="StandardMaterial3D" id="Straw"]
+albedo_color = Color(0.82, 0.65, 0.32, 1)
+roughness = 1.0
+
+[sub_resource type="StandardMaterial3D" id="Cloth"]
+albedo_color = Color(0.62, 0.21, 0.17, 1)
+
+[sub_resource type="BoxMesh" id="PostMesh"]
+size = Vector3(0.19, 2.4, 0.19)
+
+[sub_resource type="BoxMesh" id="ArmsMesh"]
+size = Vector3(1.8, 0.18, 0.18)
+
+[sub_resource type="CylinderMesh" id="BodyMesh"]
+top_radius = 0.36
+bottom_radius = 0.28
+height = 0.85
+radial_segments = 8
+
+[sub_resource type="SphereMesh" id="HeadMesh"]
+radius = 0.25
+height = 0.5
+radial_segments = 8
+rings = 4
+
+[node name="TrainingDummy" type="Node3D"]
+
+[node name="Post" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.2, 0)
+mesh = SubResource("PostMesh")
+material_override = SubResource("Wood")
+
+[node name="Arms" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.8, 0)
+mesh = SubResource("ArmsMesh")
+material_override = SubResource("Wood")
+
+[node name="Body" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.65, 0)
+mesh = SubResource("BodyMesh")
+material_override = SubResource("Cloth")
+
+[node name="Head" type="MeshInstance3D" parent="."]
+position = Vector3(0, 2.35, 0)
+mesh = SubResource("HeadMesh")
+material_override = SubResource("Straw")

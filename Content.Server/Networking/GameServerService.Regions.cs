@@ -79,8 +79,10 @@ public sealed partial class GameServerService
         if (_regions is not null)
         {
             var owner = _regions.Owner(peer.Id);
-            var route = _regionalWorlds!.Routes.Single(r => r.Source == owner.Region);
-            peer.Send(NetworkProtocol.Write(new RegionEnter(owner.Epoch, owner.Region, route.Departure, route.Radius, world.GeometryHash)), DeliveryMethod.ReliableOrdered);
+            var routes = _regionalWorlds!.Routes.Where(r => r.Source == owner.Region).ToArray();
+            var route = routes[0];
+            peer.Send(NetworkProtocol.Write(new RegionEnter(owner.Epoch, owner.Region, route.Departure, route.Radius, world.GeometryHash,
+                routes.Length == 1 ? null : routes.Skip(1).Select(g => new RegionGate(g.Departure, g.Radius)).ToArray())), DeliveryMethod.ReliableOrdered);
         }
         SendGame(peer, NetworkProtocol.Write(new DevelopmentTools(CanDevelopmentRevive(peer))), DeliveryMethod.ReliableOrdered);
         SendGame(peer, NetworkProtocol.Write(world.Navigation.ToMessage()), DeliveryMethod.ReliableOrdered);

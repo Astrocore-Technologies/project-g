@@ -25,6 +25,7 @@ public sealed partial class ServerWorld
         if (_progressionCatalog is not { } catalog) return;
         var value = saved ?? SavedProgression.Starter(_playerDefinition!,catalog); value.Validate(); ValidateProfession(value);
         if(value.DeliveryQuest is { } quest && quest.DefinitionId!=catalog.DeliveryQuest?.Id) throw new InvalidDataException("Quest content migration required.");
+        if(value.SwordTraining is { } training && (catalog.Swordsman is not { } sword || training.Damage > sword.RequiredDamage)) throw new InvalidDataException("Sword training content migration required.");
         var balance = catalog.Progression;
         if (value.Level > balance.LevelCap || (value.Level == balance.LevelCap ? value.Experience != 0 : value.Experience >= balance.LevelThreshold(value.Level)))
             throw new InvalidDataException("Saved level curve requires migration.");
@@ -39,7 +40,7 @@ public sealed partial class ServerWorld
         if (value.Skills.Count(s => catalog.Abilities[s.DefinitionId].Kind == AbilityKind.Dash) > 1 ||
             value.Skills.Any(s => catalog.Abilities[s.DefinitionId].NetworkId == balance.DiscoverySkillId && value.Discoveries == 0))
             throw new InvalidDataException("Invalid progression source.");
-        _progression.Add(id,value); Abilities!.ApplyProgression(id,value); _progressionDirty.Add(id); _professionDirty.Add(id); EvaluateProfessionOffer(id);
+        _progression.Add(id,value); Combat!.SetProfession(id,value.Profession.ActiveId); Abilities!.ApplyProgression(id,value); _progressionDirty.Add(id); _professionDirty.Add(id); EvaluateProfessionOffer(id);
     }
     public ProgressionState ProgressionState(NetworkEntityId id, uint tick)
     {
@@ -101,8 +102,10 @@ public sealed partial class ServerWorld
     {
         if (_progressionCatalog is not { } catalog) return;
         // Combat events are created exactly once by the authoritative simulation; no client reward RPC.
-        foreach (var action in Combat!.Events) if (action.Damage > 0 && IsPlayer(action.AttackerId) && !IsPlayer(action.TargetId)) GrantExperience(action.AttackerId,1);
-        foreach (var hit in Abilities!.Hits) if (hit.Damage > 0 && IsPlayer(hit.ActorId) && !IsPlayer(hit.TargetId)) GrantExperience(hit.ActorId,1);
+        foreach (var action in Combat!.Events) if (action.Damage > 0 && IsPlayer(action.AttackerId) && !IsPlayer(action.TargetId) && !_arenaDummies.Contains(action.TargetId)) GrantExperience(action.AttackerId,1);
+        // Periodic ticks are not separate actions and must not multiply experience with server tick rate.
+        for (var i = Abilities!.DirectHitsStart; i < Abilities.Hits.Count; i++)
+        { var hit = Abilities.Hits[i]; if (hit.Damage > 0 && IsPlayer(hit.ActorId) && !IsPlayer(hit.TargetId) && !_arenaDummies.Contains(hit.TargetId)) GrantExperience(hit.ActorId,1); }
         foreach (var use in Abilities.Practice)
         {
             RecordProfessionUse(use.ActorId);

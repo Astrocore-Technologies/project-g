@@ -26,7 +26,9 @@ public sealed class DefenseProtocolTests
         Assert.False(NetworkProtocol.TryReadDefenseState(Body([..data,0]),out _));
         BitConverter.GetBytes(double.NaN).CopyTo(data,19); Assert.False(NetworkProtocol.TryReadDefenseState(Body(data),out _));
         Assert.Throws<ArgumentException>(()=>NetworkProtocol.Write(state with { Stamina=101 }));
-        Assert.Throws<ArgumentException>(()=>NetworkProtocol.Write(state with { MovementMultiplier=0 }));
+        Assert.Throws<ArgumentException>(()=>NetworkProtocol.Write(state with { MovementMultiplier=-.1f }));
+        Assert.True(NetworkProtocol.TryReadDefenseState(Body(NetworkProtocol.Write(state with { MovementMultiplier=0 }).CopyData()),out _));
+        Assert.True(NetworkProtocol.TryReadDefenseState(Body(NetworkProtocol.Write(state with { MovementMultiplier=1.1f }).CopyData()),out _));
         Assert.Throws<ArgumentException>(()=>NetworkProtocol.Write(new DefenseCommand(1,DefenseAction.Parry,Vector2.Zero)));
     }
 }

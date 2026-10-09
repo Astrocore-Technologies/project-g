@@ -80,6 +80,7 @@ public sealed class NpcSimulation
         if (!float.IsFinite(delta) || delta <= 0) throw new ArgumentException("Invalid NPC fixed tick delta.");
         _time += delta;
         if (_combat.Get(Id).Health <= 0) { Defeat(tick); return; }
+        if (_combat.IsStunned(Id)) return;
         if (Behavior == NpcBehavior.Windup) return;
         _decisionRemaining -= delta;
         if (_decisionRemaining <= 0)
@@ -87,7 +88,7 @@ public sealed class NpcSimulation
             _decisionRemaining = _options.DecisionSeconds;
             Decide(tick);
         }
-        Motion.Step(delta);
+        Motion.Step(delta * _combat.OrdinaryMovement(Id));
         _spatial.Move(Id, Motion.Position);
         _combat.Move(Id, Motion.Position);
     }
@@ -96,6 +97,7 @@ public sealed class NpcSimulation
     {
         // Player attacks/casts resolve first: killing a winding-up NPC cancels its strike.
         if (_combat.Get(Id).Health <= 0) { Defeat(tick); return; }
+        if (_combat.IsStunned(Id)) return;
         if (Area is { Phase: NpcAreaPhase.Impact } impact)
         {
             var remaining = Math.Max(0, impact.RemainingSeconds - delta);
@@ -181,6 +183,14 @@ public sealed class NpcSimulation
             Behavior = NpcBehavior.Chasing;
             if (!Motion.TrySetTarget(target.Position)) Return(tick);
         }
+    }
+
+    internal void Interrupt(uint tick, NetworkEntityId target)
+    {
+        if (target != Id || Behavior != NpcBehavior.Windup) return;
+        if (_castingArea ? _area?.Interruptible != true : _combat.Get(Id).Kind == CombatEntityKind.Boss) return;
+        EndTelegraph(tick); EndArea(tick); _castingArea = false; Behavior = NpcBehavior.Chasing;
+        Motion.Reset(Motion.Position, Motion.Position);
     }
 
     private bool ValidTarget(out Combatant target) => _combat.TryGet(TargetId, out target!) && target.Health > 0 &&

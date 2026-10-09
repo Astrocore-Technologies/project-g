@@ -28,8 +28,9 @@ public sealed partial class RegionalSimulation
     {
         ArgumentNullException.ThrowIfNull(clock);
         if (capacity is < 1 or > 64) throw new ArgumentOutOfRangeException(nameof(capacity));
-        if (regions.Count != 2 || routes.Count != 2)
-            throw new ArgumentException("The travel slice requires two regions and reciprocal boundaries.");
+        if (regions.Count is < 2 or > RegionalWorlds.MaxRegions || routes.Count < regions.Count ||
+            routes.Count > regions.Count * NetworkConstants.MaxRegionGates)
+            throw new ArgumentException("Regional graph exceeds the bounded region/gate budget.");
         orderedWorlds = regions.ToArray();
         publicWorlds = Array.AsReadOnly(orderedWorlds);
         var worldKeys = new HashSet<string>(StringComparer.Ordinal);
@@ -50,12 +51,18 @@ public sealed partial class RegionalSimulation
             route.Validate(source, destination);
         }
         boundaries = routes.GroupBy(r => r.Source).ToDictionary(g => g.Key, g => g.ToArray(), StringComparer.Ordinal);
-        if (boundaries.Count != 2 || boundaries.Values.Any(r => r.Length != 1))
+        if (boundaries.Count != regions.Count || boundaries.Values.Any(r => r.Length > NetworkConstants.MaxRegionGates) ||
+            routes.Any(r => !routes.Any(back => back.Source == r.Destination && back.Destination == r.Source)))
             throw new InvalidDataException("Regions need reciprocal routes.");
         // Arrivals cannot immediately trigger the reverse journey and create a transfer loop.
         foreach (var route in routes)
-            if (boundaries[route.Destination][0].Contains(route.Arrival))
+            if (boundaries[route.Destination].Any(gate => gate.Contains(route.Arrival)))
                 throw new InvalidDataException("Arrival overlaps the reverse boundary.");
+        foreach (var gates in boundaries.Values)
+            for (var i = 0; i < gates.Length; i++)
+            for (var j = i + 1; j < gates.Length; j++)
+                if (System.Numerics.Vector2.Distance(gates[i].Departure, gates[j].Departure) <= gates[i].Radius + gates[j].Radius)
+                    throw new InvalidDataException("Regional gate volumes overlap.");
         ownership = new(capacity);
         Social = new(clock, character => !characters.TryGetValue(character, out var connection) ||
             CanExecute(connection, ownership.Owner(character)) && World(connection).CanChangeSocial(connection), maxParties, maxGuilds);
@@ -122,8 +129,10 @@ public sealed partial class RegionalSimulation
     internal RegionBoundary? Boundary(int connection)
     {
         var world = World(connection); var actor = world.GetPlayer(connection);
-        var route = boundaries[world.RegionId][0];
-        return route.Contains(actor.Position) ? route : null;
+        // Only this region's bounded gate list is visited, never the world's entities.
+        foreach (var route in boundaries[world.RegionId])
+            if (route.Contains(actor.Position)) return route;
+        return null;
     }
 
     private void ValidateArchivedMaps(CharacterState state)

@@ -18,6 +18,15 @@ public partial class UiFoundationSmoke : Node
             Check(bad.Validate().Any(x=>x.Contains("Duplicate")) && bad.Validate().Any(x=>x.Contains("No resource")),"Missing/duplicate resources were not diagnosed.");
             Check(UiAssets.Texture("not-supplied") is null && UiAssets.Model("not-supplied") is null,"Missing art invented a resource.");
             Check(ReferenceEquals(GameUi.CreateTheme(),GameUi.CreateTheme()),"Theme rebuilt instead of cached.");
+            var icons=new HBoxContainer(); AddChild(icons);
+            var regular=new UiIconSlot { SizeFlagsVertical=Control.SizeFlags.ShrinkCenter }; regular.Bind("nav.character","Regular icon"); icons.AddChild(regular);
+            var compact=new UiIconSlot { CustomMinimumSize=new(32,32),SizeFlagsVertical=Control.SizeFlags.ShrinkCenter,FocusMode=Control.FocusModeEnum.None }; compact.Bind("nav.character","Compact icon"); icons.AddChild(compact);
+            await Frames(3);
+            Check(regular.Size.IsEqualApprox(new(64,64)) && compact.Size.IsEqualApprox(regular.Size/2),"Compact icon is not half the default slot size.");
+            Check(compact.FocusMode==Control.FocusModeEnum.None,"Binding reset the caller's focus mode.");
+            var regularArt=regular.GetChildren().OfType<TextureRect>().Single(); var compactArt=compact.GetChildren().OfType<TextureRect>().Single();
+            Check(compactArt.Size.IsEqualApprox(regularArt.Size/2),"Compact artwork did not preserve half-size proportions.");
+            icons.QueueFree(); await Frames(2);
             var workbench=GD.Load<PackedScene>("res://UI/Workbench.tscn").Instantiate<UiWorkbench>(); AddChild(workbench); await Frames(4);
             foreach(var screen in Enum.GetValues<UiScreenKind>())
             {

@@ -19,7 +19,7 @@ public static partial class NetworkProtocol
         double.IsFinite(s.Stamina) && s.Stamina>=0 && double.IsFinite(s.MaxStamina) && s.MaxStamina>0 && s.Stamina<=s.MaxStamina &&
         double.IsFinite(s.BlockDamage) && double.IsFinite(s.ParryRemaining) && s.ParryRemaining is >=0 and <=60 &&
         double.IsFinite(s.ParryCooldown) && s.ParryCooldown is >=0 and <=60 && double.IsFinite(s.DodgeCost) && s.DodgeCost>0 &&
-        double.IsFinite(s.ParryCost) && s.ParryCost>0 && float.IsFinite(s.MovementMultiplier) && s.MovementMultiplier is >0 and <=1 && BasicAttackShape.IsValidDirection(s.Direction);
+        double.IsFinite(s.ParryCost) && s.ParryCost>0 && float.IsFinite(s.MovementMultiplier) && s.MovementMultiplier is >=0 and <=2 && BasicAttackShape.IsValidDirection(s.Direction);
     public static NetDataWriter Write(DefenseState s)
     {
         if (!ValidDefense(s)) throw new ArgumentException("Invalid defense state.");

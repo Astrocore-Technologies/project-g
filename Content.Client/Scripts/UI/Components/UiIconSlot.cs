@@ -7,14 +7,20 @@ public partial class UiIconSlot : Button
     private TextureRect _art = null!;
     private Label _fallback = null!, _badge = null!;
     private bool _built;
+    public UiIconSlot()
+    {
+        CustomMinimumSize = new(64,64); FocusMode = FocusModeEnum.All;
+    }
     public override void _Ready() => Build();
     private void Build()
     {
         if (_built) return; _built = true;
-        CustomMinimumSize = new(64,64); Theme = GameUi.CreateTheme(); FocusMode = FocusModeEnum.All;
+        Theme = GameUi.CreateTheme();
+        // Preserve the caller's slot size and scale art insets with it, not the whole UI.
+        var artScale = CustomMinimumSize / 64f;
         _art = new TextureRect { ExpandMode=TextureRect.ExpandModeEnum.IgnoreSize, StretchMode=TextureRect.StretchModeEnum.KeepAspectCentered, MouseFilter=MouseFilterEnum.Ignore };
-        _art.Modulate=UiAssets.Skin.IconTint; AddChild(_art); _art.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect); _art.OffsetLeft=7; _art.OffsetRight=-7; _art.OffsetTop=7; _art.OffsetBottom=-12;
-        _fallback=GameUi.Text("◇",26); _fallback.HorizontalAlignment=HorizontalAlignment.Center; _fallback.VerticalAlignment=VerticalAlignment.Center;
+        _art.Modulate=UiAssets.Skin.IconTint; AddChild(_art); _art.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect); _art.OffsetLeft=7*artScale.X; _art.OffsetRight=-7*artScale.X; _art.OffsetTop=7*artScale.Y; _art.OffsetBottom=-12*artScale.Y;
+        _fallback=GameUi.Text("◇",Math.Max(1,Mathf.RoundToInt(26*Math.Min(artScale.X,artScale.Y)))); _fallback.HorizontalAlignment=HorizontalAlignment.Center; _fallback.VerticalAlignment=VerticalAlignment.Center;
         _fallback.AddThemeColorOverride("font_color",UiAssets.Skin.IconTint); AddChild(_fallback); _fallback.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
         _badge=GameUi.Text("",12); _badge.HorizontalAlignment=HorizontalAlignment.Right; _badge.VerticalAlignment=VerticalAlignment.Bottom;
         _badge.AddThemeColorOverride("font_color",UiAssets.Skin.IconTint); AddChild(_badge); _badge.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect); _badge.OffsetRight=-5; _badge.OffsetBottom=-3;

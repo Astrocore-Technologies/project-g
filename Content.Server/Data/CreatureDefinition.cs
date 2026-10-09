@@ -6,6 +6,8 @@ namespace Content.Server.Data;
 /// <summary>Immutable base definition, separate from mutable HP, AI and persistence.</summary>
 public sealed record CreatureDefinition
 {
+    public bool CanBleed { get; init; } = true;
+    public bool CanBeStunned { get; init; } = true;
     public required string Id { get; init; }
     public required BaseStats Stats { get; init; }
     public DerivedStatModifiers Modifiers { get; init; } = new();

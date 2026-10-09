@@ -414,7 +414,7 @@ public sealed partial class GameServerService : BackgroundService
     private void SendInterest(NetPeer peer, InterestView view)
     {
         var world = WorldFor(peer.Id);
-        if(world.HasWorldNode)
+        if(world.HasWorldEvent)
         {
             var state=world.PublicWorldNode();
             if((state.Consequences&1)!=0 && !view.BridgeNavigationSent)

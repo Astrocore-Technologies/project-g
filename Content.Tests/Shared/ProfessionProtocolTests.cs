@@ -34,6 +34,6 @@ public sealed class ProfessionProtocolTests
         Assert.Throws<ArgumentException>(()=>NetworkProtocol.Write(new ProfessionState(new(1),0,0,"hidden",0,"")));
         Assert.Throws<ArgumentException>(()=>NetworkProtocol.Write(new ProfessionState(new(1),0,1,new string('x',25),0,"")));
         Assert.False(NetworkProtocol.TryReadProfessionState(new(new byte[171]),out _));
-        Assert.Equal(6,typeof(ProfessionState).GetProperties().Length);
+        Assert.Equal(8,typeof(ProfessionState).GetProperties().Length); // Public training, not hidden profession counters.
     }
 }

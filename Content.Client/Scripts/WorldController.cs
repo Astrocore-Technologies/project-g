@@ -217,7 +217,12 @@ public partial class WorldController : Node3D
             AddChild(actor);
             actor.Position = new Vector3(state.Position.X, 1, state.Position.Y);
             if (actor is NpcPresentation npc) npc.Initialize(state, _network.Navigation!);
-            actor.AddChild(new MeshInstance3D
+            if (state.Kind == CombatEntityKind.TrainingTarget)
+            {
+                var dummy = GD.Load<PackedScene>("res://Scenes/Actors/TrainingDummy.tscn").Instantiate<Node3D>();
+                dummy.Position = Vector3.Down; actor.AddChild(dummy);
+            }
+            else actor.AddChild(new MeshInstance3D
             {
                 Mesh = new CylinderMesh { TopRadius = state.Kind == CombatEntityKind.Boss ? 0.7f : 0.4f,
                     BottomRadius = state.Kind == CombatEntityKind.Boss ? 0.7f : 0.4f, Height = 2 },
@@ -302,6 +307,8 @@ public partial class WorldController : Node3D
     private void OnAbilityEffect(AbilityEffectState value)
     {
         _abilities?.Confirm(value);
+        if (_players.TryGetValue(value.ActorId, out var animated) && animated.IsAlive)
+            animated.SwordAnimation.ApplyAbility(value);
         if (value.Phase == AbilityPhase.Finished)
         {
             if (_effects.Remove(value.EffectId, out var old) && GodotObject.IsInstanceValid(old)) old.QueueFree();

@@ -13,6 +13,7 @@ public partial class BlockoutPreview : Node3D
     [Export] public float GameplayFov { get; set; } = 50;
     [Export] public float OverviewSize { get; set; } = 96;
     [Export] public float PanSpeed { get; set; } = 12;
+    [Export] public string RegionTitle { get; set; } = "ОКРАИНА РЕЧНОЙ ПРИСТАНИ · BLOCKOUT";
     private Vector3 _focus;
     private bool _overview = true;
     private int _point;
@@ -84,5 +85,5 @@ public partial class BlockoutPreview : Node3D
     }
 
     private void UpdateStatus(string view) => Status.Text =
-        $"ОКРАИНА РЕЧНОЙ ПРИСТАНИ · BLOCKOUT\n{view} · 1–6: точки осмотра · Tab: план / игровая камера\nСтрелки: сдвиг камеры · Offline, без движения персонажа и серверной навигации";
+        $"{RegionTitle}\n{view} · 1–6: точки осмотра · Tab: план / игровая камера\nСтрелки: сдвиг камеры · Offline, без движения персонажа и серверной навигации";
 }

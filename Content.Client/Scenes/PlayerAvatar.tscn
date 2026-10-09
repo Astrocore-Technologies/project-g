@@ -1,6 +1,7 @@
 [gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://Scripts/PlayerController.cs" id="1_player"]
+[ext_resource type="PackedScene" path="res://Scenes/Actors/SwordAttackRig.tscn" id="2_sword"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_player"]
 
@@ -14,6 +15,8 @@ mesh = SubResource("CapsuleMesh_player")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("CapsuleShape_player")
+
+[node name="SwordAttackRig" parent="." instance=ExtResource("2_sword")]
 
 [node name="CameraRig" type="Node3D" parent="."]
 

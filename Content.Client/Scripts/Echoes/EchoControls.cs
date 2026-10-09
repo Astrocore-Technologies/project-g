@@ -34,7 +34,7 @@ public partial class EchoControls : CanvasLayer
         for(var i=0;i<_buttons.Length;i++)
         {
             var slot=(byte)(i+1); var button=new Button { Visible=false,CustomMinimumSize=new(144,62),FocusMode=Control.FocusModeEnum.None,Icon=UiAssets.Texture("icon.star"),ExpandIcon=true };
-            button.AddThemeConstantOverride("icon_max_width",28); button.Pressed+=()=> { _selected=slot; Toggle(); }; panel.AddChild(button); _buttons[i]=button;
+            button.AddThemeConstantOverride("icon_max_width",14); button.Pressed+=()=> { _selected=slot; Toggle(); }; panel.AddChild(button); _buttons[i]=button;
         }
         _status=UiComposition.Paragraph(panel,"T / Y / U — способности\nF3 — Эхо Прошлого",12); _status.AddThemeConstantOverride("outline_size",4); _status.AddThemeColorOverride("font_outline_color",new Color(0,0,0,.8f));
         _window=new UiWindow { ToggleKey=Key.F3 }; root.AddChild(_window); _window.Build("Эхо Прошлого",new(1180,656)); _window.CloseRequested+=_window.Close;

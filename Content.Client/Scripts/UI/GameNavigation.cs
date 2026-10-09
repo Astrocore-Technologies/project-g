@@ -26,17 +26,18 @@ public partial class GameNavigation : CanvasLayer
         foreach(var item in UiComposition.Screens)
         {
             var cell=new VBoxContainer { CustomMinimumSize=new(76,0) }; nav.AddChild(cell);
-            var button=new UiIconSlot { CustomMinimumSize=new(48,48),SizeFlagsHorizontal=Control.SizeFlags.ShrinkCenter,FocusMode=Control.FocusModeEnum.None };
+            var button=new UiIconSlot { CustomMinimumSize=new(32,32),SizeFlagsHorizontal=Control.SizeFlags.ShrinkCenter,FocusMode=Control.FocusModeEnum.None };
             button.Bind(item.Icon,item.Label+" · "+item.Key); button.Disabled=item.Id!="guild" && !GameUi.HasRoute(item.Id); button.Pressed+=()=>GameUi.Navigate(item.Id); cell.AddChild(button);
             var label=GameUi.Text(item.Id=="echo"?"Эхо":item.Id=="map"?"Карта":item.Label,12); label.HorizontalAlignment=HorizontalAlignment.Center; cell.AddChild(label);
         }
         var menuCell=new VBoxContainer { CustomMinimumSize=new(64,0) }; nav.AddChild(menuCell);
-        var menuButton=new UiIconSlot { CustomMinimumSize=new(48,48),FocusMode=Control.FocusModeEnum.None }; menuButton.Bind("nav.menu","Меню · Esc"); menuButton.Pressed+=ToggleMenu; menuCell.AddChild(menuButton);
+        var menuButton=new UiIconSlot { CustomMinimumSize=new(32,32),SizeFlagsHorizontal=Control.SizeFlags.ShrinkCenter,FocusMode=Control.FocusModeEnum.None }; menuButton.Bind("nav.menu","Меню · Esc"); menuButton.Pressed+=ToggleMenu; menuCell.AddChild(menuButton);
         var menuLabel=GameUi.Text("Меню",12); menuLabel.HorizontalAlignment=HorizontalAlignment.Center; menuCell.AddChild(menuLabel);
         var notices=new PanelContainer { AnchorTop=1,AnchorBottom=1,OffsetLeft=16,OffsetRight=296,OffsetTop=-186,OffsetBottom=-16,MouseFilter=Control.MouseFilterEnum.Stop }; root.AddChild(notices); _notices=notices;
         var feed=new VBoxContainer(); notices.AddChild(feed); feed.AddChild(GameUi.Text("События мира",16));
         _noticeText=UiComposition.Paragraph(UiComposition.Scroll(feed),"Здесь появятся вести и приглашения.",13); _noticeText.SizeFlagsVertical=Control.SizeFlags.ExpandFill;
         var actions=new HBoxContainer(); feed.AddChild(actions); actions.AddChild(GameUi.Button("Журнал",()=>GameUi.Navigate("journal"))); actions.AddChild(GameUi.Button("Группа",()=>GameUi.Navigate("party")));
+        GameUi.CompactHud(notices);
         if(network.LatestWorldNode is {} known) WorldNotice(known);
         network.WorldNodeReceived+=WorldNotice; network.TradeStateReceived+=TradeNotice; network.SocialInvitesReceived+=InviteNotice; network.SocialRosterReceived+=PartyNotice; network.ProfessionReceived+=ProfessionNotice;
         _menu=new UiWindow { ToggleKey=Key.Escape }; root.AddChild(_menu); _menu.Build("Меню путешественника",new(730,620)); _menu.CloseRequested+=_menu.Close;

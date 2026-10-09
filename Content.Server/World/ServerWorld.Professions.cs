@@ -15,19 +15,20 @@ public sealed partial class ServerWorld
     public bool IsProfessionDirty(NetworkEntityId id) => _professionDirty.Contains(id);
     public void ClearProfessionResults() { _professionResults.Clear(); _professionDirty.Clear(); }
     private ProfessionDefinition? ProfessionDefinition(ushort id) => _progressionCatalog!.Professions.FirstOrDefault(p => p.Id == id);
-    private static bool Eligible(SavedProgression value,ProfessionDefinition definition) =>
-        (value.Discoveries & definition.DiscoveryMask) == definition.DiscoveryMask && value.Profession.SuccessfulUses >= definition.SuccessfulUses;
+    private bool Eligible(SavedProgression value,ProfessionDefinition definition) => definition.RequiresTrainer
+        ? _progressionCatalog!.Swordsman is { } s && definition.Id == s.ProfessionId && value.SwordTraining?.Damage >= s.RequiredDamage
+        : (value.Discoveries & definition.DiscoveryMask) == definition.DiscoveryMask && value.Profession.SuccessfulUses >= definition.SuccessfulUses;
     private void ValidateProfession(SavedProgression value)
     {
         var profession=value.Profession; profession.Validate();
         foreach (var id in profession.RetiredIds.Append(profession.ActiveId))
-            if (id != 0 && (ProfessionDefinition(id) is not { } source || !value.Skills.Any(s => s.DefinitionId == source.SkillId)))
+            if (id != 0 && (ProfessionDefinition(id) is not { } source || source.AllSkills.Any(skill => !value.Skills.Any(s => s.DefinitionId == skill))))
                 throw new InvalidDataException("Missing learned profession skill.");
         foreach (var id in profession.RetiredIds.Append(profession.ActiveId).Append(profession.OfferedId))
             if (id != 0 && (ProfessionDefinition(id) is not { } definition || !Eligible(value,definition)))
                 throw new InvalidDataException("Saved profession/source requires migration.");
     }
-    private bool HasProfessionSkillSource(SavedProgression value,string skill) => _progressionCatalog!.Professions.Any(p => p.SkillId == skill &&
+    private bool HasProfessionSkillSource(SavedProgression value,string skill) => _progressionCatalog!.Professions.Any(p => p.AllSkills.Contains(skill) &&
         (value.Profession.ActiveId == p.Id || value.Profession.RetiredIds.Contains(p.Id)));
     private void EvaluateProfessionOffer(NetworkEntityId id)
     {
@@ -35,7 +36,7 @@ public sealed partial class ServerWorld
         if (profession.OfferedId != 0) return;
         foreach (var candidate in _progressionCatalog!.Professions)
         {
-            if (candidate.Id == profession.ActiveId || profession.RetiredIds.Contains(candidate.Id) || !Eligible(value,candidate)) continue;
+            if (candidate.RequiresTrainer || candidate.Id == profession.ActiveId || profession.RetiredIds.Contains(candidate.Id) || !Eligible(value,candidate)) continue;
             _progression[id]=value with { Profession=profession with { OfferedId=candidate.Id } };
             DirtyProgression(id); _professionDirty.Add(id); return;
         }
@@ -49,8 +50,13 @@ public sealed partial class ServerWorld
     public ProfessionState ProfessionState(NetworkEntityId id,uint tick)
     {
         var value=_progression[id].Profession;
+        var training = _progression[id].SwordTraining;
+        // Completed/retired training must not reappear as an unfinished HUD objective.
+        if (_progressionCatalog!.Swordsman is { } sword &&
+            (value.ActiveId == sword.ProfessionId || value.RetiredIds.Contains(sword.ProfessionId))) training = null;
         return new(id,tick,value.ActiveId,value.ActiveId == 0 ? "" : ProfessionDefinition(value.ActiveId)!.Name,
-            value.OfferedId,value.OfferedId == 0 ? "" : ProfessionDefinition(value.OfferedId)!.Name);
+            value.OfferedId,value.OfferedId == 0 ? "" : ProfessionDefinition(value.OfferedId)!.Name,
+            training?.Damage ?? 0, training is null ? 0 : _progressionCatalog!.Swordsman!.RequiredDamage);
     }
     public bool TryQueueProfession(int connectionId,ProfessionCommand command)
     {
@@ -81,6 +87,7 @@ public sealed partial class ServerWorld
             {
                 var definition=ProfessionDefinition(command.ProfessionId);
                 if (definition is null || profession.OfferedId != command.ProfessionId || profession.ActiveId == command.ProfessionId || profession.RetiredIds.Contains(command.ProfessionId) || !Eligible(value,definition)) outcome=ProfessionOutcome.Unavailable;
+                else if (definition.RequiresTrainer && !NearSwordTrainer(id)) outcome=ProfessionOutcome.Unavailable;
                 else if (command.Action == ProfessionAction.Prepare)
                 {
                     token=(uint)RandomNumberGenerator.GetInt32(1,int.MaxValue);
@@ -88,15 +95,18 @@ public sealed partial class ServerWorld
                 }
                 else if (!_professionConfirmations.TryGetValue(id,out var confirmation) || confirmation.Token != command.Confirmation || confirmation.Id != command.ProfessionId || confirmation.Previous != profession.ActiveId || unchecked(Tick-confirmation.At) > 600)
                     outcome=ProfessionOutcome.InvalidConfirmation;
-                else if (value.Skills.Length >= NetworkConstants.MaxLearnedSkills && !value.Skills.Any(s => s.DefinitionId == definition.SkillId)) outcome=ProfessionOutcome.Unavailable;
+                else if (value.Skills.Length + definition.AllSkills.Count(skill => !value.Skills.Any(s => s.DefinitionId == skill)) > NetworkConstants.MaxLearnedSkills) outcome=ProfessionOutcome.Unavailable;
                 else
                 {
                     var retired=profession.ActiveId == 0 ? profession.RetiredIds : [..profession.RetiredIds,profession.ActiveId];
                     if (retired.Length > 8) outcome=ProfessionOutcome.Unavailable;
                     else
                     {
-                        var skills=value.Skills.Any(s => s.DefinitionId == definition.SkillId) ? value.Skills : [..value.Skills,new SavedSkill(definition.SkillId,1,0,0)];
+                        var skills = value.Skills.Concat(definition.AllSkills.Where(skill => !value.Skills.Any(s => s.DefinitionId == skill)).Select(skill => new SavedSkill(skill,1,0,0))).ToArray();
+                        if (_progressionCatalog!.Swordsman is { } sword && definition.Id == sword.ProfessionId)
+                            skills = skills.Select(skill => skill with { Slot = (byte)(Array.IndexOf(sword.DefaultBar,skill.DefinitionId)+1) }).ToArray();
                         _progression[id]=value with { Profession=profession with { ActiveId=command.ProfessionId,OfferedId=0,RetiredIds=retired },Skills=skills };
+                        Combat.SetProfession(id, command.ProfessionId);
                         Abilities!.ApplyProgression(id,_progression[id]); DirtyProgression(id); _professionDirty.Add(id);
                         EvaluateProfessionOffer(id);
                     }

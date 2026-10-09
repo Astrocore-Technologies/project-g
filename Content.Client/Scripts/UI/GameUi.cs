@@ -32,6 +32,16 @@ public static class GameUi
     };
     public static Theme CreateTheme() => _dark ??= BuildTheme(false);
     public static Theme CreatePaperTheme() => _paper ??= BuildTheme(true);
+    public static void CompactHud(Control control)
+    {
+        // These HUD blocks use a single anchor point. Scale their offsets from that
+        // point while retaining local layout sizes, so containers and hit areas agree.
+        var left=control.OffsetLeft; var top=control.OffsetTop;
+        var width=control.OffsetRight-left; var height=control.OffsetBottom-top;
+        control.Scale=new(.5f,.5f);
+        control.OffsetLeft=left*.5f; control.OffsetTop=top*.5f;
+        control.OffsetRight=control.OffsetLeft+width; control.OffsetBottom=control.OffsetTop+height;
+    }
     private static Theme BuildTheme(bool paper)
     {
         var skin=UiAssets.Skin; var text=paper?skin.Ink:skin.LightText;
@@ -69,5 +79,5 @@ public static class GameUi
     public static Label Text(string text,int size=16)
     { var label=new Label { Text=text,MouseFilter=Control.MouseFilterEnum.Ignore }; label.AddThemeFontSizeOverride("font_size",size); if(size>=22 && UiAssets.Skin.HeadingFont is {} font) label.AddThemeFontOverride("font",font); return label; }
     public static Button Button(string text,Action action) { var button=new Button { Text=text }; button.Pressed+=action; return button; }
-    public static string SkillName(ushort id) => id switch { 1=>"Снаряд",2=>"Область",3=>"Рывок",5=>"Болт открытия",6=>"Импульс",_=>"Навык" };
+    public static string SkillName(ushort id) => id switch { 1=>"Снаряд",2=>"Область",3=>"Рывок",5=>"Болт открытия",6=>"Импульс",_=>SwordsmanUi.Name(id) };
 }

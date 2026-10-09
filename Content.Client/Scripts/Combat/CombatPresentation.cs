@@ -26,6 +26,7 @@ public partial class CombatPresentation : Node3D
     private CombatState _state;
     private bool _local;
     private PlayerController? _player;
+    private SwordAttackAnimation? _swordAnimation;
     private CombatPresentation? _autoTarget;
     private double _chaseAt;
     private readonly MeshInstance3D _selection=new() { Visible=false,Position=new(0,-.94f,0) };
@@ -48,6 +49,7 @@ public partial class CombatPresentation : Node3D
         _network = network;
         _local = local;
         _player=local ? _actor as PlayerController : null;
+        _swordAnimation=(_actor as PlayerController)?.SwordAnimation;
         AddToGroup("CombatTargets");
         if (_player is not null) _player.ManualMoveRequested+=CancelAutoAttack;
         _selection.Mesh=new CylinderMesh { TopRadius=.65f,BottomRadius=.65f,Height=.025f };
@@ -105,6 +107,7 @@ public partial class CombatPresentation : Node3D
         _pending = _sequence;
         _pendingSince = Now();
         _nextAttackAt = Now() + _state.AttackInterval;
+        _swordAnimation?.PredictBasic(_sequence, direction, _state.AttackInterval);
         ShowSwing(new(_actor.GlobalPosition.X, _actor.GlobalPosition.Z), direction, _state.Range, predicted: true);
         _network?.SendAttack(new AttackCommand(_sequence, _player?.ClientTick ?? 0, direction,target));
     }
@@ -147,7 +150,7 @@ public partial class CombatPresentation : Node3D
 
     public void Confirm(AttackEvent action)
     {
-        if (!MovementSimulation.IsSequenceNewer(action.ServerTick, _spawnTick) ||
+        if (!IsAlive || !MovementSimulation.IsSequenceNewer(action.ServerTick, _spawnTick) ||
             !MovementSimulation.IsSequenceNewer(action.Sequence, _lastAttackSequence))
             return;
         _lastAttackSequence = action.Sequence;
@@ -156,6 +159,7 @@ public partial class CombatPresentation : Node3D
             _pending = 0;
         // Replace/restart the same visual with authoritative origin; do not apply damage twice.
         ShowSwing(action.Origin, action.Direction, action.Range, predicted: false);
+        _swordAnimation?.ConfirmBasic(action);
     }
 
     public void ApplyResult(AttackResult result)
@@ -165,6 +169,7 @@ public partial class CombatPresentation : Node3D
         _pending = 0;
         if (result.Outcome != AttackOutcome.Accepted)
         {
+            _swordAnimation?.RejectBasic(result.Sequence);
             _slash.Visible = false;
             _slashRemaining = 0;
             _damageText = result.Outcome.ToString();
@@ -191,7 +196,7 @@ public partial class CombatPresentation : Node3D
         if (hit.ServerTick != _state.ServerTick && !MovementSimulation.IsSequenceNewer(hit.ServerTick, _state.ServerTick)) return;
         if (hit.TargetHealth > _state.MaxHealth) return;
         _state = _state with { Health = hit.TargetHealth, ServerTick = hit.ServerTick };
-        _damageText = $"-{hit.Damage:0.0}"; _damageRemaining = 0.6;
+        _damageText = hit.Guard==GuardImpact.Parried ? "ПАРИРОВАНИЕ" : $"{(hit.Guard==GuardImpact.Blocked ? "БЛОК " : "")}-{hit.Damage:0}"; _damageRemaining = 0.6;
         UpdateLabel();
     }
 
@@ -235,6 +240,7 @@ public partial class CombatPresentation : Node3D
         // Connection loss or a delayed ack cannot leave unlimited pending predictions.
         if (_pending != 0 && Now() - _pendingSince > 2)
         {
+            _swordAnimation?.RejectBasic(_pending);
             _pending = 0;
             _slash.Visible = false;
         }
@@ -251,8 +257,8 @@ public partial class CombatPresentation : Node3D
 
     private void UpdateLabel()
     {
-        if (!IsAlive) { _slash.Visible = false; _slashRemaining = 0; _areaVisual.Visible = false; _areaRemaining = 0; }
-        _healthLabel.Text = _local ? _damageText : $"{(_state.Kind == CombatEntityKind.Boss ? "BOSS " : "")}HP {_state.Health:0.0}/{_state.MaxHealth:0.0}\n{(IsAlive ? _damageText : "Defeated")}";
+        if (!IsAlive) { _slash.Visible = false; _slashRemaining = 0; _areaVisual.Visible = false; _areaRemaining = 0; _swordAnimation?.Stop(); }
+        _healthLabel.Text = _local ? _damageText : $"{(_state.Kind == CombatEntityKind.TrainingTarget ? "Манекен · " : _state.Kind == CombatEntityKind.Boss ? "BOSS " : "")}HP {_state.Health:0}/{_state.MaxHealth:0}\n{(IsAlive ? _damageText : "Повержен")}";
     }
     private static double Now() => Time.GetTicksMsec() / 1000d;
 

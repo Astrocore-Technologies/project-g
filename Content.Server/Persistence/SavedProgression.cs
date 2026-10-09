@@ -18,6 +18,7 @@ public sealed record SavedProgression
     public SavedWorldParticipation WorldParticipation { get; init; } = new();
     public SavedProfession Profession { get; init; } = new();
     [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)] public SavedDeliveryQuest? DeliveryQuest {get;init;}
+    [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)] public SavedSwordTraining? SwordTraining {get;init;}
     public static SavedProgression Starter(CreatureDefinition definition, ContentCatalog catalog)
     {
         byte slot = 0;
@@ -35,12 +36,14 @@ public sealed record SavedProgression
         if (Profession is null) throw new InvalidDataException("Missing profession history.");
         Profession.Validate(); Exploration?.Validate(); Pvp?.Validate();
         DeliveryQuest?.Validate();
+        SwordTraining?.Validate();
         if (OtherExplorations is { } maps)
         {
-            if (maps.Length > 1) throw new InvalidDataException("Regional map archive exceeds the two-region budget.");
+            if (maps.Length >= Content.Server.Regions.RegionalWorlds.MaxRegions) throw new InvalidDataException("Regional map archive exceeds the region budget.");
+            var regions = new HashSet<string>(StringComparer.Ordinal);
             foreach (var map in maps)
             {
-                if (map is null || map.RegionKey == Exploration?.RegionKey) throw new InvalidDataException("Duplicate or null regional map.");
+                if (map is null || map.RegionKey == Exploration?.RegionKey || !regions.Add(map.RegionKey)) throw new InvalidDataException("Duplicate or null regional map.");
                 map.Validate();
             }
         }
@@ -68,6 +71,7 @@ public sealed record SavedProgression
         if (System.Text.Encoding.UTF8.GetByteCount(json) > 8192) throw new InvalidDataException("Progression exceeds size budget.");
         using var document = JsonDocument.Parse(json,new JsonDocumentOptions { MaxDepth = 8 });
         RejectDuplicates(document.RootElement);
+        if(document.RootElement.TryGetProperty("SwordTraining",out var training) && training.ValueKind==JsonValueKind.Null) throw new InvalidDataException("Null sword training receipt.");
         if(document.RootElement.TryGetProperty("DeliveryQuest",out var quest) && quest.ValueKind==JsonValueKind.Null) throw new InvalidDataException("Null delivery quest receipt.");
         if(document.RootElement.TryGetProperty("Pvp",out var pvp)&&pvp.ValueKind==JsonValueKind.Null)throw new InvalidDataException("Null PvP component.");
         if(document.RootElement.TryGetProperty("Exploration",out var exploration) && exploration.ValueKind==JsonValueKind.Null) throw new InvalidDataException("Null exploration component.");

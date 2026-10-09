@@ -1,7 +1,7 @@
 using System.Numerics;
 namespace Content.Shared.Network;
 
-public enum QuestAction : byte { Talk, Accept, Deliver, Journal }
+public enum QuestAction : byte { Talk, Accept, Deliver, Journal, TrainingSword }
 public enum QuestStatus : byte { Unknown, Active, Completed }
 public enum QuestOutcome : byte { Accepted, TooFar, Busy, InvalidState, Unavailable, AlreadyProcessed, MissingMaterials, MaterialFull, RateLimited }
 public readonly record struct QuestCommand(uint Sequence, QuestAction Action, NetworkEntityId NpcId);

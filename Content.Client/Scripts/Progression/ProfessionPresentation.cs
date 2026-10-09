@@ -15,7 +15,7 @@ public partial class ProfessionPresentation : CanvasLayer
     private bool _alive=true;
     private string _feedback="";
     public void Initialize(NetworkClient network)
-    { _network=network; Layer=24; AddChild(_summary); _summary.Hide(); AddChild(_panel); _panel.Build("Профессия",new(820,560)); _panel.Body.AddChild(_rows); _panel.CloseRequested+=Close; }
+    { _network=network; Layer=24; AddChild(_summary); _summary.Hide(); AddChild(_panel); _panel.Build("Профессия",new(920,656)); var scroll=new ScrollContainer { SizeFlagsVertical=Control.SizeFlags.ExpandFill,HorizontalScrollMode=ScrollContainer.ScrollMode.Disabled }; _panel.Body.AddChild(scroll); scroll.AddChild(_rows); _rows.SizeFlagsHorizontal=Control.SizeFlags.ExpandFill; _panel.CloseRequested+=Close; }
     public void Apply(ProfessionState state) { if (_state.OfferedId != state.OfferedId) _confirmation=0; _state=state; Rebuild(); }
     public void ApplyAlive(bool alive) { if (_alive == alive) return; _alive=alive; if (!alive) _confirmation=0; Rebuild(); }
     public void Result(ProfessionResult result)
@@ -55,8 +55,17 @@ public partial class ProfessionPresentation : CanvasLayer
         _rows.AddChild(new Label { Text="Профессия [P]" });
         _rows.AddChild(new Label { Text=$"Сейчас: {current}" });
         _rows.AddChild(new Label { Text=_feedback });
+        if (_state.TrainingRequired > 0 && _state.ActiveId != 2)
+            _rows.AddChild(new Label { Text=$"Обучение мечу: {Math.Floor(_state.TrainingDamage):0} / {_state.TrainingRequired:0} урона\n" +
+                (_state.TrainingDamage >= _state.TrainingRequired ? "Вернитесь к Радану на тренировочной арене." : "Наденьте тренировочный меч (I) и атакуйте манекены (ЛКМ).") });
+        if (_state.ActiveId == 2)
+        {
+            UiComposition.Paragraph(_rows,"Мечник · пассивки действуют с надетым исправным мечом",18);
+            UiComposition.Paragraph(_rows,"Владение мечом — +10% урона обычных атак.\nБоевой ритм — каждое третье попадание возвращает 6 выносливости; промах или пауза свыше 4 с сбивают ритм.\nКрепкий хват — после блока ещё −15% от оставшегося физического урона.\nРабота ног — +10% скорости бега на 1,5 с после прямого попадания.\nСобранность — успешное парирование усиливает следующую попытку удара на 10% на 3 с.",14);
+            UiComposition.Paragraph(_rows,"Space — длинный рывок до 20 м: 35 выносливости, перезарядка 7 с, без неуязвимости.\nРеген: 8/с после 1 с; во время приёма и блока приостановлен.\nВсе 10 приёмов доступны в K → Навыки; на панели — выбранные восемь.",14);
+        }
         if (_state.OfferedId == 0) { _rows.AddChild(new Label { Text="Мир замечает ваши действия." }); return; }
-        _rows.AddChild(new Label { Text=$"Открыта возможность: {_state.OfferedName}" });
+        _rows.AddChild(new Label { Text=$"Открыта возможность: {_state.OfferedName}" + (_state.OfferedId == 2 ? "\nДля принятия оставайтесь рядом с тренером." : "") });
         if (_confirmation == 0) { _rows.AddChild(Button("Рассмотреть переход",()=>Send(ProfessionAction.Prepare,_state.OfferedId))); return; }
         _rows.AddChild(new Label { Text=$"{current} → {_state.OfferedName}\nОдна активная профессия. Возврат к прежней\nпрофессии после перехода невозможен." });
         var acknowledge=new CheckBox { Text="Я понимаю необратимость перехода",Disabled=_pending != 0 || !_alive };

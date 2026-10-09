@@ -45,7 +45,7 @@ public sealed class QuestProtocolTests
         Assert.Throws<ArgumentException>(() => NetworkProtocol.Write(new QuestCommand(1, QuestAction.Talk, default)));
         Assert.Throws<ArgumentException>(() => NetworkProtocol.Write(new QuestNpcSpawn(new(1), 0, new(float.NaN, 0), "NPC", "Role")));
         Assert.Throws<ArgumentException>(() => NetworkProtocol.Write(new QuestNpcSpawn(default, 0, new(0, 0), "NPC", "Role")));
-        Assert.Throws<ArgumentException>(() => NetworkProtocol.Write(new QuestReply(1, 0, new(1), QuestOutcome.Accepted, 4, "NPC", "text")));
+        Assert.Throws<ArgumentException>(() => NetworkProtocol.Write(new QuestReply(1, 0, new(1), QuestOutcome.Accepted, 16, "NPC", "text")));
         Assert.Throws<ArgumentException>(() => NetworkProtocol.Write(new QuestReply(1, 0, new(1), (QuestOutcome)255, 0, "NPC", "text")));
         Assert.Throws<ArgumentException>(() => NetworkProtocol.Write(new QuestReply(1, 0, new(1), QuestOutcome.Accepted, 0, "NPC", new string('x', 201))));
         Assert.Throws<ArgumentException>(() => NetworkProtocol.Write(new QuestJournal(new(1), 0, QuestStatus.Unknown, "Title", "Objective", "Wood", 3, 0, 20)));

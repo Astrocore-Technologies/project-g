@@ -64,7 +64,7 @@ public sealed partial class GameServerService
         }
         var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         _logins.Add(peer.Id, new(peer, hello, player,
-            _characters!.OpenAsync(hello.DevelopmentToken, _world.CreateInitialCharacter(), deadline.Token), deadline));
+            _characters!.OpenAsync(hello.DevelopmentToken, (_regionalWorlds?.StartingWorld ?? _world).CreateInitialCharacter(), deadline.Token), deadline));
     }
 
     private void CompleteLogins()

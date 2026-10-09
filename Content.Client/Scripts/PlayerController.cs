@@ -51,10 +51,13 @@ public partial class PlayerController : CharacterBody3D
 	public uint ClientTick => _clientTick;
 	public NumericsVector2 PredictedPosition => _predictedPosition;
 	public bool IsAlive { get; private set; } = true;
+	public ProjectG.Combat.SwordAttackAnimation SwordAnimation { get; private set; } = null!;
+	public override void _Ready() => SwordAnimation = GetNode<ProjectG.Combat.SwordAttackAnimation>("SwordAttackRig");
 	public void SetAlive(bool alive)
 	{
 		IsAlive = alive;
 		if (alive) return;
+		SwordAnimation.Stop();
 		_dash = null; _predictionHistory.Clear();
 		_rightHeld=false; DefenseHeld=false;
 		_target = _predictedPosition = _authoritative.Position;

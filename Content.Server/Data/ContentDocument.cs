@@ -11,6 +11,7 @@ public sealed record ContentDocument
     public Content.Server.Combat.DefenseBalance Defense { get; init; } = new();
     public Content.Server.Progression.ProgressionBalance Progression { get; init; } = new();
     public Content.Server.Professions.ProfessionDefinition[] Professions { get; init; } = [];
+    public Content.Server.Professions.SwordsmanDefinition? Swordsman { get; init; }
     public Content.Server.WorldStory.WorldNodeDefinition? WorldNode { get; init; }
     public Content.Server.StarterZone.StarterZoneDefinition? StarterZone { get; init; }
     public required WeaponDefinition[] Weapons { get; init; }

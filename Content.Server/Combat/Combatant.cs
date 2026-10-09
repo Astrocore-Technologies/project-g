@@ -23,6 +23,12 @@ public sealed class Combatant
     public WeaponDefinition Weapon { get; internal set; }
     public double AttackInterval { get; internal set; }
     public bool IsCasting { get; internal set; }
+    internal bool CanBleed { get; set; }
+    internal bool CanBeStunned { get; set; }
+    internal bool StationaryCast { get; set; }
+    internal double StunnedUntil { get; set; }
+    internal double SlowUntil { get; set; }
+    internal float SlowFraction { get; set; }
     public uint LastAbilitySequence { get; internal set; }
     internal uint LastSequence { get; set; }
     internal uint? LastRequestTick { get; set; }

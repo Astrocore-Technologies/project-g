@@ -18,6 +18,7 @@ public sealed partial class ServerWorld
     private readonly Dictionary<NetworkEntityId,WorldNodeResult> _nodeResults=new();
     private readonly List<DatabaseWorldAudit> _nodeAudit=new(8);
     public bool HasWorldNode => _node is not null;
+    public bool HasWorldEvent => _node?.Interactive == true;
     public string WorldNodeKey => _node!.Key;
     public long WorldNodeRevision => _nodeRevision;
     public bool WorldNodeDirty => _nodeAudit.Count!=0;
@@ -29,7 +30,7 @@ public sealed partial class ServerWorld
     {
         if (options?.Enabled!=true) return;
         _node=definition ?? throw new InvalidDataException("World node definition is missing."); _node.Validate();
-        if (Npc is null || !Navigation.IsWalkable(_node.Position) || _node.OpeningCells.Any(i=>i>=Navigation.CellCount || !Navigation.IsBlocked(i%Navigation.Width,i/Navigation.Width)) || _node.PatrolAggroRadius>Npc.EffectiveAggroRadius) throw new InvalidDataException("World node is incompatible with region/NPC.");
+        if (!Navigation.IsWalkable(_node.Position) || _node.Interactive && (Npc is null || _node.OpeningCells.Any(i=>i>=Navigation.CellCount || !Navigation.IsBlocked(i%Navigation.Width,i/Navigation.Width)) || _node.PatrolAggroRadius>Npc.EffectiveAggroRadius)) throw new InvalidDataException("World node is incompatible with region/NPC.");
     }
     public void RestoreWorldNode(SavedWorldNode state,long revision)
     {
@@ -46,7 +47,7 @@ public sealed partial class ServerWorld
     public WorldNodeState PublicWorldNode() => new((ulong)_nodeRevision,Tick,_node!.Position,Consequences,_node.KeeperName,_node.KeeperLines[Consequences],_node.Rumors[_nodeState.StormRumor ? 4 : Consequences]);
     public bool TryQueueWorldNode(int connection,WorldNodeCommand command)
     {
-        if(!HasWorldNode || !_playersByConnection.TryGetValue(connection,out var p) || command.Sequence==0 || !Enum.IsDefined(command.Action)) return false;
+        if(!HasWorldEvent || !_playersByConnection.TryGetValue(connection,out var p) || command.Sequence==0 || !Enum.IsDefined(command.Action)) return false;
         if(_nodeSequences.TryGetValue(connection,out var previous))
         {
             if(!MovementSimulation.IsSequenceNewer(command.Sequence,previous.Sequence)) return false;
@@ -56,7 +57,7 @@ public sealed partial class ServerWorld
     }
     private void SimulateWorldNode()
     {
-        if(_node is null) return;
+        if(_node is not { Interactive: true }) return;
         foreach(var action in Combat!.Events) if(action.Damage>0 && Npc!.Id==action.TargetId) RecordPatrolHit(action.AttackerId);
         foreach(var hit in Abilities!.Hits) if(hit.Damage>0 && Npc!.Id==hit.TargetId) RecordPatrolHit(hit.ActorId);
         foreach(var (connection,command) in _nodePending)
@@ -85,6 +86,7 @@ public sealed partial class ServerWorld
     }
     private void ApplyWorldConsequences()
     {
+        if (_node is not { Interactive: true }) return;
         var consequences=Consequences;
         if((consequences&1)!=0 && (_appliedConsequences&1)==0)
         {
@@ -95,7 +97,7 @@ public sealed partial class ServerWorld
     }
     internal void ApplyLiveDm(AuthorizedLiveDm command)
     {
-        if(_node is null) return;
+        if(_node is not { Interactive: true }) return;
         _nodeState=command.Operation switch
         {
             LiveDmOperation.OpenBridge => _nodeState with { Repairs=_node.ContributionsRequired },

@@ -1,11 +1,64 @@
 {
   "schemaVersion": 3,
   "balanceVersion": 3,
+  "swordsman": {
+    "professionId": 2,
+    "regionId": "river_city",
+    "trainingItemId": "arena_training_sword",
+    "dummyDefinitionId": "arena_dummy",
+    "trainer": {
+      "name": "Радан",
+      "role": "Наставник мечников",
+      "x": 15,
+      "z": -6
+    },
+    "dummyAnchors": [
+      "SwordTarget",
+      "SwordDummyWest",
+      "SwordDummyEast"
+    ],
+    "requiredDamage": 100,
+    "interactionRange": 2.5,
+    "dummyResetSeconds": 5,
+    "recoveryPerSecond": 8,
+    "dashRange": 20,
+    "dashCost": 35,
+    "dashCooldown": 7,
+    "basicDamageBonus": 0.1,
+    "rhythmHits": 3,
+    "rhythmWindow": 4,
+    "rhythmStamina": 6,
+    "blockRemainderReduction": 0.15,
+    "footworkBonus": 0.1,
+    "footworkSeconds": 1.5,
+    "parryWindow": 3,
+    "focusBonus": 0.1,
+    "defaultBar": [
+      "sword_thrust",
+      "sword_sweep",
+      "sword_rend",
+      "sword_pommel",
+      "sword_hamstring",
+      "sword_riposte",
+      "sword_breath",
+      "sword_finisher"
+    ]
+  },
   "deliveryQuest": {
     "id": "river-road-supplies",
     "regionId": "prototype",
-    "giver": { "name": "Лада", "role": "Снабженец пристани", "x": -15, "z": 18 },
-    "recipient": { "name": "Орен", "role": "Смотритель дороги", "x": -7, "z": 7 },
+    "giver": {
+      "name": "Лада",
+      "role": "Снабженец пристани",
+      "x": -15,
+      "z": 18
+    },
+    "recipient": {
+      "name": "Орен",
+      "role": "Смотритель дороги",
+      "x": -7,
+      "z": 7
+    },
     "title": "Припасы для дороги",
     "objective": "Отнесите 3 древесины Орену. Идите от пристани на север по дороге: смотритель стоит у подхода к тренировочной площадке. Разговор — F2 рядом с NPC.",
     "offer": "Нужна небольшая помощь. Передам тебе 3 древесины для Орена, смотрителя дороги к северу от пристани. Он выдаст 20 EXP за доставку. Возьмёшься?",
@@ -97,6 +150,7 @@
     {
       "id": "training_sword",
       "kind": "Melee",
+      "isSword": true,
       "attack": 10,
       "attackIntervalSeconds": 1,
       "range": 2
@@ -165,6 +219,7 @@
     },
     {
       "id": "boss_ground_area",
+      "interruptible": false,
       "networkId": 4,
       "kind": "GroundArea",
       "power": 12,
@@ -201,6 +256,195 @@
       "radius": 0.3,
       "speed": 8,
       "magicAttackScale": 1
+    },
+    {
+      "id": "sword_thrust",
+      "networkId": 20,
+      "kind": "Melee",
+      "power": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 4,
+      "castSeconds": 0,
+      "range": 3,
+      "radius": 0.3,
+      "speed": 0,
+      "magicAttackScale": 0,
+      "staminaCost": 8,
+      "melee": {
+        "damageFactor": 1.2,
+        "rangeFactor": 1.3333333,
+        "narrowThrust": true
+      }
+    },
+    {
+      "id": "sword_sweep",
+      "networkId": 21,
+      "kind": "Melee",
+      "power": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 6,
+      "castSeconds": 0.2,
+      "range": 3,
+      "radius": 0.3,
+      "speed": 0,
+      "magicAttackScale": 0,
+      "staminaCost": 14,
+      "melee": {
+        "damageFactor": 1,
+        "arcDegrees": 140,
+        "firstTargetOnly": false
+      }
+    },
+    {
+      "id": "sword_rend",
+      "networkId": 22,
+      "kind": "Melee",
+      "power": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 8,
+      "castSeconds": 0.15,
+      "range": 3,
+      "radius": 0.3,
+      "speed": 0,
+      "magicAttackScale": 0,
+      "staminaCost": 14,
+      "melee": {
+        "damageFactor": 0.8,
+        "bleedFactor": 0.6,
+        "bleedSeconds": 4
+      }
+    },
+    {
+      "id": "sword_breaker",
+      "networkId": 23,
+      "kind": "Melee",
+      "power": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 10,
+      "castSeconds": 0.65,
+      "range": 3,
+      "radius": 0.3,
+      "speed": 0,
+      "magicAttackScale": 0,
+      "staminaCost": 20,
+      "melee": {
+        "damageFactor": 1.7,
+        "armorIgnore": 0.3
+      }
+    },
+    {
+      "id": "sword_pommel",
+      "networkId": 24,
+      "kind": "Melee",
+      "power": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 12,
+      "castSeconds": 0.1,
+      "range": 3,
+      "radius": 0.3,
+      "speed": 0,
+      "magicAttackScale": 0,
+      "staminaCost": 12,
+      "melee": {
+        "damageFactor": 0.4,
+        "rangeFactor": 0.7,
+        "stunSeconds": 0.4
+      }
+    },
+    {
+      "id": "sword_hamstring",
+      "networkId": 25,
+      "kind": "Melee",
+      "power": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 9,
+      "castSeconds": 0.15,
+      "range": 3,
+      "radius": 0.3,
+      "speed": 0,
+      "magicAttackScale": 0,
+      "staminaCost": 12,
+      "melee": {
+        "damageFactor": 0.7,
+        "slowFraction": 0.25,
+        "slowSeconds": 2
+      }
+    },
+    {
+      "id": "sword_riposte",
+      "networkId": 26,
+      "kind": "Melee",
+      "power": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 6,
+      "castSeconds": 0,
+      "range": 3,
+      "radius": 0.3,
+      "speed": 0,
+      "magicAttackScale": 0,
+      "staminaCost": 12,
+      "melee": {
+        "damageFactor": 1.7,
+        "requiresParry": true
+      }
+    },
+    {
+      "id": "sword_whirl",
+      "networkId": 27,
+      "kind": "Melee",
+      "power": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 12,
+      "castSeconds": 0.45,
+      "range": 3,
+      "radius": 0.3,
+      "speed": 0,
+      "magicAttackScale": 0,
+      "staminaCost": 24,
+      "melee": {
+        "damageFactor": 1.2,
+        "arcDegrees": 360,
+        "firstTargetOnly": false,
+        "stationary": true
+      }
+    },
+    {
+      "id": "sword_breath",
+      "networkId": 28,
+      "kind": "Recovery",
+      "power": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 24,
+      "castSeconds": 1.2,
+      "range": 3,
+      "radius": 0.3,
+      "speed": 0,
+      "magicAttackScale": 0,
+      "staminaCost": 0,
+      "melee": {
+        "damageFactor": 0,
+        "stationary": true,
+        "restoreStamina": 25
+      }
+    },
+    {
+      "id": "sword_finisher",
+      "networkId": 29,
+      "kind": "Melee",
+      "power": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 16,
+      "castSeconds": 0.55,
+      "range": 3,
+      "radius": 0.3,
+      "speed": 0,
+      "magicAttackScale": 0,
+      "staminaCost": 22,
+      "melee": {
+        "damageFactor": 1.5,
+        "executeThreshold": 0.3,
+        "executeFactor": 2.3
+      }
     }
   ],
   "items": [
@@ -251,6 +495,14 @@
         "repairMaterialId": 2,
         "durabilityPerMaterial": 20
       }
+    },
+    {
+      "id": "arena_training_sword",
+      "name": "Тренировочный меч",
+      "slot": "Weapon",
+      "weaponId": "training_sword",
+      "bound": true,
+      "modifiers": {}
     }
   ],
   "creatures": [
@@ -314,6 +566,25 @@
       "abilityIds": [
         "boss_ground_area"
       ]
+    },
+    {
+      "id": "arena_dummy",
+      "stats": {
+        "strength": 0,
+        "agility": 0,
+        "vitality": 0,
+        "intelligence": 0,
+        "dexterity": 0,
+        "luck": 0
+      },
+      "baseHealth": 10000,
+      "baseMana": 1,
+      "baseHealthRecovery": 0,
+      "baseManaRecovery": 0,
+      "weaponId": "training_sword",
+      "abilityIds": [],
+      "canBleed": false,
+      "canBeStunned": false
     }
   ],
   "progression": {
@@ -334,6 +605,25 @@
       "skillId": "trail_impulse",
       "discoveryMask": 3,
       "successfulUses": 3
+    },
+    {
+      "id": 2,
+      "name": "Мечник",
+      "requiresTrainer": true,
+      "skillId": "sword_thrust",
+      "additionalSkills": [
+        "sword_sweep",
+        "sword_rend",
+        "sword_breaker",
+        "sword_pommel",
+        "sword_hamstring",
+        "sword_riposte",
+        "sword_whirl",
+        "sword_breath",
+        "sword_finisher"
+      ],
+      "discoveryMask": 0,
+      "successfulUses": 0
     }
   ],
   "worldNode": {

@@ -1,0 +1,50 @@
+{
+  "Spawn": [
+    0,
+    18
+  ],
+  "Guide": [
+    -2,
+    17
+  ],
+  "MagicShop": [
+    -7,
+    -5
+  ],
+  "Arena": [
+    15,
+    -2
+  ],
+  "SwordTarget": [
+    15,
+    -14
+  ],
+  "SwordDummyWest": [
+    12,
+    -16
+  ],
+  "SwordDummyEast": [
+    18,
+    -16
+  ],
+  "SwordTrainer": [
+    15,
+    -6
+  ],
+  "SouthGate": [
+    0,
+    29
+  ],
+  "SouthArrival": [
+    0,
+    23
+  ],
+  "RiverGate": [
+    -36,
+    0
+  ],
+  "RiverArrival": [
+    -30,
+    0
+  ]
+}

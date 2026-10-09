@@ -11,13 +11,19 @@ public partial class WorldController
     private int[] _authoredOpening = [];
     private bool _contentReady = true;
 
-    private void LoadAuthoredRegion(ulong expectedHash)
+    private void LoadAuthoredRegion(string regionId, ulong expectedHash)
     {
         _contentReady = false;
         RegionRoot? scene = null;
         try
         {
-            scene = GD.Load<PackedScene>("res://Scenes/Regions/RiverLanding/RiverLandingBlockout.tscn").Instantiate<RegionRoot>();
+            var scenePath = regionId switch
+            {
+                "prototype" => "res://Scenes/Regions/RiverLanding/RiverLandingBlockout.tscn",
+                "river_city" => "res://Scenes/Regions/RiverCity/RiverCity.tscn",
+                _ => throw new InvalidDataException("Неизвестная клиентская сцена региона.")
+            };
+            scene = GD.Load<PackedScene>(scenePath).Instantiate<RegionRoot>();
             var geometry = FlatGeometryBake.Bake(scene);
             if (geometry.Hash != expectedHash) throw new InvalidDataException("Клиентская сцена и серверная карта различаются. Пересобери экспорт и перезапусти сервер.");
             _authoredBase = geometry.CreateGrid();
@@ -68,6 +74,7 @@ public partial class WorldController
             var expected = patch && opened ? 0 : original.BlockedCells[i];
             if (received.BlockedCells[i] != expected) { RejectRegion("Сервер прислал неизвестное изменение геометрии."); return; }
         }
+        if (_authoredOpening.Length == 0) return;
         var barrier = _authoredRegion.GetNode<StaticBody3D>("PublicStateBindings/Bridge/RepairBarrier");
         barrier.Visible = !opened;
         barrier.GetNode<CollisionShape3D>("Collision").Disabled = opened;

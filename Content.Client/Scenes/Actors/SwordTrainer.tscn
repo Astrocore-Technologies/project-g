@@ -1,0 +1,40 @@
+[gd_scene load_steps=6 format=3]
+
+[sub_resource type="StandardMaterial3D" id="Coat"]
+albedo_color = Color(0.23, 0.36, 0.45, 1)
+
+[sub_resource type="StandardMaterial3D" id="Skin"]
+albedo_color = Color(0.8, 0.63, 0.45, 1)
+
+[sub_resource type="CapsuleMesh" id="Body"]
+radius = 0.4
+height = 1.65
+radial_segments = 12
+rings = 4
+
+[sub_resource type="SphereMesh" id="Head"]
+radius = 0.29
+height = 0.58
+radial_segments = 12
+rings = 6
+
+[sub_resource type="BoxMesh" id="Sword"]
+size = Vector3(0.10, 1.5, 0.20)
+
+[node name="SwordTrainer" type="Node3D"]
+
+[node name="Body" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.85, 0)
+mesh = SubResource("Body")
+material_override = SubResource("Coat")
+
+[node name="Head" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.9, 0)
+mesh = SubResource("Head")
+material_override = SubResource("Skin")
+
+[node name="PracticeSword" type="MeshInstance3D" parent="."]
+position = Vector3(0.55, 0.95, 0)
+rotation = Vector3(0, 0, -0.2)
+mesh = SubResource("Sword")
+material_override = SubResource("Skin")

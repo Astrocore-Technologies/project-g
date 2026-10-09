@@ -21,21 +21,27 @@ public partial class WorldController
         _contentReady = true;
         if (region.GeometryHash != 0)
         {
-            if (region.Region != "prototype") { RejectRegion("Неизвестная клиентская сцена региона."); return; }
-            LoadAuthoredRegion(region.GeometryHash);
+            LoadAuthoredRegion(region.Region, region.GeometryHash);
             if (!_contentReady) return;
         }
-        _regionExit = new Node3D { Position = new(region.Exit.X, .08f, region.Exit.Y) };
+        _regionExit = new Node3D();
         AddChild(_regionExit);
-        _regionExit.AddChild(new MeshInstance3D
+        AddGate(new(region.Exit,region.Radius));
+        foreach (var gate in region.AdditionalGates ?? []) AddGate(gate);
+
+        void AddGate(Content.Shared.Network.RegionGate gate)
         {
-            Mesh = new CylinderMesh { TopRadius = region.Radius, BottomRadius = region.Radius, Height = .12f },
-            MaterialOverride = new StandardMaterial3D { AlbedoColor = new(.15f, .65f, .95f) }
-        });
-        _regionExit.AddChild(new Label3D
-        {
-            Position = new(0, 1.6f, 0), Text = "Переход в соседний регион\nПодойди к границе",
-            FontSize = 32, PixelSize = .007f, Billboard = BaseMaterial3D.BillboardModeEnum.Enabled
-        });
+            var marker = new Node3D { Position = new(gate.Exit.X,.08f,gate.Exit.Y) }; _regionExit.AddChild(marker);
+            marker.AddChild(new MeshInstance3D
+            {
+                Mesh = new CylinderMesh { TopRadius = gate.Radius, BottomRadius = gate.Radius, Height = .03f },
+                MaterialOverride = new StandardMaterial3D { AlbedoColor = new(.4f,.7f,.8f,.32f),Transparency=BaseMaterial3D.TransparencyEnum.Alpha }
+            });
+            marker.AddChild(new Label3D
+            {
+                Position = new(0, 2.6f, 0), Text = "Выход в другую локацию",
+                FontSize = 24, PixelSize = .006f, Billboard = BaseMaterial3D.BillboardModeEnum.Enabled
+            });
+        }
     }
 }

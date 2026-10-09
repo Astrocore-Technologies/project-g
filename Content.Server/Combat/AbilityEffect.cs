@@ -19,7 +19,8 @@ internal struct AbilityEffect
     public float Remaining;
     public float DistanceLeft;
     public float CompensationSeconds;
+    public double FocusFactor;
 
     public readonly AbilityEffectState State(uint tick) => new(Id, ActorId, Sequence, tick, Profile.Id, Profile.Form,
-        Phase, Origin, Position, Direction, Profile.Radius, Profile.Speed, Math.Max(0, Remaining));
+        Phase, Origin, Position, Direction, Profile.Form == AbilityForm.Melee ? Profile.Range : Profile.Radius, Profile.Speed, Math.Max(0, Remaining));
 }
