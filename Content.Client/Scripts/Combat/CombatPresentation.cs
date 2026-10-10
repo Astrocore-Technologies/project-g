@@ -78,9 +78,14 @@ public partial class CombatPresentation : Node3D
         if (!_local || !IsAlive || ProjectG.UI.GameUi.GameplayModalOpen || @event is not InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } mouse)
             return;
         CancelAutoAttack();
-        var selected=PickTarget(mouse.Position);
-        if (selected is not null)
-        { _autoTarget=selected; selected._selection.Visible=true; _chaseAt=0; GetViewport().SetInputAsHandled(); return; }
+        if (!mouse.CtrlPressed)
+        {
+            var selected=PickTarget(mouse.Position);
+            if (selected is not null)
+            { _autoTarget=selected; selected._selection.Visible=true; _chaseAt=0; GetViewport().SetInputAsHandled(); }
+            return;
+        }
+        // Ctrl reserves this click for one directional swing, even when the cursor overlaps a target.
         if (Now() < _nextAttackAt || _pending != 0 || _player?.DefenseHeld==true) return;
         var camera = GetViewport().GetCamera3D();
         if (camera is null)

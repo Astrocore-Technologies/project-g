@@ -105,6 +105,7 @@ public partial class QuestPresentation : CanvasLayer
         if(GameUi.GameplayModalOpen) return;
         // NPC clicks are consumed before combat. GUI clicks cannot hit NPCs behind a panel.
         if (GameUi.GameplayModalOpen || !_player.IsAlive || ev is not InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } mouse || GetViewport().GuiGetHoveredControl() is not null) return;
+        if (mouse.CtrlPressed) return; // Force-attack clicks must reach combat, not open a dialogue.
         var camera = GetViewport().GetCamera3D(); if (camera is null) return;
         foreach (var (id, npc) in _npcs)
         {

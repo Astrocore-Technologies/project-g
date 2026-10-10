@@ -68,7 +68,7 @@ public partial class StarterZonePresentation : Node3D
         var flags=_exploration?.Tutorial ?? 0;
         // Bit 3 is reserved for the deferred Echo tutorial; keep persisted bit positions unchanged.
         for(var i=0;i<Steps.Length;i++) if(i!=3) text+=((flags&(1<<i))!=0 ? "✓ " : "○ ")+Steps[i]+"\n";
-        text+="\nTab — блок; Shift — парирование.\n";
+        text+="\nCtrl + ЛКМ — одиночный удар в направлении курсора.\nTab — блок; Shift — парирование.\n";
         _guideText.Text=text+"\nI — вещи, K — характеристики и навыки, C — добыча, крафт и ремонт.\nB — обмен, J — кузница, монеты и местный рынок.\nN — группа, O — гильдия. F2 — разговор рядом с NPC, L — поручения.\nИсследуй мир и пробуй разные действия: новые возможности\nпоявляются по мере твоего пути. Подсказки не дают наград.\nV — PvP/смерть; F1 — открыть или закрыть эту памятку.";
     }
     public void ToggleMap() { if(_worldWindow.Visible) _worldWindow.Close(); else _worldWindow.Open(); }

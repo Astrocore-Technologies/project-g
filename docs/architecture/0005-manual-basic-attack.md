@@ -4,6 +4,15 @@
 
 Stage 5 accepted by the user. Stage 6 extends this baseline; see ADR 0006.
 
+2026-10-10 input amendment: plain LMB only selects a combat target for approach/autoattack; empty-ground clicks do not swing. Ctrl + LMB bypasses both target picking and NPC dialogue, issuing one directional swing without starting pursuit/repeat. Existing cooldown, alive/defense/modal checks and server authority remain; no protocol, persistence, attack formula or animation change. The F1 guide documents the chord.
+
+Verification of the input amendment:
+- `dotnet build Game.slnx --no-restore -m:1` passed with 0 errors; existing NU1903 (SQLitePCLRaw 2.1.11) and NU1900 (audit endpoint unavailable) warnings remain. After updating the smoke fixture, `dotnet build Content.Client/Project-G.csproj --no-restore -m:1` passed without warnings/errors.
+- `dotnet test Content.Tests/Content.Tests.csproj --no-build --no-restore --filter 'FullyQualifiedName~Combat|FullyQualifiedName~Quest|FullyQualifiedName~Defense' --logger 'console;verbosity=minimal'`: 103 passed.
+- Full run with the same options but no filter: 538 passed, 7 skipped, 1 failed (`RecoveryReplicationTests.TwoLossyClientsReplaceDeadNpcOnlyAfterDurableRespawn`, line 91: old/new NPC IDs equal). The separate `FullyQualifiedName~RecoveryReplicationTests` rerun also failed there; the server and this test were not changed by the input amendment.
+- `dotnet Content.Server/bin/Debug/net10.0/Content.Server.dll --validate-content` passed.
+- Godot 4.7.1 Mobile/D3D12: `res://Tests/UI/CombatInputSmoke.tscn -- --server-port=28956 --identity=ctrl-attack-2 --attack-input-only` passed against an isolated Development server/database. Real input checks cover ground clicks, directional Ctrl swings and held chord, NPC dialogue bypass, modal protection, no Ctrl pursuit, normal approach/repeated autoattack, and cancellation of autoattack by Ctrl. Use a graphical, focused window and a fresh isolated identity/database for this smoke; the default scene mode remains the older defense/reconnect scenario.
+
 2026-10-09 amendment: the user approved selected-target repeated basic attacks and automatic approach,
 RMB-held movement, Tab guard, Shift parry and stamina. The old manual-only input restrictions below
 are historical, superseded by `docs/design/gameplay-contract.md` (Combat).
