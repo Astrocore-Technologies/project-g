@@ -143,7 +143,7 @@ public partial class CombatPresentation : Node3D
         if (!GodotObject.IsInstanceValid(_autoTarget) || !_autoTarget.IsInsideTree() || !_autoTarget.IsAlive || !IsAlive || !GetWindow().HasFocus())
         { CancelAutoAttack(); _player.StopMovement(); return; }
         if(ProjectG.UI.GameUi.GameplayModalOpen) { _player.StopMovement(); return; }
-        if (_player.DefenseHeld || _player.IsDashing) return;
+        if (_player.DefenseHeld || _player.IsDashing || _player.Control != CombatControlPhase.None || _player.RecoveryRemaining > 0) return;
         var targetPosition=_autoTarget._actor.GlobalPosition; var point=new NumericsVector2(targetPosition.X,targetPosition.Z);
         var offset=point-_player.PredictedPosition;
         var targetFoot = new System.Numerics.Vector3(point.X, targetPosition.Y - 1, point.Y);

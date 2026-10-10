@@ -78,7 +78,9 @@ public partial class SwordAttackAnimation : Node3D
             _weapon.Visible = state.AbilityId != 3;
         }
         _effect = state.EffectId; _predicted = false;
-        if (state.Phase == AbilityPhase.Impact) Contact();
+        if (state.Phase == AbilityPhase.Impact || state.Phase == AbilityPhase.Recovery) Contact();
+        if (state.Phase == AbilityPhase.Recovery)
+        { _from=ClipPosition; _elapsed=0; _duration=Math.Max(.001,state.RemainingSeconds); }
         else if (_waiting)
         {
             // Keep the current pose when the server replaces a prediction; no duplicate wind-up.
@@ -147,6 +149,6 @@ public partial class SwordAttackAnimation : Node3D
     {
         3 => "dash", 20 => "thrust", 21 => "sweep", 22 => "rend", 23 => "breaker",
         24 => "pommel", 25 => "hamstring", 26 => "riposte", 27 => "whirl",
-        28 => "breath", 29 => "finisher", 1 or 2 => "cast_release", 4 or 5 or 6 => "cast_self", _ => ""
+        28 => "breath", 29 => "finisher", 30 => "pommel", 1 or 2 => "cast_release", 4 or 5 or 6 => "cast_self", _ => ""
     };
 }

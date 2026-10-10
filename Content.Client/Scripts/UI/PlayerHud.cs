@@ -71,7 +71,7 @@ public partial class PlayerHud : CanvasLayer
         _defense=state; _defenseReceived=Time.GetTicksMsec()/1000d;
         _staminaText.Text=$"Выносливость  {state.Stamina:0} / {state.MaxStamina:0}";
         Value(_stamina,state.Stamina,state.MaxStamina);
-        _defenseText.TooltipText=$"Блок урона: {state.BlockDamage*100:0.#}%\nПарирование: {state.ParryCost:0} выносливости\nРывок: {state.DodgeCost:0} выносливости";
+        _defenseText.TooltipText=$"Блок урона: {state.BlockDamage*100:0.#}%\nПарирование: {state.ParryCost:0} выносливости\nРывок: {state.DodgeCost:0} выносливости\nSpace при падении: Quick Recover, {state.QuickRecoverCost:0} выносливости, до {state.QuickRecoverRange:0.#} м. Удерживать — прицел, отпустить — перекат.";
     }
     public void Apply(AbilityLoadout loadout)
     { if (loadout.EntityId != _owner) return; _loadout = loadout; _received = Time.GetTicksMsec()/1000d; _manaText.Text = $"Мана  {loadout.Mana:0} / {loadout.MaxMana:0}"; Value(_mana,loadout.Mana,loadout.MaxMana); UpdateSlots(); }
@@ -87,6 +87,8 @@ public partial class PlayerHud : CanvasLayer
     {
         var parry=Math.Max(0,_defense.ParryCooldown-(Time.GetTicksMsec()/1000d-_defenseReceived));
         _defenseText.Text=(_defense.Blocking ? "Tab · БЛОК" : "Tab · блок")+(parry>0 ? $"   Shift · {parry:0.0} с" : "   Shift · парирование");
+        var quick=Math.Max(0,_defense.QuickRecoverCooldown-(Time.GetTicksMsec()/1000d-_defenseReceived));
+        if(quick>0) _defenseText.Text+=$"   Подъём · {quick:0.0} с";
         if (_loadout.Abilities is null) return;
         var elapsed = Time.GetTicksMsec()/1000d-_received;
         for (var i=0;i<9;i++)
@@ -94,14 +96,15 @@ public partial class PlayerHud : CanvasLayer
             AbilityProfile? found = null;
             foreach (var profile in _loadout.Abilities) if (i==8 ? profile.Form==AbilityForm.Dash : profile.Id==_bar[i]) { found=profile; break; }
             if (found is not { } skill) { _slotArt[i].Texture=null; _shownArt[i]=0; _slotNames[i].Text="—"; _slotTimers[i].Text="Пусто"; _slots[i].TooltipText="Назначьте навык в окне K"; continue; }
-            if (_shownArt[i]!=skill.Id) { _shownArt[i]=skill.Id; _slotArt[i].Texture=UiAssets.Texture(UiAssets.SkillKey(skill.Id),skill.Id is >=20 and <=29 ? "equipment.weapon" : null); }
+            if (_shownArt[i]!=skill.Id) { _shownArt[i]=skill.Id; _slotArt[i].Texture=UiAssets.Texture(UiAssets.SkillKey(skill.Id),skill.Id is >=20 and <=30 ? "equipment.weapon" : null); }
             var cooldown = Math.Max(0,skill.ReadyInSeconds-elapsed);
             var exhausted=_defense.Stamina<skill.StaminaCost;
             _slotNames[i].Text=GameUi.SkillName(skill.Id); _slotTimers[i].Text=!_alive ? "—" : cooldown>0 ? $"{cooldown:0.0} с" : _loadout.Mana<skill.ManaCost ? "Нет маны" : "Готово";
             _slotTimers[i].Modulate=cooldown<=0 && _loadout.Mana>=skill.ManaCost && _alive ? GameUi.Accent : new Color("a9aeb7");
             _slots[i].TooltipText=$"{GameUi.SkillName(skill.Id)}\nМана: {skill.ManaCost:0}\nКаст: {skill.CastSeconds:0.##} с";
             if (skill.Form==AbilityForm.Dash) { _slotNames[i].Text=skill.Range>3 ? "Длинный рывок" : "Рывок"; _slots[i].TooltipText=$"{_slotNames[i].Text}\nВыносливость: {skill.StaminaCost:0}\nДо {skill.Range:0.#} м · {skill.CooldownSeconds:0.#} с\nSpace · до курсора, без неуязвимости"; }
-            if (skill.Id is >=20 and <=29) _slots[i].TooltipText=$"{GameUi.SkillName(skill.Id)}\n{SwordsmanUi.Description(skill.Id)}\nТекущий расход: {skill.StaminaCost:0}; перезарядка: {skill.CooldownSeconds:0.#} с";
+            if (skill.Id is >=20 and <=30) _slots[i].TooltipText=$"{GameUi.SkillName(skill.Id)}\n{SwordsmanUi.Description(skill.Id)}\nТекущий расход: {skill.StaminaCost:0}; перезарядка: {skill.CooldownSeconds:0.#} с";
+            if (skill.RecoverySeconds>0) _slots[i].TooltipText+=$"\nВосстановление после удара: до {skill.RecoverySeconds:0.##} с";
             _slots[i].TooltipText += "\nУдерживайте клавишу — область применения; отпустите — применить.\nEsc или ПКМ — отменить прицеливание.";
             if (skill.Availability!=AbilityAvailability.Ready && _alive && cooldown<=0)
             { _slotTimers[i].Text=skill.Availability==AbilityAvailability.NeedsSword ? "Нужен меч" : "Парируй"; _slotTimers[i].Modulate=new Color("a9aeb7"); }

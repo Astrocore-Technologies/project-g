@@ -170,12 +170,12 @@ public partial class ProgressionPresentation : CanvasLayer
         if (_skills is null || _state.Skills is null) return;
         foreach (var node in _skills.GetChildren()) { _skills.RemoveChild(node); node.QueueFree(); }
         _skills.AddChild(GameUi.Text("8 ячеек навыков · рывок Space — отдельно"));
-        foreach (var skill in _state.Skills.OrderByDescending(s => s.Id is >=20 and <=29))
+        foreach (var skill in _state.Skills.OrderByDescending(s => s.Id is >=20 and <=30))
         {
             var row = new VBoxContainer(); _skills.AddChild(row);
             var name = GameUi.Text(GameUi.SkillName(skill.Id)+(skill.Level == 0 ? " · не изучен" : $" · ур. {skill.Level} · освоение {skill.Practice}/{skill.NextPractice}"));
             name.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill; name.AutowrapMode=TextServer.AutowrapMode.WordSmart; row.AddChild(name);
-            if (skill.Id is >= 20 and <= 29) UiComposition.Paragraph(row,"Требуется меч · " + SwordsmanUi.Description(skill.Id),14);
+            if (skill.Id is >= 20 and <= 30) UiComposition.Paragraph(row,"Требуется меч · " + SwordsmanUi.Description(skill.Id),14);
             if (skill.Id == 3) { row.AddChild(GameUi.Text("Space")); continue; }
             if (skill.Level == 0)
             { var learn = GameUi.Button("Изучить",()=>Send(ProgressionAction.LearnSkill,skill.Id)); learn.Disabled = !skill.Learnable || _pending != 0 || !_alive; row.AddChild(learn); continue; }

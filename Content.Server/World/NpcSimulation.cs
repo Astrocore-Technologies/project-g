@@ -83,7 +83,9 @@ public sealed class NpcSimulation
         if (!float.IsFinite(delta) || delta <= 0) throw new ArgumentException("Invalid NPC fixed tick delta.");
         _time += delta;
         if (_combat.Get(Id).Health <= 0) { Defeat(tick); return; }
-        if (_combat.IsStunned(Id)) return;
+        if (Motion.IsDashing)
+        { Motion.Step(delta); _spatial.Move(Id,Motion.Position); _combat.Move(Id,Motion.Position,Motion.Height); return; }
+        if (_combat.IsActionLocked(Id)) return;
         if (Behavior == NpcBehavior.Windup) return;
         _decisionRemaining -= delta;
         if (_decisionRemaining <= 0)
@@ -100,7 +102,7 @@ public sealed class NpcSimulation
     {
         // Player attacks/casts resolve first: killing a winding-up NPC cancels its strike.
         if (_combat.Get(Id).Health <= 0) { Defeat(tick); return; }
-        if (_combat.IsStunned(Id)) return;
+        if (_combat.IsActionLocked(Id)) return;
         if (Area is { Phase: NpcAreaPhase.Impact } impact)
         {
             var remaining = Math.Max(0, impact.RemainingSeconds - delta);

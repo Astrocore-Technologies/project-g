@@ -16,6 +16,8 @@ public sealed partial class AbilitySimulation
 {
     private readonly Dictionary<NetworkEntityId, AbilityActor> _actors = new();
     private readonly Dictionary<NetworkEntityId, Pending> _pending = new();
+    private readonly Dictionary<NetworkEntityId, (Pending Intent, double Expires)> _buffered = new();
+    private readonly List<NetworkEntityId> _bufferFinished = new();
     private readonly Dictionary<NetworkEntityId, AbilityResult> _results = new();
     private readonly HashSet<NetworkEntityId> _dirty = new();
     private readonly List<AbilityEffect> _effects = new();
@@ -49,6 +51,7 @@ public sealed partial class AbilitySimulation
         _calculator = new StatCalculator(catalog.Balance); _startDash = startDash; _queryLimit = cellSize * 32;
         _combat.DirectlyDamaged += CancelRecovery;
         _combat.ActionAttempted += CancelRecovery;
+        _combat.ActionAttempted += id => _buffered.Remove(id);
         _combat.InterruptRequested += InterruptCast;
         _combat.SwordWindowsChanged += id => _dirty.Add(id);
         // Reject unusable content before accepting any connections.
@@ -98,23 +101,25 @@ public sealed partial class AbilitySimulation
         return saved;
     }
 
-    internal void ResetSession(NetworkEntityId id){var a=_actors[id];a.LastSeenSequence=0;a.LastRequestTick=null;_pending.Remove(id);_results.Remove(id);}
+    internal void ResetSession(NetworkEntityId id){var a=_actors[id];a.LastSeenSequence=0;a.LastRequestTick=null;_pending.Remove(id);_buffered.Remove(id);_results.Remove(id);}
     internal void Respawn(NetworkEntityId id){var a=_actors[id];a.Mana=a.MaxMana*.5;_dirty.Add(id);RefreshManaRecovery(id);}
-    internal void StopDead(NetworkEntityId id){InterruptCast(id);_combat.Get(id).IsCasting=false;_combat.Get(id).StationaryCast=false;_pending.Remove(id);}
+    internal void StopDead(NetworkEntityId id){InterruptCast(id);_combat.Get(id).IsCasting=false;_combat.Get(id).StationaryCast=false;_pending.Remove(id);_buffered.Remove(id);}
     internal double Mana(NetworkEntityId id) => _actors[id].Mana;
 
     internal void Restore(NetworkEntityId id, CharacterState state, double offlineSeconds)
     {
         var actor = _actors[id];
-        if (state.Mana > actor.MaxMana || state.Cooldowns.Length != actor.Definitions.Length)
+        if (state.Mana > actor.MaxMana || state.Cooldowns.Any(c => !actor.Definitions.Any(d => d.Id == c.AbilityId)))
             throw new InvalidDataException("Saved mana/loadout does not match current content.");
         actor.Mana = state.Mana;
         RefreshManaRecovery(id); // NC: offline time never restores mana.
         for (var i = 0; i < actor.Definitions.Length; i++)
         {
-            var saved = Array.Find(state.Cooldowns, item => item.AbilityId == actor.Definitions[i].Id)
-                ?? throw new InvalidDataException("Saved ability is not in the current loadout.");
-            actor.ReadyAt[i] = _time + Math.Max(0, saved.Seconds - offlineSeconds);
+            var saved = Array.Find(state.Cooldowns, item => item.AbilityId == actor.Definitions[i].Id);
+            // Explicit additive content upgrade only; missing old abilities remain invalid.
+            if (saved is null && actor.Definitions[i].Id != "sword_rising")
+                throw new InvalidDataException("Saved ability is not in the current loadout.");
+            actor.ReadyAt[i] = _time + Math.Max(0, (saved?.Seconds ?? 0) - offlineSeconds);
         }
     }
 
@@ -132,6 +137,7 @@ public sealed partial class AbilitySimulation
         {
             var ability = _catalog.Abilities[abilityIds[i]];
             var cast = ability.Kind == AbilityKind.Recovery ? ability.CastSeconds : _calculator.CastDuration(ability.CastSeconds, stats);
+            cast = Math.Max(cast,ability.Melee?.MinimumWindupSeconds ?? 0);
             var lifetime = ability.Speed > 0 ? ability.Range / ability.Speed : _options.ImpactSeconds;
             if (!float.IsFinite((float)ability.Range) || !float.IsFinite((float)ability.Radius) || !float.IsFinite((float)ability.Speed) ||
                 (float)ability.Range <= 0 || (float)ability.Radius <= 0 ||
@@ -143,7 +149,8 @@ public sealed partial class AbilitySimulation
             definitions[i] = ability;
             profiles[i] = new(ability.NetworkId, (AbilityForm)ability.Kind, (float)ability.Range, (float)ability.Radius,
                 (float)ability.Speed, cast, ability.CooldownSeconds, ability.Kind==AbilityKind.Dash ? 0 : ability.ManaCost, 0, ability.StaminaCost);
-            profiles[i] = profiles[i] with { Area = DescribeArea(ability, profiles[i]) };
+            profiles[i] = profiles[i] with { Area = DescribeArea(ability, profiles[i]),
+                RecoverySeconds = Math.Max(ability.Melee?.HitRecoverySeconds ?? 0,ability.Melee?.MissRecoverySeconds ?? 0) };
         }
         return new AbilityActor(definitions, profiles, Math.Max(0, stats.MaxMana));
     }
@@ -170,7 +177,7 @@ public sealed partial class AbilitySimulation
     public void Remove(NetworkEntityId id)
     {
         _recoveringMana.Remove(id); _offlineMana.Remove(id); // NC
-        _actors.Remove(id); _pending.Remove(id); _results.Remove(id); _dirty.Remove(id);
+        _actors.Remove(id); _pending.Remove(id);_buffered.Remove(id); _results.Remove(id); _dirty.Remove(id);
         RemoveMeleeEffects(id);
         for (var i = _effects.Count - 1; i >= 0; i--) if (_effects[i].ActorId == id) _effects.RemoveAt(i);
         // ActiveStates is refreshed next tick; stale send caches expire through interest removal.
@@ -183,7 +190,7 @@ public sealed partial class AbilitySimulation
         actor.LastSeenSequence = command.Sequence;
         if (actor.LastRequestTick == serverTick)
         {
-            _pending.Remove(id);
+            _pending.Remove(id);_buffered.Remove(id);
             _combat.Get(id).LastAbilitySequence = command.Sequence;
             _dirty.Add(id);
             _results[id] = new(command.Sequence, serverTick, AbilityOutcome.RateLimited);
@@ -222,6 +229,21 @@ public sealed partial class AbilitySimulation
             if (effect.Phase == AbilityPhase.Finished) { _cancelledCasts.Remove(effect.Id); _effects.RemoveAt(i); }
             else _effects[i] = effect;
         }
+        _bufferFinished.Clear();
+        foreach (var (id, buffered) in _buffered)
+        {
+            // A newer manual intention replaces the single slot; never replay a whole queue.
+            if (_pending.ContainsKey(id)) { _bufferFinished.Add(id); continue; }
+            var caster = _combat.Get(id);
+            if (caster.Health <= 0 || !caster.Active || _combat.IsStunned(id) || caster.Control != CombatControlPhase.None)
+            { _results[id] = new(buffered.Intent.Command.Sequence,tick,AbilityOutcome.InvalidState); _bufferFinished.Add(id); continue; }
+            var definition = Array.Find(_actors[id].Definitions,d => d.NetworkId == buffered.Intent.Command.AbilityId);
+            if (!caster.IsCasting && (!_combat.IsActionLocked(id) || definition is not null && _combat.CanHitFollowup(id,definition.Id)))
+            { Begin(id,buffered.Intent,tick,allowBuffer:false); _bufferFinished.Add(id); }
+            else if (_time > buffered.Expires)
+            { _results[id] = new(buffered.Intent.Command.Sequence,tick,AbilityOutcome.Busy); _bufferFinished.Add(id); }
+        }
+        foreach (var id in _bufferFinished) _buffered.Remove(id);
         foreach (var (id, pending) in _pending) Begin(id, pending, tick);
         _pending.Clear();
         foreach (var effect in _effects) _states.Add(effect.State(tick));
@@ -252,7 +274,7 @@ public sealed partial class AbilitySimulation
         foreach (var id in view.Removed) view.Visible.Remove(id);
     }
 
-    private void Begin(NetworkEntityId id, Pending pending, uint tick)
+    private void Begin(NetworkEntityId id, Pending pending, uint tick, bool allowBuffer = true)
     {
         var actor = _actors[id]; var combatant = _combat.Get(id); var command = pending.Command;
         if (MovementSimulation.IsSequenceNewer(command.Sequence, combatant.LastAbilitySequence))
@@ -260,9 +282,20 @@ public sealed partial class AbilitySimulation
         _dirty.Add(id);
         var index = -1;
         for (var i = 0; i < actor.Profiles.Length; i++) if (actor.Profiles[i].Id == command.AbilityId) { index = i; break; }
+        var followup = index >= 0 && _combat.CanHitFollowup(id,actor.Definitions[index].Id);
+        if (index >= 0 && !combatant.IsCasting && combatant.Health > 0 && combatant.Active &&
+            !_combat.IsStunned(id) && combatant.Control == CombatControlPhase.None && _time < actor.ReadyAt[index])
+        { _results[id] = new(command.Sequence,tick,AbilityOutcome.Cooldown); return; }
+        if (allowBuffer && index >= 0 && actor.Enabled.Contains(command.AbilityId) && combatant.Health > 0 && combatant.Active &&
+            !_combat.IsStunned(id) && combatant.Control == CombatControlPhase.None && !followup &&
+            !combatant.IsCasting && _combat.RecoveryRemaining(id) is > 0 && _combat.RecoveryRemaining(id) <= _catalog.Defense.InputBufferSeconds)
+        {
+            _buffered[id] = (pending with { CompensationSeconds=0 },_time + _catalog.Defense.InputBufferSeconds + _delta);
+            _results[id] = new(command.Sequence,tick,AbilityOutcome.Buffered); return;
+        }
         var outcome = index < 0 || !actor.Enabled.Contains(command.AbilityId) ? AbilityOutcome.UnknownAbility
-            : combatant.Health <= 0 || !combatant.Active || _combat.IsStunned(id) ? AbilityOutcome.InvalidState
-            : combatant.IsCasting ? AbilityOutcome.Busy
+            : combatant.Health <= 0 || !combatant.Active || _combat.IsStunned(id) || combatant.Control != CombatControlPhase.None ? AbilityOutcome.InvalidState
+            : combatant.IsCasting || _combat.RecoveryRemaining(id) > 0 && !followup ? AbilityOutcome.Busy
             : _time < actor.ReadyAt[index] ? AbilityOutcome.Cooldown
             : actor.Mana < actor.Profiles[index].ManaCost ? AbilityOutcome.NoMana
             : actor.Profiles[index].Form==AbilityForm.Dash && !_combat.CanDodge(id) ? AbilityOutcome.NoStamina
@@ -303,6 +336,7 @@ public sealed partial class AbilitySimulation
         {
             _results[id] = new(command.Sequence, tick, AbilityOutcome.InvalidAim); return;
         }
+        if (followup) _combat.SetRecovery(id,0);
         if(profile.Form!=AbilityForm.Dash)_combat.PlayerAction?.Invoke(id);
         else _combat.SpendDodge(id);
         if (profile.Form != AbilityForm.Dash) _combat.SpendStamina(id, profile.StaminaCost);
@@ -318,8 +352,8 @@ public sealed partial class AbilitySimulation
             Id = _nextEffectId++, ActorId = id, Sequence = command.Sequence, Definition = actor.Definitions[index] with
             { Power = actor.Definitions[index].Power * PowerFactor(actor,profile.Id),
               MagicAttackScale = actor.Definitions[index].MagicAttackScale * PowerFactor(actor,profile.Id) }, Profile = profile,
-            Origin = combatant.Position, Position = destination, Direction = direction, OriginHeight = combatant.Height,
-            Height = profile.Form == AbilityForm.GroundArea ? command.AimHeight : combatant.Height, DirectionY = command.DirectionY / directionLength, Phase = AbilityPhase.Telegraph,
+            Origin = combatant.Position, Position = destination, Direction = direction, OriginHeight = combatant.Foot.Y,
+            Height = profile.Form == AbilityForm.GroundArea ? command.AimHeight : combatant.Foot.Y, DirectionY = command.DirectionY / directionLength, Phase = AbilityPhase.Telegraph,
             Remaining = (float)profile.CastSeconds, DistanceLeft = profile.Range,
             FocusFactor = profile.Form == AbilityForm.Melee ? _combat.ConsumeFocus(id) : 1,
             // Old observations do not earn catch-up. Nothing rewinds actor position or resources.
@@ -341,13 +375,19 @@ public sealed partial class AbilitySimulation
         if (_cancelledCasts.Contains(effect.Id)) { effect.Phase = AbilityPhase.Finished; return; }
         if (effect.Phase == AbilityPhase.Telegraph)
         {
+            if (effect.Profile.Form is AbilityForm.Melee or AbilityForm.Recovery)
+            { effect.Position=caster.Position; effect.Height=caster.Foot.Y; }
             effect.Remaining -= delta;
             if (effect.Remaining > 0) return;
             caster.IsCasting = false;
             caster.StationaryCast = false;
             if (effect.Profile.Form is AbilityForm.Melee or AbilityForm.Recovery)
             {
-                ResolveTechnique(effect, tick);
+                var hit = ResolveTechnique(effect, tick);
+                var technique = effect.Definition.Melee!;
+                var recovery = hit ? technique.HitRecoverySeconds : technique.MissRecoverySeconds;
+                _combat.SetRecovery(effect.ActorId,recovery,hit ? technique.HitCancelAfterSeconds : 0,hit ? technique.HitFollowups : null);
+                effect.RecoveryEndsAt=caster.RecoveryUntil;
                 effect.Phase = AbilityPhase.Impact; effect.Remaining = _options.ImpactSeconds;
                 return;
             }
@@ -358,7 +398,13 @@ public sealed partial class AbilitySimulation
                 effect.Phase = AbilityPhase.Impact; effect.Remaining = _options.ImpactSeconds;
                 return;
             }
-            effect.Phase = AbilityPhase.Flying; effect.Origin = effect.Position = caster.Position; effect.Height = effect.OriginHeight = caster.Height;
+            effect.Phase = AbilityPhase.Flying; effect.Origin = effect.Position = caster.Position; effect.Height = effect.OriginHeight = caster.Foot.Y;
+        }
+        if (effect.Phase == AbilityPhase.Recovery)
+        {
+            effect.Remaining = caster.RecoveryUntil==effect.RecoveryEndsAt ? (float)_combat.RecoveryRemaining(effect.ActorId) : 0;
+            if (effect.Remaining <= 0) effect.Phase = AbilityPhase.Finished;
+            return;
         }
         if (effect.Phase == AbilityPhase.Dash || effect.Phase == AbilityPhase.Impact)
         {
@@ -370,7 +416,10 @@ public sealed partial class AbilitySimulation
                     caster.IsCasting = false;
                     if (Vector2.DistanceSquared(caster.Position,effect.Origin) > 0.01f) _practice.Add((effect.ActorId,effect.Profile.Id));
                 }
-                effect.Phase = AbilityPhase.Finished;
+                if (effect.Phase == AbilityPhase.Impact && effect.Definition.Melee is not null &&
+                    caster.RecoveryUntil==effect.RecoveryEndsAt && _combat.RecoveryRemaining(effect.ActorId) > 0)
+                { effect.Phase = AbilityPhase.Recovery; effect.Remaining = (float)_combat.RecoveryRemaining(effect.ActorId); }
+                else effect.Phase = AbilityPhase.Finished;
             }
             return;
         }
@@ -407,7 +456,7 @@ public sealed partial class AbilitySimulation
         foreach (var id in _candidates)
             if (_combat.TryGet(id, out var target) && _combat.CanTarget(effect.ActorId,target.Id) && target.Health > 0 &&
                 Vector3.DistanceSquared(effect.Foot, target.Foot) <= effect.Profile.Radius * effect.Profile.Radius &&
-                _grid.TraverseSurface(effect.Foot, target.Foot) && _grid.ClearAttack(effect.Foot, target.Foot)) Hit(effect, target, tick);
+                _grid.TraverseSurface(effect.Foot, new(target.Position.X,target.Height,target.Position.Y)) && _grid.ClearAttack(effect.Foot, target.Foot)) Hit(effect, target, tick);
     }
 
     private void Hit(AbilityEffect effect, Combatant target, uint tick)

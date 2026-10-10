@@ -5,6 +5,14 @@ public static class EditorLabels
 {
     private static readonly Dictionary<string, string> Names = new()
     {
+        ["sword_rising"]="Восходящий удар", ["hitRecoverySeconds"]="Восстановление после попадания · с",
+        ["missRecoverySeconds"]="Восстановление после промаха / защиты · с", ["hitCancelAfterSeconds"]="Продолжение после попадания · с",
+        ["knockupSeconds"]="Полёт · с", ["knockdownSeconds"]="Падение · с", ["knockupHeight"]="Высота полёта · м",
+        ["knockbackDistance"]="Отбрасывание · м", ["knockbackSpeed"]="Скорость отбрасывания · м/с", ["minimumWindupSeconds"]="Минимальный замах · с",
+        ["inputBufferSeconds"]="Буфер действия · с", ["controlResetSeconds"]="Сброс повторного контроля · с",
+        ["repeatedControlFactor"]="Сила второго контроля", ["quickRecoverCost"]="Стоимость Quick Recover",
+        ["quickRecoverCooldown"]="Перезарядка Quick Recover · с", ["quickRecoverRange"]="Перекат Quick Recover · м",
+        ["quickRecoverSpeed"]="Скорость переката · м/с",
         ["balance"]="Влияние характеристик", ["progression"]="Уровни и опыт", ["defense"]="Защита и выносливость", ["swordsman"]="Мечник · пассивки", ["melee"]="Приём", ["stats"]="Характеристики", ["modifiers"]="Добавки",
         ["weapons"]="Оружие", ["abilities"]="Навыки", ["creatures"]="Существа", ["items"]="Предметы", ["professions"]="Профессии",
         ["strength"]="STR · Сила", ["agility"]="AGI · Ловкость", ["vitality"]="VIT · Живучесть", ["intelligence"]="INT · Интеллект", ["dexterity"]="DEX · Точность", ["luck"]="LUK · Удача",
@@ -33,7 +41,7 @@ public static class EditorLabels
         ["meleeWeaponMultiplier"]="Усиление ближнего оружия", ["rangedWeaponMultiplier"]="Усиление дальнего оружия", ["healthItemMultiplier"]="Усиление предметов HP", ["manaItemMultiplier"]="Усиление предметов маны", ["attackSpeedMultiplier"]="Бонус скорости атаки", ["castSpeedMultiplier"]="Бонус скорости каста", ["criticalChance"]="Добавка к шансу крита", ["blockDamage"]="Добавка к блокированию",
         ["practicePerUse"]="Практика за применение", ["practiceToNext"]="Практика до следующего уровня", ["powerMultiplier"]="Сила навыка"
     };
-    private static readonly HashSet<string> Percent = ["damageFactor","rangeFactor","armorIgnore","bleedFactor","slowFraction","executeThreshold","executeFactor","baseBlockDamage","baseCriticalChance","basicDamageBonus","blockRemainderReduction","focusBonus","footworkBonus","blockMovementMultiplier","powerPerSkillLevel"];
+    private static readonly HashSet<string> Percent = ["damageFactor","rangeFactor","armorIgnore","bleedFactor","slowFraction","executeThreshold","executeFactor","baseBlockDamage","baseCriticalChance","basicDamageBonus","blockRemainderReduction","focusBonus","footworkBonus","blockMovementMultiplier","powerPerSkillLevel","repeatedControlFactor"];
     public static string Name(string key) => Names.GetValueOrDefault(key, key);
     public static bool IsPercent(string path) => Percent.Contains(path.Split('/')[^1]) || path.Split('/')[^1] is "powerMultiplier" or "magicAttackScale" or "meleeWeaponMultiplier" or "rangedWeaponMultiplier" or "healthItemMultiplier" or "manaItemMultiplier" or "attackSpeedMultiplier" or "castSpeedMultiplier" or "criticalChance" or "blockDamage";
     public static string Label(string path) => string.Join(" / ", path.Split('/').Skip(2).Select(Name)) is { Length: > 0 } text ? text : Name(path.Split('/')[^1]);

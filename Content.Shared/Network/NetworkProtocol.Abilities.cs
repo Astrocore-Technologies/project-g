@@ -49,7 +49,7 @@ public static partial class NetworkProtocol
             writer.Put(slot.Id); writer.Put((byte)slot.Form); writer.Put(slot.Range); writer.Put(slot.Radius); writer.Put(slot.Speed);
             writer.Put(slot.CastSeconds); writer.Put(slot.CooldownSeconds); writer.Put(slot.ManaCost); writer.Put(slot.ReadyInSeconds);
             writer.Put(slot.StaminaCost); writer.Put((byte)slot.Availability);
-            WriteArea(writer, slot.Area);
+            WriteArea(writer, slot.Area); writer.Put(slot.RecoverySeconds);
         }
         return writer;
     }
@@ -59,15 +59,15 @@ public static partial class NetworkProtocol
         value = default;
         if (reader.AvailableBytes < 29 || !reader.TryGetULong(out var actor) || actor == 0 ||
             !reader.TryGetUInt(out var tick) || !reader.TryGetDouble(out var mana) || !reader.TryGetDouble(out var maximum) ||
-            !reader.TryGetByte(out var count) || count > NetworkConstants.MaxAbilityProfiles || reader.AvailableBytes != count * (56 + AbilityArea.WireBytes)) return false;
+            !reader.TryGetByte(out var count) || count > NetworkConstants.MaxAbilityProfiles || reader.AvailableBytes != count * (64 + AbilityArea.WireBytes)) return false;
         var slots = new AbilityProfile[count];
         for (var i = 0; i < count; i++)
         {
             if (!reader.TryGetUShort(out var id) || !reader.TryGetByte(out var form) || !reader.TryGetFloat(out var range) ||
                 !reader.TryGetFloat(out var radius) || !reader.TryGetFloat(out var speed) || !reader.TryGetDouble(out var cast) ||
                 !reader.TryGetDouble(out var cooldown) || !reader.TryGetDouble(out var cost) || !reader.TryGetDouble(out var ready) ||
-                !reader.TryGetDouble(out var stamina) || !reader.TryGetByte(out var available) || !ReadArea(reader, out var area)) return false;
-            slots[i] = new(id, (AbilityForm)form, range, radius, speed, cast, cooldown, cost, ready, stamina, (AbilityAvailability)available, area);
+                !reader.TryGetDouble(out var stamina) || !reader.TryGetByte(out var available) || !ReadArea(reader, out var area) || !reader.TryGetDouble(out var recovery)) return false;
+            slots[i] = new(id, (AbilityForm)form, range, radius, speed, cast, cooldown, cost, ready, stamina, (AbilityAvailability)available, area, recovery);
         }
         var candidate = new AbilityLoadout(new(actor), tick, mana, maximum, slots);
         if (!ValidLoadout(candidate)) return false;
@@ -139,7 +139,7 @@ public static partial class NetworkProtocol
         float.IsFinite(value.Speed) && value.Speed >= 0 && (value.Form is not (AbilityForm.Projectile or AbilityForm.Dash) || value.Speed > 0) &&
         NonNegative(value.CastSeconds) && (value.Form != AbilityForm.Dash || value.CastSeconds == 0) &&
         double.IsFinite(value.CooldownSeconds) && value.CooldownSeconds > 0 &&
-        NonNegative(value.ManaCost) && NonNegative(value.ReadyInSeconds) && NonNegative(value.StaminaCost) && Enum.IsDefined(value.Availability) && value.Area.IsValid;
+        NonNegative(value.ManaCost) && NonNegative(value.ReadyInSeconds) && NonNegative(value.StaminaCost) && Enum.IsDefined(value.Availability) && value.Area.IsValid && double.IsFinite(value.RecoverySeconds) && value.RecoverySeconds is >=0 and <=2;
 
     private static bool ValidLoadout(AbilityLoadout value)
     {
@@ -166,7 +166,7 @@ public static partial class NetworkProtocol
         {
             AbilityForm.Projectile => value.Phase is AbilityPhase.Telegraph or AbilityPhase.Flying,
             AbilityForm.GroundArea => value.Phase is AbilityPhase.Telegraph or AbilityPhase.Impact,
-            AbilityForm.Melee or AbilityForm.Recovery => value.Phase is AbilityPhase.Telegraph or AbilityPhase.Impact,
+            AbilityForm.Melee or AbilityForm.Recovery => value.Phase is AbilityPhase.Telegraph or AbilityPhase.Impact or AbilityPhase.Recovery,
             AbilityForm.Dash => value.Phase == AbilityPhase.Dash,
             _ => false
         }) && float.IsFinite(value.RemainingSeconds) && value.RemainingSeconds >= 0 && value.Area.IsValid;

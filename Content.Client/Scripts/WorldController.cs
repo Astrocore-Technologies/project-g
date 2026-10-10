@@ -345,7 +345,7 @@ public partial class WorldController : Node3D
             visual = new AbilityEffectVisual(); AddChild(visual);
             _effects[value.EffectId] = visual;
         }
-        visual.Apply(value);
+        visual.Caster=_players[value.ActorId]; visual.Apply(value);
     }
 
     private void OnSnapshotReceived(WorldSnapshot snapshot)

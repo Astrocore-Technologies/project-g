@@ -8,7 +8,7 @@ public sealed partial class CombatSimulation
 {
     private sealed class DefenseActor
     {
-        public double Stamina, RecoverAt, ParryUntil, ParryReadyAt, GuardUntil;
+        public double Stamina, RecoverAt, ParryUntil, ParryReadyAt, GuardUntil, QuickReadyAt;
         public uint Sequence;
         public uint? RequestTick;
         public Vector2 Facing=Vector2.UnitY;
@@ -23,7 +23,7 @@ public sealed partial class CombatSimulation
     internal double DodgeCost => _catalog.Defense.DodgeCost;
     internal bool IsDefending(NetworkEntityId id) => _defense.TryGetValue(id,out var a) && (a.GuardUntil>_time || a.ParryUntil>_time);
     internal float DefenseMovement(NetworkEntityId id) => OrdinaryMovement(id) * (_defense.TryGetValue(id,out var a) && a.GuardUntil>_time ? _catalog.Defense.BlockMovementMultiplier : 1);
-    internal bool CanDodge(NetworkEntityId id) => !IsRooted(id) && CanSpendStamina(id, DodgeCostFor(id));
+    internal bool CanDodge(NetworkEntityId id) => !IsActionLocked(id) && !IsRooted(id) && CanSpendStamina(id, DodgeCostFor(id));
     internal void SpendDodge(NetworkEntityId id)
     { var a=_defense[id]; Spend(id,a,DodgeCostFor(id)); a.GuardUntil=0; a.ParryUntil=0; }
     private void Spend(NetworkEntityId id,DefenseActor a,double cost)
@@ -31,24 +31,27 @@ public sealed partial class CombatSimulation
     internal void SetDefenseConnected(NetworkEntityId id,bool connected)
     {
         if (!_defense.TryGetValue(id,out var a)) return;
-        a.Connected=connected; a.GuardUntil=0; a.ParryUntil=0; _defensePending.Remove(id);
+        a.Connected=connected; a.GuardUntil=0; a.ParryUntil=0; _defensePending.Remove(id); _landingRecover.Remove(id);
         if (connected) _defenseActive.Add(id); else _defenseActive.Remove(id);
         RefreshHealthRecovery(id);
     }
-    internal void RestoreDefense(NetworkEntityId id,SavedDefense? saved)
+    internal void RestoreDefense(NetworkEntityId id,SavedDefense? saved,double offlineSeconds=0)
     {
         if (saved is null) return;
         saved.Validate(); var a=_defense[id];
         if (saved.Stamina>_catalog.Defense.MaxStamina) throw new InvalidDataException("Saved stamina exceeds current capacity.");
-        a.Stamina=saved.Stamina; a.RecoverAt=_time+saved.RecoveryDelay; a.ParryReadyAt=_time+saved.ParryCooldown; _defenseActive.Add(id);
+        a.Stamina=saved.Stamina; a.RecoverAt=_time+saved.RecoveryDelay;
+        a.QuickReadyAt=_time+Math.Max(0,saved.QuickRecoverCooldown-offlineSeconds);
+        a.ParryReadyAt=_time+saved.ParryCooldown; _defenseActive.Add(id);
     }
     internal SavedDefense CaptureDefense(NetworkEntityId id)
-    { var a=_defense[id]; return new(1,a.Stamina,Math.Max(0,a.ParryReadyAt-_time),Math.Max(0,a.RecoverAt-_time)); }
+    { var a=_defense[id]; return new(1,a.Stamina,Math.Max(0,a.ParryReadyAt-_time),Math.Max(0,a.RecoverAt-_time),Math.Max(0,a.QuickReadyAt-_time)); }
     public DefenseState DefenseState(NetworkEntityId id,uint tick)
     {
         var a=_defense[id]; var b=_catalog.Defense;
         return new(id,tick,a.Sequence,a.Outcome,a.Stamina,b.MaxStamina,_actors[id].Stats.BlockDamage,Math.Max(0,a.ParryUntil-_time),
-            Math.Max(0,a.ParryReadyAt-_time),DodgeCostFor(id),b.ParryCost,a.GuardUntil>_time,DefenseMovement(id),a.Facing);
+            Math.Max(0,a.ParryReadyAt-_time),DodgeCostFor(id),b.ParryCost,a.GuardUntil>_time,DefenseMovement(id),a.Facing,RecoveryRemaining(id),Math.Max(0,a.QuickReadyAt-_time),
+            _catalog.Defense.QuickRecoverCost,_catalog.Defense.QuickRecoverRange,_catalog.Defense.QuickRecoverSpeed,(float)_catalog.Defense.InputBufferSeconds);
     }
     public bool QueueDefense(NetworkEntityId id,DefenseCommand c,uint tick)
     {
@@ -72,7 +75,7 @@ public sealed partial class CombatSimulation
             var sword = IsSwordsman(id); var actor = _actors[id];
             if (_swords.TryGetValue(id, out var window) && window.RiposteUntil > 0 && window.RiposteUntil <= _time)
             { window.RiposteUntil = 0; SwordWindowsChanged?.Invoke(id); }
-            var paused = actor.StationaryCast || sword && (actor.IsCasting || a.GuardUntil > _time);
+            var paused = actor.StationaryCast || IsActionLocked(id) || sword && (actor.IsCasting || a.GuardUntil > _time);
             if (a.Stamina<b.MaxStamina && elapsed>0 && !paused)
             { a.Stamina=Math.Min(b.MaxStamina,a.Stamina+(sword ? _catalog.Swordsman!.RecoveryPerSecond : b.RecoveryPerSecond)*elapsed); _defenseDirty.Add(id); }
             // Timed movement effects keep only affected actors awake and publish their expiration too.
@@ -85,7 +88,8 @@ public sealed partial class CombatSimulation
         {
             var a=_defense[id]; var actor=_actors[id]; a.Outcome=DefenseOutcome.Accepted; _defenseDirty.Add(id);
             if (c.Action==DefenseAction.Release) { a.GuardUntil=0; continue; }
-            if (actor.Health<=0 || actor.IsCasting || IsStunned(id) || !a.Connected) { a.Outcome=DefenseOutcome.InvalidState; continue; }
+            if (c.Action==DefenseAction.QuickRecover) { a.Outcome=QuickRecover(id,c); continue; }
+            if (actor.Health<=0 || actor.IsCasting || IsActionLocked(id) || !a.Connected) { a.Outcome=DefenseOutcome.InvalidState; continue; }
             if (c.Action==DefenseAction.Parry && _time<a.ParryReadyAt) { a.Outcome=DefenseOutcome.Cooldown; continue; }
             if (a.Stamina<(c.Action==DefenseAction.Parry ? b.ParryCost : b.BlockCost)) { a.Outcome=DefenseOutcome.NoStamina; continue; }
             a.Facing=Vector2.Normalize(c.Direction); _defenseActive.Add(id);

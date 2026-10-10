@@ -55,6 +55,7 @@ public partial class AbilityPresentation : Node3D
         if (!_player.IsAlive || !_network.RegionActive || @event is not InputEventKey { Pressed: true, Echo: false } key || _pending != 0 || IsAiming || _loadout.Abilities is null) return;
         var index = Array.IndexOf(BarKeys,key.PhysicalKeycode);
         if (key.PhysicalKeycode != Key.Space && index < 0) return;
+        if (key.PhysicalKeycode == Key.Space && _player.Control is CombatControlPhase.Airborne or CombatControlPhase.KnockedDown) return;
         AbilityProfile? selected = null;
         foreach (var slot in _loadout.Abilities)
             if (key.PhysicalKeycode == Key.Space ? slot.Form == AbilityForm.Dash : slot.Id == _bar[index]) { selected = slot; break; }
@@ -137,7 +138,8 @@ public partial class AbilityPresentation : Node3D
         var form = profile.Form; var position = _player.PredictedPosition;
         if (form == AbilityForm.GroundArea && !_player.CanAttack(new(aim.X, aimHeight, aim.Y), profile.Range)) { _feedback = "Вне дальности или за препятствием"; return; }
         if (++_sequence == 0) ++_sequence;
-        if (form == AbilityForm.Dash && !_player.PredictDash(_sequence, direction, dashDistance, profile.Speed)) return;
+        var delayed = _player.RecoveryRemaining > 0;
+        if (form == AbilityForm.Dash && !delayed && !_player.PredictDash(_sequence, direction, dashDistance, profile.Speed)) return;
         if (profile.Area.Stationary)
         {
             // Combat state can arrive after the player spawn; resolve once when the first stationary skill is used.
@@ -145,7 +147,7 @@ public partial class AbilityPresentation : Node3D
             _combat?.CancelAutoAttack(); _player.StopMovement();
         }
         _pending = _sequence; _pendingAt = Now(); _feedback = "";
-        _player.SwordAnimation.PredictAbility(_sequence, profile.Id, direction,
+        if (!delayed) _player.SwordAnimation.PredictAbility(_sequence, profile.Id, direction,
             form == AbilityForm.Dash ? dashDistance / profile.Speed : profile.CastSeconds);
         _prediction = new AbilityEffectVisual();
         // World-space preview is replaced by the single confirmed effect, not duplicated.
@@ -167,6 +169,7 @@ public partial class AbilityPresentation : Node3D
     public void ApplyResult(AbilityResult result)
     {
         if (result.Sequence != _pending) return;
+        if (result.Outcome == AbilityOutcome.Buffered) { _feedback="Действие подготовлено"; ClearPreview(); _player.SwordAnimation.RejectAbility(result.Sequence); return; }
         if (result.Outcome == AbilityOutcome.Accepted) return; // Authoritative effect replaces the preview.
         _player.RejectDash(result.Sequence);
         _player.SwordAnimation.RejectAbility(result.Sequence);

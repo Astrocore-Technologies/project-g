@@ -13,12 +13,15 @@ public partial class AbilityEffectVisual : Node3D
     private StandardMaterial3D? _material;
     private float _opacity;
     private double _life;
+    public Node3D? Caster { get; set; }
+    private Vector3 _casterPosition;
 
     public override void _Ready() => AddChild(_mesh);
 
     public void Apply(AbilityEffectState state, bool predicted = false)
     {
         _state = state;
+        _casterPosition=new(state.Position.X,state.Height+1,state.Position.Y);
         _remaining = state.RemainingSeconds + 0.25;
         _life = _remaining;
         Position = new(state.Position.X, state.Height + (state.Phase == AbilityPhase.Flying ? 1 : .12f), state.Position.Y);
@@ -69,12 +72,15 @@ public partial class AbilityEffectVisual : Node3D
             }
         }
         _opacity = _material.AlbedoColor.A;
+        _mesh.Visible=state.Phase != AbilityPhase.Recovery;
         _mesh.MaterialOverride = _material;
         _mesh.CastShadow = GeometryInstance3D.ShadowCastingSetting.Off;
     }
 
     public override void _Process(double delta)
     {
+        if (_state.Phase==AbilityPhase.Telegraph && _state.Form is AbilityForm.Melee or AbilityForm.Recovery && GodotObject.IsInstanceValid(Caster))
+        { Position+=Caster!.GlobalPosition-_casterPosition; _casterPosition=Caster.GlobalPosition; }
         if ((_remaining -= delta) <= 0) { QueueFree(); return; }
         if(_material is not null && _state.Phase == AbilityPhase.Impact)
         { var color=_material.AlbedoColor; color.A=_opacity*(float)(_remaining/Math.Max(.001,_life)); _material.AlbedoColor=color; }

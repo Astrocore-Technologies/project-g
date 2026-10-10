@@ -32,6 +32,7 @@ public static class EditorSchema
         pages.Add(new("combat/rules", "Защита и критический удар", ["Бой и защита"], "balance", "rules"));
         foreach (var (key, title) in new[] { ("stamina", "Выносливость"), ("block", "Блок"), ("parry", "Парирование") })
             pages.Add(new("combat/" + key, title, ["Бой и защита"], "defense", key));
+        pages.Add(new("combat/control", "Контроль, буфер и Quick Recover", ["Бой и защита"], "defense", "control"));
         foreach (var profession in document.ProfessionEntries())
         {
             var entry = entries.Single(e => e.Name == "professions / " + profession.Id);
@@ -123,7 +124,8 @@ public static class EditorSchema
         {
             "stamina" => key is "maxStamina" or "recoveryPerSecond" or "recoveryDelay" or "dodgeCost",
             "block" => key is "blockCost" or "blockMovementMultiplier" or "guardLeaseSeconds",
-            "parry" => key.StartsWith("parry"), _ => true
+            "parry" => key.StartsWith("parry"),
+            "control" => key.StartsWith("quickRecover") || key is "inputBufferSeconds" or "controlResetSeconds" or "repeatedControlFactor", _ => true
         };
         if (page.RootPath == "progression") return (key is "practicePerLevel" or "skillLevelCap" or "powerPerSkillLevel") == (page.Section == "skills");
         if (page.Section == "rules") return path.Count(c => c == '/') == 1;
@@ -153,7 +155,8 @@ public static class EditorSchema
         if (page.RootPath.StartsWith("abilities/"))
         {
             group = key is "range" or "radius" or "speed" or "rangeFactor" or "arcDegrees" ? "Попадание" :
-                key is "armorIgnore" or "bleedFactor" or "bleedSeconds" or "stunSeconds" or "slowFraction" or "slowSeconds" or "executeThreshold" or "executeFactor" or "restoreStamina" ? "Эффекты" : "Основное";
+                key is "armorIgnore" or "bleedFactor" or "bleedSeconds" or "stunSeconds" or "slowFraction" or "slowSeconds" or "executeThreshold" or "executeFactor" or "restoreStamina" || key.StartsWith("knock") ? "Эффекты" :
+                key.Contains("Recovery") || key is "hitCancelAfterSeconds" or "minimumWindupSeconds" ? "Фазы и продолжения" : "Основное";
             min = 0;
         }
         if (page.RootPath == "swordsman")
@@ -174,6 +177,12 @@ public static class EditorSchema
         if (key is "armorIgnore" or "executeThreshold" or "slowFraction" or "powerPerSkillLevel" or "basicDamageBonus" or "blockRemainderReduction" or "focusBonus" or "footworkBonus" or "blockMovementMultiplier") max = 1;
         if (key == "dashRange") max = 20;
         if (key == "arcDegrees") max = 360;
+        if (key is "hitRecoverySeconds" or "missRecoverySeconds" or "minimumWindupSeconds" or "knockupSeconds" or "knockdownSeconds") max=2;
+        if (key is "knockbackDistance" or "knockupHeight" or "quickRecoverRange") max=3;
+        if (key is "knockbackSpeed" or "quickRecoverSpeed") max=20;
+        if (key == "inputBufferSeconds") max=.3;
+        if (key == "controlResetSeconds") max=10;
+        if (key == "repeatedControlFactor") max=1;
         help = key switch
         {
             "rhythmHits" => "Сколько успешных обычных попаданий нужно для восстановления выносливости.",

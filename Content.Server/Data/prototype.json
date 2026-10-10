@@ -1,6 +1,6 @@
 {
   "schemaVersion": 4,
-  "balanceVersion": 3,
+  "balanceVersion": 4,
   "swordsman": {
     "professionId": 2,
     "regionId": "river_city",
@@ -81,7 +81,14 @@
     "parryWindow": 0.25,
     "parryCooldown": 0.5,
     "blockMovementMultiplier": 0.5,
-    "guardLeaseSeconds": 0.5
+    "guardLeaseSeconds": 0.5,
+    "inputBufferSeconds": 0.2,
+    "controlResetSeconds": 4,
+    "repeatedControlFactor": 0.5,
+    "quickRecoverCost": 15,
+    "quickRecoverCooldown": 12,
+    "quickRecoverRange": 1.5,
+    "quickRecoverSpeed": 6
   },
   "balance": {
     "baseBlockDamage": 0.3,
@@ -303,7 +310,11 @@
       "melee": {
         "damageFactor": 1.2,
         "rangeFactor": 1.3333333,
-        "narrowThrust": true
+        "narrowThrust": true,
+        "hitRecoverySeconds": 0.2,
+        "missRecoverySeconds": 0.4,
+        "hitCancelAfterSeconds": 0.1,
+        "hitFollowups": ["sword_rend", "sword_sweep"]
       }
     },
     {
@@ -337,7 +348,9 @@
       "melee": {
         "damageFactor": 1,
         "arcDegrees": 140,
-        "firstTargetOnly": false
+        "firstTargetOnly": false,
+        "hitRecoverySeconds": 0.25,
+        "missRecoverySeconds": 0.25
       }
     },
     {
@@ -371,7 +384,10 @@
       "melee": {
         "damageFactor": 0.8,
         "bleedFactor": 0.6,
-        "bleedSeconds": 4
+        "bleedSeconds": 4,
+        "hitRecoverySeconds": 0.25,
+        "missRecoverySeconds": 0.3,
+        "blockPreventsBleed": true
       }
     },
     {
@@ -404,7 +420,9 @@
       "staminaCost": 20,
       "melee": {
         "damageFactor": 1.7,
-        "armorIgnore": 0.3
+        "armorIgnore": 0.3,
+        "hitRecoverySeconds": 0.45,
+        "missRecoverySeconds": 0.45
       }
     },
     {
@@ -438,7 +456,9 @@
       "melee": {
         "damageFactor": 0.4,
         "rangeFactor": 0.7,
-        "stunSeconds": 0.4
+        "stunSeconds": 0.4,
+        "hitRecoverySeconds": 0.15,
+        "missRecoverySeconds": 0.25
       }
     },
     {
@@ -472,7 +492,9 @@
       "melee": {
         "damageFactor": 0.7,
         "slowFraction": 0.25,
-        "slowSeconds": 2
+        "slowSeconds": 2,
+        "hitRecoverySeconds": 0.2,
+        "missRecoverySeconds": 0.25
       }
     },
     {
@@ -505,7 +527,10 @@
       "staminaCost": 12,
       "melee": {
         "damageFactor": 1.7,
-        "requiresParry": true
+        "requiresParry": true,
+        "hitRecoverySeconds": 0.25,
+        "missRecoverySeconds": 0.4,
+        "narrowThrust": true
       }
     },
     {
@@ -537,10 +562,14 @@
       "magicAttackScale": 0,
       "staminaCost": 24,
       "melee": {
-        "damageFactor": 1.2,
+        "damageFactor": 0.9,
         "arcDegrees": 360,
         "firstTargetOnly": false,
-        "stationary": true
+        "stationary": true,
+        "hitRecoverySeconds": 0.35,
+        "missRecoverySeconds": 0.35,
+        "knockbackDistance": 1,
+        "knockbackSpeed": 8
       }
     },
     {
@@ -574,7 +603,9 @@
       "melee": {
         "damageFactor": 0,
         "stationary": true,
-        "restoreStamina": 25
+        "restoreStamina": 25,
+        "hitRecoverySeconds": 0,
+        "missRecoverySeconds": 0
       }
     },
     {
@@ -608,7 +639,79 @@
       "melee": {
         "damageFactor": 1.5,
         "executeThreshold": 0.3,
-        "executeFactor": 2.3
+        "executeFactor": 2.3,
+        "hitRecoverySeconds": 0.45,
+        "missRecoverySeconds": 0.45
+      }
+    },
+    {
+      "id": "sword_rising",
+      "progression": {
+        "practicePerUse": 1,
+        "levels": [
+          {
+            "practiceToNext": 3,
+            "powerMultiplier": 1
+          },
+          {
+            "practiceToNext": 6,
+            "powerMultiplier": 1.05
+          },
+          {
+            "practiceToNext": 9,
+            "powerMultiplier": 1.1
+          },
+          {
+            "practiceToNext": 12,
+            "powerMultiplier": 1.15
+          },
+          {
+            "practiceToNext": 15,
+            "powerMultiplier": 1.2
+          },
+          {
+            "practiceToNext": 18,
+            "powerMultiplier": 1.25
+          },
+          {
+            "practiceToNext": 21,
+            "powerMultiplier": 1.3
+          },
+          {
+            "practiceToNext": 24,
+            "powerMultiplier": 1.35
+          },
+          {
+            "practiceToNext": 27,
+            "powerMultiplier": 1.4
+          },
+          {
+            "practiceToNext": 0,
+            "powerMultiplier": 1.45
+          }
+        ]
+      },
+      "networkId": 30,
+      "kind": "Melee",
+      "power": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 12,
+      "castSeconds": 0.35,
+      "range": 3,
+      "radius": 0.3,
+      "speed": 0,
+      "magicAttackScale": 0,
+      "staminaCost": 16,
+      "melee": {
+        "damageFactor": 0.8,
+        "rangeFactor": 0.85,
+        "arcDegrees": 50,
+        "hitRecoverySeconds": 0.25,
+        "missRecoverySeconds": 0.4,
+        "knockupSeconds": 0.7,
+        "knockupHeight": 1,
+        "knockdownSeconds": 0.6,
+        "minimumWindupSeconds": 0.25
       }
     }
   ],
@@ -785,7 +888,8 @@
         "sword_riposte",
         "sword_whirl",
         "sword_breath",
-        "sword_finisher"
+        "sword_finisher",
+        "sword_rising"
       ],
       "discoveryMask": 0,
       "successfulUses": 0

@@ -23,7 +23,13 @@ public sealed partial class ServerWorld
     private void AddProgression(NetworkEntityId id, SavedProgression? saved)
     {
         if (_progressionCatalog is not { } catalog) return;
-        var value = saved ?? SavedProgression.Starter(_playerDefinition!,catalog); value.Validate(); ValidateProfession(value);
+        var value = saved ?? SavedProgression.Starter(_playerDefinition!,catalog);
+        // Add this single new learned technique to existing swordsmen, preserving all levels and bar slots.
+        if (catalog.Abilities.ContainsKey("sword_rising") && catalog.Swordsman is { } swordsman &&
+            (value.Profession.ActiveId == swordsman.ProfessionId || value.Profession.RetiredIds.Contains(swordsman.ProfessionId)) &&
+            !value.Skills.Any(s => s.DefinitionId == "sword_rising"))
+            value = value with { Skills = [..value.Skills,new SavedSkill("sword_rising",1,0,0)] };
+        value.Validate(); ValidateProfession(value);
         if(value.DeliveryQuest is { } quest && quest.DefinitionId!=catalog.DeliveryQuest?.Id) throw new InvalidDataException("Quest content migration required.");
         if(value.SwordTraining is { } training && (catalog.Swordsman is not { } sword || training.Damage > sword.RequiredDamage)) throw new InvalidDataException("Sword training content migration required.");
         var balance = catalog.Progression;

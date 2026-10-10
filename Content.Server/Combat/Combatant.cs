@@ -19,7 +19,14 @@ public sealed class Combatant
     public CombatEntityKind Kind { get; }
     public Vector2 Position { get; internal set; }
     public float Height { get; internal set; }
-    public Vector3 Foot => new(Position.X, Height, Position.Y);
+    public Vector3 Foot => new(Position.X, Height + AirOffset, Position.Y);
+    public float AirOffset { get; internal set; }
+    public CombatControlPhase Control { get; internal set; }
+    internal double ControlUntil, FlightStarted, FlightSeconds, KnockdownSeconds;
+    internal float FlightHeight;
+    internal int ControlCount;
+    internal double ControlResetAt, RecoveryUntil, HitCancelAt;
+    internal string[] HitFollowups = [];
     public bool Active { get; internal set; } = true;
     public double Health { get; internal set; }
     internal double HealthRecoveryElapsed { get; set; }

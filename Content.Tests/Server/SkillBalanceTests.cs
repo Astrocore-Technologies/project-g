@@ -34,7 +34,7 @@ public sealed class SkillBalanceTests
                 Assert.Equal(1 + (level - 1) * .05, curve.PowerFactor(level));
             }
         }
-        Assert.Equal(10, document.ProfessionSkills(2).Count);
+        Assert.Equal(11, document.ProfessionSkills(2).Count);
         Assert.Single(document.ProfessionSkills(1));
         Assert.Equal(5, document.ProfessionSkills(0).Count);
         var thrust = document.ProfessionSkills(2).Single(e => e.Name.EndsWith("sword_thrust")).Path;

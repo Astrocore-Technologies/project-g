@@ -71,7 +71,7 @@ public sealed class SwordTrainingTests
         Assert.Equal(ProfessionOutcome.Accepted,ProfessionTests.Command(w,p,2,ProfessionAction.Confirm,2,prepared.Confirmation).Outcome);
         var saved=w.CaptureCharacter(42); Assert.Equal((ushort)2,saved.Progression!.Profession.ActiveId);
         Assert.Equal(0,w.ProfessionState(p.EntityId,w.Tick).TrainingRequired);
-        Assert.Equal(10,saved.Progression.Skills.Count(s=>s.DefinitionId.StartsWith("sword_")));
+        Assert.Equal(11,saved.Progression.Skills.Count(s=>s.DefinitionId.StartsWith("sword_")));
         Assert.Equal(8,saved.Progression.Skills.Count(s=>s.Slot!=0));
         Assert.All(saved.Progression.Skills.Where(s=>s.DefinitionId.StartsWith("sword_")),s=>Assert.Equal(1,s.Level));
         Assert.Equal(9,w.Abilities!.Loadout(p.EntityId,w.Tick).Abilities.Count);

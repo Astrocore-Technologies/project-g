@@ -21,7 +21,7 @@ public sealed partial class CombatSimulation
     internal bool HasSword(NetworkEntityId id) => SwordEquipped?.Invoke(id) == true && WeaponUsable?.Invoke(id) != false;
     internal bool IsSwordsman(NetworkEntityId id) => _swords.TryGetValue(id, out var s) && s.Profession && HasSword(id);
     internal bool IsStunned(NetworkEntityId id) => _actors.TryGetValue(id, out var a) && a.StunnedUntil > _time;
-    internal bool IsRooted(NetworkEntityId id) => _actors.TryGetValue(id, out var a) && (a.StationaryCast || a.StunnedUntil > _time);
+    internal bool IsRooted(NetworkEntityId id) => _actors.TryGetValue(id, out var a) && (a.StationaryCast || a.StunnedUntil > _time || a.Control != CombatControlPhase.None);
     internal void SetProfession(NetworkEntityId id, ushort profession)
     {
         if (!_swords.TryGetValue(id, out var s)) _swords.Add(id, s = new());
@@ -86,9 +86,12 @@ public sealed partial class CombatSimulation
     {
         var actor = _actors[target];
         // Boss action interruption is decided by the action, independently of stun immunity.
-        InterruptRequested?.Invoke(target);
-        if (!actor.CanBeStunned) return;
-        actor.StunnedUntil = Math.Max(actor.StunnedUntil, _time + seconds);
+        if (!actor.CanBeStunned) { InterruptRequested?.Invoke(target); return; }
+        var factor = ControlFactor(actor); if (factor == 0) return;
+        InterruptControl(target);
+        if (actor.Control is CombatControlPhase.Recovering or CombatControlPhase.Displaced)
+            actor.Control=CombatControlPhase.None;
+        actor.StunnedUntil = Math.Max(actor.StunnedUntil, _time + seconds * factor);
         if (_defense.TryGetValue(target, out var d)) { d.GuardUntil = d.ParryUntil = 0; _defenseActive.Add(target); _defenseDirty.Add(target); }
     }
     internal void Slow(NetworkEntityId target, float fraction, double seconds)

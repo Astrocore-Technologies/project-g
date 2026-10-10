@@ -9,7 +9,7 @@ namespace Content.Shared.Network;
 /// </summary>
 public static partial class NetworkProtocol
 {
-    private const int EntitySnapshotBytes = sizeof(ulong) + 10 * sizeof(float) + 2 * sizeof(uint);
+    private const int EntitySnapshotBytes = sizeof(ulong) + 10 * sizeof(float) + 2 * sizeof(uint) + 9;
 
     /// <summary>Unreliable messages cannot fragment; respect the peer's current transport payload budget.</summary>
     public static int SnapshotCapacity(int payloadBudget) => payloadBudget <= 7 ? 0 : Math.Clamp(
@@ -122,7 +122,7 @@ public static partial class NetworkProtocol
                 !float.IsFinite(entity.Position.Y) ||
                 !float.IsFinite(entity.Target.X) || !float.IsFinite(entity.Target.Y) ||
                 !float.IsFinite(entity.DashDestination.X) || !float.IsFinite(entity.DashDestination.Y) ||
-                !float.IsFinite(entity.DashSpeed) || entity.DashSpeed < 0)
+                !float.IsFinite(entity.DashSpeed) || entity.DashSpeed < 0 || !ValidControl(entity.AirOffset,entity.Control,entity.ControlRemaining))
                 throw new ArgumentOutOfRangeException(nameof(entities));
             writer.Put(entity.EntityId.Value);
             WriteVector2(writer, entity.Position);
@@ -132,6 +132,7 @@ public static partial class NetworkProtocol
             WriteVector2(writer, entity.DashDestination);
             writer.Put(entity.DashSpeed);
             WriteHeight(writer, entity.Height); WriteHeight(writer, entity.TargetHeight); WriteHeight(writer, entity.DashHeight);
+            writer.Put(entity.AirOffset); writer.Put((byte)entity.Control); writer.Put(entity.ControlRemaining);
         }
     }
 
@@ -298,7 +299,9 @@ public static partial class NetworkProtocol
                 !reader.TryGetUInt(out var abilitySequence) ||
                 !TryReadVector2(reader, out var dashDestination) ||
                 !reader.TryGetFloat(out var dashSpeed) || !float.IsFinite(dashSpeed) || dashSpeed < 0 ||
-                !ReadHeight(reader, out var height) || !ReadHeight(reader, out var targetHeight) || !ReadHeight(reader, out var dashHeight))
+                !ReadHeight(reader, out var height) || !ReadHeight(reader, out var targetHeight) || !ReadHeight(reader, out var dashHeight) || !reader.TryGetFloat(out var air) ||
+                !reader.TryGetByte(out var control) || !reader.TryGetFloat(out var remaining) ||
+                !ValidControl(air,(CombatControlPhase)control,remaining))
             {
                 return false;
             }
@@ -307,7 +310,7 @@ public static partial class NetworkProtocol
                 new NetworkEntityId(entityId),
                 position,
                 sequence,
-                target, abilitySequence, dashDestination, dashSpeed, height, targetHeight, dashHeight);
+                target, abilitySequence, dashDestination, dashSpeed, height, targetHeight, dashHeight, air, (CombatControlPhase)control, remaining);
         }
 
         if (reader.AvailableBytes != 0)
@@ -316,6 +319,11 @@ public static partial class NetworkProtocol
         message = new WorldSnapshot(serverTick, entities);
         return true;
     }
+
+    private static bool ValidControl(float air, CombatControlPhase phase, float remaining) =>
+        Enum.IsDefined(phase) && float.IsFinite(air) && air is >=0 and <=3 &&
+        float.IsFinite(remaining) && remaining is >=0 and <=10 &&
+        (phase == CombatControlPhase.Airborne || air == 0) && (phase != CombatControlPhase.None || remaining == 0);
 
     private static NetDataWriter CreateWriter(NetworkMessageType messageType)
     {

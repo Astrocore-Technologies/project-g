@@ -92,6 +92,9 @@ public sealed class ContentCatalog
             Check(ability.StaminaCost <= Defense.MaxStamina, "Ability stamina exceeds capacity.");
             Check((ability.Kind is AbilityKind.Melee or AbilityKind.Recovery) == (ability.Melee is not null), "Missing/unexpected melee technique.");
             ability.Melee?.Validate();
+            if (ability.Melee is { } technique)
+                Check(technique.HitFollowups.All(id => Abilities.TryGetValue(id,out var next) && next.Kind == AbilityKind.Melee),
+                    $"ability {ability.Id}: unknown/non-melee followup");
             NonNegative(ability.MagicAttackScale, $"ability {ability.Id}.magicAttackScale");
         }
         SkillProgressions = skillCurves.ToFrozenDictionary(StringComparer.Ordinal);
@@ -107,7 +110,7 @@ public sealed class ContentCatalog
                 "Invalid profession definition/reference.");
         Professions = Array.AsReadOnly((Content.Server.Professions.ProfessionDefinition[])document.Professions.Clone());
         foreach (var profession in Professions)
-            Check(profession.AdditionalSkills is { Length: <= 9 } && profession.AllSkills.Distinct().Count() == profession.AdditionalSkills.Length + 1 &&
+            Check(profession.AdditionalSkills is not null && profession.AdditionalSkills.Length < Content.Shared.Network.NetworkConstants.MaxLearnedSkills && profession.AllSkills.Distinct().Count() == profession.AdditionalSkills.Length + 1 &&
                 profession.AllSkills.All(id => Abilities.TryGetValue(id, out var a) && a.Kind != AbilityKind.Dash), "Invalid profession skill list.");
         document.Swordsman?.Validate(this); Swordsman = document.Swordsman;
         foreach (var creature in Creatures.Values)

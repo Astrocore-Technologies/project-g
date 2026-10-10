@@ -49,14 +49,14 @@ public sealed partial class AbilitySimulation
         }
     }
 
-    private void ResolveTechnique(AbilityEffect effect, uint tick)
+    private bool ResolveTechnique(AbilityEffect effect, uint tick)
     {
         var technique = effect.Definition.Melee!;
-        if (!_combat.HasSword(effect.ActorId)) return;
+        if (!_combat.HasSword(effect.ActorId)) return false;
         if (effect.Profile.Form == AbilityForm.Recovery)
         {
             _combat.RestoreStamina(effect.ActorId, technique.RestoreStamina);
-            _practice.Add((effect.ActorId, effect.Profile.Id)); return;
+            _practice.Add((effect.ActorId, effect.Profile.Id)); return true;
         }
         var actor = _combat.Get(effect.ActorId);
         _spatial.Query(actor.Position, effect.Profile.Range + effect.Profile.Radius, _candidates);
@@ -67,11 +67,12 @@ public sealed partial class AbilitySimulation
             var next = Vector3.DistanceSquared(actor.Foot, target.Foot);
             if (next < distance || next == distance && (first is null || id.Value < first.Id.Value)) { first = target; distance = next; }
         }
-        if (first is null) return;
-        TechniqueHit(effect, first, tick, effect.FocusFactor);
-        if (technique.FirstTargetOnly) return;
+        if (first is null) return false;
+        var hit = TechniqueHit(effect, first, tick, effect.FocusFactor);
+        if (technique.FirstTargetOnly) return hit;
         foreach (var id in _candidates)
-            if (id != first.Id && MeleeCandidate(effect, actor, id, out var target)) TechniqueHit(effect, target, tick, 1);
+            if (id != first.Id && MeleeCandidate(effect, actor, id, out var target)) hit |= TechniqueHit(effect, target, tick, 1);
+        return hit;
     }
 
     private bool MeleeCandidate(AbilityEffect effect, Combatant actor, NetworkEntityId id, out Combatant target)
@@ -88,7 +89,7 @@ public sealed partial class AbilitySimulation
         return BasicAttackShape.Contains(actor.Position, effect.Direction, target.Position, effect.Profile.Range, t.ArcDegrees * MathF.PI / 360);
     }
 
-    private void TechniqueHit(AbilityEffect effect, Combatant target, uint tick, double focus)
+    private bool TechniqueHit(AbilityEffect effect, Combatant target, uint tick, double focus)
     {
         var t = effect.Definition.Melee!;
         var basePower = _combat.SwordPower(effect.ActorId);
@@ -97,17 +98,25 @@ public sealed partial class AbilitySimulation
         var damage = _combat.ApplySwordDamage(effect.ActorId, target.Id, effect.Direction, power, t.ArmorIgnore, out var guard);
         _hits.Add(new(effect.Id, effect.ActorId, target.Id, tick, damage, target.Health, guard));
         _combat.SwordHit(effect.ActorId, basic: false, success: damage > 0);
-        if (damage <= 0) return;
+        if (damage <= 0) return false;
         if (target.Kind != CombatEntityKind.Player && _practiced.Add(effect.Id)) _practice.Add((effect.ActorId, effect.Profile.Id));
         if (t.StunSeconds > 0) _combat.Stun(target.Id, t.StunSeconds);
         if (t.SlowSeconds > 0) _combat.Slow(target.Id, t.SlowFraction, t.SlowSeconds);
-        if (t.BleedSeconds > 0 && target.CanBleed)
+        if (t.BleedSeconds > 0 && target.CanBleed && !(t.BlockPreventsBleed && guard == GuardImpact.Blocked))
         {
             var key = (effect.ActorId, target.Id);
             if (_bleeds.ContainsKey(key) || _bleeds.Count < _options.MaxAbilityEffects)
                 _bleeds[key] = new() { Source = effect.ActorId, Target = target.Id, Effect = effect.Id,
                     PowerPerSecond = basePower * t.BleedFactor * level / t.BleedSeconds, Remaining = t.BleedSeconds };
         }
+        if (t.KnockupSeconds > 0) _combat.Knockup(target.Id,t.KnockupSeconds,t.KnockupHeight,t.KnockdownSeconds);
+        if (t.KnockbackDistance > 0)
+        {
+            var offset = target.Position - _combat.Get(effect.ActorId).Position;
+            var direction = offset.LengthSquared() > .000001f ? Vector2.Normalize(offset) : effect.Direction;
+            _combat.Knockback(target.Id,direction,t.KnockbackDistance,t.KnockbackSpeed);
+        }
+        return guard == GuardImpact.None;
     }
 
     private void AdvanceBleeds(float delta, uint tick)

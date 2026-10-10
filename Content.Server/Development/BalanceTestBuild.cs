@@ -16,10 +16,13 @@ public sealed record BalanceTestBuild
     public string TargetId { get; init; } = "arena_dummy";
     public bool MovingEnemy { get; init; }
     public string? SelectedAbilityId { get; init; }
+    // Local QA fixture only: exercise recovery with actual input/network authority after login.
+    public double InitialKnockdownSeconds { get; init; }
 
     public void Validate(ContentCatalog catalog)
     {
-        if (Level < 1 || Level > catalog.Progression.LevelCap || SkillLevel is < 1 or > 1000 ||
+        if (!double.IsFinite(InitialKnockdownSeconds) || InitialKnockdownSeconds is <0 or >10 ||
+            Level < 1 || Level > catalog.Progression.LevelCap || SkillLevel is < 1 or > 1000 ||
             !catalog.Items.TryGetValue(WeaponItemId, out var item) || item.WeaponId is null ||
             catalog.Weapons[item.WeaponId].Kind != WeaponKind.Melee || !catalog.Creatures.ContainsKey(TargetId) ||
             ProfessionId != 0 && !catalog.Professions.Any(p => p.Id == ProfessionId))
@@ -69,6 +72,7 @@ public sealed record BalanceTestBuild
         return initial with
         {
             Stats = Stats, X = 15, Z = -9, Health = derived.MaxHealth, Mana = Math.Max(0, derived.MaxMana),
+            CombatControl = InitialKnockdownSeconds > 0 ? new(1,InitialKnockdownSeconds,0,0,0,0) : null,
             Inventory = new SavedInventory { Items = [new(Guid.NewGuid(), WeaponItemId, EquipmentSlot.Weapon)] },
             Cooldowns = skills.Select(s => new SavedCooldown(s.DefinitionId, 0)).ToArray(),
             Progression = progression with

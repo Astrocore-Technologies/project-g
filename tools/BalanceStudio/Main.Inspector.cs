@@ -127,8 +127,11 @@ public partial class Main
                     card.AddChild(Button("Использует: " + p.Title, () => Navigate(p.Key)));
             if (node["kind"]!.GetValue<string>() is "Melee" or "Recovery") card.AddChild(Wrap("Нужны активный Мечник, исправный меч и достаточная выносливость."));
             if (node["melee"] is JsonObject melee)
-                foreach (var (key, title) in new[] { ("requiresParry", "Требует успешного парирования"), ("stationary", "Применение на месте"), ("firstTargetOnly", "Только первая цель"), ("narrowThrust", "Узкая направленная область") })
+                foreach (var (key, title) in new[] { ("requiresParry", "Требует успешного парирования"), ("stationary", "Применение на месте"), ("firstTargetOnly", "Только первая цель"), ("narrowThrust", "Узкая направленная область"), ("blockPreventsBleed", "Блок предотвращает новое кровотечение") })
                     if (melee[key] is { } flag) card.AddChild(Wrap(title + ": " + (flag.GetValue<bool>() ? "да" : "нет")));
+            if (node["melee"]?["hitFollowups"] is JsonArray followups)
+                foreach (var next in followups)
+                    card.AddChild(Button("Продолжение после попадания: "+EditorLabels.Name(next!.GetValue<string>()),()=>Navigate("ability/"+next!.GetValue<string>())));
         }
         if (node["weaponId"]?.GetValue<string>() is { } weapon) card.AddChild(Button("Оружие: " + EditorLabels.Name(weapon), () => Navigate("weapons/" + weapon)));
         if (_page.RootPath == "swordsman") card.AddChild(Wrap("Тренер и размещение манекенов редактируются в сцене города. Здесь меняются числовые параметры обучения и профессии."));

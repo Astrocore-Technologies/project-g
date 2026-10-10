@@ -12,7 +12,7 @@ namespace Content.Tests.Server.Combat;
 
 public sealed class SwordsmanSimulationTests
 {
-    private sealed class Fight
+    internal sealed class Fight
     {
         public readonly NetworkEntityId Player=new(1), Target=new(2);
         public readonly CombatSimulation Combat;
@@ -70,7 +70,7 @@ public sealed class SwordsmanSimulationTests
     [Theory]
     [InlineData(20,1.2,8)] [InlineData(21,1,14)] [InlineData(22,.8,14)]
     [InlineData(23,1.7,20)] [InlineData(24,.4,12)] [InlineData(25,.7,12)]
-    [InlineData(27,1.2,24)] [InlineData(29,1.5,22)]
+    [InlineData(27,.9,24)] [InlineData(29,1.5,22)]
     public void DirectSkillsUseSwordBaseNotMasteryBonusAndSpendOnce(int id,double factor,double stamina)
     {
         var f=new Fight(selected:(ushort)id); f.Combat.Get(f.Target).CanBleed=false;

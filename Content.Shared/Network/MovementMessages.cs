@@ -24,7 +24,8 @@ public readonly record struct EntitySnapshot(
     Vector2 Target,
     uint LastAbilitySequence = 0,
     Vector2 DashDestination = default,
-    float DashSpeed = 0, float Height = 0, float TargetHeight = 0, float DashHeight = 0);
+    float DashSpeed = 0, float Height = 0, float TargetHeight = 0, float DashHeight = 0,
+    float AirOffset = 0, CombatControlPhase Control = CombatControlPhase.None, float ControlRemaining = 0);
 
 public readonly record struct WorldSnapshot(
     uint ServerTick,

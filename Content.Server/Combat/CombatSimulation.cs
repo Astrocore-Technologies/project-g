@@ -83,7 +83,7 @@ public sealed partial class CombatSimulation
         if (_actors[target].Health <= 0) Defeated?.Invoke(target);
     }
     internal void ResetSession(NetworkEntityId id){var a=_actors[id];a.LastSequence=0;a.LastAbilitySequence=0;a.LastRequestTick=null;_pending.Remove(id);_results.Remove(id);if(_defense.TryGetValue(id,out var d)){d.Sequence=0;d.RequestTick=null;SetDefenseConnected(id,true);}}
-    internal void Respawn(NetworkEntityId id){var a=_actors[id];a.Health=a.Stats.MaxHealth;a.IsCasting=false;a.StationaryCast=false;a.StunnedUntil=a.SlowUntil=0;_equipmentDirty.Add(id);SetDefenseConnected(id,true);}
+    internal void Respawn(NetworkEntityId id){var a=_actors[id];ClearControl(id);a.Health=a.Stats.MaxHealth;a.IsCasting=false;a.StationaryCast=false;a.StunnedUntil=a.SlowUntil=0;_equipmentDirty.Add(id);SetDefenseConnected(id,true);}
     internal Func<NetworkEntityId,bool>? WeaponUsable { get; set; }
     public IReadOnlyList<AttackEvent> Events => _events;
     public IReadOnlyDictionary<NetworkEntityId, AttackResult> Results => _results;
@@ -120,6 +120,7 @@ public sealed partial class CombatSimulation
     {
         var actor = _actors[id];
         if (actor.Kind != CombatEntityKind.Player || actor.Health > 0) return;
+        ClearControl(id);
         actor.Health = actor.Stats.MaxHealth;
         actor.StationaryCast = false; actor.IsCasting = false; actor.StunnedUntil = actor.SlowUntil = 0;
         SetDefenseConnected(id,true);
@@ -165,6 +166,7 @@ public sealed partial class CombatSimulation
 
     public void Remove(NetworkEntityId id)
     {
+        ClearControl(id);
         _actors.Remove(id); _damageSerial.Remove(id); _pending.Remove(id); _results.Remove(id); _equipmentDirty.Remove(id);
         _defense.Remove(id); _defenseActive.Remove(id); _defensePending.Remove(id); _defenseDirty.Remove(id);
         _swords.Remove(id);
@@ -202,11 +204,12 @@ public sealed partial class CombatSimulation
         _events.Clear();
         _time = StatMath.Add(_time, delta);
         RecoverHealth(delta);
+        SimulateControl();
         SimulateDefense(delta);
         foreach (var (id, command) in _pending)
         {
             var actor = _actors[id];
-            var outcome = actor.Health <= 0 || !actor.Active || actor.IsCasting || IsStunned(id) || IsDefending(id) || WeaponUsable?.Invoke(id)==false ? AttackOutcome.InvalidState
+            var outcome = actor.Health <= 0 || !actor.Active || actor.IsCasting || IsActionLocked(id) || IsDefending(id) || WeaponUsable?.Invoke(id)==false ? AttackOutcome.InvalidState
                 : _time < actor.ReadyAt ? AttackOutcome.Cooldown : AttackOutcome.Accepted;
             _results[id] = new(command.Sequence, tick, outcome);
             if (outcome != AttackOutcome.Accepted)
@@ -224,7 +227,7 @@ public sealed partial class CombatSimulation
     {
         if (!_actors.TryGetValue(id, out var actor) || !IsNpc(actor.Kind) || actor.Health <= 0 ||
             !BasicAttackShape.IsValidDirection(direction) || !MovementSimulation.IsSequenceNewer(sequence, actor.LastSequence) ||
-            _time < actor.ReadyAt || IsStunned(id)) return false;
+            _time < actor.ReadyAt || IsActionLocked(id)) return false;
         actor.LastSequence = sequence;
         actor.ReadyAt = StatMath.Add(_time, actor.AttackInterval);
         Resolve(actor, new(sequence, tick, direction), tick);

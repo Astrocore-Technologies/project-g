@@ -39,7 +39,7 @@ public sealed class AbilityAreaTests
         var profiles = Enumerable.Range(1, NetworkConstants.MaxAbilityProfiles)
             .Select(id => Profile with { Id = (ushort)id, Area = new(AbilityAreaShape.Sector, 2, HalfAngleRadians: 1) }).ToArray();
         var packet = NetworkProtocol.Write(new AbilityLoadout(new(1), 1, 50, 50, profiles));
-        Assert.Equal(661, packet.Length);
+        Assert.Equal(733, packet.Length);
         Assert.True(packet.Length <= NetworkConstants.MaxGamePacketBytes);
         Assert.True(NetworkProtocol.TryReadAbilityLoadout(Body(packet), out var copy));
         Assert.Equal(profiles, copy.Abilities);
@@ -55,7 +55,7 @@ public sealed class AbilityAreaTests
             AbilityPhase.Telegraph, Vector2.Zero, Vector2.Zero, Vector2.UnitY, 2, 0, .2f, Area: area));
         foreach (var packet in new[] { owner, observer })
         {
-            var bytes = packet.CopyData(); var offset = bytes.Length - AbilityArea.WireBytes + field;
+            var bytes = packet.CopyData(); var offset = bytes.Length - AbilityArea.WireBytes - (packet == owner ? sizeof(double) : 0) + field;
             if (field is 0 or 13) bytes[offset] = 255;
             else BitConverter.GetBytes(float.NaN).CopyTo(bytes, offset);
             var reader = new NetDataReader(bytes, 2, bytes.Length);

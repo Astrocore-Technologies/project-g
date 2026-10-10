@@ -207,3 +207,51 @@ Verification entry points: AvatarProtocolTests, AvatarSimulationTests, existing
 Swordsman/Defense tests, CharacterAnimationGallery (--smoke, optional --capture),
 AvatarLiveSmoke (isolated server, two clients), SwordAnimationSmoke and UiScreensSmoke.
 No crowd-load or packaged-platform export performance claim is made.
+
+## Accepted combat interactions — 2026-10-10
+
+The approved Swordsman revision adds recovery phases, manual hit-confirm followups,
+one buffered skill intention, knockup/knockdown/knockback, and common Quick Recover.
+Gameplay and temporary tuning are specified in `docs/design/gameplay-contract.md`.
+CombatSimulation owns restrictions and a target-owned repeated-control counter;
+AbilitySimulation owns the bounded intention/effect lifecycles. Only affected actors
+enter the control update set. No transport ownership or process boundary changes.
+
+Flight is a combat-height offset above the existing navigation anchor. Player and
+NPC movement retain surface coordinates, while damage range and LOS use the actual
+3D foot. Ceiling checks start at the exported agent height. Forced movement uses
+surface navigation, not client physics or a client-provided endpoint. Snapshots carry
+ground height and air offset separately so prediction/interpolation can retain a
+valid surface anchor. Client poses are temporary presentation; they never apply damage.
+
+Protocol **34** replaces v33: each entity snapshot is 65 bytes, with float air offset,
+byte control phase and float remaining time appended to the previous 56-byte layout.
+At most 18 entities fit a 1200-byte game packet (1177 bytes total); existing independent
+chunking preserves all relevant entities. AbilityProfile adds double recovery duration
+(78 bytes per slot, 733-byte full bar plus dash). DefenseState adds recovery remaining,
+Quick Recover cooldown/cost and range/speed/buffer parameters (124 bytes including ID).
+AbilityPhase adds Recovery; AbilityOutcome adds Buffered; DefenseAction adds QuickRecover.
+Delivery methods and regional envelopes are unchanged; exact-length, finite-value,
+enum and bound checks apply before accepting data. Both endpoints need a rebuild/restart.
+
+Optional independently versioned SavedCombatControl and an optional SavedDefense timer
+extend character JSON; no SQL migration or character reset is required. Reconnect keeps
+the remaining grounded restriction, recovery, stun, control counter and Quick Recover
+cooldown. It drops unsent buffered intentions and unsafe transient flight/dash motion.
+Existing Swordsmen receive only `sword_rising` at level 1 in an unequipped slot; old
+skills, practice, slots and cooldowns retain their state. Missing unrelated cooldown
+entries remain errors. The balance version becomes 4; the content schema remains 4.
+
+Verification entry points: CombatInteractionTests, CombatControlIntegrationTests,
+CombatInteractionProtocolTests and native CombatInteractionsSmoke. The smoke fixture
+uses the Development-only BalanceTestBuild.InitialKnockdownSeconds parameter and a
+fresh test database, exercising real hold/release input and a server-approved roll.
+
+Verification: `dotnet build Game.slnx --no-restore --nologo -m:1` and content validation
+passed. The full suite passed 664 tests with 7 external PostgreSQL checks skipped;
+after the final recovery-lifecycle fix, 224 relevant combat/travel/network tests passed.
+Native Godot 4.7.1 smoke passed with a real UDP server and a fresh SQLite database:
+Quick Recover preview/release, surface roll, single stamina cost, independent dash
+cooldown, Rising windup/impact/recovery, and a decoded public snapshot driving remote
+air-height presentation. The last remote-height assertion is a presentation fixture,
+not a two-client PvP test. Duel tuning and final animations remain unverified.

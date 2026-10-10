@@ -87,6 +87,8 @@ public sealed partial class ServerWorld
             _spatial.Add(TrainingTargetId, position);
             Abilities = new AbilitySimulation(catalog, Combat, _spatial, Navigation, settings, _interest.CellSize, StartDash);
             Abilities.StopForCast = StopForSwordCast;
+            Combat.StopForControl = StopControlledMotion;
+            Combat.StartControlDash = StartControlledDash;
             Combat.InterruptRequested += id => { StopForSwordCast(id); Npc?.Interrupt(Tick, id); Boss?.Interrupt(Tick, id); };
             if (echoes?.Value.Enabled == true)
                 Echoes = new EchoSimulation(echoes.Value,Navigation,_movement,Combat,_spatial,id =>
@@ -186,7 +188,8 @@ public sealed partial class ServerWorld
                 Combat.RefreshHealthRecovery(entityId);
                 actor.ReadyAt = Combat.Time + Math.Max(0, saved.AttackCooldownSeconds - offline);
                 Abilities!.Restore(entityId, saved, offline);
-                Combat.RestoreDefense(entityId,saved.Defense);
+                Combat.RestoreDefense(entityId,saved.Defense,offline);
+                Combat.RestoreControl(entityId,saved.CombatControl,offline);
             }
             AddPvp(entityId,saved?.Progression?.Pvp);
             Echoes?.Add(entityId,saved?.Echoes ?? SavedEchoes.Empty,saved?.OfflineSeconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()) ?? 0,AllocateEntityId);
@@ -230,6 +233,7 @@ public sealed partial class ServerWorld
             Mana = Abilities!.Mana(player.EntityId), Cooldowns = Abilities.CaptureCooldowns(player.EntityId),
             AttackCooldownSeconds = Math.Max(0, actor.ReadyAt - Combat.Time),
             Defense = Combat.CaptureDefense(player.EntityId),
+            CombatControl = Combat.CaptureControl(player.EntityId),
             SavedAtUnixMilliseconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
         };
     }
@@ -487,19 +491,19 @@ public sealed partial class ServerWorld
                 if (Echoes?.TryGet(id,out var echoActor) == true)
                     view.States.Add(new(id,echoActor.Motion.Position,0,echoActor.Motion.Target, Height: echoActor.Motion.Height, TargetHeight: echoActor.Motion.TargetHeight));
                 else if (Npc is { } npcActor && id == npcActor.Id)
-                    view.States.Add(new(id, npcActor.Motion.Position, 0, npcActor.Motion.Target, Height: npcActor.Motion.Height, TargetHeight: npcActor.Motion.TargetHeight));
+                    view.States.Add(ControlSnapshot(new(id, npcActor.Motion.Position, 0, npcActor.Motion.Target, DashDestination: npcActor.Motion.DashDestination, DashSpeed: npcActor.Motion.DashSpeed, Height: npcActor.Motion.Height, TargetHeight: npcActor.Motion.TargetHeight, DashHeight: npcActor.Motion.DashHeight)));
                 else if (Boss is { } bossActor && id == bossActor.Id)
-                    view.States.Add(new(id, bossActor.Motion.Position, 0, bossActor.Motion.Target, Height: bossActor.Motion.Height, TargetHeight: bossActor.Motion.TargetHeight));
+                    view.States.Add(ControlSnapshot(new(id, bossActor.Motion.Position, 0, bossActor.Motion.Target, Height: bossActor.Motion.Height, TargetHeight: bossActor.Motion.TargetHeight)));
                 continue;
             }
-            view.States.Add(new EntitySnapshot(
+            view.States.Add(ControlSnapshot(new EntitySnapshot(
                 player.EntityId,
                 player.Position,
                 player.LastProcessedSequence,
                 player.Target,
                 Combat?.Get(player.EntityId).LastAbilitySequence ?? 0,
                 player.Motion.IsDashing ? player.Motion.DashDestination : default,
-                player.Motion.DashSpeed, player.Height, player.Motion.TargetHeight, player.Motion.DashHeight));
+                player.Motion.DashSpeed, player.Height, player.Motion.TargetHeight, player.Motion.DashHeight)));
         }
     }
 }

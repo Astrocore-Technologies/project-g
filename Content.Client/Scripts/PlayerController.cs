@@ -27,8 +27,16 @@ public partial class PlayerController : CharacterBody3D
 	private NavigationMover? _motion;
 	private NumericsVector2 _predictedPosition;
 	private NumericsVector2 _target;
-	private float _predictedHeight, _targetHeight;
-	public System.Numerics.Vector3 PredictedFoot => new(_predictedPosition.X, _predictedHeight, _predictedPosition.Y);
+	private float _predictedHeight, _targetHeight, _airOffset;
+    private Node3D _visual = null!;
+    private Vector3 _visualRestPosition;
+    public CombatControlPhase Control { get; private set; }
+    public float AirOffset => _airOffset;
+    private double _controlUntil, _recoveryUntil;
+    public double ControlRemaining => Math.Max(0,_controlUntil-NowSeconds());
+    public double RecoveryRemaining => Math.Max(0,_recoveryUntil-NowSeconds());
+    public void SetRecoveryRemaining(double seconds) => _recoveryUntil=NowSeconds()+seconds;
+	public System.Numerics.Vector3 PredictedFoot => new(_predictedPosition.X, _predictedHeight + _airOffset, _predictedPosition.Y);
 	internal NavigationGrid Navigation => _navigation;
 	private double _tickAccumulator;
 	private float _fixedDelta;
@@ -47,7 +55,7 @@ public partial class PlayerController : CharacterBody3D
 	public void SetDefenseMovement(float multiplier) => _defenseMovement=multiplier;
 	public bool MoveTo(NumericsVector2 target, float? height = null)
 	{
-		if (!_isLocal || !IsAlive || _motion is null) return false;
+		if (!_isLocal || !IsAlive || _motion is null || Control != CombatControlPhase.None) return false;
 		target=MovementSimulation.ClampTarget(target,_settings);
 		if (!_motion.TrySetTarget(target, height ?? _motion.Height)) return false;
 		_target=_motion.Target; _targetHeight=_motion.TargetHeight; return true;
@@ -70,7 +78,8 @@ public partial class PlayerController : CharacterBody3D
 		_appearance = AppearanceScene.Instantiate<Node3D>();
 		_appearance.Name = "Appearance";
 		_appearance.Position = new Vector3(0, -1, 0);
-		GetNode<Node3D>("Visual").AddChild(_appearance);
+		_visual=GetNode<Node3D>("Visual"); _visual.AddChild(_appearance);
+        _visualRestPosition=_visual.Position;
 		SwordAnimation.Bind(Animator);
 	}
 	public void SetAlive(bool alive)
@@ -78,6 +87,7 @@ public partial class PlayerController : CharacterBody3D
 		IsAlive = alive;
 		Animator.SetAlive(alive);
 		if (alive) return;
+        Control=CombatControlPhase.None; _airOffset=0;
 		SwordAnimation.Stop();
 		_dash = null; _predictionHistory.Clear();
 		_rightHeld=false; DefenseHeld=false;
@@ -155,7 +165,11 @@ public partial class PlayerController : CharacterBody3D
 	public override void _Process(double delta)
 	{
 		if (!_isLocal)
-			UpdateRemote();
+            UpdateRemote();
+        // Rotate only the visible body: collision and the navigation anchor remain upright.
+        _visual.Rotation = Control == CombatControlPhase.KnockedDown ? new(1.35f,0,0)
+            : Control == CombatControlPhase.Recovering ? new((float)(ControlRemaining*6*Math.PI),0,0) : Vector3.Zero;
+        _visual.Position=_visualRestPosition+(Control==CombatControlPhase.KnockedDown ? Vector3.Down*.65f : Vector3.Zero);
 	}
 
 	public void ApplySnapshot(EntitySnapshot snapshot, uint serverTick)
@@ -164,7 +178,10 @@ public partial class PlayerController : CharacterBody3D
 		if (!MovementSimulation.IsSequenceNewer(serverTick, _lastServerTick))
 			return;
 		_lastServerTick = serverTick;
-		if (_isLocal)
+        Control=snapshot.Control; _controlUntil=NowSeconds()+snapshot.ControlRemaining;
+        _airOffset=snapshot.AirOffset;
+        if (Control != CombatControlPhase.None) { _rightHeld=false; _dash=null; }
+        if (_isLocal)
 		{
 			if (!IsAlive)
 			{
@@ -176,7 +193,7 @@ public partial class PlayerController : CharacterBody3D
 			return;
 		}
 
-		_remotePoints.Add(new RemotePoint(NowSeconds(), snapshot.Position, snapshot.Height));
+		_remotePoints.Add(new RemotePoint(NowSeconds(), snapshot.Position, snapshot.Height, snapshot.AirOffset));
 		if (_remotePoints.Count > MaxRemoteSnapshots)
 			_remotePoints.RemoveAt(0);
 	}
@@ -207,7 +224,7 @@ public partial class PlayerController : CharacterBody3D
 				_dash = pending with { Applied = true };
 			}
 			ApplyMovementFrame(command);
-			_motion.Step(_fixedDelta*(_motion.IsDashing ? 1 : _defenseMovement));
+			_motion.Step(_fixedDelta*(_motion.IsDashing ? 1 : Control != CombatControlPhase.None ? 0 : _defenseMovement));
 			_predictedPosition = _motion.Position; _predictedHeight = _motion.Height;
 
 			_predictionHistory.Add(new PredictedFrame(command,_defenseMovement));
@@ -217,11 +234,11 @@ public partial class PlayerController : CharacterBody3D
 			_network?.SendMove(command);
 		}
 
-		var desired = ToGodot(_predictedPosition, _predictedHeight);
+		var desired = ToGodot(_predictedPosition, _predictedHeight + _airOffset);
 		var error = GlobalPosition.DistanceTo(desired);
 		// A correction across a corner must not visually ease through solid geometry.
 		var current = new NumericsVector2(GlobalPosition.X, GlobalPosition.Z);
-		GlobalPosition = error > 3f || !_navigation.TraverseSurface(new(current.X, GlobalPosition.Y - 1, current.Y), PredictedFoot)
+		GlobalPosition = error > 3f || !_navigation.TraverseSurface(new(current.X, GlobalPosition.Y - 1 - _airOffset, current.Y), new(_predictedPosition.X,_predictedHeight,_predictedPosition.Y))
 			? desired
 			: GlobalPosition.Lerp(desired, 1f - Mathf.Exp((float) (-20d * delta)));
 	}
@@ -229,6 +246,7 @@ public partial class PlayerController : CharacterBody3D
 	private void Reconcile(EntitySnapshot snapshot)
 	{
 		_authoritative = snapshot;
+        if (snapshot.Control != CombatControlPhase.None) { _target=snapshot.Target; _targetHeight=snapshot.TargetHeight; }
 		if (_dash is { } pending && !MovementSimulation.IsSequenceNewer(pending.Sequence, snapshot.LastAbilitySequence))
 		{
 			if (_target == pending.Destination) { _target = snapshot.Target; _targetHeight = snapshot.TargetHeight; }
@@ -256,7 +274,7 @@ public partial class PlayerController : CharacterBody3D
 				injected = true;
 			}
 			ApplyMovementFrame(frame.Command);
-			_motion.Step(_fixedDelta*(_motion.IsDashing ? 1 : frame.SpeedMultiplier));
+			_motion.Step(_fixedDelta*(_motion.IsDashing ? 1 : Control != CombatControlPhase.None ? 0 : frame.SpeedMultiplier));
 		}
 
 		_predictedPosition = _motion.Position; _predictedHeight = _motion.Height;
@@ -264,7 +282,7 @@ public partial class PlayerController : CharacterBody3D
 
 	public bool PredictDash(uint sequence, NumericsVector2 direction, float range, float speed)
 	{
-		if (!_isLocal || !IsAlive || _motion is null || _dash is not null || _motion.IsDashing ||
+		if (!_isLocal || !IsAlive || _motion is null || _dash is not null || _motion.IsDashing || Control != CombatControlPhase.None ||
 			!SurfaceDash.TryDestination(_navigation, PredictedFoot, direction, range, out var destination, out var height)) return false;
 		_dash = new(sequence, _clientTick + 1, direction, range, speed, destination, _target, NowSeconds(), false, height, _targetHeight);
 		_target = destination; _targetHeight = height;
@@ -291,7 +309,7 @@ public partial class PlayerController : CharacterBody3D
 		// Hold at the predicted endpoint until authority acknowledges it; a new RMB still queues normally.
 		if (_dash is { } dash && command.ClientTick >= dash.ClientTick && command.Target == dash.PreviousTarget &&
 			_target == dash.Destination) return;
-		_motion?.TrySetTarget(command.Target, command.TargetHeight);
+		if (Control == CombatControlPhase.None) _motion?.TrySetTarget(command.Target, command.TargetHeight);
 	}
 
 	private void UpdateRemote()
@@ -303,23 +321,23 @@ public partial class PlayerController : CharacterBody3D
 		while (_remotePoints.Count >= 2 && _remotePoints[1].ReceivedAt <= renderTime)
 			_remotePoints.RemoveAt(0);
 
-		NumericsVector2 position; float height;
+		NumericsVector2 position; float height, air;
 		if (_remotePoints.Count >= 2)
 		{
 			var from = _remotePoints[0];
 			var to = _remotePoints[1];
 			var duration = Math.Max(0.0001, to.ReceivedAt - from.ReceivedAt);
 			var amount = (float) Math.Clamp((renderTime - from.ReceivedAt) / duration, 0d, 1d);
-			position = NumericsVector2.Lerp(from.Position, to.Position, amount); height = float.Lerp(from.Height, to.Height, amount);
+			position = NumericsVector2.Lerp(from.Position, to.Position, amount); height = float.Lerp(from.Height, to.Height, amount); air = float.Lerp(from.Air,to.Air,amount);
 			if (!_navigation.TraverseSurface(new(from.Position.X, from.Height, from.Position.Y), new(to.Position.X, to.Height, to.Position.Y)))
 				{ position = from.Position; height = from.Height; }
 		}
 		else
 		{
-			position = _remotePoints[0].Position; height = _remotePoints[0].Height;
+			position = _remotePoints[0].Position; height = _remotePoints[0].Height; air = _remotePoints[0].Air;
 		}
 
-		GlobalPosition = ToGodot(position, height);
+		GlobalPosition = ToGodot(position, height + air);
 	}
 
 	private Vector3 ToGodot(NumericsVector2 position, float height = 0) =>
@@ -337,5 +355,5 @@ public partial class PlayerController : CharacterBody3D
 
 	private readonly record struct RemotePoint(
 		double ReceivedAt,
-		NumericsVector2 Position, float Height);
+		NumericsVector2 Position, float Height, float Air = 0);
 }
