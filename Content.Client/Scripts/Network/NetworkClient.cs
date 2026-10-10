@@ -107,6 +107,9 @@ public partial class NetworkClient : Node
     public event Action<ProgressionResult>? ProgressionResultReceived;
     public event Action<StatPreview>? StatPreviewReceived;
     public event Action<DefenseState>? DefenseReceived;
+    // NC: public observer state is distinct from the owner's private defense resources.
+    public event Action<AvatarState>? AvatarReceived;
+    public void SendEmote(EmoteCommand command) { if (_handshakeComplete) SendGame(NetworkProtocol.Write(command), DeliveryMethod.ReliableOrdered); }
     public DefenseState? LatestDefense { get; private set; }
     public Dictionary<NetworkEntityId,QuestNpcSpawn> QuestNpcs {get;}=new();
     public QuestJournal? LatestQuestJournal {get;private set;}
@@ -321,6 +324,9 @@ public partial class NetworkClient : Node
 
             switch (messageType)
             {
+                case NetworkMessageType.AvatarState:
+                    if (_handshakeComplete && NetworkProtocol.TryReadAvatarState(reader, out var avatar)) AvatarReceived?.Invoke(avatar); else DisconnectMalformed(peer);
+                    break;
                 case NetworkMessageType.SocialRoster:
                     if(_handshakeComplete&&NetworkProtocol.TryReadSocialRoster(reader,out var roster))SocialRosterReceived?.Invoke(roster);else DisconnectMalformed(peer);break;
                 case NetworkMessageType.SocialInvites:

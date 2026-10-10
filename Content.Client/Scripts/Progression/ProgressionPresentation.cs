@@ -24,7 +24,8 @@ public partial class ProgressionPresentation : CanvasLayer
     private bool _alive = true, _needsPreview;
     private double _sentAt, _previewAfter;
     private UiModelPreview _modelPreview=null!;
-    public void SetPreviewMesh(Mesh mesh,Material? material) => _modelPreview.SetMesh(mesh,material);
+    // NC: a visual-only scene includes the body, face and hair without gameplay nodes.
+    public void SetPreviewVisual(PackedScene appearance) => _modelPreview.SetVisual(appearance);
     private static readonly string[] Keys = ["Q","W","E","R","A","S","D","F"];
     private static readonly string[] StatNames = ["STR · Сила","AGI · Ловкость","VIT · Живучесть","INT · Интеллект","DEX · Сноровка","LUK · Удача"];
     private static readonly string[] Descriptions = [

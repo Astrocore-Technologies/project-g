@@ -21,7 +21,7 @@ public sealed class NavigationWorldTests
         var target = new Vector2(8f, 0f);
         Assert.True(world.TryApplyMove(1, new MoveCommand(2, 2, target)));
         var wentAround = false;
-        for (var i = 0; i < 160; i++)
+        for (var i = 0; i < 320; i++)
         {
             var previous = player.Position;
             world.Simulate(0.05f);

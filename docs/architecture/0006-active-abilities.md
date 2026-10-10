@@ -2,7 +2,9 @@
 
 ## Status and scope
 
-Update (2026-10-09, Swordsman): the implementation addendum at the end supersedes the historical v6 layouts and prototype combat restrictions below. Current wire version is **30**; the approved profession rules are in `../design/gameplay-contract.md`.
+Update (2026-10-10, avatar animation): current wire version is **31**. The skinned-avatar addendum below adds public cosmetic states and emotes. Gameplay ownership and balance are unchanged.
+
+Update (2026-10-09, Swordsman): the implementation addendum at the end supersedes the historical v6 layouts and prototype combat restrictions below; the approved profession rules are in `../design/gameplay-contract.md`.
 
 Update (2026-10-09): the no-mana-regeneration assumption below is superseded by the approved progression rules in `../design/gameplay-contract.md`. The server now restores mana on fixed simulation ticks for living, connected players; only actors with missing mana are scheduled for recovery. Authority and wire contracts are unchanged.
 
@@ -161,3 +163,47 @@ Verification for the confirmed rule:
 - `dotnet Content.Server/bin/Debug/net10.0/Content.Server.dll --validate-content` — succeeded.
 - Godot Mobile/D3D12 `res://Tests/Combat/DashDistanceSmoke.tscn -- --server-port=28955 --identity=dash-profession-only-1` — passed. Real Space input with the cursor 8 m away moved an ordinary character **3.00 m**, with matching client prediction and server position. A separate database `.artifacts/dash-profession-only-live.db` was used; working character data was untouched. The Swordsman distance was covered by server tests; its full Godot training loop was not rerun in this correction.
 - `git -c core.safecrlf=false diff --check` — passed. Restart the rebuilt server and reconnect to load the corrected content.
+
+
+## Skinned avatar presentation — 2026-10-10
+
+The accepted animation plan adds one shared 40-bone humanoid library, 64 clips
+(including the T rest pose), interchangeable head/hair modules and the ten existing
+sword techniques. CharacterAnimator samples in-place poses and blends moving legs
+under upper-body actions. SwordAttackAnimation retains sequence/effect de-duplication,
+server windup/contact phases, rejection, interruption and timeout behavior. The
+render skeleton never applies root motion to the authoritative navigation body.
+
+New code lives under each project's `_NC/Animation` directory (client under
+`Scripts/_NC/Animation`). Artist sources and generation scripts are under
+`art-source/characters/male-base`; original static sources remain available.
+
+### Protocol 31
+
+Both endpoints must be rebuilt/restarted; the handshake rejects v30.
+Packet lengths include the two-byte message ID, but not the region envelope.
+
+| ID | Message and exact payload order | Bytes | Delivery |
+|---|---|---|---|
+| 90 | AvatarState: ulong entity, uint tick, byte flags (armed/blocking/focus), float facing X/Z, float parry/stun remaining, byte gesture, uint gesture sequence, float gesture age, uint rhythm cue serial | 44 | Unreliable AOI state, on entry and every second fixed tick |
+| 91 | EmoteCommand: uint sequence, byte gesture (0 cancel, 1–8 social gestures) | 7 | ReliableOrdered owner intention |
+
+No private stamina, stack count, profession conditions or balances enter the public
+packet. The rhythm serial denotes an observable completed activation, not the internal
+hit count. Late AOI entry initializes it without replaying past effects. All reads
+reject wrong lengths, trailing bytes, invalid flags/enums/directions and nonfinite
+or out-of-range durations. Server-side ownership, sequences, one queued request per
+actor, rate limiting, alive/busy/movement state and cancellation are checked on the
+fixed tick. Cosmetic requests share the existing save barrier; no new persistence
+payload or database migration is introduced. Only active gestures are simulated.
+
+Eight emotes are available through F4. Accepted trainer conversations, pickups and
+resource/workbench operations trigger public gestures. Visible block, parry, stun,
+equipped sword and passive cues are derived from server state. Sounds and blade
+trails are local, bounded, spatial and do not determine a hit. Character audio is
+an original synthesized first pass; recorded Foley can replace its WAV files.
+
+Verification entry points: AvatarProtocolTests, AvatarSimulationTests, existing
+Swordsman/Defense tests, CharacterAnimationGallery (--smoke, optional --capture),
+AvatarLiveSmoke (isolated server, two clients), SwordAnimationSmoke and UiScreensSmoke.
+No crowd-load or packaged-platform export performance claim is made.

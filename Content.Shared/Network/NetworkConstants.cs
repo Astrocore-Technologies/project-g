@@ -4,7 +4,7 @@ public static class NetworkConstants
 {
     public const int Port = 9050;
     public const string ConnectionKey = "project-g-dev";
-    public const ushort ProtocolVersion = 30;
+    public const ushort ProtocolVersion = 31; // NC: public avatar presentation and emotes.
     public const int MaxRegionGates = 4;
     public const int MaxActiveEchoes = 3;
     public const int MaxInventoryItems = 8;

@@ -1,0 +1,12 @@
+{
+  "20": { "color":"b9e4e8", "arc":24, "height":1.05, "width":0.08 },
+  "21": { "color":"d6e9d7", "arc":140, "height":0.95, "width":0.16 },
+  "22": { "color":"d48b78", "arc":70, "height":0.82, "width":0.10 },
+  "23": { "color":"efc991", "arc":70, "height":0.65, "width":0.22 },
+  "24": { "color":"fff0c3", "arc":70, "height":1.25, "width":0.08 },
+  "25": { "color":"dbdec0", "arc":70, "height":0.25, "width":0.12 },
+  "26": { "color":"b4e5ef", "arc":70, "height":1.05, "width":0.10 },
+  "27": { "color":"dae8ec", "arc":360, "height":0.90, "width":0.16 },
+  "28": { "color":"9abf9c", "arc":360, "height":0.06, "width":0.06 },
+  "29": { "color":"f4c98a", "arc":70, "height":0.80, "width":0.23 }
+}

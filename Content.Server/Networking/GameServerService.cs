@@ -209,6 +209,15 @@ public sealed partial class GameServerService : BackgroundService
             }
             var world = WorldFor(peer.Id);
 
+            // NC: ownership comes from the connection; the packet cannot choose another avatar.
+            if (messageType == NetworkMessageType.EmoteCommand && deliveryMethod == DeliveryMethod.ReliableOrdered &&
+                NetworkProtocol.TryReadEmoteCommand(reader, out var emote))
+            {
+                if (_characters is null) world.TryQueueEmote(peer.Id, emote);
+                else BufferIntentions(peer.Id).Emote ??= emote;
+                return;
+            }
+
             if(messageType==NetworkMessageType.QuestCommand && deliveryMethod==DeliveryMethod.ReliableOrdered && NetworkProtocol.TryReadQuestCommand(reader,out var quest))
             {
                 if(_characters is null) world.TryQueueQuest(peer.Id,quest);
@@ -588,6 +597,11 @@ public sealed partial class GameServerService : BackgroundService
             view.BossAreaVersion = boss.AreaVersion;
         }
         var chunkCapacity = NetworkProtocol.SnapshotCapacity(Math.Min(NetworkConstants.MaxGamePacketBytes, peer.GetMaxSinglePacketSize(DeliveryMethod.Unreliable)) - (_regions is null ? 0 : NetworkProtocol.RegionEnvelopeBytes));
+        // NC: public pose snapshots repair packet loss, and are limited to this peer's AOI.
+        if (world.Combat is not null)
+            foreach (var id in view.Entities)
+                if (world.IsPlayer(id) && (view.Entered.Contains(id) || world.Tick % 2 == 0))
+                    SendGame(peer, NetworkProtocol.Write(world.Avatar(id)), DeliveryMethod.Unreliable);
         if (chunkCapacity == 0) throw new InvalidOperationException("Peer MTU cannot hold an entity snapshot.");
         for (var offset = 0; offset < view.Snapshots.Count; offset += chunkCapacity)
         {

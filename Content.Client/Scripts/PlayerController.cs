@@ -9,6 +9,11 @@ namespace ProjectG.Gameplay;
 
 public partial class PlayerController : CharacterBody3D
 {
+	// NC: the editable appearance is shared by world avatars and the character-window preview.
+	[Export] public PackedScene AppearanceScene { get; set; } = null!;
+	private Node3D _appearance = null!;
+	// NC: the visual rig is separate from the movement/collision authority.
+	public ProjectG.Animation.CharacterAnimator Animator => (ProjectG.Animation.CharacterAnimator)_appearance;
 	private const double RemoteInterpolationDelaySeconds = 0.1;
 	private const int MaxPredictionHistory = 128;
 	private const int MaxRemoteSnapshots = 20;
@@ -52,10 +57,22 @@ public partial class PlayerController : CharacterBody3D
 	public NumericsVector2 PredictedPosition => _predictedPosition;
 	public bool IsAlive { get; private set; } = true;
 	public ProjectG.Combat.SwordAttackAnimation SwordAnimation { get; private set; } = null!;
-	public override void _Ready() => SwordAnimation = GetNode<ProjectG.Combat.SwordAttackAnimation>("SwordAttackRig");
+	public override void _Ready()
+	{
+		SwordAnimation = GetNode<ProjectG.Combat.SwordAttackAnimation>("SwordAttackRig");
+		if (AppearanceScene is null)
+			throw new InvalidOperationException("PlayerAvatar requires an appearance scene.");
+		// NC: animate the visual pivot while the imported model keeps its feet at ground level.
+		_appearance = AppearanceScene.Instantiate<Node3D>();
+		_appearance.Name = "Appearance";
+		_appearance.Position = new Vector3(0, -1, 0);
+		GetNode<Node3D>("Visual").AddChild(_appearance);
+		SwordAnimation.Bind(Animator);
+	}
 	public void SetAlive(bool alive)
 	{
 		IsAlive = alive;
+		Animator.SetAlive(alive);
 		if (alive) return;
 		SwordAnimation.Stop();
 		_dash = null; _predictionHistory.Clear();
@@ -92,15 +109,8 @@ public partial class PlayerController : CharacterBody3D
 		collision.Shape = new CapsuleShape3D { Radius = _navigation.AgentRadius, Height = height };
 		collision.Disabled = !isLocal;
 
-		var material = new StandardMaterial3D
-		{
-			AlbedoColor = isLocal
-				? new Color(0.2f, 0.8f, 0.35f)
-				: new Color(0.9f, 0.45f, 0.2f)
-		};
-		var mesh = GetNode<MeshInstance3D>("MeshInstance3D");
-		mesh.Mesh = new CapsuleMesh { Radius = _navigation.AgentRadius, Height = height };
-		mesh.MaterialOverride = material;
+		// NC: preserve the model's authored scale/materials; only offset its floor origin.
+		_appearance.Position = new Vector3(0, -height / 2, 0);
 
 		if (!isLocal)
 			_remotePoints.Add(new RemotePoint(NowSeconds(), spawn.Position));

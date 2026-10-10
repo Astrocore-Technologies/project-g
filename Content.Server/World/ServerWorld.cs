@@ -250,6 +250,7 @@ public sealed partial class ServerWorld
         _playersByConnection.Remove(connectionId);
         _developmentRevives.Remove(connectionId); _developmentReviveSequences.Remove(connectionId);
         _playersByEntity.Remove(player.EntityId);
+        RemoveAvatar(player.EntityId); // NC: presentation leases never survive disconnect/region exit.
         _spatial.Remove(player.EntityId);
         _movingPlayers.Remove(connectionId);
         _persistenceDirty.Remove(connectionId);
@@ -402,6 +403,7 @@ public sealed partial class ServerWorld
         SimulateEconomy();
         SimulateStarterZone();
         SimulateNpcRespawns();
+        SimulateAvatars(fixedDeltaSeconds); // NC: cosmetic requests run on the fixed tick after gameplay.
         if (Inventory is { } inventory) foreach (var id in inventory.Dirty) MarkPersistent(id);
         if (Combat is { } combat)
         {

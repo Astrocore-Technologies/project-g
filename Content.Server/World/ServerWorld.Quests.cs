@@ -96,6 +96,8 @@ public sealed partial class ServerWorld
             if (outcome == QuestOutcome.Accepted && c.Action != QuestAction.Journal)
                 choices = (byte)(saved is null && c.NpcId == _questGiver ? 1 : saved?.Status == QuestStatus.Active && c.NpcId == _questRecipient ? 2 : 0);
             _questReplies[id] = new(c.Sequence, Tick, c.NpcId, outcome, choices, npc?.Name ?? "Журнал", text);
+            // NC: a visible conversation gesture does not reveal quest conditions.
+            if(npc is not null && outcome==QuestOutcome.Accepted) StartGesture(id,AvatarGesture.Talk);
         }
         _questPending.Clear();
     }

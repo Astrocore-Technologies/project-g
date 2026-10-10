@@ -1,0 +1,10 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "Character_Palette"
+vertex_color_use_as_albedo = true
+vertex_color_is_srgb = false
+albedo_color = Color(1, 1, 1, 1)
+roughness = 0.83
+metallic_specular = 0.23
+cull_mode = 2

@@ -70,4 +70,7 @@ public enum NetworkMessageType : ushort
     QuestCommand = 87,
     QuestReply = 88,
     QuestJournal = 89,
+    // NC: bounded public animation state and owner social intention.
+    AvatarState = 90,
+    EmoteCommand = 91,
 }

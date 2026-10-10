@@ -85,6 +85,8 @@ public sealed partial class ServerWorld
             if(outcome==CraftOutcome.Accepted)
             { MarkPersistent(player.EntityId); Audit(_persistentActors.GetValueOrDefault(connection,"runtime-"+connection),command.Action.ToString(),$"Operation {command.Operation}, target {command.Target}"); }
             _craftResults[player.EntityId]=new(command.Operation,Tick,outcome);
+            // NC: publish only successfully completed resource/workbench gestures.
+            if(outcome==CraftOutcome.Accepted) StartGesture(player.EntityId,command.Action==CraftAction.Gather ? AvatarGesture.Gather : AvatarGesture.Craft);
         }
         _craftPending.Clear();
     }

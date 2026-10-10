@@ -100,5 +100,6 @@ public sealed partial class ServerWorld
                 (owns ? "Надень меч в инвентаре I. После тренировки вернись ко мне." : "Возьми у меня меч и надень его в инвентаре I.");
         byte choices = outcome != QuestOutcome.Accepted ? (byte)0 : (byte)((owns ? 0 : 4) | (trained && !already ? 8 : 0));
         _questReplies[id] = new(command.Sequence, Tick, command.NpcId, outcome, choices, s.Trainer.Name, text);
+        if(outcome==QuestOutcome.Accepted) StartGesture(id,AvatarGesture.Talk); // NC: confirmed public conversation pose.
     }
 }

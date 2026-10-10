@@ -1,0 +1,52 @@
+{
+  "height_m": 1.788,
+  "pose": "T",
+  "sex": "adult male",
+  "build": "average",
+  "rigged": false,
+  "animations": false,
+  "underwear": "integrated body vertex colors",
+  "source_forward": "-Y",
+  "gltf_forward": "+Z",
+  "parts": {
+    "Body_Male_TPose": {
+      "vertices": 1280,
+      "triangles": 2556,
+      "materials": 1
+    },
+    "Face_01_Soft": {
+      "vertices": 1520,
+      "triangles": 2700,
+      "materials": 1
+    },
+    "Face_02_Angular": {
+      "vertices": 1520,
+      "triangles": 2700,
+      "materials": 1
+    },
+    "Face_03_Broad": {
+      "vertices": 1520,
+      "triangles": 2700,
+      "materials": 1
+    },
+    "Hair_01_SidePart": {
+      "vertices": 292,
+      "triangles": 580,
+      "materials": 1
+    },
+    "Hair_02_Tousled": {
+      "vertices": 340,
+      "triangles": 680,
+      "materials": 1
+    },
+    "Hair_03_TiedBack": {
+      "vertices": 448,
+      "triangles": 888,
+      "materials": 1
+    }
+  },
+  "combinations": 9,
+  "material": "opaque vertex color / rough dielectric",
+  "art_direction": "smooth skin normals, broad painted color fields, low-poly silhouettes",
+  "note": "First art prototype; no animation-ready deformation topology or LODs claimed."
+}

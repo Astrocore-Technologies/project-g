@@ -15,7 +15,7 @@ namespace Content.Tests.Server;
 
 public sealed class EchoTests
 {
-    private static ServerWorld World(NavigationOptions? navigation = null) => new(Options.Create(new MovementOptions()), Options.Create(new InterestOptions()),
+    private static ServerWorld World(NavigationOptions? navigation = null, MovementOptions? movement = null) => new(Options.Create(movement ?? new MovementOptions()), Options.Create(new InterestOptions()),
         navigation: Options.Create(navigation ?? new()), catalog: ContentCatalogTests.Load(), echoes: Options.Create(new EchoOptions { Enabled = true }));
     // Echo mechanics are tested with explicit ownership, never through a starter/login grant.
     internal static CharacterState WithEcho(ServerWorld world) => world.CreateInitialCharacter() with
@@ -155,7 +155,8 @@ public sealed class EchoTests
     [Fact]
     public void NavigationDetoursAndSignatureCannotCrossWall()
     {
-        var world = World(new() { BlockedAreas = [new() { X = 14, Z = 10, Width = 2, Height = 10 }] });
+        // Keep the fast-owner chase scenario independent of the current player speed balance.
+        var world = World(new() { BlockedAreas = [new() { X = 14, Z = 10, Width = 2, Height = 10 }] }, new() { Speed = 5 });
         var saved = WithEcho(world) with { X = -3, Z = 0 };
         var player = world.AddPlayer(1, new(1), saved); var id = world.Echoes!.Loadout(player.EntityId, 0).Slots[0].EntityId;
         Assert.True(world.TryQueueEchoSignature(1, new(1, 0, 1, new(1.5f, 0)))); Step(world);

@@ -9,6 +9,7 @@ public sealed partial class CombatSimulation
     {
         public bool Profession;
         public int Rhythm;
+        public uint RhythmCue; // NC: observable proc serial, never the internal rhythm stack count.
         public double LastHit, FootworkUntil, FocusUntil, RiposteUntil;
     }
     private readonly Dictionary<NetworkEntityId, SwordState> _swords = new();
@@ -54,7 +55,7 @@ public sealed partial class CombatSimulation
         if (!basic) return;
         if (!success) { s.Rhythm = 0; return; }
         s.Rhythm = _time - s.LastHit > b.RhythmWindow ? 1 : s.Rhythm + 1; s.LastHit = _time;
-        if (s.Rhythm >= b.RhythmHits) { s.Rhythm = 0; RestoreStamina(id, b.RhythmStamina); }
+        if (s.Rhythm >= b.RhythmHits) { s.Rhythm = 0; RestoreStamina(id, b.RhythmStamina); if(++s.RhythmCue==0)++s.RhythmCue; } // NC: one presentation cue per activation.
     }
     internal float OrdinaryMovement(NetworkEntityId id)
     {

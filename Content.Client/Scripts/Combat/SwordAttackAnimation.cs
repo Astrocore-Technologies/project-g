@@ -19,6 +19,10 @@ public partial class SwordAttackAnimation : Node3D
     private bool _ability, _waiting, _predicted, _active;
     private double _elapsed, _duration, _age;
     private float _from;
+    // NC: production actors sample the shared skinned library; the standalone legacy test rig stays usable.
+    private ProjectG.Animation.CharacterAnimator? _character;
+    private bool _sounded;
+    public void Bind(ProjectG.Animation.CharacterAnimator character) { _character=character; }
     public bool IsAnimating => _active;
     public StringName Clip { get; private set; } = "";
     public float ClipPosition { get; private set; }
@@ -89,10 +93,13 @@ public partial class SwordAttackAnimation : Node3D
     {
         Stop();
         _sequence = sequence; _ability = ability; _predicted = predicted; _waiting = true; _active = true;
+        _sounded = false;
+        if(clip=="breath" && _character is not null) { _character.SwingCue(clip); _sounded=true; }
         _elapsed = _age = 0; _duration = Math.Max(.001, windup); _from = 0; _effect = 0;
         Rotation = new(0, Mathf.Atan2(direction.X, direction.Y), 0);
-        Clip = clip; _animation.Play(Clip); _animation.Pause();
-        _weapon.Visible = true; Visible = true; SetProcess(true); Sample(0);
+        Clip = clip;
+        if (_animation.HasAnimation(Clip)) { _animation.Play(Clip); _animation.Pause(); }
+        _weapon.Visible = _character is null; Visible = true; SetProcess(true); Sample(0);
     }
 
     private void Contact()
@@ -100,6 +107,7 @@ public partial class SwordAttackAnimation : Node3D
         if (!_waiting) return;
         _waiting = false; _predicted = false; _elapsed = 0; _duration = RecoverySeconds;
         _from = ContactTime; Sample(ContactTime);
+        _character?.ContactCue(Clip.ToString());
     }
 
     public override void _Process(double delta)
@@ -115,6 +123,13 @@ public partial class SwordAttackAnimation : Node3D
     private void Sample(float time)
     {
         ClipPosition = time;
+        if (_character is not null)
+        {
+            _weapon.Visible = false;
+            _character.Attack(Clip.ToString(), time, Rotation.Y, _waiting);
+            if (!_sounded && time >= .24f) { _sounded = true; _character.SwingCue(Clip.ToString()); }
+            return;
+        }
         _animation.Seek(time, update: true);
         // Only the render mesh receives the pose; the player, camera and navigation remain untouched.
         _body.Transform = new Transform3D(Basis * _pose.Basis * _rest.Basis, _rest.Origin + Basis * _pose.Position);
@@ -123,6 +138,7 @@ public partial class SwordAttackAnimation : Node3D
     public void Stop()
     {
         _active = false; Visible = false; SetProcess(false);
+        _character?.EndAttack();
         if (_animation is null) return;
         _animation.Stop(); _body.Transform = _rest;
     }
@@ -131,6 +147,6 @@ public partial class SwordAttackAnimation : Node3D
     {
         3 => "dash", 20 => "thrust", 21 => "sweep", 22 => "rend", 23 => "breaker",
         24 => "pommel", 25 => "hamstring", 26 => "riposte", 27 => "whirl",
-        28 => "breath", 29 => "finisher", _ => ""
+        28 => "breath", 29 => "finisher", 1 or 2 => "cast_release", 4 or 5 or 6 => "cast_self", _ => ""
     };
 }

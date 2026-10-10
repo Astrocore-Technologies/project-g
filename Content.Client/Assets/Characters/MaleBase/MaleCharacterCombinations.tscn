@@ -1,0 +1,217 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="PackedScene" path="res://Assets/Characters/MaleBase/body_male_tpose.glb" id="1"]
+[ext_resource type="PackedScene" path="res://Assets/Characters/MaleBase/face_01_soft.glb" id="2"]
+[ext_resource type="PackedScene" path="res://Assets/Characters/MaleBase/face_02_angular.glb" id="3"]
+[ext_resource type="PackedScene" path="res://Assets/Characters/MaleBase/face_03_broad.glb" id="4"]
+[ext_resource type="PackedScene" path="res://Assets/Characters/MaleBase/hair_01_sidepart.glb" id="5"]
+[ext_resource type="PackedScene" path="res://Assets/Characters/MaleBase/hair_02_tousled.glb" id="6"]
+[ext_resource type="PackedScene" path="res://Assets/Characters/MaleBase/hair_03_tiedback.glb" id="7"]
+
+[sub_resource type="Environment" id="Studio"]
+background_mode = 1
+background_color = Color(0.16, 0.20, 0.20, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.78, 0.85, 0.90, 1)
+ambient_light_energy = 0.6
+tonemap_mode = 2
+
+[sub_resource type="StandardMaterial3D" id="FloorMaterial"]
+albedo_color = Color(0.19, 0.24, 0.24, 1)
+roughness = 0.95
+
+[sub_resource type="PlaneMesh" id="Floor"]
+material = SubResource("FloorMaterial")
+size = Vector2(18, 18)
+
+[node name="MaleCharacterCombinations" type="Node3D"]
+
+[node name="Environment" type="WorldEnvironment" parent="."]
+environment = SubResource("Studio")
+
+[node name="Key" type="DirectionalLight3D" parent="."]
+rotation = Vector3(-0.8, -0.65, 0)
+light_color = Color(1, 0.91, 0.79, 1)
+light_energy = 1.4
+shadow_enabled = true
+directional_shadow_max_distance = 30.0
+
+[node name="Fill" type="DirectionalLight3D" parent="."]
+rotation = Vector3(-0.5, 2.4, 0)
+light_color = Color(0.78, 0.88, 1, 1)
+light_energy = 0.45
+
+[node name="Ground" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.003, 0)
+mesh = SubResource("Floor")
+
+[node name="Camera" type="Camera3D" parent="."]
+position = Vector3(0, 8, 8)
+rotation = Vector3(-0.733, 0, 0)
+projection = 1
+size = 6.7
+current = true
+
+[node name="Face1_Hair1" type="Node3D" parent="."]
+position = Vector3(-3.1, 0, 3.4)
+
+[node name="Body" parent="Face1_Hair1" instance=ExtResource("1")]
+
+[node name="Face" parent="Face1_Hair1" instance=ExtResource("2")]
+
+[node name="Hair" parent="Face1_Hair1" instance=ExtResource("5")]
+
+[node name="Label" type="Label3D" parent="Face1_Hair1"]
+position = Vector3(0, 2.13, 0)
+billboard = 1
+text = "FACE 01 / HAIR 01"
+font_size = 36
+pixel_size = 0.0015
+modulate = Color(0.91, 0.90, 0.84, 1)
+outline_size = 4
+
+[node name="Face1_Hair2" type="Node3D" parent="."]
+position = Vector3(0, 0, 3.4)
+
+[node name="Body" parent="Face1_Hair2" instance=ExtResource("1")]
+
+[node name="Face" parent="Face1_Hair2" instance=ExtResource("2")]
+
+[node name="Hair" parent="Face1_Hair2" instance=ExtResource("6")]
+
+[node name="Label" type="Label3D" parent="Face1_Hair2"]
+position = Vector3(0, 2.13, 0)
+billboard = 1
+text = "FACE 01 / HAIR 02"
+font_size = 36
+pixel_size = 0.0015
+modulate = Color(0.91, 0.90, 0.84, 1)
+outline_size = 4
+
+[node name="Face1_Hair3" type="Node3D" parent="."]
+position = Vector3(3.1, 0, 3.4)
+
+[node name="Body" parent="Face1_Hair3" instance=ExtResource("1")]
+
+[node name="Face" parent="Face1_Hair3" instance=ExtResource("2")]
+
+[node name="Hair" parent="Face1_Hair3" instance=ExtResource("7")]
+
+[node name="Label" type="Label3D" parent="Face1_Hair3"]
+position = Vector3(0, 2.13, 0)
+billboard = 1
+text = "FACE 01 / HAIR 03"
+font_size = 36
+pixel_size = 0.0015
+modulate = Color(0.91, 0.90, 0.84, 1)
+outline_size = 4
+
+[node name="Face2_Hair1" type="Node3D" parent="."]
+position = Vector3(-3.1, 0, 0)
+
+[node name="Body" parent="Face2_Hair1" instance=ExtResource("1")]
+
+[node name="Face" parent="Face2_Hair1" instance=ExtResource("3")]
+
+[node name="Hair" parent="Face2_Hair1" instance=ExtResource("5")]
+
+[node name="Label" type="Label3D" parent="Face2_Hair1"]
+position = Vector3(0, 2.13, 0)
+billboard = 1
+text = "FACE 02 / HAIR 01"
+font_size = 36
+pixel_size = 0.0015
+modulate = Color(0.91, 0.90, 0.84, 1)
+outline_size = 4
+
+[node name="Face2_Hair2" type="Node3D" parent="."]
+position = Vector3(0, 0, 0)
+
+[node name="Body" parent="Face2_Hair2" instance=ExtResource("1")]
+
+[node name="Face" parent="Face2_Hair2" instance=ExtResource("3")]
+
+[node name="Hair" parent="Face2_Hair2" instance=ExtResource("6")]
+
+[node name="Label" type="Label3D" parent="Face2_Hair2"]
+position = Vector3(0, 2.13, 0)
+billboard = 1
+text = "FACE 02 / HAIR 02"
+font_size = 36
+pixel_size = 0.0015
+modulate = Color(0.91, 0.90, 0.84, 1)
+outline_size = 4
+
+[node name="Face2_Hair3" type="Node3D" parent="."]
+position = Vector3(3.1, 0, 0)
+
+[node name="Body" parent="Face2_Hair3" instance=ExtResource("1")]
+
+[node name="Face" parent="Face2_Hair3" instance=ExtResource("3")]
+
+[node name="Hair" parent="Face2_Hair3" instance=ExtResource("7")]
+
+[node name="Label" type="Label3D" parent="Face2_Hair3"]
+position = Vector3(0, 2.13, 0)
+billboard = 1
+text = "FACE 02 / HAIR 03"
+font_size = 36
+pixel_size = 0.0015
+modulate = Color(0.91, 0.90, 0.84, 1)
+outline_size = 4
+
+[node name="Face3_Hair1" type="Node3D" parent="."]
+position = Vector3(-3.1, 0, -3.4)
+
+[node name="Body" parent="Face3_Hair1" instance=ExtResource("1")]
+
+[node name="Face" parent="Face3_Hair1" instance=ExtResource("4")]
+
+[node name="Hair" parent="Face3_Hair1" instance=ExtResource("5")]
+
+[node name="Label" type="Label3D" parent="Face3_Hair1"]
+position = Vector3(0, 2.13, 0)
+billboard = 1
+text = "FACE 03 / HAIR 01"
+font_size = 36
+pixel_size = 0.0015
+modulate = Color(0.91, 0.90, 0.84, 1)
+outline_size = 4
+
+[node name="Face3_Hair2" type="Node3D" parent="."]
+position = Vector3(0, 0, -3.4)
+
+[node name="Body" parent="Face3_Hair2" instance=ExtResource("1")]
+
+[node name="Face" parent="Face3_Hair2" instance=ExtResource("4")]
+
+[node name="Hair" parent="Face3_Hair2" instance=ExtResource("6")]
+
+[node name="Label" type="Label3D" parent="Face3_Hair2"]
+position = Vector3(0, 2.13, 0)
+billboard = 1
+text = "FACE 03 / HAIR 02"
+font_size = 36
+pixel_size = 0.0015
+modulate = Color(0.91, 0.90, 0.84, 1)
+outline_size = 4
+
+[node name="Face3_Hair3" type="Node3D" parent="."]
+position = Vector3(3.1, 0, -3.4)
+
+[node name="Body" parent="Face3_Hair3" instance=ExtResource("1")]
+
+[node name="Face" parent="Face3_Hair3" instance=ExtResource("4")]
+
+[node name="Hair" parent="Face3_Hair3" instance=ExtResource("7")]
+
+[node name="Label" type="Label3D" parent="Face3_Hair3"]
+position = Vector3(0, 2.13, 0)
+billboard = 1
+text = "FACE 03 / HAIR 03"
+font_size = 36
+pixel_size = 0.0015
+modulate = Color(0.91, 0.90, 0.84, 1)
+outline_size = 4
+
+

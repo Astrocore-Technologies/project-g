@@ -56,6 +56,7 @@ public partial class WorldController : Node3D
         _network.NavigationReceived += OnNavigationReceived;
         _network.CombatStateReceived += OnCombatState;
         _network.AttackReceived += OnAttack;
+        _network.AvatarReceived += OnAvatar; // NC: skinned presentation for all visible players.
         _network.PvpPublicReceived+=OnPvpPublic;
         _network.AttackResultReceived += OnAttackResult;
         _network.AbilityLoadoutReceived += OnAbilityLoadout;
@@ -95,6 +96,7 @@ public partial class WorldController : Node3D
         _network.NavigationReceived -= OnNavigationReceived;
         _network.CombatStateReceived -= OnCombatState;
         _network.AttackReceived -= OnAttack;
+        _network.AvatarReceived -= OnAvatar;
         _network.PvpPublicReceived-=OnPvpPublic;
         _network.AttackResultReceived -= OnAttackResult;
         _network.AbilityLoadoutReceived -= OnAbilityLoadout;
@@ -159,7 +161,8 @@ public partial class WorldController : Node3D
             _inventory = new InventoryPresentation(); AddChild(_inventory); _inventory.Initialize(_network,_localEntityId);
             _echoControls = new(); AddChild(_echoControls); _echoControls.Initialize(_network,_localEntityId);
             _progression = new(); AddChild(_progression); _progression.Initialize(_network);
-            var avatarMesh=player.GetNode<MeshInstance3D>("MeshInstance3D"); _progression.SetPreviewMesh(avatarMesh.Mesh,avatarMesh.MaterialOverride);
+            // NC: preview the same modular appearance used by the world avatar.
+            _progression.SetPreviewVisual(player.AppearanceScene);
             _hud = new(); AddChild(_hud); _hud.Initialize(_localEntityId,()=>_progression?.Toggle());
             _quests=new(); AddChild(_quests); _quests.Initialize(_network,player);
             var defense = new DefensePresentation(); player.AddChild(defense); defense.Initialize(player,_network,_hud);
@@ -179,6 +182,9 @@ public partial class WorldController : Node3D
             if(_pvp is not null) ProjectG.UI.GameUi.RegisterRoute("pvp",_pvp.Toggle);
             if(_social is not null) { ProjectG.UI.GameUi.RegisterRoute("party",()=>_social.Toggle(SocialKind.Party)); ProjectG.UI.GameUi.RegisterRoute("clan",()=>_social.Toggle(SocialKind.Guild)); }
             _uiNavigation=new(); AddChild(_uiNavigation); _uiNavigation.Initialize(_network,_localEntityId);
+
+            // NC: emotes use the same server-confirmed public stream for the owner and observers.
+            var emotes = new ProjectG.Animation.EmoteMenu(); player.AddChild(emotes); emotes.Initialize(_network, player);
 
         }
     }
@@ -231,6 +237,8 @@ public partial class WorldController : Node3D
                         ? new Color(1, 0.5f, 0.05f) : new Color(0.65f, 0.3f, 0.8f) }
             });
             _targets.Add(state.EntityId, actor);
+            // NC: NPCs and training dummies also provide spatial contact feedback.
+            actor.AddChild(new ProjectG.Animation.CharacterFeedback { Name="ContactFeedback", Position=new(0,-1,0) });
         }
         var presentation = new CombatPresentation { Name = "CombatPresentation" };
         actor.AddChild(presentation);
@@ -258,6 +266,11 @@ public partial class WorldController : Node3D
         if (action.TargetId.IsValid && _combat.TryGetValue(action.TargetId, out var target))
             target.ApplyDamage(action);
         RefreshAlive(action.TargetId);
+        if(action.Damage > 0 || action.Guard != GuardImpact.None)
+        {
+            if (_players.TryGetValue(action.TargetId, out var victim)) victim.Animator.Hit(new Vector3(action.Direction.X,0,action.Direction.Y), action.Guard);
+            else if(_targets.TryGetValue(action.TargetId,out var npc)) npc.GetNodeOrNull<ProjectG.Animation.CharacterFeedback>("ContactFeedback")?.Impact(action.Guard);
+        }
     }
 
     private void OnAttackResult(AttackResult result)
@@ -284,7 +297,14 @@ public partial class WorldController : Node3D
     {
         if (_combat.TryGetValue(value.TargetId, out var target)) target.ApplyAbilityDamage(value);
         RefreshAlive(value.TargetId);
+        if (_players.TryGetValue(value.TargetId, out var victim) && (value.Damage > 0 || value.Guard != GuardImpact.None))
+            victim.Animator.Hit(Vector3.Forward, value.Guard);
+        else if((value.Damage > 0 || value.Guard != GuardImpact.None) && _targets.TryGetValue(value.TargetId,out var npc))
+            npc.GetNodeOrNull<ProjectG.Animation.CharacterFeedback>("ContactFeedback")?.Impact(value.Guard);
     }
+
+    private void OnAvatar(AvatarState value)
+    { if (_players.TryGetValue(value.EntityId, out var player)) player.Animator.Apply(value); }
 
     private void RefreshAlive(NetworkEntityId id)
     {

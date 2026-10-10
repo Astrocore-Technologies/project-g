@@ -1,0 +1,326 @@
+{
+  "fps": 30,
+  "bones": 40,
+  "clips": [
+    {
+      "name": "t_pose",
+      "seconds": 1,
+      "loop": false
+    },
+    {
+      "name": "idle",
+      "seconds": 3,
+      "loop": true
+    },
+    {
+      "name": "combat_idle",
+      "seconds": 3,
+      "loop": true
+    },
+    {
+      "name": "idle_look",
+      "seconds": 3,
+      "loop": false
+    },
+    {
+      "name": "walk",
+      "seconds": 1,
+      "loop": true
+    },
+    {
+      "name": "run",
+      "seconds": 0.65,
+      "loop": true
+    },
+    {
+      "name": "walk_sword",
+      "seconds": 1,
+      "loop": true
+    },
+    {
+      "name": "run_sword",
+      "seconds": 0.65,
+      "loop": true
+    },
+    {
+      "name": "turn_left",
+      "seconds": 0.5,
+      "loop": false
+    },
+    {
+      "name": "turn_right",
+      "seconds": 0.5,
+      "loop": false
+    },
+    {
+      "name": "move_start",
+      "seconds": 0.3,
+      "loop": false
+    },
+    {
+      "name": "move_stop",
+      "seconds": 0.3,
+      "loop": false
+    },
+    {
+      "name": "basic_left",
+      "seconds": 1,
+      "loop": false
+    },
+    {
+      "name": "basic_right",
+      "seconds": 1,
+      "loop": false
+    },
+    {
+      "name": "thrust",
+      "seconds": 1,
+      "loop": false
+    },
+    {
+      "name": "sweep",
+      "seconds": 1,
+      "loop": false
+    },
+    {
+      "name": "rend",
+      "seconds": 1,
+      "loop": false
+    },
+    {
+      "name": "breaker",
+      "seconds": 1,
+      "loop": false
+    },
+    {
+      "name": "pommel",
+      "seconds": 1,
+      "loop": false
+    },
+    {
+      "name": "hamstring",
+      "seconds": 1,
+      "loop": false
+    },
+    {
+      "name": "riposte",
+      "seconds": 1,
+      "loop": false
+    },
+    {
+      "name": "finisher",
+      "seconds": 1,
+      "loop": false
+    },
+    {
+      "name": "whirl",
+      "seconds": 1,
+      "loop": false
+    },
+    {
+      "name": "breath",
+      "seconds": 1,
+      "loop": false
+    },
+    {
+      "name": "dash",
+      "seconds": 1,
+      "loop": false
+    },
+    {
+      "name": "block_enter",
+      "seconds": 0.18,
+      "loop": false
+    },
+    {
+      "name": "block_exit",
+      "seconds": 0.18,
+      "loop": false
+    },
+    {
+      "name": "equip",
+      "seconds": 0.55,
+      "loop": false
+    },
+    {
+      "name": "unequip",
+      "seconds": 0.55,
+      "loop": false
+    },
+    {
+      "name": "block_hold",
+      "seconds": 1,
+      "loop": true
+    },
+    {
+      "name": "block_hit",
+      "seconds": 0.38,
+      "loop": false
+    },
+    {
+      "name": "parry",
+      "seconds": 0.38,
+      "loop": false
+    },
+    {
+      "name": "parry_success",
+      "seconds": 0.38,
+      "loop": false
+    },
+    {
+      "name": "cast_start",
+      "seconds": 0.3,
+      "loop": false
+    },
+    {
+      "name": "cast_cancel",
+      "seconds": 0.2,
+      "loop": false
+    },
+    {
+      "name": "cast_release",
+      "seconds": 0.4,
+      "loop": false
+    },
+    {
+      "name": "cast_self",
+      "seconds": 0.5,
+      "loop": false
+    },
+    {
+      "name": "cast_hold",
+      "seconds": 1,
+      "loop": true
+    },
+    {
+      "name": "hit_front",
+      "seconds": 0.28,
+      "loop": false
+    },
+    {
+      "name": "hit_back",
+      "seconds": 0.28,
+      "loop": false
+    },
+    {
+      "name": "hit_left",
+      "seconds": 0.28,
+      "loop": false
+    },
+    {
+      "name": "hit_right",
+      "seconds": 0.28,
+      "loop": false
+    },
+    {
+      "name": "stun_enter",
+      "seconds": 0.2,
+      "loop": false
+    },
+    {
+      "name": "stun_loop",
+      "seconds": 1,
+      "loop": true
+    },
+    {
+      "name": "stun_exit",
+      "seconds": 0.2,
+      "loop": false
+    },
+    {
+      "name": "death_front",
+      "seconds": 1.1,
+      "loop": false
+    },
+    {
+      "name": "dead_front",
+      "seconds": 1,
+      "loop": true
+    },
+    {
+      "name": "death_back",
+      "seconds": 1.1,
+      "loop": false
+    },
+    {
+      "name": "dead_back",
+      "seconds": 1,
+      "loop": true
+    },
+    {
+      "name": "interact",
+      "seconds": 0.8,
+      "loop": false
+    },
+    {
+      "name": "pickup",
+      "seconds": 1,
+      "loop": false
+    },
+    {
+      "name": "talk",
+      "seconds": 1.5,
+      "loop": true
+    },
+    {
+      "name": "gather",
+      "seconds": 1.3,
+      "loop": true
+    },
+    {
+      "name": "craft",
+      "seconds": 1.0,
+      "loop": true
+    },
+    {
+      "name": "wave",
+      "seconds": 2,
+      "loop": false
+    },
+    {
+      "name": "nod",
+      "seconds": 1.8,
+      "loop": false
+    },
+    {
+      "name": "no",
+      "seconds": 1.8,
+      "loop": false
+    },
+    {
+      "name": "bow",
+      "seconds": 1.8,
+      "loop": false
+    },
+    {
+      "name": "point",
+      "seconds": 1.8,
+      "loop": false
+    },
+    {
+      "name": "cheer",
+      "seconds": 1.8,
+      "loop": false
+    },
+    {
+      "name": "clap",
+      "seconds": 1.8,
+      "loop": false
+    },
+    {
+      "name": "sit_down",
+      "seconds": 0.8,
+      "loop": false
+    },
+    {
+      "name": "sit_idle",
+      "seconds": 2,
+      "loop": true
+    },
+    {
+      "name": "stand_up",
+      "seconds": 0.8,
+      "loop": false
+    }
+  ]
+}

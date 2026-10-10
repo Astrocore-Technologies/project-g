@@ -2,21 +2,21 @@
 
 [ext_resource type="Script" path="res://Scripts/PlayerController.cs" id="1_player"]
 [ext_resource type="PackedScene" path="res://Scenes/Actors/SwordAttackRig.tscn" id="2_sword"]
-
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_player"]
+[ext_resource type="PackedScene" path="res://Assets/Characters/MaleBase/MaleCharacter.tscn" id="3_appearance"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape_player"]
 
 [node name="PlayerAvatar" type="CharacterBody3D"]
 script = ExtResource("1_player")
+AppearanceScene = ExtResource("3_appearance")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
-mesh = SubResource("CapsuleMesh_player")
+[node name="Visual" type="Node3D" parent="."]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("CapsuleShape_player")
 
 [node name="SwordAttackRig" parent="." instance=ExtResource("2_sword")]
+BodyPath = NodePath("../Visual")
 
 [node name="CameraRig" type="Node3D" parent="."]
 
