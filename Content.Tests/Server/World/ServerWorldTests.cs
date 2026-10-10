@@ -19,7 +19,7 @@ public sealed class ServerWorldTests
         Assert.True(world.TryApplyMove(1, new MoveCommand(1, 1, new Vector2(10f, 0f))));
         world.Simulate(0.05f);
 
-        Assert.Equal(0.125f, Vector2.Distance(start, player.Position), 4);
+        Assert.Equal(3.5f * .05f, Vector2.Distance(start, player.Position), 4);
     }
 
     [Fact]

@@ -30,8 +30,15 @@ public partial class AbilityEffectVisual : Node3D
             : new CylinderMesh { TopRadius = radius, BottomRadius = radius, Height = 0.035f };
         if (state.Form == AbilityForm.Melee)
         {
-            var arc = state.AbilityId == 21 ? 140f : state.AbilityId == 27 ? 360f : state.AbilityId == 20 ? 24f : 70f;
-            _mesh.Mesh = CombatPresentation.BuildCone(radius,arc*MathF.PI/360);
+            // The same public geometry drives aiming and confirmed melee telegraphs.
+            if (state.Area.Shape == AbilityAreaShape.Corridor)
+            {
+                _mesh.Mesh = new BoxMesh { Size = new(state.Area.HalfWidth * 2, .035f, state.Area.Length) };
+                Position = new(state.Position.X + state.Direction.X * state.Area.Length / 2, state.Height + .12f,
+                    state.Position.Y + state.Direction.Y * state.Area.Length / 2);
+            }
+            else _mesh.Mesh = CombatPresentation.BuildCone(state.Area.Length > 0 ? state.Area.Length : radius,
+                state.Area.HalfAngleRadians > 0 ? state.Area.HalfAngleRadians : MathF.PI);
             Rotation = new(0,Mathf.Atan2(state.Direction.X,state.Direction.Y),0);
         }
         if (state.Phase == AbilityPhase.Dash ||

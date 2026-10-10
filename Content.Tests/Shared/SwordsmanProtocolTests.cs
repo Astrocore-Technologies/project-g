@@ -14,7 +14,7 @@ public sealed class SwordsmanProtocolTests
         var profile=new AbilityProfile(26,AbilityForm.Melee,2,.3f,0,0,6,0,0,12,AbilityAvailability.NeedsParry);
         var state=new AbilityLoadout(new(1),42,50,50,[profile]);
         var packet=NetworkProtocol.Write(state);
-        Assert.Equal(87,packet.Length); Assert.True(NetworkProtocol.TryReadAbilityLoadout(Body(packet),out var decoded));
+        Assert.Equal(87 + AbilityArea.WireBytes,packet.Length); Assert.True(NetworkProtocol.TryReadAbilityLoadout(Body(packet),out var decoded));
         Assert.Equal(profile,Assert.Single(decoded.Abilities));
         for(var i=2;i<packet.Length;i++) Assert.False(NetworkProtocol.TryReadAbilityLoadout(new(packet.CopyData(),2,i),out _));
         Assert.False(NetworkProtocol.TryReadAbilityLoadout(new([..packet.CopyData()[2..],0]),out _));

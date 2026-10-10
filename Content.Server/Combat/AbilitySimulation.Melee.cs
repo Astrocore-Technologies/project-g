@@ -31,7 +31,7 @@ public sealed partial class AbilitySimulation
                 Range = (float)_combat.Get(id).Weapon.Range * technique.RangeFactor,
                 Availability = !_combat.HasSword(id) ? AbilityAvailability.NeedsSword : technique.RequiresParry && !_combat.HasRiposte(id) ? AbilityAvailability.NeedsParry : AbilityAvailability.Ready
             };
-        return profile;
+        return profile with { Area = DescribeArea(definition, profile) };
     }
 
     internal void CancelRecovery(NetworkEntityId id) => CancelCast(id, recoveryOnly: true);

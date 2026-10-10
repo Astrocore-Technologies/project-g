@@ -29,6 +29,7 @@ public partial class PlayerController : CharacterBody3D
 	private NumericsVector2 _target;
 	private float _predictedHeight, _targetHeight;
 	public System.Numerics.Vector3 PredictedFoot => new(_predictedPosition.X, _predictedHeight, _predictedPosition.Y);
+	internal NavigationGrid Navigation => _navigation;
 	private double _tickAccumulator;
 	private float _fixedDelta;
 	private uint _sequence;

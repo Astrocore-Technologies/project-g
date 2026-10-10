@@ -243,7 +243,7 @@ public sealed class SwordsmanSimulationTests
     public void LongDashUsesOwnProfileFullCostForShortDistanceAndCannotBreakStun()
     {
         var f=new Fight(); var dash=f.Abilities.Loadout(f.Player,0).Abilities.Single(a=>a.Form==AbilityForm.Dash);
-        Assert.Equal(20,dash.Range); Assert.Equal(35,dash.StaminaCost); Assert.Equal(7,dash.CooldownSeconds);
+        Assert.Equal(20,dash.Range); Assert.Equal(35,dash.StaminaCost); Assert.Equal(20,dash.CooldownSeconds);
         Assert.Equal(AbilityOutcome.Accepted,f.Cast(3,Vector2.UnitX,1)); Assert.Equal(65,f.Stamina);
         f.Step(4); Assert.Equal(AbilityOutcome.Cooldown,f.Cast(3));
         var stunned=new Fight(); stunned.Combat.Stun(stunned.Player,.4); Assert.Equal(AbilityOutcome.InvalidState,stunned.Cast(3)); Assert.Equal(100,stunned.Stamina);
@@ -273,6 +273,41 @@ public sealed class SwordsmanSimulationTests
     }
 
     [Fact]
+    public void EverySwordsmanSkillPublishesItsExecutionGeometry()
+    {
+        var catalog = ContentCatalogTests.Load();
+        for (ushort id = 20; id <= 29; id++)
+        {
+            var f = new Fight(selected: id);
+            var profile = f.Abilities.Loadout(f.Player, 0).Abilities.Single(a => a.Id == id);
+            var technique = catalog.Abilities.Values.Single(a => a.NetworkId == id).Melee!;
+            Assert.True(profile.Area.IsValid);
+            Assert.Equal(technique.Stationary, profile.Area.Stationary);
+            if (profile.Form == AbilityForm.Recovery) Assert.Equal(AbilityAreaShape.Self, profile.Area.Shape);
+            else
+            {
+                Assert.Equal(profile.Range, profile.Area.Length);
+                Assert.Equal((float)f.Combat.Get(f.Player).Weapon.Range * technique.RangeFactor, profile.Area.Length);
+                Assert.Equal(technique.NarrowThrust ? AbilityAreaShape.Corridor : AbilityAreaShape.Sector, profile.Area.Shape);
+                if (!technique.NarrowThrust) Assert.Equal(technique.ArcDegrees * MathF.PI / 360, profile.Area.HalfAngleRadians);
+            }
+        }
+        var dash = new Fight().Abilities.Loadout(new(1), 0).Abilities.Single(a => a.Form == AbilityForm.Dash);
+        Assert.Equal(new AbilityArea(AbilityAreaShape.Corridor, 20, .45f), dash.Area);
+    }
+
+    [Fact]
+    public void SwordDashBecomesAvailableAfterTwentySeconds()
+    {
+        var f = new Fight();
+        Assert.Equal(AbilityOutcome.Accepted, f.Cast(3, Vector2.UnitX, 1));
+        f.Step(378); // 18.9 seconds after the accepted cast.
+        Assert.Equal(AbilityOutcome.Cooldown, f.Cast(3, Vector2.UnitX, 1));
+        f.Step(21);
+        Assert.Equal(AbilityOutcome.Accepted, f.Cast(3, Vector2.UnitX, 1));
+    }
+
+    [Fact]
     public void TwentyMeterSwordDashRejectsLargerIntentsAndKeepsCooldownAndCost()
     {
         var f=new Fight(); f.Position(f.Player,new(-10,0));
@@ -282,6 +317,6 @@ public sealed class SwordsmanSimulationTests
         Assert.Equal(20,Vector2.Distance(effect.Origin,effect.Position),5);
         Assert.Equal(AbilityOutcome.Busy,f.Cast(3)); f.Step(30);
         Assert.Equal(AbilityOutcome.Cooldown,f.Cast(3));
-        Assert.Equal(7,f.Abilities.Loadout(f.Player,f.Tick).Abilities.Single(a=>a.Form==AbilityForm.Dash).CooldownSeconds);
+        Assert.Equal(20,f.Abilities.Loadout(f.Player,f.Tick).Abilities.Single(a=>a.Form==AbilityForm.Dash).CooldownSeconds);
     }
 }

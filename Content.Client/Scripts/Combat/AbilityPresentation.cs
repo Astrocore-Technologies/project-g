@@ -1,4 +1,5 @@
 using Content.Shared.Network;
+using Content.Shared.Navigation;
 using Godot;
 using ProjectG.Gameplay;
 using ProjectG.Networking;
@@ -21,6 +22,14 @@ public partial class AbilityPresentation : Node3D
     private string _feedback = "";
     private static readonly Key[] BarKeys = [Key.Q,Key.W,Key.E,Key.R,Key.A,Key.S,Key.D,Key.F];
     private readonly ushort[] _bar = new ushort[8];
+    private readonly AbilityAreaVisual _area = new();
+    private Key _aimKey;
+    private ushort _aimId;
+    private double _areaRefresh;
+    private CombatPresentation? _combat;
+    private Window? _focusWindow;
+    public bool IsAiming => _aimId != 0;
+    public AbilityAreaVisual AreaVisual => _area;
     public void ApplyProgression(ProgressionState value)
     {
         Array.Clear(_bar);
@@ -30,7 +39,8 @@ public partial class AbilityPresentation : Node3D
     public void Initialize(PlayerController player, NetworkClient network)
     {
         _player = player; _network = network;
-        AddChild(_label);
+        _focusWindow = GetWindow(); _focusWindow.FocusExited += CancelAim;
+        AddChild(_label); AddChild(_area);
     }
 
     public void ApplyLoadout(AbilityLoadout loadout)
@@ -42,34 +52,98 @@ public partial class AbilityPresentation : Node3D
     public override void _UnhandledInput(InputEvent @event)
     {
         if(ProjectG.UI.GameUi.GameplayModalOpen) return;
-        if (!_player.IsAlive || @event is not InputEventKey { Pressed: true, Echo: false } key || _pending != 0 || _loadout.Abilities is null) return;
+        if (!_player.IsAlive || !_network.RegionActive || @event is not InputEventKey { Pressed: true, Echo: false } key || _pending != 0 || IsAiming || _loadout.Abilities is null) return;
         var index = Array.IndexOf(BarKeys,key.PhysicalKeycode);
         if (key.PhysicalKeycode != Key.Space && index < 0) return;
         AbilityProfile? selected = null;
         foreach (var slot in _loadout.Abilities)
             if (key.PhysicalKeycode == Key.Space ? slot.Form == AbilityForm.Dash : slot.Id == _bar[index]) { selected = slot; break; }
-        if (selected is not { } profile || profile.ReadyInSeconds > Now() - _receivedAt || _loadout.Mana < profile.ManaCost) return;
+        if (selected is not { } profile) return;
+        _aimKey = key.PhysicalKeycode; _aimId = profile.Id;
+        RefreshArea(); GetViewport().SetInputAsHandled();
+    }
+
+    public override void _Input(InputEvent @event)
+    {
+        if (!IsAiming) return;
+        if (@event is InputEventKey { Pressed: true, PhysicalKeycode: Key.Escape } ||
+            @event is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Right })
+        { CancelAim(); GetViewport().SetInputAsHandled(); return; }
+        if (@event is not InputEventKey { Pressed: false } key || key.PhysicalKeycode != _aimKey) return;
+        var id = _aimId; CancelAim();
+        // Only releasing the key creates an intent; holding and cancelling never spends resources.
+        if (FindProfile(id) is { } profile) Commit(profile);
+        GetViewport().SetInputAsHandled();
+    }
+
+    private AbilityProfile? FindProfile(ushort id)
+    {
+        if (_loadout.Abilities is not null) foreach (var profile in _loadout.Abilities) if (profile.Id == id) return profile;
+        return null;
+    }
+    private string Unavailable(AbilityProfile profile)
+    {
+        if (!_player.IsAlive || !_network.RegionActive || ProjectG.UI.GameUi.GameplayModalOpen) return "Сейчас нельзя применить навык";
+        if (profile.ReadyInSeconds > Now() - _receivedAt) return "Навык перезаряжается";
+        if (_loadout.Mana < profile.ManaCost) return "Не хватает маны";
         if (profile.Availability != AbilityAvailability.Ready)
-        { _feedback = profile.Availability == AbilityAvailability.NeedsSword ? "Нужен надетый исправный меч" : "Сначала парируйте ближний удар"; return; }
+            return profile.Availability == AbilityAvailability.NeedsSword ? "Нужен надетый исправный меч" : "Сначала парируйте ближний удар";
+        if (_network.LatestDefense is { } defense && defense.Stamina < profile.StaminaCost) return "Не хватает выносливости";
+        return "";
+    }
+
+    private bool TryAim(AbilityProfile profile, out NumericsVector2 aim, out float aimHeight,
+        out NumericsVector2 direction, out float directionY, out float dashDistance, out System.Numerics.Vector3 dashEnd)
+    {
+        var foot = _player.PredictedFoot;
+        aim = _player.PredictedPosition; aimHeight = foot.Y; direction = NumericsVector2.UnitY;
+        directionY = dashDistance = 0; dashEnd = foot;
+        if (profile.Area.Shape == AbilityAreaShape.Self) return true;
+        if (!_player.TryCursorSurface(out aim, out aimHeight)) return false;
         var form = profile.Form;
-        if (_network.LatestDefense is { } defense && defense.Stamina<profile.StaminaCost) { _feedback="Не хватает выносливости"; return; }
-        var camera = GetViewport().GetCamera3D();
-        if (camera is null) return;
-        if (!_player.TryCursorSurface(out var clicked, out var aimHeight)) return;
-        var point = new Vector3(clicked.X, aimHeight, clicked.Y);
-        var position = _player.PredictedPosition;
-        var aim = new NumericsVector2(point.X, point.Z);
-        var offset = aim - position;
-        if (offset.LengthSquared() < 0.000001f && form!=AbilityForm.Projectile) { if(form != AbilityForm.Recovery) return; offset=NumericsVector2.UnitY; }
-        var direction = offset.LengthSquared()<.000001f ? NumericsVector2.UnitY : NumericsVector2.Normalize(offset);
-        var directionY = 0f;
-        if (form == AbilityForm.Projectile) { var length = MathF.Sqrt(offset.LengthSquared() + MathF.Pow(aimHeight - _player.PredictedFoot.Y, 2)); if(length<.0001f)return; direction = offset / length; directionY = (aimHeight - _player.PredictedFoot.Y) / length; }
-        if (form == AbilityForm.GroundArea && System.Numerics.Vector3.DistanceSquared(_player.PredictedFoot, new(aim.X, aimHeight, aim.Y)) > profile.Range * profile.Range) return;
+        var offset = aim - _player.PredictedPosition;
+        direction = offset.LengthSquared()<.000001f ? NumericsVector2.UnitY : NumericsVector2.Normalize(offset);
+        if (form == AbilityForm.Projectile)
+        {
+            var length = MathF.Sqrt(offset.LengthSquared() + MathF.Pow(aimHeight - foot.Y, 2));
+            if (length < .0001f) return false;
+            direction = offset / length; directionY = (aimHeight - foot.Y) / length;
+        }
+        if (form == AbilityForm.Dash)
+        {
+            dashDistance = Math.Min(profile.Range, offset.Length());
+            if (dashDistance < .001f || !SurfaceDash.TryDestination(_player.Navigation, foot, direction, dashDistance, out var end, out var height)) return false;
+            dashEnd = new(end.X, height, end.Y);
+        }
+        return true;
+    }
+
+    private void RefreshArea()
+    {
+        if (FindProfile(_aimId) is not { } profile) { CancelAim(); return; }
+        var reason = Unavailable(profile);
+        if (!TryAim(profile, out var aim, out var height, out var direction, out var dy, out _, out var dashEnd))
+        { _area.HideArea(); _feedback = "Наведите курсор на поверхность"; return; }
+        if (profile.Form == AbilityForm.GroundArea && !_player.CanAttack(new(aim.X, height, aim.Y), profile.Range)) reason = "Вне дальности или за препятствием";
+        _area.Show(profile, _player.Navigation, _player.PredictedFoot, new(aim.X, height, aim.Y), direction, dy, dashEnd, reason.Length == 0);
+        _feedback = reason.Length > 0 ? reason : profile.Area.Shape == AbilityAreaShape.Self
+            ? "На себя · отпустите клавишу · Esc/ПКМ отмена" : "Отпустите клавишу для применения · Esc/ПКМ отмена";
+    }
+
+    private void Commit(AbilityProfile profile)
+    {
+        _feedback = Unavailable(profile); if (_feedback.Length > 0 || _pending != 0) return;
+        if (!TryAim(profile, out var aim, out var aimHeight, out var direction, out var directionY, out var dashDistance, out _)) return;
+        var form = profile.Form; var position = _player.PredictedPosition;
+        if (form == AbilityForm.GroundArea && !_player.CanAttack(new(aim.X, aimHeight, aim.Y), profile.Range)) { _feedback = "Вне дальности или за препятствием"; return; }
         if (++_sequence == 0) ++_sequence;
-        var dashDistance = form == AbilityForm.Dash ? Math.Min(profile.Range,offset.Length()) : 0;
         if (form == AbilityForm.Dash && !_player.PredictDash(_sequence, direction, dashDistance, profile.Speed)) return;
-        if (form == AbilityForm.Recovery || profile.Id == 27)
-        { _player.GetNodeOrNull<CombatPresentation>("CombatPresentation")?.CancelAutoAttack(); _player.StopMovement(); }
+        if (profile.Area.Stationary)
+        {
+            // Combat state can arrive after the player spawn; resolve once when the first stationary skill is used.
+            _combat ??= _player.GetNodeOrNull<CombatPresentation>("CombatPresentation");
+            _combat?.CancelAutoAttack(); _player.StopMovement();
+        }
         _pending = _sequence; _pendingAt = Now(); _feedback = "";
         _player.SwordAnimation.PredictAbility(_sequence, profile.Id, direction,
             form == AbilityForm.Dash ? dashDistance / profile.Speed : profile.CastSeconds);
@@ -78,7 +152,7 @@ public partial class AbilityPresentation : Node3D
         GetTree().CurrentScene.AddChild(_prediction);
         _prediction.Apply(new(1, _player.EntityId, _sequence, _network.LatestServerTick, profile.Id, form,
             AbilityPhase.Telegraph, position, form == AbilityForm.GroundArea ? aim : position, direction,
-            profile.Radius, profile.Speed, (float)profile.CastSeconds, _player.PredictedFoot.Y, form == AbilityForm.GroundArea ? aimHeight : _player.PredictedFoot.Y, directionY), predicted: true);
+            profile.Form == AbilityForm.Melee ? profile.Range : profile.Radius, profile.Speed, (float)profile.CastSeconds, _player.PredictedFoot.Y, form == AbilityForm.GroundArea ? aimHeight : _player.PredictedFoot.Y, directionY, profile.Area), predicted: true);
         _network.SendAbility(new(_sequence, _network.LatestServerTick, profile.Id, form == AbilityForm.GroundArea ? aim : direction, dashDistance, form == AbilityForm.GroundArea ? aimHeight : 0, directionY));
         GetViewport().SetInputAsHandled();
     }
@@ -102,6 +176,11 @@ public partial class AbilityPresentation : Node3D
 
     public override void _Process(double delta)
     {
+        if (IsAiming)
+        {
+            if (!_player.IsAlive || !_network.RegionActive || ProjectG.UI.GameUi.GameplayModalOpen) CancelAim();
+            else if ((_areaRefresh += delta) >= .05) { _areaRefresh = 0; RefreshArea(); }
+        }
         if (_pending != 0 && Now() - _pendingAt > 2)
         {
             _player.RejectDash(_pending); _player.SwordAnimation.RejectAbility(_pending); _pending = 0; ClearPreview();
@@ -110,7 +189,12 @@ public partial class AbilityPresentation : Node3D
         _label.Text = _feedback;
     }
 
-    public override void _ExitTree() => ClearPreview();
+    public override void _ExitTree()
+    {
+        if (GodotObject.IsInstanceValid(_focusWindow)) _focusWindow!.FocusExited -= CancelAim;
+        CancelAim(); ClearPreview();
+    }
+    private void CancelAim() { _aimId = 0; _aimKey = Key.None; _area.HideArea(); _feedback = ""; }
     private void ClearPreview()
     {
         if (GodotObject.IsInstanceValid(_prediction)) _prediction!.QueueFree();

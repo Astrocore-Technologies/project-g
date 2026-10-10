@@ -4,7 +4,7 @@ public static class NetworkConstants
 {
     public const int Port = 9050;
     public const string ConnectionKey = "project-g-dev";
-    public const ushort ProtocolVersion = 32; // Heights, surface geometry and regional readiness controls.
+    public const ushort ProtocolVersion = 33; // Public ability footprints for aiming and confirmed effects.
     public const int MaxRegionGates = 4;
     public const int MaxActiveEchoes = 3;
     public const int MaxInventoryItems = 8;

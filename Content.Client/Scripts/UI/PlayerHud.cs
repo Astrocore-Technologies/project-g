@@ -99,9 +99,10 @@ public partial class PlayerHud : CanvasLayer
             var exhausted=_defense.Stamina<skill.StaminaCost;
             _slotNames[i].Text=GameUi.SkillName(skill.Id); _slotTimers[i].Text=!_alive ? "—" : cooldown>0 ? $"{cooldown:0.0} с" : _loadout.Mana<skill.ManaCost ? "Нет маны" : "Готово";
             _slotTimers[i].Modulate=cooldown<=0 && _loadout.Mana>=skill.ManaCost && _alive ? GameUi.Accent : new Color("a9aeb7");
-            _slots[i].TooltipText=$"{GameUi.SkillName(skill.Id)}\nМана: {skill.ManaCost:0}\nКаст: {skill.CastSeconds:0.##} с\nИспользуйте клавишу, направляя курсор в мир.";
+            _slots[i].TooltipText=$"{GameUi.SkillName(skill.Id)}\nМана: {skill.ManaCost:0}\nКаст: {skill.CastSeconds:0.##} с";
             if (skill.Form==AbilityForm.Dash) { _slotNames[i].Text=skill.Range>3 ? "Длинный рывок" : "Рывок"; _slots[i].TooltipText=$"{_slotNames[i].Text}\nВыносливость: {skill.StaminaCost:0}\nДо {skill.Range:0.#} м · {skill.CooldownSeconds:0.#} с\nSpace · до курсора, без неуязвимости"; }
             if (skill.Id is >=20 and <=29) _slots[i].TooltipText=$"{GameUi.SkillName(skill.Id)}\n{SwordsmanUi.Description(skill.Id)}\nТекущий расход: {skill.StaminaCost:0}; перезарядка: {skill.CooldownSeconds:0.#} с";
+            _slots[i].TooltipText += "\nУдерживайте клавишу — область применения; отпустите — применить.\nEsc или ПКМ — отменить прицеливание.";
             if (skill.Availability!=AbilityAvailability.Ready && _alive && cooldown<=0)
             { _slotTimers[i].Text=skill.Availability==AbilityAvailability.NeedsSword ? "Нужен меч" : "Парируй"; _slotTimers[i].Modulate=new Color("a9aeb7"); }
             if (exhausted && _alive && cooldown<=0) { _slotTimers[i].Text="Нет сил"; _slotTimers[i].Modulate=new Color("a9aeb7"); }

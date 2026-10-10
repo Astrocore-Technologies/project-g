@@ -18,7 +18,7 @@ public sealed record SwordsmanDefinition
     public double RecoveryPerSecond { get; init; } = 8;
     public float DashRange { get; init; } = 20;
     public double DashCost { get; init; } = 35;
-    public double DashCooldown { get; init; } = 7;
+    public double DashCooldown { get; init; } = 20;
     public double BasicDamageBonus { get; init; } = .10;
     public int RhythmHits { get; init; } = 3;
     public double RhythmWindow { get; init; } = 4;

@@ -23,7 +23,7 @@
     "recoveryPerSecond": 8,
     "dashRange": 20,
     "dashCost": 35,
-    "dashCooldown": 7,
+    "dashCooldown": 20,
     "basicDamageBonus": 0.1,
     "rhythmHits": 3,
     "rhythmWindow": 4,

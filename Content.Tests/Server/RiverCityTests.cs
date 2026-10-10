@@ -49,19 +49,19 @@ public sealed class RiverCityTests
     }
 
     [Fact]
-    public void AllRegionsPublishHalfSpeedAndCityMovementMatchesClientPrediction()
+    public void AllRegionsPublishRunSpeedAndCityMovementMatchesClientPrediction()
     {
         var worlds = Worlds();
         foreach (var world in worlds.Worlds)
         {
             var player = world.AddPlayer(42, new(42), world.CreateInitialCharacter());
-            Assert.Equal(2.5f, world.CreateSpawn(player).Movement.Speed);
+            Assert.Equal(3.5f, world.CreateSpawn(player).Movement.Speed);
             world.RemovePlayer(42);
         }
 
         var city = worlds.StartingWorld;
         var start = new Vector2(19, -11);
-        var target = new Vector2(16, -11);
+        var target = new Vector2(15, -11);
         var traveler = city.AddPlayer(42, new(42), city.CreateInitialCharacter() with { X = start.X, Z = start.Y });
         // Prediction uses the exact movement settings advertised by the server on spawn.
         var predicted = new NavigationMover(city.Navigation, city.CreateSpawn(traveler).Movement,
@@ -74,7 +74,7 @@ public sealed class RiverCityTests
             predicted.Step(.05f);
             Assert.Equal(predicted.Position, traveler.Position);
         }
-        Assert.Equal(2.5f, Vector2.Distance(start, traveler.Position), 4);
+        Assert.Equal(3.5f, Vector2.Distance(start, traveler.Position), 4);
     }
 
     [Fact]

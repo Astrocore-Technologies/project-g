@@ -51,7 +51,7 @@ public sealed class TerrainIntegrationTests
             Assert.True(world.TryApplyMove(1,command));
             var before=player.Foot; world.Simulate(.05f); client.Step(.05f);
             Assert.True(world.Navigation.TraverseSurface(before,player.Foot));
-            Assert.InRange(Vector3.Distance(before,player.Foot),0,.1251f);
+            Assert.InRange(Vector3.Distance(before,player.Foot),0,world.CreateSpawn(player).Movement.Speed * .05f + .0001f);
             Assert.InRange(Vector3.Distance(client.Foot,player.Foot),0,.0001f);
         }
         Assert.InRange(Vector3.Distance(player.Foot,goal),0,.001f);

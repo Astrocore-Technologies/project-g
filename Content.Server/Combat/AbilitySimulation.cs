@@ -143,8 +143,28 @@ public sealed partial class AbilitySimulation
             definitions[i] = ability;
             profiles[i] = new(ability.NetworkId, (AbilityForm)ability.Kind, (float)ability.Range, (float)ability.Radius,
                 (float)ability.Speed, cast, ability.CooldownSeconds, ability.Kind==AbilityKind.Dash ? 0 : ability.ManaCost, 0, ability.StaminaCost);
+            profiles[i] = profiles[i] with { Area = DescribeArea(ability, profiles[i]) };
         }
         return new AbilityActor(definitions, profiles, Math.Max(0, stats.MaxMana));
+    }
+
+    private AbilityArea DescribeArea(AbilityDefinition definition, AbilityProfile profile)
+    {
+        // Every supported form gets a footprint automatically; weapon-dependent reach is refreshed in ExecutionProfile.
+        var area = profile.Form switch
+        {
+            AbilityForm.GroundArea => new AbilityArea(AbilityAreaShape.Circle, profile.Radius),
+            AbilityForm.Recovery => new AbilityArea(AbilityAreaShape.Self, Stationary: true),
+            AbilityForm.Dash => new AbilityArea(AbilityAreaShape.Corridor, profile.Range, _grid.AgentRadius),
+            AbilityForm.Projectile => new AbilityArea(AbilityAreaShape.Corridor, profile.Range, profile.Radius + _grid.AgentRadius),
+            AbilityForm.Melee when definition.Melee is { NarrowThrust: true } melee =>
+                new AbilityArea(AbilityAreaShape.Corridor, profile.Range, profile.Radius + _grid.AgentRadius, Stationary: melee.Stationary),
+            AbilityForm.Melee when definition.Melee is { } melee =>
+                new AbilityArea(AbilityAreaShape.Sector, profile.Range, HalfAngleRadians: melee.ArcDegrees * MathF.PI / 360, Stationary: melee.Stationary),
+            _ => throw new ArgumentException($"Ability {definition.Id} has no supported targeting geometry.")
+        };
+        if (!area.IsValid) throw new ArgumentException($"Ability {definition.Id} exceeds the footprint budget.");
+        return area;
     }
 
     public void Remove(NetworkEntityId id)

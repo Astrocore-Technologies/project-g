@@ -24,5 +24,5 @@ internal struct AbilityEffect
     public double FocusFactor;
 
     public readonly AbilityEffectState State(uint tick) => new(Id, ActorId, Sequence, tick, Profile.Id, Profile.Form,
-        Phase, Origin, Position, Direction, Profile.Form == AbilityForm.Melee ? Profile.Range : Profile.Radius, Profile.Speed, Math.Max(0, Remaining), OriginHeight, Height, DirectionY);
+        Phase, Origin, Position, Direction, Profile.Form == AbilityForm.Melee ? Profile.Range : Profile.Radius, Profile.Speed, Math.Max(0, Remaining), OriginHeight, Height, DirectionY, Profile.Area);
 }
