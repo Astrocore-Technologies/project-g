@@ -10,15 +10,20 @@ public sealed class NavigationOptions
 {
     public const string SectionName = "Navigation";
     public string? GeometryFile { get; init; }
+    // A validated package pins geometry once, avoiding mixed files during publication.
+    [System.Text.Json.Serialization.JsonIgnore]
+    public FlatRegionGeometry? ExportedGeometry { get; set; }
+    public FlatRegionGeometry? LoadGeometry() => ExportedGeometry ?? (GeometryFile is { } file
+        ? FlatRegionGeometry.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, file))) : null);
     public float CellSize { get; init; } = 1f;
     public float AgentRadius { get; init; } = 0.45f;
     public List<BlockedAreaOptions> BlockedAreas { get; init; } = new();
 
     public NavigationGrid CreateGrid(MovementSettings movement)
     {
-        if (GeometryFile is not null)
+        if (LoadGeometry() is { } geometry)
         {
-            var exported = FlatRegionGeometry.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, GeometryFile))).CreateGrid();
+            var exported = geometry.CreateGrid();
             if (exported.Origin.X != movement.MinX || exported.Origin.Y != movement.MinZ ||
                 exported.Origin.X + exported.Width * exported.CellSize != movement.MaxX || exported.Origin.Y + exported.Height * exported.CellSize != movement.MaxZ)
                 throw new InvalidDataException("Exported geometry does not match movement bounds.");

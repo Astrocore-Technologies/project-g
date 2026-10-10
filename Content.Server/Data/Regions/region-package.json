@@ -1,0 +1,214 @@
+{
+  "Version": 1,
+  "Regions": [
+    {
+      "Id": "prototype",
+      "ScenePath": "res://Scenes/Regions/RiverLanding/RiverLandingBlockout.tscn",
+      "GeometryFile": "Data/Regions/river-landing.json",
+      "PlacementsFile": null,
+      "Geometry": {
+        "Version": 1,
+        "Navigation": "DgAAACDCAAAAwgAAgD9mZuY+UABAAAAAAAAAgB/wDwAAeAAAAIAf8A8AAHgAADCAH/APAAB8AAAwmB/wDwAAfAAAABgA8A8AAAAAAAAAhvcPAAAAAAAAAIb3DwBgAAAAAACA9w8AYAAAAAAAgPcPAD8AAAAAAADwDwA/AAAAAAAA8A8APwAAAAAAAPAPAD8AAAAAAADwDwA/AAAAAAAA8A8APwAAAAAAAPAPAD8AAGAAAADwDwA/AABgAAAA8w8AwAAAAAAAAPMPAMAAAAAAAAD8PwAAAAAAAAAA/D8AAAAAAwAAAIABAAAAAAMAAACAAQAAAAAAAAAAgAEAAAAAAAAAAIABAB4AAAAAAAD8PwAeAwAAAAAA/D8AHgNgAAAAAPAPAB4AYAAAAADwDwAeAAAAAAAA8A8AHgAAAAAAAPAPAAAAAAAAAADwDwAAAAAAAAAA8A8AAAAAAAAAAPAPAAAAAAAAAMDzDwAAAAAAAADA8w8AAAAAAAAAwPMPABgAAAAAAMDzDwAYwD8AAAAA8A8AAMA/AAAAAPAPAADAPwAAAADwDwAAwD8A+AcA8A8AAMA/APgHAPAPAADAPwD4BwDwDwAwAAAA+AcA8A8AMAAAAPgHAPAPAAAAAAD4BwDwDwAAAAAAAAAA8A8AAAAAAAAAAPAPAAAAAAAAAADwDwAAAAAAAAAA8A8AeAAAABgYAPAPAHgAAAAYGADwDwB4AAAAAAAA8A8AeAAAAADAAPAPAAAAAAAAwADwDwAAAAAAwMMA8w8AwAAAAMDDAPMPAMAAAAAAwBjwDwAAAPwD+N8Y8A8AfgD8A/jfAPAPAH4AAAAAwADwDwB+AAAAAAAA8A8AfgAAAAAAAPAPAAAAAAAAAADwDwA=",
+        "OpeningCells": [
+          1663,
+          1664,
+          1743,
+          1744,
+          1823,
+          1824,
+          1903,
+          1904
+        ]
+      },
+      "Anchors": [
+        {
+          "Id": "31000000-0000-4000-8000-000000000001",
+          "Kind": "entry",
+          "X": -12,
+          "Z": 28,
+          "Radius": 0
+        },
+        {
+          "Id": "31000000-0000-4000-8000-000000000002",
+          "Kind": "gate",
+          "X": -5,
+          "Z": -30,
+          "Radius": 0.65
+        },
+        {
+          "Id": "31000000-0000-4000-8000-000000000003",
+          "Kind": "gate",
+          "X": 37,
+          "Z": -10,
+          "Radius": 0.65
+        },
+        {
+          "Id": "31000000-0000-4000-8000-000000000004",
+          "Kind": "interaction",
+          "X": -5,
+          "Z": 23,
+          "Radius": 0
+        },
+        {
+          "Id": "31000000-0000-4000-8000-000000000005",
+          "Kind": "interaction",
+          "X": -26,
+          "Z": -7,
+          "Radius": 0
+        },
+        {
+          "Id": "31000000-0000-4000-8000-000000000006",
+          "Kind": "spawn",
+          "X": -23,
+          "Z": -22,
+          "Radius": 0
+        },
+        {
+          "Id": "31000000-0000-4000-8000-000000000007",
+          "Kind": "patch",
+          "X": 24,
+          "Z": -10,
+          "Radius": 0
+        }
+      ],
+      "Bindings": {}
+    },
+    {
+      "Id": "river_city",
+      "ScenePath": "res://Scenes/Regions/RiverCity/RiverCity.tscn",
+      "GeometryFile": "Data/Regions/river-city.json",
+      "PlacementsFile": "Data/Regions/river-city-placements.json",
+      "Geometry": {
+        "Version": 1,
+        "Navigation": "DgAAACDCAAAAwgAAgD9mZuY+UABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGAAAAAMAAAAAABgAAAADAAAAA/P///////z8AAP7///////9/AAwPAAAAAAAA8AAMDwAAAAAAAPAAAA8YAACA////AeAPGAA/gABg8AfwAwD8P4AAYO0PMAAA/D+AAGAtDTDz+/0/gABgAA0w8/v9P4AAYAANMPD7/T+AAGAAbTDw+/0AgABgAG0w8PsBAIAAYAANMPD7AQCAAGAADTAAAAAAgABgAA0w8PvhH4AAYAANMPD74R+AAGAADTDw++EfgABgAA0w8PvhH4AAYAANMPD74R+AAGAADTDw++EfgABgAA0wAAAYAIAAYAANeAAAGADgAWAADXgAAAYA4D//5w14GAAGAAAAAAAMABgAwAMAAAMADAAAAMDDAwADAAwAAAAAwAMAAAAMAAAAAMADAAAADAAAAADAAwAAAAwAAAAAAAAAAAAMeAAAAAAAAAAADHgAAMADwAMAAAx48PvBA8B/fv8MMPD7GQAAfn7/DDDz+xkAAH5+Pwww8/vBAAB+fj8MMPD7wQAAf34/DDDw+wEAAH9+PwwwAAAAAAAAAAAMMAAAAAAAAAAADDAAAAAAAAAAADww8Pv5AQAAAAA8MPD7+QEAfn4/DDDw+/kBMH5+/www8/v5ATB+fv8MMPP7+QEAfn4/DDDw+/kBAH5+PwwwAAAAAAB+fj8M8AMAAAAAAADAD+APAAA8DAAA8AcADwAAPAwAAPAAAA8AAAAAAADwAADPAAAcOAAA8AAA/v//H/j//38AAPz//x/4//8/AAAAAAAcOAAAAAAAAAAAAAAAAwAAAAAAAAAAAAMAAAAAAAAAAAAAAAA=",
+        "OpeningCells": []
+      },
+      "Anchors": [
+        {
+          "Id": "41000000-0000-4000-8000-000000000001",
+          "Kind": "entry",
+          "X": 0,
+          "Z": 18,
+          "Radius": 0
+        },
+        {
+          "Id": "41000000-0000-4000-8000-000000000002",
+          "Kind": "spawn",
+          "X": -2,
+          "Z": 17,
+          "Radius": 0
+        },
+        {
+          "Id": "41000000-0000-4000-8000-000000000003",
+          "Kind": "interaction",
+          "X": -7,
+          "Z": -5,
+          "Radius": 0
+        },
+        {
+          "Id": "41000000-0000-4000-8000-000000000004",
+          "Kind": "interaction",
+          "X": 15,
+          "Z": -2,
+          "Radius": 0
+        },
+        {
+          "Id": "41000000-0000-4000-8000-000000000005",
+          "Kind": "spawn",
+          "X": 15,
+          "Z": -14,
+          "Radius": 0
+        },
+        {
+          "Id": "41000000-0000-4000-8000-000000000006",
+          "Kind": "gate",
+          "X": 0,
+          "Z": 29,
+          "Radius": 2.8
+        },
+        {
+          "Id": "41000000-0000-4000-8000-000000000007",
+          "Kind": "entry",
+          "X": 0,
+          "Z": 23,
+          "Radius": 0
+        },
+        {
+          "Id": "41000000-0000-4000-8000-000000000008",
+          "Kind": "gate",
+          "X": -36,
+          "Z": 0,
+          "Radius": 2.8
+        },
+        {
+          "Id": "41000000-0000-4000-8000-000000000009",
+          "Kind": "entry",
+          "X": -30,
+          "Z": 0,
+          "Radius": 0
+        },
+        {
+          "Id": "41000000-0000-4000-8000-000000000010",
+          "Kind": "spawn",
+          "X": 12,
+          "Z": -16,
+          "Radius": 0
+        },
+        {
+          "Id": "41000000-0000-4000-8000-000000000011",
+          "Kind": "spawn",
+          "X": 18,
+          "Z": -16,
+          "Radius": 0
+        },
+        {
+          "Id": "41000000-0000-4000-8000-000000000012",
+          "Kind": "spawn",
+          "X": 15,
+          "Z": -6,
+          "Radius": 0
+        }
+      ],
+      "Bindings": {
+        "Arena": "41000000-0000-4000-8000-000000000004",
+        "Guide": "41000000-0000-4000-8000-000000000002",
+        "MagicShop": "41000000-0000-4000-8000-000000000003",
+        "RiverArrival": "41000000-0000-4000-8000-000000000009",
+        "RiverGate": "41000000-0000-4000-8000-000000000008",
+        "SouthArrival": "41000000-0000-4000-8000-000000000007",
+        "SouthGate": "41000000-0000-4000-8000-000000000006",
+        "Spawn": "41000000-0000-4000-8000-000000000001",
+        "SwordDummyEast": "41000000-0000-4000-8000-000000000011",
+        "SwordDummyWest": "41000000-0000-4000-8000-000000000010",
+        "SwordTarget": "41000000-0000-4000-8000-000000000005",
+        "SwordTrainer": "41000000-0000-4000-8000-000000000012"
+      }
+    }
+  ],
+  "Sources": {
+    "Content.Client/Scenes/Actors/SwordTrainer.tscn": "AD98D7366B2FC87547C3042CE56395F2738B5FA221E746DF77907AD5F0026159",
+    "Content.Client/Scenes/Actors/TrainingDummy.tscn": "DBFDD222B0C8812CBC518BDBCEF287E55FC75C228D05A42ACAE8DF5109BF77DC",
+    "Content.Client/Scenes/Blockout/House.tscn": "AD21FC8C10777720716FBC6FA428AD5A2AFE459CEFE64EA36BE713F1FEE25D53",
+    "Content.Client/Scenes/Blockout/Tree.tscn": "90EEABB18935C6348BB8FD3A725EDBCC166D57A8EFF32C13E4CB43C81EE2726F",
+    "Content.Client/Scenes/Regions/RiverCity/RiverCity.tscn": "0CBB5FAC7D4540556969F49276442FABC323B776DA9781C5E4F50E9D7244267D",
+    "Content.Client/Scenes/Regions/RiverLanding/RiverLandingBlockout.tscn": "973BB75C7E983684581C3036DDBE6811FB5CEAB0AA5822A057D2FD8449725DC8",
+    "Content.Client/Scripts/Editor/Regions/ActorSpawnMarker.cs": "B14A8E786791AEC3BDCE6FFCF1D9E74DA8C481E0AC410E7B9B60470E6B5F0BF4",
+    "Content.Client/Scripts/Editor/Regions/EntryMarker.cs": "321643CFF690E83D589E7BE366CF624DDD5D26583406C691E2DF473535417CF3",
+    "Content.Client/Scripts/Editor/Regions/ExportRegionsInEditor.cs": "8CB932856A7BF350CAD895D040D8285A904EEFF0CEFD2407364DFA7741963695",
+    "Content.Client/Scripts/Editor/Regions/FlatGeometryBake.cs": "D7BFF82EFF16C7849C39E9C9D31009E05644B09A95D15AFB1871A683AF2814E8",
+    "Content.Client/Scripts/Editor/Regions/GateMarker.cs": "117C38148567BB8C107D39FFAD599D0780416E6BD604D8195068F2FA44C3681D",
+    "Content.Client/Scripts/Editor/Regions/InteractionMarker.cs": "B706FA9EF331C7DB6AC8F622BBFC34529849F9F6F4CD77E0D3F60C8C2961207C",
+    "Content.Client/Scripts/Editor/Regions/NavigationPatchMarker.cs": "D0938E9E296A6925588FDDB1EE7AF24104B580E5DB12298E2955CD138E97BBAB",
+    "Content.Client/Scripts/Editor/Regions/RegionAuthoringValidation.cs": "2D4B4F6E7365F406077CC0C9995BF013840D97AE07A3F79C00D3FABC38F75560",
+    "Content.Client/Scripts/Editor/Regions/RegionExportRunner.cs": "9515A6026AB5FCF94AAD8C622A328EF522DC4BA796788799625B5C03491C43C4",
+    "Content.Client/Scripts/Editor/Regions/RegionMarker.cs": "BDA230CADE60D02C6255228A04332848D1E678BADF1B06C8FF9B731919DF0E93",
+    "Content.Client/Scripts/Editor/Regions/RegionPackageExporter.cs": "DA0495848D058887EF1782256BDBAED4E67D8A49FC099B4A9967A2354013581E",
+    "Content.Client/Scripts/Editor/Regions/RegionPublicPack.cs": "C46ECC6A357B36A42C587A41D25C1BDB618DB7580CEF25A6668F61EE086691F9",
+    "Content.Client/Scripts/Editor/Regions/RegionRoot.cs": "099AD1D71952AB909328C7D71F4EF1E8B9A850B55B371C385B8099B0A381885F",
+    "Content.Client/Scripts/Regions/BlockoutPreview.cs": "82F646A4D5D927583FD9AEC720D6EB9801AA5479C1641447C751BFBC20739004",
+    "Content.Client/Tests/Regions/RegionExportSmoke.cs": "4C6A41EC38239901A5A95C9EFD42775432DCB9AD311ABC646F4CE5A0AD8DE953",
+    "Content.Client/Tools/Regions/ExportRegions.cs": "AB58FBAEEEEFC482118863C14BD54C12779DD8001BCB3BF67BFD90EA00EEB1A0",
+    "Content.Server/Data/region-authoring.json": "0ABE23ADFF6FEF59A597CDD62A408F8512DF1C7AFDFF350CEC3456963621E139",
+    "Content.Shared/Regions/RegionExportPackage.cs": "999A8AB30007ECF2073BBBDD78B9BFB240AF9002F1919B2955A3EDF26D41A284"
+  }
+}

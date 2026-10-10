@@ -62,9 +62,9 @@ public sealed partial class ServerWorld
             throw new ArgumentException("Invalid interest settings.", nameof(interest));
         _spatial = new SpatialIndex(_interest.CellSize);
         Navigation = (navigation?.Value ?? new NavigationOptions()).CreateGrid(_movement);
-        if (navigation?.Value.GeometryFile is { } geometryFile)
+        // Use the same pinned export for navigation, hash and the opening patch.
+        if (navigation?.Value.LoadGeometry() is { } geometry)
         {
-            var geometry = FlatRegionGeometry.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, geometryFile)));
             GeometryHash = geometry.Hash;
             worldNodeDefinition = (worldNodeDefinition ?? catalog?.WorldNode ?? throw new InvalidDataException("Missing region rules."))
                 with { OpeningCells = geometry.OpeningCells };

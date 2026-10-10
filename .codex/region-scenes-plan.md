@@ -366,4 +366,28 @@ res://Tests/Regions/RegionAuthoringSmoke.tscn --quit-after 240`.
 при раннем выходе editor дал scan-aborted / HotReloadAssemblyWatcher timer diagnostic,
 поэтому его не объявляем полностью чистой проверкой UI. Runtime smoke без ошибок.
 `git diff --check` выполнен. Server/Shared tests не запускались: их код и wire/SQL не менялись.
-Визуальная приёмка R1 ожидается; R2 не начат.
+Визуальная приёмка R1 ожидается.
+
+2026-10-10: по разрешению пользователя реализован общий экспорт R2 для действующих
+RiverLanding/RiverCity scenes. Один editor/headless pipeline создаёт deterministic
+server package с geometry/UUID/bindings/source fingerprints; сервер проверяет граф,
+ссылки, placements и stale sources до открытия БД/порта. Публикация — атомарная замена
+одного JSON после успешной проверки. Публичный PCK собран, открыт и проверен на
+authoring nodes/scripts. Старые export entry points вызывают общий инструмент.
+
+Граница этапа: outskirts остаётся legacy-картой; полный release PCK и его подключение
+к игровому loader, migration policy, большой navigation backend и loading protocol
+не реализованы. Действующий F5 сохраняет прежний способ загрузки authored scenes.
+Это не приёмка R3/R4 или full production export.
+
+Проверено: build — 0 ошибок; 65 targeted tests — passed; headless scene export smoke,
+побайтно одинаковый повторный export и реальный Godot/UDP smoke с четырьмя переходами
+город → пристань → город → окраина → город — passed. Проверки использовали отдельную БД;
+тестовый сервер остановлен. Остались существующие NuGet warnings и ручная визуальная
+приёмка. Команды, ограничения и чеклист: [region-export.md](../docs/development/region-export.md).
+
+Уточнение 2026-10-10: ручной экспорт больше не нужен перед обычным Development-запуском.
+Сервер проверяет пакет до БД/порта, при изменениях вызывает экспортёр и загружает
+обновлённый пакет из checkout. Актуальные карты пропускаются, explicit custom package
+и standalone остаются без автоэкспорта; validate-content не публикует данные.
+Проверены 19 targeted tests и настоящий запуск с устаревшим/актуальным пакетом.

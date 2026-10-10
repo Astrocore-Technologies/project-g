@@ -1,0 +1,32 @@
+{
+  "Version": 1,
+  "Regions": [
+    {
+      "Id": "prototype",
+      "ScenePath": "res://Scenes/Regions/RiverLanding/RiverLandingBlockout.tscn",
+      "GeometryFile": "Data/Regions/river-landing.json",
+      "PlacementsFile": null,
+      "Bindings": {}
+    },
+    {
+      "Id": "river_city",
+      "ScenePath": "res://Scenes/Regions/RiverCity/RiverCity.tscn",
+      "GeometryFile": "Data/Regions/river-city.json",
+      "PlacementsFile": "Data/Regions/river-city-placements.json",
+      "Bindings": {
+        "Spawn": "41000000-0000-4000-8000-000000000001",
+        "Guide": "41000000-0000-4000-8000-000000000002",
+        "MagicShop": "41000000-0000-4000-8000-000000000003",
+        "Arena": "41000000-0000-4000-8000-000000000004",
+        "SwordTarget": "41000000-0000-4000-8000-000000000005",
+        "SouthGate": "41000000-0000-4000-8000-000000000006",
+        "SouthArrival": "41000000-0000-4000-8000-000000000007",
+        "RiverGate": "41000000-0000-4000-8000-000000000008",
+        "RiverArrival": "41000000-0000-4000-8000-000000000009",
+        "SwordDummyWest": "41000000-0000-4000-8000-000000000010",
+        "SwordDummyEast": "41000000-0000-4000-8000-000000000011",
+        "SwordTrainer": "41000000-0000-4000-8000-000000000012"
+      }
+    }
+  ]
+}

@@ -135,7 +135,8 @@ public partial class BuildRiverCity : Node
             var directory=ProjectSettings.GlobalizePath("res://Scenes/Regions/RiverCity");
             Directory.CreateDirectory(directory);
             if(ResourceSaver.Save(scene,$"{directory}/RiverCity.tscn")!=Error.Ok) throw new IOException("Could not save city scene.");
-            var geometry=ExportRiverCity.Export(root);
+            // Scene generation never publishes server content; use the common exporter afterwards.
+            var geometry=FlatGeometryBake.Bake(root);
             root.Free();
             GD.Print($"RIVER_CITY_BUILT: editable scene, {geometry.CreateGrid().CellCount} cells, hash {geometry.Hash:X16}");
             GetTree().Quit();

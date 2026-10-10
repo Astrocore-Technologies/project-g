@@ -60,10 +60,29 @@ public sealed class RegionalWorlds
             ?? throw new InvalidDataException("Missing regional content.");
         if (definitions.Length is < 2 or > MaxRegions || definitions[0].Id != "prototype")
             throw new InvalidDataException("Expected the existing primary and bounded adjoining regions.");
+        // Read all authored geometry/placements from one atomically published snapshot.
+        RegionExportCatalog? exports = null;
+        if (configuration["RegionExports:PackagePath"] is { } packagePath)
+        {
+            var sourceRoot = configuration.GetValue("RegionExports:VerifySources", true)
+                ? RegionExportCatalog.FindSourceRoot(AppContext.BaseDirectory) : null;
+            exports = new RegionExportCatalog(Path.Combine(AppContext.BaseDirectory, packagePath), sourceRoot);
+            var geometryIds = definitions.Where(d => d.Navigation?.GeometryFile is not null).Select(d => d.Id).Order().ToArray();
+            if (!geometryIds.SequenceEqual(exports.Package.Regions.Select(r => r.Id).Order()))
+                throw new InvalidDataException("Region graph and export package cover different authored regions.");
+            foreach (var definition in definitions)
+                if (definition.Navigation?.GeometryFile is { } geometryFile)
+                    definition.Navigation.ExportedGeometry = exports.Require(definition.Id, geometryFile, definition.PlacementsFile).Geometry;
+        }
         var placements = new Dictionary<string, Dictionary<string,float[]>>(StringComparer.Ordinal);
         foreach (var definition in definitions)
         {
             if (definition.PlacementsFile is not { } file) continue;
+            if (exports is not null)
+            {
+                placements.Add(definition.Id, RegionExportCatalog.Placements(exports.Require(definition.Id, definition.Navigation!.GeometryFile!, file)));
+                continue;
+            }
             var json = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, file));
             if (json.Length > 8192) throw new InvalidDataException("Placement export exceeds budget.");
             var points = JsonSerializer.Deserialize<Dictionary<string,float[]>>(json) ?? throw new InvalidDataException("Missing placements.");
@@ -90,7 +109,7 @@ public sealed class RegionalWorlds
             Content.Server.Pvp.PvpDefinition? pvp = null;
             if (definition.PlacementsFile is not null)
             {
-                var geometry = FlatRegionGeometry.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, definition.Navigation!.GeometryFile!))).CreateGrid();
+                var geometry = definition.Navigation!.LoadGeometry()!.CreateGrid();
                 var spawn = Point(definition.Id,"Spawn"); var guide = Point(definition.Id,"Guide");
                 var shop = Point(definition.Id,"MagicShop"); var arena = Point(definition.Id,"Arena"); var target = Point(definition.Id,"SwordTarget");
                 movement = new MovementOptions { MinX=geometry.Origin.X,MinZ=geometry.Origin.Y,
@@ -120,8 +139,16 @@ public sealed class RegionalWorlds
         }
         return new(worlds,routes,configuration["Server:StartingRegion"]);
 
-        RegionBoundary Boundary(string source,string destination,float x,float z,float ax,float az,float radius,string? exit,string? arrival) =>
-            new(source,destination,exit is null ? new(x,z) : Point(source,exit),arrival is null ? new(ax,az) : Point(destination,arrival),radius);
+        RegionBoundary Boundary(string source,string destination,float x,float z,float ax,float az,float radius,string? exit,string? arrival)
+        {
+            // Named legacy bindings resolve to stable UUIDs, including marker type/radius checks.
+            if (exports is not null)
+            {
+                if (exit is not null) RegionExportCatalog.RequireRouteAnchor(exports.Package.Regions.Single(r => r.Id == source), exit, "gate", radius);
+                if (arrival is not null) RegionExportCatalog.RequireRouteAnchor(exports.Package.Regions.Single(r => r.Id == destination), arrival, "entry");
+            }
+            return new(source,destination,exit is null ? new(x,z) : Point(source,exit),arrival is null ? new(ax,az) : Point(destination,arrival),radius);
+        }
     }
 
     private sealed record Layout

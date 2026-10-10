@@ -1,24 +1,14 @@
-using System.Text.Json;
 using Godot;
-using ProjectG.Regions.Authoring;
+using ProjectG.Regions.Export;
 
 namespace ProjectG.Tests.Regions;
 
+// Legacy F6 shortcut uses the same complete publication pipeline.
 public partial class ExportRiverLanding : Node
 {
-    public override void _Ready()
+    public override async void _Ready()
     {
-        try
-        {
-            using var root = GD.Load<PackedScene>("res://Scenes/Regions/RiverLanding/RiverLandingBlockout.tscn").Instantiate<RegionRoot>();
-            var geometry = FlatGeometryBake.Bake(root);
-            var grid = geometry.CreateGrid();
-            var path = ProjectSettings.GlobalizePath("res://../Content.Server/Data/Regions/river-landing.json");
-            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-            File.WriteAllText(path, JsonSerializer.Serialize(geometry, new JsonSerializerOptions { WriteIndented = true }));
-            GD.Print($"RIVER_EXPORT_OK: {geometry.Hash:X16}, {grid.CellCount} cells");
-            GetTree().Quit();
-        }
+        try { GetTree().Quit(await RegionExportRunner.Run()); }
         catch (Exception error) { GD.PushError(error.ToString()); GetTree().Quit(1); }
     }
 }

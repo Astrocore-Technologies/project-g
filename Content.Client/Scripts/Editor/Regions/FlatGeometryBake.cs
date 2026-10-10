@@ -14,7 +14,9 @@ public static class FlatGeometryBake
         var bounds = root.MovementBounds;
         var width = (int)bounds.Size.X;
         var height = (int)bounds.Size.Y;
-        if (width != bounds.Size.X || height != bounds.Size.Y || (long)width * height > NetworkConstants.MaxNavigationCells)
+        // Reject overflow before allocating the raster.
+        if (width <= 0 || height <= 0 || width > ushort.MaxValue || height > ushort.MaxValue ||
+            width != bounds.Size.X || height != bounds.Size.Y || (long)width * height > NetworkConstants.MaxNavigationCells)
             throw new InvalidDataException("Flat export requires bounded whole-metre dimensions.");
         var floors = new List<Rect2>();
         var blockers = new List<Rect2>();
@@ -44,9 +46,13 @@ public static class FlatGeometryBake
                 {
                     var floor = body.IsInGroup("region_walkable");
                     var blocker = body.IsInGroup("region_movement_blocker");
-                    if (!floor && !blocker) throw new InvalidDataException($"Unclassified collision: {body.Name}");
-                    if (collision.Shape is not BoxShape3D box || !local.Basis.IsEqualApprox(Basis.Identity))
-                        throw new InvalidDataException($"Flat export requires axis-aligned boxes: {body.Name}");
+                    // Invalid transforms/shapes must not silently produce free cells.
+                    var path = root.GetPathTo(collision);
+                    if (floor == blocker) throw new InvalidDataException($"Collision must have exactly one classification: {path}");
+                    if (collision.Shape is not BoxShape3D box || !local.Origin.IsFinite() || !local.Basis.IsFinite() ||
+                        !local.Basis.IsEqualApprox(Basis.Identity) || !box.Size.IsFinite() ||
+                        box.Size.X <= 0 || box.Size.Y <= 0 || box.Size.Z <= 0)
+                        throw new InvalidDataException($"Flat export requires finite axis-aligned positive boxes: {path}");
                     if (floor && !Mathf.IsZeroApprox(local.Origin.Y + box.Size.Y / 2))
                         throw new InvalidDataException($"Walkable floor must be at Y=0: {body.Name}");
                     var rectangle = new Rect2(local.Origin.X - box.Size.X / 2, local.Origin.Z - box.Size.Z / 2, box.Size.X, box.Size.Z);

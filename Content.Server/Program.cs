@@ -18,6 +18,12 @@ var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings
     ContentRootPath = AppContext.BaseDirectory
 });
 
+// Local startup refreshes changed maps automatically. The exporter's validation subprocess must
+// remain read-only, so --validate-content never invokes the exporter recursively.
+if (builder.Environment.IsDevelopment() && !validateContentOnly)
+    await Content.Server.Regions.DevelopmentRegionExport.EnsureCurrentAsync(builder.Configuration, AppContext.BaseDirectory,
+        Content.Server.Regions.DevelopmentRegionExport.RunExporterAsync, Console.Out);
+
 builder.Services
     .AddOptions<ServerOptions>()
     .Bind(builder.Configuration.GetSection(ServerOptions.SectionName))

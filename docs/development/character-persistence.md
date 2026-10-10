@@ -9,6 +9,11 @@ $env:DOTNET_ENVIRONMENT = 'Development'
 dotnet run --project Content.Server
 ```
 
+Сохранённые изменения сцен регионов экспортируются автоматически перед запуском мира.
+Если изменений нет, экспорт пропускается. Ошибки карты останавливают запуск с диагностикой;
+отдельно выполнять `Export-Regions.ps1` перед игрой не требуется.
+Подробности: [экспорт регионов](region-export.md).
+
 PostgreSQL и Docker не нужны. Development использует SQLite: `.data/project-g-development.db`.
 Миграция schema v4 выполняется до открытия UDP; character, inventory и Echo model v1 хранятся отдельно.
 SQL/providers/migrations находятся в `Content.Database`, игровые модели и adapter — в `Content.Server/Persistence`.
