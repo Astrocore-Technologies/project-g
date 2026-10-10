@@ -7,6 +7,7 @@ namespace ProjectG.Gameplay;
 public partial class WorldController
 {
     private RegionRoot? _authoredRegion;
+    private Node3D? _surfaceRegion;
     private NavigationGrid? _authoredBase;
     private int[] _authoredOpening = [];
     private bool _contentReady = true;
@@ -82,6 +83,7 @@ public partial class WorldController
 
     private void UnloadAuthoredRegion()
     {
+        DetachPresentation(_surfaceRegion); _surfaceRegion = null;
         DetachPresentation(_authoredRegion); _authoredRegion = null; _authoredBase = null;
         GetNode<Node3D>("Ground").Show();
         GetNode<CollisionShape3D>("Ground/CollisionShape3D").Disabled = false;

@@ -55,16 +55,16 @@ public partial class AbilityPresentation : Node3D
         if (_network.LatestDefense is { } defense && defense.Stamina<profile.StaminaCost) { _feedback="Не хватает выносливости"; return; }
         var camera = GetViewport().GetCamera3D();
         if (camera is null) return;
-        var mouse = GetViewport().GetMousePosition();
-        var origin = camera.ProjectRayOrigin(mouse); var ray = camera.ProjectRayNormal(mouse);
-        if (Mathf.Abs(ray.Y) < 0.0001f || -origin.Y / ray.Y <= 0) return;
-        var point = origin + ray * (-origin.Y / ray.Y);
+        if (!_player.TryCursorSurface(out var clicked, out var aimHeight)) return;
+        var point = new Vector3(clicked.X, aimHeight, clicked.Y);
         var position = _player.PredictedPosition;
         var aim = new NumericsVector2(point.X, point.Z);
         var offset = aim - position;
-        if (offset.LengthSquared() < 0.000001f) { if(form != AbilityForm.Recovery) return; offset=NumericsVector2.UnitY; }
-        var direction = NumericsVector2.Normalize(offset);
-        if (form == AbilityForm.GroundArea && offset.LengthSquared() > profile.Range * profile.Range) return;
+        if (offset.LengthSquared() < 0.000001f && form!=AbilityForm.Projectile) { if(form != AbilityForm.Recovery) return; offset=NumericsVector2.UnitY; }
+        var direction = offset.LengthSquared()<.000001f ? NumericsVector2.UnitY : NumericsVector2.Normalize(offset);
+        var directionY = 0f;
+        if (form == AbilityForm.Projectile) { var length = MathF.Sqrt(offset.LengthSquared() + MathF.Pow(aimHeight - _player.PredictedFoot.Y, 2)); if(length<.0001f)return; direction = offset / length; directionY = (aimHeight - _player.PredictedFoot.Y) / length; }
+        if (form == AbilityForm.GroundArea && System.Numerics.Vector3.DistanceSquared(_player.PredictedFoot, new(aim.X, aimHeight, aim.Y)) > profile.Range * profile.Range) return;
         if (++_sequence == 0) ++_sequence;
         var dashDistance = form == AbilityForm.Dash ? Math.Min(profile.Range,offset.Length()) : 0;
         if (form == AbilityForm.Dash && !_player.PredictDash(_sequence, direction, dashDistance, profile.Speed)) return;
@@ -78,8 +78,8 @@ public partial class AbilityPresentation : Node3D
         GetTree().CurrentScene.AddChild(_prediction);
         _prediction.Apply(new(1, _player.EntityId, _sequence, _network.LatestServerTick, profile.Id, form,
             AbilityPhase.Telegraph, position, form == AbilityForm.GroundArea ? aim : position, direction,
-            profile.Radius, profile.Speed, (float)profile.CastSeconds), predicted: true);
-        _network.SendAbility(new(_sequence, _network.LatestServerTick, profile.Id, form == AbilityForm.GroundArea ? aim : direction, dashDistance));
+            profile.Radius, profile.Speed, (float)profile.CastSeconds, _player.PredictedFoot.Y, form == AbilityForm.GroundArea ? aimHeight : _player.PredictedFoot.Y, directionY), predicted: true);
+        _network.SendAbility(new(_sequence, _network.LatestServerTick, profile.Id, form == AbilityForm.GroundArea ? aim : direction, dashDistance, form == AbilityForm.GroundArea ? aimHeight : 0, directionY));
         GetViewport().SetInputAsHandled();
     }
 

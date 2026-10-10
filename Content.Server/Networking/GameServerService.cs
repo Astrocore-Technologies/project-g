@@ -208,6 +208,9 @@ public sealed partial class GameServerService : BackgroundService
                 if (epoch != owner.Epoch || !_regions.CanExecute(peer.Id, owner)) return;
             }
             var world = WorldFor(peer.Id);
+            if (messageType is NetworkMessageType.RegionReady or NetworkMessageType.RegionApplied)
+            { HandleRegionLoad(peer, reader, messageType, deliveryMethod); return; }
+            if (!world.GetPlayer(peer.Id).Loaded) return;
 
             // NC: ownership comes from the connection; the packet cannot choose another avatar.
             if (messageType == NetworkMessageType.EmoteCommand && deliveryMethod == DeliveryMethod.ReliableOrdered &&
@@ -422,6 +425,11 @@ public sealed partial class GameServerService : BackgroundService
 
     private void SendInterest(NetPeer peer, InterestView view)
     {
+        if (_loading.TryGetValue(peer.Id, out var load))
+        {
+            if (Environment.TickCount64 > load.Deadline) { peer.Disconnect(); return; }
+            if (load.Stage == 0) return;
+        }
         var world = WorldFor(peer.Id);
         if(world.HasWorldEvent)
         {

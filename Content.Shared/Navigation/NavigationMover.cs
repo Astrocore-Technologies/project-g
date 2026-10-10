@@ -12,26 +12,53 @@ public sealed class NavigationMover
     private List<Vector2> _route = new();
     private List<Vector2> _candidate = new();
     private int _waypoint;
+    private readonly SurfaceMover? _surface;
+    public float Height => _surface?.Position.Y ?? 0;
+    public float TargetHeight => _surface?.Target.Y ?? 0;
+    public float DashHeight => _surface?.DashDestination.Y ?? 0;
+    public Vector3 Foot => new(Position.X, Height, Position.Y);
     public Vector2 Position { get; private set; }
     public Vector2 Target { get; private set; }
-    public bool IsMoving => IsDashing || _waypoint < _route.Count;
-    public bool IsDashing => DashSpeed > 0;
+    public bool IsMoving => _surface?.Moving ?? (IsDashing || _waypoint < _route.Count);
+    public bool IsDashing => (_surface?.DashSpeed ?? DashSpeed) > 0;
     public Vector2 DashDestination { get; private set; }
     public float DashSpeed { get; private set; }
 
     public NavigationMover(NavigationGrid grid, MovementSettings settings,
-        NavigationPathfinder pathfinder, Vector2 spawn)
+        NavigationPathfinder pathfinder, Vector2 spawn, float height = 0)
     {
-        if (!grid.IsWalkable(spawn))
+        if (grid.Surface is not null) _surface = new(grid, settings, new(spawn.X, height, spawn.Y));
+        else if (!grid.IsWalkable(spawn))
             throw new ArgumentException("Spawn is not walkable.", nameof(spawn));
         _grid = grid;
         _settings = settings;
         _pathfinder = pathfinder;
         Position = Target = spawn;
+        SyncSurface();
+    }
+
+    private void SyncSurface()
+    {
+        if (_surface is null) return;
+        Position = new(_surface.Position.X, _surface.Position.Z); Target = new(_surface.Target.X, _surface.Target.Z);
+        DashDestination = new(_surface.DashDestination.X, _surface.DashDestination.Z); DashSpeed = _surface.DashSpeed;
+    }
+
+    public bool TrySetTarget(Vector2 target, float height)
+    {
+        if (_surface is null) return height == 0 && TrySetTarget(target);
+        var result = _surface.SetTarget(new(target.X, height, target.Y)); SyncSurface(); return result;
+    }
+
+    public bool Reset(Vector2 position, Vector2 target, float height, float targetHeight)
+    {
+        if (_surface is null) return height == 0 && targetHeight == 0 && Reset(position, target);
+        var result = _surface.Reset(new(position.X, height, position.Y), new(target.X, targetHeight, target.Y)); SyncSurface(); return result;
     }
 
     public bool TrySetTarget(Vector2 target)
     {
+        if (_surface is not null) return TrySetTarget(target, Height);
         if (IsDashing)
             return MovementSimulation.IsValidTarget(target, _settings) && _grid.IsWalkable(target);
         if (target == Target)
@@ -45,6 +72,7 @@ public sealed class NavigationMover
 
     public bool Reset(Vector2 position, Vector2 target)
     {
+        if (_surface is not null) return Reset(position, target, Height, Height);
         if (!MovementSimulation.IsValidTarget(target, _settings) ||
             !_pathfinder.TryFindPath(position, target, _candidate))
             return false;
@@ -63,6 +91,7 @@ public sealed class NavigationMover
 
     public void Step(float deltaSeconds)
     {
+        if (_surface is not null) { _surface.Step(deltaSeconds); SyncSurface(); return; }
         if (!float.IsFinite(deltaSeconds) || deltaSeconds <= 0f)
             return;
         if (IsDashing)
@@ -108,6 +137,7 @@ public sealed class NavigationMover
 
     public bool TryStartDash(Vector2 destination, float speed)
     {
+        if (_surface is not null) return TryStartDash(destination, speed, Height);
         if (IsDashing || !float.IsFinite(speed) || speed <= 0 || destination == Position ||
             !_grid.CanTraverse(Position, destination))
             return false;
@@ -121,4 +151,14 @@ public sealed class NavigationMover
 
     public bool Restore(Vector2 position, Vector2 target, Vector2 dashDestination, float dashSpeed) =>
         Reset(position, target) && (dashSpeed == 0 || TryStartDash(dashDestination, dashSpeed));
+
+    public bool TryStartDash(Vector2 destination, float speed, float height)
+    {
+        if (_surface is null) return height == 0 && TryStartDash(destination, speed);
+        var result = _surface.Dash(new(destination.X, height, destination.Y), speed); SyncSurface(); return result;
+    }
+
+    public bool Restore(Vector2 position, Vector2 target, Vector2 dashDestination, float dashSpeed,
+        float height, float targetHeight, float dashHeight) => Reset(position, target, height, targetHeight) &&
+        (dashSpeed == 0 || TryStartDash(dashDestination, dashSpeed, dashHeight));
 }

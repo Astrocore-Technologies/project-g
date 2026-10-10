@@ -39,7 +39,7 @@ public sealed class GroundItemSimulation
         _catalog=catalog;_inventory=inventory;_combat=combat;_grid=grid;_range=options.PickupRange;_spatial=new(cellSize);
         var ids=new HashSet<string>();var seeds=new List<SavedGroundItem>();foreach(var seed in options.Seeds){if(seed is null||string.IsNullOrWhiteSpace(seed.Id)||seed.Id.Length>64||!ids.Add(seed.Id))throw new ArgumentException("Invalid ground seed.");var item=new SavedGroundItem(Guid.NewGuid(),seed.Id,seed.DefinitionId,seed.X,seed.Z);Validate(item);seeds.Add(item);}Seeds=seeds;
     }
-    private void Validate(SavedGroundItem item){if(item.InstanceId==Guid.Empty||!_catalog.Items.ContainsKey(item.DefinitionId)||!_grid.IsWalkable(item.Position))throw new InvalidDataException("Ground content/geometry mismatch.");}
+    private void Validate(SavedGroundItem item){if(item.InstanceId==Guid.Empty||!_catalog.Items.ContainsKey(item.DefinitionId)||!_grid.IsOnSurface(item.Foot))throw new InvalidDataException("Ground content/geometry mismatch.");}
     private ulong Insert(SavedGroundItem item){if(!HasDropCapacity)throw new InvalidOperationException("Ground capacity exceeded.");var h=_nextHandle++;_items.Add(h,item);_spatial.Add(new(h),item.Position);return h;}
     public void Restore(IReadOnlyList<SavedGroundItem> items)
     {
@@ -47,13 +47,13 @@ public sealed class GroundItemSimulation
     }
     internal void AddDeathLoot(SavedDeathLoot loot)
     {
-        loot.Validate();var item=new SavedGroundItem(loot.Item.InstanceId,"death",loot.Item.DefinitionId,loot.X,loot.Z);Validate(item);
+        loot.Validate();var item=new SavedGroundItem(loot.Item.InstanceId,"death",loot.Item.DefinitionId,loot.X,loot.Z,loot.Surface?.Height ?? 0);Validate(item); if (_grid.SurfaceHash != 0 && loot.Surface?.GeometryHash != _grid.SurfaceHash) throw new InvalidDataException("Saved loot surface changed.");
         if(_items.Values.Any(i=>i.InstanceId==loot.Item.InstanceId))throw new InvalidDataException("Duplicate death loot UUID.");
         var definition=_catalog.Items[loot.Item.DefinitionId];if(definition.Bound||loot.Item.Condition is {} c&&(definition.Condition is null||c.Maximum>definition.Condition.Maximum)||definition.Condition is not null&&loot.Item.Condition is null||loot.Item.Enhancement>0&&(_catalog.Economy is not {} b||loot.Item.Enhancement>b.EnhancementChances.Length||loot.Item.DefinitionId!=b.BaseWeapon&&loot.Item.DefinitionId!=b.EvolvedWeapon))throw new InvalidDataException("Death loot content migration required.");
         _death.Add(Insert(item),loot);
     }
     public void Query(Vector2 center,float radius,HashSet<NetworkEntityId> items)=>_spatial.Query(center,radius,items);
-    public GroundItemSpawn State(ulong handle,uint tick){var item=_items[handle];var d=_catalog.Items[item.DefinitionId];var level=_death.TryGetValue(handle,out var loot)?loot.Item.Enhancement:0;return new(handle,tick,item.Position,d.Name+(level>0?" +"+level:""),d.Slot);}
+    public GroundItemSpawn State(ulong handle,uint tick){var item=_items[handle];var d=_catalog.Items[item.DefinitionId];var level=_death.TryGetValue(handle,out var loot)?loot.Item.Enhancement:0;return new(handle,tick,item.Position,d.Name+(level>0?" +"+level:""),d.Slot,item.Height);}
     public bool Queue(NetworkEntityId owner,PickupCommand command,uint tick)
     {
         if(!_combat.TryGet(owner,out _)||command.Sequence==0||command.Handle==0||!MovementSimulation.IsSequenceNewer(command.Sequence,_sequences.GetValueOrDefault(owner)))return false;
@@ -61,7 +61,7 @@ public sealed class GroundItemSimulation
     }
     private PickupOutcome Check(NetworkEntityId owner,ulong handle,bool channel)
     {
-        var a=_combat.Get(owner);return !_items.TryGetValue(handle,out var item)?PickupOutcome.Missing:a.Health<=0||a.IsCasting||channel&&CanChannel?.Invoke(owner)==false?PickupOutcome.InvalidState:Vector2.DistanceSquared(a.Position,item.Position)>_range*_range?PickupOutcome.OutOfRange:!_grid.CanTraverse(a.Position,item.Position)?PickupOutcome.Blocked:!_inventory.HasRoom(owner)?PickupOutcome.InventoryFull:PickupOutcome.Accepted;
+        var a=_combat.Get(owner);return !_items.TryGetValue(handle,out var item)?PickupOutcome.Missing:a.Health<=0||!a.Active||a.IsCasting||channel&&CanChannel?.Invoke(owner)==false?PickupOutcome.InvalidState:Vector3.DistanceSquared(a.Foot,item.Foot)>_range*_range?PickupOutcome.OutOfRange:!_grid.ClearAttack(a.Foot,item.Foot)?PickupOutcome.Blocked:!_inventory.HasRoom(owner)?PickupOutcome.InventoryFull:PickupOutcome.Accepted;
     }
     private void Transfer(NetworkEntityId owner,ulong handle)
     {

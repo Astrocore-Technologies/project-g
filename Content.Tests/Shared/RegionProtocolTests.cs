@@ -81,6 +81,6 @@ public sealed class RegionProtocolTests
         Assert.False(NetworkProtocol.TryReadRegionHeader(new NetDataReader(invalid.CopyData()), out _, out _));
         invalid.Reset(); invalid.Put(1UL); invalid.Put((ushort)NetworkMessageType.RegionEnter);
         Assert.False(NetworkProtocol.TryReadRegionHeader(new NetDataReader(invalid.CopyData()), out _, out _));
-        Assert.InRange(NetworkProtocol.SnapshotCapacity(1200 - NetworkProtocol.RegionEnvelopeBytes) * 44 + 7 + NetworkProtocol.RegionEnvelopeBytes, 1, 1200);
+        Assert.InRange(NetworkProtocol.SnapshotCapacity(1200 - NetworkProtocol.RegionEnvelopeBytes) * 56 + 7 + NetworkProtocol.RegionEnvelopeBytes, 1, 1200);
     }
 }

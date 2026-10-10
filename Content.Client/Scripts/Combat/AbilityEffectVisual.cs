@@ -21,7 +21,7 @@ public partial class AbilityEffectVisual : Node3D
         _state = state;
         _remaining = state.RemainingSeconds + 0.25;
         _life = _remaining;
-        Position = new(state.Position.X, 0.12f, state.Position.Y);
+        Position = new(state.Position.X, state.Height + (state.Phase == AbilityPhase.Flying ? 1 : .12f), state.Position.Y);
         var projectile = state.Phase == AbilityPhase.Flying;
         var radius = Math.Max(0.08f, state.Radius);
         Rotation = Vector3.Zero;
@@ -40,7 +40,7 @@ public partial class AbilityEffectVisual : Node3D
             var length = state.Phase == AbilityPhase.Dash
                 ? System.Numerics.Vector2.Distance(state.Origin, state.Position) : 1.2f;
             _mesh.Mesh = new BoxMesh { Size = new(0.2f, 0.035f, Math.Max(0.05f, length)) };
-            Position = new(state.Origin.X + state.Direction.X * length * 0.5f, 0.12f,
+            Position = new(state.Origin.X + state.Direction.X * length * 0.5f, state.OriginHeight + .12f,
                 state.Origin.Y + state.Direction.Y * length * 0.5f);
             Rotation = new(0, Mathf.Atan2(state.Direction.X, state.Direction.Y), 0);
         }
@@ -58,7 +58,7 @@ public partial class AbilityEffectVisual : Node3D
             if(state.Phase == AbilityPhase.Impact)
             {
                 _mesh.Mesh = style.Ribbon(state.AbilityId == 28 ? .65f : radius);
-                Position = new(state.Position.X,style.Height,state.Position.Y);
+                Position = new(state.Position.X,state.Height + style.Height,state.Position.Y);
             }
         }
         _opacity = _material.AlbedoColor.A;
@@ -72,6 +72,6 @@ public partial class AbilityEffectVisual : Node3D
         if(_material is not null && _state.Phase == AbilityPhase.Impact)
         { var color=_material.AlbedoColor; color.A=_opacity*(float)(_remaining/Math.Max(.001,_life)); _material.AlbedoColor=color; }
         if (_state.Phase == AbilityPhase.Flying)
-            Position += new Vector3(_state.Direction.X, 0, _state.Direction.Y) * _state.Speed * (float)delta;
+            Position += new Vector3(_state.Direction.X, _state.DirectionY, _state.Direction.Y) * _state.Speed * (float)delta;
     }
 }

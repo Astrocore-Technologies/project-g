@@ -64,8 +64,8 @@ public sealed partial class ServerWorld
                     else
                     {
                         var position=resource?.Position ?? _crafting.StationPosition;
-                        if(Vector2.DistanceSquared(player.Position,position)>_crafting.InteractionRange*_crafting.InteractionRange) outcome=CraftOutcome.TooFar;
-                        else if(!Navigation.CanTraverse(player.Position,position)) outcome=CraftOutcome.Blocked;
+                        if(Vector3.DistanceSquared(player.Foot, GroundFoot(position))>_crafting.InteractionRange*_crafting.InteractionRange) outcome=CraftOutcome.TooFar;
+                        else if(!Navigation.ClearAttack(player.Foot, GroundFoot(position))) outcome=CraftOutcome.Blocked;
                         else if(resource is { } node)
                         {
                             var index=Array.FindIndex(_resourceStock,s=>s.Id==node.Id);

@@ -469,6 +469,10 @@ public sealed class NetworkMovementIntegrationTests
         public Dictionary<ulong, GroundItemSpawn> GroundItems { get; } = new();
         public List<PickupResult> PickupResults { get; } = new();
         public bool CanDevelopmentRevive { get; private set; }
+        private SurfaceAssembly _surfaceAssembly = new();
+        public bool Active { get; private set; } = true;
+        public bool AutoReady { get; set; } = true;
+        public void Ready(ulong hash) => SendGame(NetworkProtocol.Write(new RegionLoadState(NetworkMessageType.RegionReady,hash)),DeliveryMethod.ReliableOrdered);
         public NavigationGrid? Navigation { get; private set; }
         public string Token { get; private set; } = "";
         public ServerReject? Rejection { get; private set; }
@@ -525,7 +529,7 @@ public sealed class NetworkMovementIntegrationTests
                     {
                         Assert.True(NetworkProtocol.TryReadRegionEnter(reader, out var entry));
                         Assert.True(entry.Epoch > (Region?.Epoch ?? 0));
-                        Region = entry; Entries.Add(entry);
+                        Region = entry; Entries.Add(entry); Active=false; _surfaceAssembly=new();
                         Spawns.Clear(); CombatStates.Clear(); Echoes.Clear(); EchoLoadouts.Clear();
                         Inventories.Clear(); Loadouts.Clear(); Navigation = null; WorldNode = null;
                         SocialRosters.Clear(); SocialInvitations.Clear(); PartyPresences.Clear();
@@ -541,6 +545,17 @@ public sealed class NetworkMovementIntegrationTests
                     }
                     switch (type)
                     {
+                        case NetworkMessageType.SurfaceChunk:
+                            Assert.True(NetworkProtocol.TryReadSurfaceChunk(reader, out var surfaceChunk));
+                            if (_surfaceAssembly.Add(surfaceChunk) is { } surface) { Navigation!.AttachSurface(surface); if(AutoReady)Ready(Region!.Value.GeometryHash); }
+                            break;
+                        case NetworkMessageType.RegionBaseline:
+                            Assert.True(NetworkProtocol.TryReadRegionLoadState(reader, type, out var baseline));
+                            SendGame(NetworkProtocol.Write(new RegionLoadState(NetworkMessageType.RegionApplied, baseline.GeometryHash)), DeliveryMethod.ReliableOrdered);
+                            break;
+                        case NetworkMessageType.RegionActivated:
+                            Assert.True(NetworkProtocol.TryReadRegionLoadState(reader, type, out _)); Active=true;
+                            break;
                         case NetworkMessageType.SocialRoster:
                             Assert.True(NetworkProtocol.TryReadSocialRoster(reader,out var roster));Assert.Equal(LocalSpawn.EntityId,roster.Owner);SocialRosters[roster.Kind]=roster;break;
                         case NetworkMessageType.SocialInvites:
@@ -647,6 +662,7 @@ public sealed class NetworkMovementIntegrationTests
                         case NetworkMessageType.RegionNavigation:
                             Assert.True(NetworkProtocol.TryReadRegionNavigation(reader, out var region));
                             if(Navigation is null) Navigation=new NavigationGrid(region); else Navigation.ApplyOpening(region);
+                            if (AutoReady && Region is { HasSurface: false } flatRegion) Ready(flatRegion.GeometryHash);
                             break;
                         case NetworkMessageType.PlayerDespawn:
                             Assert.True(NetworkProtocol.TryReadPlayerDespawn(reader, out var despawn));
@@ -750,7 +766,7 @@ public sealed class NetworkMovementIntegrationTests
                                     _ticks[state.EntityId] = snapshot.ServerTick;
                                     _states[state.EntityId] = state;
                                     Assert.NotNull(Navigation);
-                                    Assert.True(Navigation.IsWalkable(state.Position));
+                                    Assert.True(Navigation.IsOnSurface(new(state.Position.X, state.Height, state.Position.Y)));
                                     SawWallDetour |= MathF.Abs(state.Position.Y) > 5f;
                                 }
                             }
@@ -775,8 +791,8 @@ public sealed class NetworkMovementIntegrationTests
         public bool HasSnapshot(NetworkEntityId id) => _states.ContainsKey(id);
         public bool HasFullSnapshotAtOneTick(int count) =>
             _states.Count == count && _snapshotCoverage.Values.Any(ids => ids.Count == count);
-        public void Move(uint sequence, Vector2 target) => SendGame(
-            NetworkProtocol.Write(new MoveCommand(sequence, sequence, target)), DeliveryMethod.Sequenced);
+        public void Move(uint sequence, Vector2 target, float height = 0) => SendGame(
+            NetworkProtocol.Write(new MoveCommand(sequence, sequence, target, height, Navigation?.SurfaceHash ?? 0)), DeliveryMethod.Sequenced);
         public void Attack(uint sequence, Vector2 direction) => SendGame(
             NetworkProtocol.Write(new AttackCommand(sequence, uint.MaxValue, direction)), DeliveryMethod.ReliableOrdered);
         public void Ability(uint sequence, ushort id, Vector2 aim) => SendGame(

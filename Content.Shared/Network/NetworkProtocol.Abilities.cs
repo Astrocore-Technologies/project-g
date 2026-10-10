@@ -8,19 +8,19 @@ public static partial class NetworkProtocol
 {
     public static NetDataWriter Write(AbilityCommand value)
     {
-        if (value.Sequence == 0 || value.AbilityId == 0 || !Finite(value.Aim) || !float.IsFinite(value.DashDistance) || value.DashDistance is < 0 or > 100) throw new ArgumentException("Invalid ability intent.");
+        if (value.Sequence == 0 || value.AbilityId == 0 || !Finite(value.Aim) || !float.IsFinite(value.DashDistance) || value.DashDistance is < 0 or > 100 || !float.IsFinite(value.DirectionY) || MathF.Abs(value.DirectionY)>1) throw new ArgumentException("Invalid ability intent.");
         var writer = CreateWriter(NetworkMessageType.AbilityCommand);
-        writer.Put(value.Sequence); writer.Put(value.ObservedServerTick); writer.Put(value.AbilityId); WriteVector2(writer, value.Aim); writer.Put(value.DashDistance);
+        writer.Put(value.Sequence); writer.Put(value.ObservedServerTick); writer.Put(value.AbilityId); WriteVector2(writer, value.Aim); writer.Put(value.DashDistance); WriteHeight(writer, value.AimHeight); WriteHeight(writer, value.DirectionY);
         return writer;
     }
 
     public static bool TryReadAbilityCommand(NetDataReader reader, out AbilityCommand value)
     {
         value = default;
-        if (reader.AvailableBytes != 22 || !reader.TryGetUInt(out var sequence) || sequence == 0 ||
+        if (reader.AvailableBytes != 30 || !reader.TryGetUInt(out var sequence) || sequence == 0 ||
             !reader.TryGetUInt(out var tick) || !reader.TryGetUShort(out var id) || id == 0 || !TryReadVector2(reader, out var aim) ||
-            !reader.TryGetFloat(out var distance) || !float.IsFinite(distance) || distance is < 0 or > 100) return false;
-        value = new(sequence, tick, id, aim, distance); return true;
+            !reader.TryGetFloat(out var distance) || !float.IsFinite(distance) || distance is < 0 or > 100 || !ReadHeight(reader, out var height) || !ReadHeight(reader, out var dy) || MathF.Abs(dy) > 1) return false;
+        value = new(sequence, tick, id, aim, distance, height, dy); return true;
     }
 
     public static NetDataWriter Write(AbilityResult value)
@@ -80,19 +80,19 @@ public static partial class NetworkProtocol
         writer.Put(value.EffectId); writer.Put(value.ActorId.Value); writer.Put(value.Sequence); writer.Put(value.ServerTick);
         writer.Put(value.AbilityId); writer.Put((byte)value.Form); writer.Put((byte)value.Phase);
         WriteVector2(writer, value.Origin); WriteVector2(writer, value.Position); WriteVector2(writer, value.Direction);
-        writer.Put(value.Radius); writer.Put(value.Speed); writer.Put(value.RemainingSeconds); return writer;
+        writer.Put(value.Radius); writer.Put(value.Speed); writer.Put(value.RemainingSeconds); WriteHeight(writer, value.OriginHeight); WriteHeight(writer, value.Height); WriteHeight(writer, value.DirectionY); return writer;
     }
 
     public static bool TryReadAbilityEffectState(NetDataReader reader, out AbilityEffectState value)
     {
         value = default;
-        if (reader.AvailableBytes != 64 || !reader.TryGetULong(out var effect) || !reader.TryGetULong(out var actor) ||
+        if (reader.AvailableBytes != 76 || !reader.TryGetULong(out var effect) || !reader.TryGetULong(out var actor) ||
             !reader.TryGetUInt(out var sequence) || !reader.TryGetUInt(out var tick) || !reader.TryGetUShort(out var id) ||
             !reader.TryGetByte(out var form) || !reader.TryGetByte(out var phase) || !TryReadVector2(reader, out var origin) ||
             !TryReadVector2(reader, out var position) || !TryReadVector2(reader, out var direction) ||
-            !reader.TryGetFloat(out var radius) || !reader.TryGetFloat(out var speed) || !reader.TryGetFloat(out var remaining)) return false;
+            !reader.TryGetFloat(out var radius) || !reader.TryGetFloat(out var speed) || !reader.TryGetFloat(out var remaining) || !ReadHeight(reader, out var originHeight) || !ReadHeight(reader, out var height) || !ReadHeight(reader, out var dy) || MathF.Abs(dy) > 1) return false;
         var candidate = new AbilityEffectState(effect, new(actor), sequence, tick, id, (AbilityForm)form, (AbilityPhase)phase,
-            origin, position, direction, radius, speed, remaining);
+            origin, position, direction, radius, speed, remaining, originHeight, height, dy);
         if (!ValidEffect(candidate)) return false;
         value = candidate; return true;
     }
@@ -139,7 +139,11 @@ public static partial class NetworkProtocol
 
     private static bool ValidEffect(AbilityEffectState value) => value.EffectId != 0 && value.ActorId.IsValid &&
         value.Sequence != 0 && value.AbilityId != 0 && Enum.IsDefined(value.Form) && Enum.IsDefined(value.Phase) &&
-        Finite(value.Origin) && Finite(value.Position) && BasicAttackShape.IsValidDirection(value.Direction) &&
+        Finite(value.Origin) && Finite(value.Position) &&
+        float.IsFinite(value.DirectionY) && MathF.Abs(value.DirectionY)<=1 &&
+        (value.Form==AbilityForm.Projectile
+            ? value.Direction.LengthSquared()+value.DirectionY*value.DirectionY is >= .99f and <= 1.01f
+            : value.DirectionY==0 && BasicAttackShape.IsValidDirection(value.Direction)) &&
         float.IsFinite(value.Radius) && value.Radius > 0 && float.IsFinite(value.Speed) && value.Speed >= 0 &&
         (value.Form is not (AbilityForm.Projectile or AbilityForm.Dash) || value.Speed > 0) &&
         (value.Phase == AbilityPhase.Finished || value.Form switch

@@ -66,7 +66,7 @@ public sealed partial class ServerWorld
             var bit=(byte)command.Action; var outcome=WorldNodeOutcome.Accepted;
             if(actor.Health<=0) outcome=WorldNodeOutcome.InvalidState;
             else if(actor.IsCasting || p.Motion.IsDashing || p.Motion.IsMoving) outcome=WorldNodeOutcome.Busy;
-            else if(Vector2.DistanceSquared(p.Position,_node.Position)>_node.InteractionRange*_node.InteractionRange || !Navigation.CanTraverse(p.Position,_node.Position)) outcome=WorldNodeOutcome.TooFar;
+            else if(Vector3.DistanceSquared(p.Foot, GroundFoot(_node.Position))>_node.InteractionRange*_node.InteractionRange || !Navigation.ClearAttack(p.Foot, GroundFoot(_node.Position))) outcome=WorldNodeOutcome.TooFar;
             else if((history.Contributions&bit)!=0) outcome=WorldNodeOutcome.AlreadyContributed;
             else if((Consequences&bit)!=0 || command.Action==WorldNodeAction.Patrol && history.PatrolHits<_node.PatrolHitsRequired) outcome=WorldNodeOutcome.Unavailable;
             if(outcome==WorldNodeOutcome.Accepted)

@@ -7,6 +7,7 @@ public sealed class CombatOptions
     public string PlayerDefinitionId { get; set; } = "test_adventurer";
     public string TargetDefinitionId { get; set; } = "test_creature";
     public float TargetX { get; set; } = -7f;
+    public float TargetHeight { get; init; }
     public float TargetZ { get; set; } = 3f;
     public float HalfAngleDegrees { get; set; } = 45f;
     public double CriticalMultiplier { get; set; } = 1.5;

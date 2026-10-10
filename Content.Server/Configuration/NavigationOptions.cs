@@ -10,6 +10,10 @@ public sealed class NavigationOptions
 {
     public const string SectionName = "Navigation";
     public string? GeometryFile { get; init; }
+    public string? SurfaceFile { get; init; }
+    public string? SurfaceRegion { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore] public SurfaceGeometry? ExportedSurface { get; set; }
+    public SurfaceGeometry? LoadSurface() => ExportedSurface ?? (SurfaceFile is { } file ? Content.Server.Regions.SurfaceCatalog.Load(Path.Combine(AppContext.BaseDirectory, file), null)[SurfaceRegion ?? throw new InvalidDataException("Missing surface region.")] : null);
     // A validated package pins geometry once, avoiding mixed files during publication.
     [System.Text.Json.Serialization.JsonIgnore]
     public FlatRegionGeometry? ExportedGeometry { get; set; }
@@ -55,6 +59,7 @@ public sealed class NavigationOptions
         }
         var grid = new NavigationGrid(new RegionNavigation(
             new Vector2(movement.MinX, movement.MinZ), CellSize, AgentRadius, columns, rows, blocked));
+        if (LoadSurface() is { } surface) grid.AttachSurface(surface);
         if (!grid.TryFindSpawn(grid.Origin, out _))
             throw new ArgumentException("Navigation grid has no valid spawn point.");
         return grid;

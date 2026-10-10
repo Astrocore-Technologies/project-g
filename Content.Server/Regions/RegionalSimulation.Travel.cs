@@ -108,9 +108,10 @@ public sealed partial class RegionalSimulation
                 var echo = echoes.Active[i];
                 if (echo.X is not { } x || echo.Z is not { } z)
                     throw new InvalidDataException("Active travelling Echo needs an authoritative position.");
-                if (!target.Navigation.TryFindSpawn(new Vector2(x, z) + delta, out var position))
+                var requested = new Vector2(x, z) + delta; var position = requested;
+                if (target.Navigation.Surface is not null ? !target.Navigation.IsOnSurface(new(requested.X, route.ArrivalHeight, requested.Y)) : !target.Navigation.TryFindSpawn(requested, out position))
                     throw new InvalidDataException("No valid Echo arrival in destination region.");
-                active[i] = echo with { X = position.X, Z = position.Y };
+                active[i] = echo with { X = position.X, Z = position.Y, Surface = target.Navigation.SurfaceHash == 0 ? null : new(1, route.ArrivalHeight, target.Navigation.SurfaceHash) };
             }
             echoes = echoes with { Active = active };
         }
@@ -123,7 +124,7 @@ public sealed partial class RegionalSimulation
             progression = progression with { Exploration = maps.SingleOrDefault(m => m.RegionKey == target.RegionId),
                 OtherExplorations = maps.Where(m => m.RegionKey != target.RegionId).ToArray() };
         }
-        return state with { RegionId = target.RegionId, X = route.Arrival.X, Z = route.Arrival.Y,
+        return state with { RegionId = target.RegionId, X = route.Arrival.X, Z = route.Arrival.Y, Surface = target.Navigation.SurfaceHash == 0 ? null : new(1, route.ArrivalHeight, target.Navigation.SurfaceHash),
             Echoes = echoes, Progression = progression };
     }
 }

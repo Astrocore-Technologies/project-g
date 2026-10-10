@@ -110,14 +110,10 @@ public partial class EchoControls : CanvasLayer
     private void Request(byte slot)
     {
         if (GameUi.GameplayModalOpen || !_alive || _pending || !_buttons[slot - 1].Visible || _cooldowns[slot - 1] > 0) return;
-        var camera = GetViewport().GetCamera3D(); if (camera is null) return;
-        var mouse = GetViewport().GetMousePosition();
-        var origin = camera.ProjectRayOrigin(mouse); var ray = camera.ProjectRayNormal(mouse);
-        if (Math.Abs(ray.Y) < .0001f) return;
-        var distance = -origin.Y / ray.Y; if (distance < 0) return;
-        var aim = origin + ray * distance;
+        var player = GetParent().GetChildren().OfType<ProjectG.Gameplay.PlayerController>().FirstOrDefault(p=>p.EntityId==_owner);
+        if (player is null || !player.TryCursorSurface(out var aim,out var height)) return;
         _sequence++; if (_sequence == 0) _sequence++;
         _pending = true; _sentAt=Time.GetTicksMsec()/1000d;
-        _network.SendEchoSignature(new(_sequence, _network.LatestServerTick, slot, new(aim.X, aim.Z)));
+        _network.SendEchoSignature(new(_sequence, _network.LatestServerTick, slot, aim, height));
     }
 }

@@ -15,6 +15,7 @@ public sealed partial class GameServerService
     private RegionalSimulation? _regions;
     private readonly Dictionary<string, WorldNodeSession> _worldLeases = new();
     private readonly HashSet<int> _disconnected = new();
+    private readonly Dictionary<int, (int Stage, long Deadline)> _loading = new();
     private readonly NetDataWriter _regionWriter = new();
     private bool WaitingForDurability => _checkpoint is not null || _regions?.HasPendingJourney == true;
     private ServerWorld WorldFor(int connection) => _regions?.World(connection) ?? _world;
@@ -82,10 +83,17 @@ public sealed partial class GameServerService
             var routes = _regionalWorlds!.Routes.Where(r => r.Source == owner.Region).ToArray();
             var route = routes[0];
             peer.Send(NetworkProtocol.Write(new RegionEnter(owner.Epoch, owner.Region, route.Departure, route.Radius, world.GeometryHash,
-                routes.Length == 1 ? null : routes.Skip(1).Select(g => new RegionGate(g.Departure, g.Radius)).ToArray())), DeliveryMethod.ReliableOrdered);
+                routes.Length == 1 ? null : routes.Skip(1).Select(g => new RegionGate(g.Departure, g.Radius, g.DepartureHeight)).ToArray(), world.Navigation.Surface is not null, route.DepartureHeight)), DeliveryMethod.ReliableOrdered);
         }
+        if (_regions is not null) { world.SetLoaded(peer.Id, false); _loading[peer.Id] = (0, Environment.TickCount64 + 30_000); }
         SendGame(peer, NetworkProtocol.Write(new DevelopmentTools(CanDevelopmentRevive(peer))), DeliveryMethod.ReliableOrdered);
         SendGame(peer, NetworkProtocol.Write(world.Navigation.ToMessage()), DeliveryMethod.ReliableOrdered);
+        if (world.Navigation.Surface is { } surface)
+        {
+            var bytes = surface.Map.Encode();
+            for (var offset = 0; offset < bytes.Length; offset += NetworkProtocol.SurfaceChunkBytes)
+                SendGame(peer, NetworkProtocol.Write(new SurfaceChunk(surface.Map.Hash, bytes.Length, offset, bytes.AsSpan(offset, Math.Min(NetworkProtocol.SurfaceChunkBytes, bytes.Length-offset)).ToArray())), DeliveryMethod.ReliableOrdered);
+        }
         if (world.HasPvp) SendGame(peer, NetworkProtocol.Write(world.PublicPvpZone()), DeliveryMethod.ReliableOrdered);
         if (world.HasStarterZone) SendGame(peer, NetworkProtocol.Write(world.PublicStarterZone()), DeliveryMethod.ReliableOrdered);
         if (world.HasCrafting)
@@ -93,7 +101,7 @@ public sealed partial class GameServerService
         var view = new InterestView { BridgeNavigationSent = world.HasWorldNode && (world.PublicWorldNode().Consequences & 1) != 0 };
         _views[peer.Id] = view;
         socialSent.Remove(peer.Id); socialPresenceSent.Remove(peer.Id);
-        SendInterest(peer, view);
+        if (_regions is null) SendInterest(peer, view);
     }
 
     private bool BeginTravel()
@@ -125,6 +133,7 @@ public sealed partial class GameServerService
         // Transport callbacks never mutate actors while a durable snapshot/transfer is in flight.
         foreach (var connection in _disconnected)
         {
+            _loading.Remove(connection);
             if (_sessions.ContainsKey(connection))
             {
                 WorldFor(connection).ScheduleSocialOffline(connection);

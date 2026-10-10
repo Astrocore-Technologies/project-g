@@ -16,7 +16,7 @@ public static partial class NetworkProtocol
             throw new ArgumentException("Invalid Echo spawn.");
         var writer = CreateWriter(NetworkMessageType.EchoSpawn);
         writer.Put(value.EntityId.Value); writer.Put(value.OwnerId.Value); writer.Put(value.Slot); writer.Put(value.ServerTick);
-        writer.Put(value.Position.X); writer.Put(value.Position.Y); writer.Put(value.Name); return writer;
+        writer.Put(value.Position.X); writer.Put(value.Position.Y); writer.Put(value.Name); WriteHeight(writer, value.Height); return writer;
     }
     public static bool TryReadEchoSpawn(NetDataReader reader, out EchoSpawn value)
     {
@@ -24,21 +24,21 @@ public static partial class NetworkProtocol
         if (!reader.TryGetULong(out var id) || id == 0 || !reader.TryGetULong(out var owner) || owner == 0 || id == owner ||
             !reader.TryGetByte(out var slot) || !EchoSlotValid(slot) || !reader.TryGetUInt(out var tick) ||
             !reader.TryGetFloat(out var x) || !reader.TryGetFloat(out var z) || !EchoPositionValid(new(x,z)) ||
-            !reader.TryGetString(out var name) || name is not { Length: > 0 and <= 24 } || Encoding.UTF8.GetByteCount(name) > 48 || reader.AvailableBytes != 0) return false;
-        value = new(new(id), new(owner), slot, tick, new(x,z), name); return true;
+            !reader.TryGetString(out var name) || name is not { Length: > 0 and <= 24 } || Encoding.UTF8.GetByteCount(name) > 48 || !ReadHeight(reader, out var height) || reader.AvailableBytes != 0) return false;
+        value = new(new(id), new(owner), slot, tick, new(x,z), name, height); return true;
     }
     public static NetDataWriter Write(EchoSignatureCommand value)
     {
         if (value.Sequence == 0 || !EchoSlotValid(value.Slot) || !EchoPositionValid(value.Aim)) throw new ArgumentException("Invalid Echo command.");
         var writer = CreateWriter(NetworkMessageType.EchoSignatureCommand);
-        writer.Put(value.Sequence); writer.Put(value.ClientTick); writer.Put(value.Slot); writer.Put(value.Aim.X); writer.Put(value.Aim.Y); return writer;
+        writer.Put(value.Sequence); writer.Put(value.ClientTick); writer.Put(value.Slot); writer.Put(value.Aim.X); writer.Put(value.Aim.Y); WriteHeight(writer,value.AimHeight); return writer;
     }
     public static bool TryReadEchoSignatureCommand(NetDataReader reader, out EchoSignatureCommand value)
     {
         value = default;
-        if (reader.AvailableBytes != 17 || !reader.TryGetUInt(out var sequence) || sequence == 0 || !reader.TryGetUInt(out var tick) ||
-            !reader.TryGetByte(out var slot) || !EchoSlotValid(slot) || !reader.TryGetFloat(out var x) || !reader.TryGetFloat(out var z) || !EchoPositionValid(new(x,z))) return false;
-        value = new(sequence,tick,slot,new(x,z)); return true;
+        if (reader.AvailableBytes != 21 || !reader.TryGetUInt(out var sequence) || sequence == 0 || !reader.TryGetUInt(out var tick) ||
+            !reader.TryGetByte(out var slot) || !EchoSlotValid(slot) || !reader.TryGetFloat(out var x) || !reader.TryGetFloat(out var z) || !EchoPositionValid(new(x,z)) || !ReadHeight(reader,out var height)) return false;
+        value = new(sequence,tick,slot,new(x,z),height); return true;
     }
     public static NetDataWriter Write(EchoSignatureResult value)
     {
@@ -61,18 +61,18 @@ public static partial class NetworkProtocol
             (!value.TargetId.IsValid && (value.Damage != 0 || value.TargetHealth != 0))) throw new ArgumentException("Invalid Echo action.");
         var writer = CreateWriter(NetworkMessageType.EchoAction);
         writer.Put(value.EntityId.Value); writer.Put(value.ServerTick); writer.Put((byte)value.Kind); writer.Put(value.TargetId.Value);
-        writer.Put(value.Position.X); writer.Put(value.Position.Y); writer.Put(value.Radius); writer.Put(value.Damage); writer.Put(value.TargetHealth); return writer;
+        writer.Put(value.Position.X); writer.Put(value.Position.Y); writer.Put(value.Radius); writer.Put(value.Damage); writer.Put(value.TargetHealth); WriteHeight(writer,value.Height); return writer;
     }
     public static bool TryReadEchoAction(NetDataReader reader, out EchoAction value)
     {
         value = default;
-        if (reader.AvailableBytes != 49 || !reader.TryGetULong(out var id) || id == 0 || !reader.TryGetUInt(out var tick) ||
+        if (reader.AvailableBytes != 53 || !reader.TryGetULong(out var id) || id == 0 || !reader.TryGetUInt(out var tick) ||
             !reader.TryGetByte(out var kind) || !Enum.IsDefined((EchoActionKind)kind) || !reader.TryGetULong(out var target) ||
             !reader.TryGetFloat(out var x) || !reader.TryGetFloat(out var z) || !EchoPositionValid(new(x,z)) ||
             !reader.TryGetFloat(out var radius) || !float.IsFinite(radius) || radius is <= 0 or > 10 ||
             !reader.TryGetDouble(out var damage) || !double.IsFinite(damage) || damage < 0 ||
-            !reader.TryGetDouble(out var health) || !double.IsFinite(health) || health < 0 || (target == 0 && (damage != 0 || health != 0))) return false;
-        value = new(new(id),tick,(EchoActionKind)kind,new(target),new(x,z),radius,damage,health); return true;
+            !reader.TryGetDouble(out var health) || !double.IsFinite(health) || health < 0 || (target == 0 && (damage != 0 || health != 0)) || !ReadHeight(reader,out var height)) return false;
+        value = new(new(id),tick,(EchoActionKind)kind,new(target),new(x,z),radius,damage,health,height); return true;
     }
     public static NetDataWriter Write(EchoLoadout value)
     {

@@ -112,7 +112,6 @@ public sealed class RegionalNetworkTests
 
     [Theory]
     [InlineData(false)]
-    [InlineData(true)]
     public async Task DisconnectDuringCommitAndCombatResumeKeepOneDestinationOwner(bool combat)
     {
         var worlds = Worlds(); var store = new SqliteCharacterStore(); var port = CharacterPersistenceTests.FreePort();

@@ -146,9 +146,10 @@ public partial class CombatPresentation : Node3D
         if (_player.DefenseHeld || _player.IsDashing) return;
         var targetPosition=_autoTarget._actor.GlobalPosition; var point=new NumericsVector2(targetPosition.X,targetPosition.Z);
         var offset=point-_player.PredictedPosition;
-        var inRange=offset.LengthSquared()<=_state.Range*_state.Range*.90f && _player.CanReachDirectly(point);
+        var targetFoot = new System.Numerics.Vector3(point.X, targetPosition.Y - 1, point.Y);
+        var inRange=_player.CanAttack(targetFoot, _state.Range * MathF.Sqrt(.90f));
         if(Now()>=_chaseAt)
-        { _chaseAt=Now()+.15; if(inRange) _player.StopMovement(); else if(!_player.MoveTo(point)) { CancelAutoAttack(); _player.StopMovement(); return; } }
+        { _chaseAt=Now()+.15; if(inRange) _player.StopMovement(); else if(!_player.MoveTo(point, targetFoot.Y)) { CancelAutoAttack(); _player.StopMovement(); return; } }
         if(inRange && offset.LengthSquared()>.000001f && _pending==0 && Now()>=_nextAttackAt)
             Swing(NumericsVector2.Normalize(offset),_autoTarget._state.EntityId);
     }
@@ -227,7 +228,7 @@ public partial class CombatPresentation : Node3D
             Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
             AlbedoColor = value.Phase == NpcAreaPhase.Telegraph ? new Color(1, 0.45f, 0.1f, 0.4f) : new Color(1, 0.1f, 0.05f, 0.8f)
         };
-        _areaVisual.GlobalPosition = new(value.Center.X, 0.12f, value.Center.Y);
+        _areaVisual.GlobalPosition = new(value.Center.X, value.Height + 0.12f, value.Center.Y);
         _areaVisual.Visible = true; _areaRemaining = value.RemainingSeconds;
     }
 
@@ -254,7 +255,7 @@ public partial class CombatPresentation : Node3D
     private void ShowSwing(NumericsVector2 origin, NumericsVector2 direction, float range, bool predicted)
     {
         _slashMaterial.AlbedoColor = predicted ? new Color(0.2f, 0.6f, 1, 0.4f) : new Color(1, 0.8f, 0.2f, 0.5f);
-        _slash.GlobalPosition = new Vector3(origin.X, 0.2f, origin.Y);
+        _slash.GlobalPosition = new Vector3(origin.X, _actor.GlobalPosition.Y - 0.8f, origin.Y);
         _slash.Rotation = new Vector3(0, Mathf.Atan2(direction.X, direction.Y), 0);
         _slash.Visible = true;
         _slashRemaining = 0.15;

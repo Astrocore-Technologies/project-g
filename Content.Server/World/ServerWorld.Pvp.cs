@@ -117,7 +117,7 @@ public sealed partial class ServerWorld
     }
     private void RespawnPvp(ServerPlayer p)
     {
-        var id=p.EntityId;var spawn=Rules.Respawn;GroundItems!.CancelChannel(id,Tick);p.Motion.Reset(spawn,spawn);_movingPlayers.Remove(p.ConnectionId);_spatial.Move(id,spawn);Combat!.Move(id,spawn);Combat.Respawn(id);Abilities!.Respawn(id);Echoes?.Respawn(id);
+        var id=p.EntityId;var spawn=Rules.Respawn;GroundItems!.CancelChannel(id,Tick);p.Motion.Reset(spawn,spawn,0,0);_movingPlayers.Remove(p.ConnectionId);_spatial.Move(id,spawn);Combat!.Move(id,spawn,p.Height);Combat.Respawn(id);Abilities!.Respawn(id);Echoes?.Respawn(id);
         _pvp[id]=_pvp[id] with {Dead=false,CombatUntil=0,ProtectionUntil=PvpClock()+Rules.ProtectionSeconds*1000L};DirtyPvp(id);
         Audit(_persistentActors.GetValueOrDefault(p.ConnectionId,"runtime"),"Respawn",_pvp[id].DeathId.ToString());
     }
@@ -138,7 +138,7 @@ public sealed partial class ServerWorld
                 if(candidates.Length>0)
                 {
                     var roll=DeathRoll(candidates.Length);if(roll<0||roll>=candidates.Length)throw new InvalidOperationException("Invalid death RNG.");var selected=candidates[roll];
-                    var loot=new SavedDeathLoot(selected with {EquippedSlot=EquipmentSlot.None},p.Position.X,p.Position.Y,now+Rules.LootSeconds*1000L);
+                    var loot=new SavedDeathLoot(selected with {EquippedSlot=EquipmentSlot.None},p.Position.X,p.Position.Y,now+Rules.LootSeconds*1000L, Navigation.SurfaceHash == 0 ? null : new(1,p.Height,Navigation.SurfaceHash));
                     var next=_nodeState with {DeathLoot=[.._nodeState.DeathLoot??[],loot]};
                     if((_nodeState.DeathLoot?.Length??0)>=8||!GroundItems!.HasDropCapacity||System.Text.Encoding.UTF8.GetByteCount(next.Serialize())>8192)skipped=true;
                     else{var removed=Inventory.RemoveDeathItem(id,selected.InstanceId);if(removed!=loot.Item)throw new InvalidOperationException("Death transfer mismatch.");_nodeState=next;GroundItems!.AddDeathLoot(loot);dropped=selected.InstanceId;}

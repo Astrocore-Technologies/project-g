@@ -3,7 +3,8 @@
     "Id": "prototype", "Destination": "outskirts",
     "ExitX": 37, "ExitZ": -10, "ArrivalX": -12, "ArrivalZ": 10, "Radius": 0.65,
     "AdditionalRoutes": [
-      { "Destination": "river_city", "ExitX": -12, "ExitZ": 30, "ArrivalX": 0, "ArrivalZ": 0, "Radius": 1.5, "ArrivalAnchor": "SouthArrival" }
+      { "Destination": "river_city", "ExitX": -12, "ExitZ": 30, "ArrivalX": 0, "ArrivalZ": 0, "Radius": 1.5, "ArrivalAnchor": "SouthArrival" },
+      {"Destination": "terrain_test", "ExitX": -20, "ExitZ": 18, "ArrivalX": -17, "ArrivalZ": 14, "Radius": 1}
     ],
     "Movement": { "MinX": -40, "MaxX": 40, "MinZ": -32, "MaxZ": 32, "SpawnX": -12, "SpawnZ": 18, "WorldLayoutVersion": 1 },
     "Navigation": { "GeometryFile": "Data/Regions/river-landing.json" },
@@ -60,6 +61,165 @@
       "RegionName": "Речная пристань", "TownName": "Рыночная площадь", "GuideName": "Городской проводник",
       "TownX": 0, "TownZ": 0, "GuideX": 0, "GuideZ": 0, "RevealRadiusCells": 4,
       "Landmarks": []
+    }
+  },
+  {
+    "Id": "terrain_test",
+    "Destination": "prototype",
+    "ExitX": -19,
+    "ExitZ": 14,
+    "ArrivalX": -17,
+    "ArrivalZ": 18,
+    "Radius": 0.65,
+    "Movement": {
+      "MinX": -20,
+      "MaxX": 20,
+      "MinZ": -16,
+      "MaxZ": 16,
+      "SpawnX": -17,
+      "SpawnZ": 14,
+      "WorldLayoutVersion": 1
+    },
+    "Navigation": {
+      "SurfaceFile": "Data/Regions/surface-package.json",
+      "SurfaceRegion": "terrain_test"
+    },
+    "Combat": {
+      "TargetX": 6,
+      "TargetZ": -6,
+      "TargetHeight": 4
+    },
+    "Npc": {
+      "Enabled": true,
+      "SpawnId": "npc",
+      "RespawnSeconds": 30,
+      "DefinitionId": "test_creature",
+      "X": -10,
+      "Z": -11,
+      "Height": 4
+    },
+    "Boss": {
+      "Actor": {
+        "Enabled": false
+      }
+    },
+    "Crafting": {
+      "Enabled": false
+    },
+    "WorldNode": {
+      "Key": "terrain_test",
+      "Interactive": false,
+      "OpeningCells": [],
+      "X": -17,
+      "Z": 14
+    },
+    "StarterZone": {
+      "RegionName": "Рельеф — тест",
+      "TownName": "Вход",
+      "GuideName": "Тестовый проводник",
+      "TownX": -17,
+      "TownZ": 14,
+      "GuideX": -15,
+      "GuideZ": 14,
+      "RevealRadiusCells": 2,
+      "Landmarks": [
+        {
+          "Id": 1,
+          "Name": "Западный проход",
+          "X": -10,
+          "Z": 2
+        },
+        {
+          "Id": 2,
+          "Name": "Восточная площадка",
+          "X": 17,
+          "Z": 12
+        }
+      ]
+    },
+    "AdditionalRoutes": [
+      {
+        "Destination": "dungeon_test",
+        "ExitX": 16,
+        "ExitZ": 14,
+        "ArrivalX": -15,
+        "ArrivalZ": 14,
+        "Radius": 1
+      }
+    ]
+  },
+  {
+    "Id": "dungeon_test",
+    "Destination": "terrain_test",
+    "ExitX": -17,
+    "ExitZ": 14,
+    "ArrivalX": 13,
+    "ArrivalZ": 14,
+    "Radius": 0.65,
+    "Movement": {
+      "MinX": -20,
+      "MaxX": 20,
+      "MinZ": -16,
+      "MaxZ": 16,
+      "SpawnX": -15,
+      "SpawnZ": 14,
+      "WorldLayoutVersion": 1
+    },
+    "Navigation": {
+      "SurfaceFile": "Data/Regions/surface-package.json",
+      "SurfaceRegion": "dungeon_test"
+    },
+    "Combat": {
+      "TargetX": -10,
+      "TargetZ": 10
+    },
+    "Npc": {
+      "Enabled": true,
+      "SpawnId": "npc",
+      "RespawnSeconds": 30,
+      "DefinitionId": "test_creature",
+      "X": 7,
+      "Z": -6,
+      "Height": 4
+    },
+    "Boss": {
+      "Actor": {
+        "Enabled": false
+      }
+    },
+    "Crafting": {
+      "Enabled": false
+    },
+    "WorldNode": {
+      "Key": "dungeon_test",
+      "Interactive": false,
+      "OpeningCells": [],
+      "X": -17,
+      "Z": 14
+    },
+    "StarterZone": {
+      "RegionName": "Общее подземелье — тест",
+      "TownName": "Вход",
+      "GuideName": "Тестовый проводник",
+      "TownX": -15,
+      "TownZ": 14,
+      "GuideX": -13,
+      "GuideZ": 14,
+      "RevealRadiusCells": 2,
+      "Landmarks": [
+        {
+          "Id": 1,
+          "Name": "Западный проход",
+          "X": -10,
+          "Z": 2
+        },
+        {
+          "Id": 2,
+          "Name": "Восточная площадка",
+          "X": 17,
+          "Z": 12
+        }
+      ]
     }
   }
 ]

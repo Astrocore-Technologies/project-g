@@ -14,6 +14,8 @@ if (-not $GodotPath -or -not (Test-Path -LiteralPath $GodotPath)) { throw 'Set -
 $exportArtifacts = Join-Path $exportRepo '.artifacts/region-export'
 $exportBuild = Join-Path $exportArtifacts 'build'
 $exportCandidate = Join-Path $exportArtifacts (([guid]::NewGuid().ToString('N')) + '.candidate.json')
+$surfaceCandidate = $exportCandidate + ".surfaces.json"
+$surfacePublished = Join-Path $exportRepo "Content.Server/Data/Regions/surface-package.json"
 $exportPublished = Join-Path $exportRepo 'Content.Server/Data/Regions/region-package.json'
 $exportServer = Join-Path $exportBuild 'bin/Content.Server/debug/Content.Server.dll'
 [IO.Directory]::CreateDirectory($exportArtifacts) | Out-Null
@@ -30,12 +32,16 @@ try {
     if (-not (Test-Path -LiteralPath $exportServer)) { throw 'Run without -NoBuild first.' }
     & $GodotPath --headless --path (Join-Path $exportRepo 'Content.Client') --log-file (Join-Path $exportArtifacts 'godot.log') res://Tools/Regions/ExportRegions.tscn -- "--output=$exportCandidate"
     if ($LASTEXITCODE -ne 0) { throw 'Scene export failed; published package unchanged.' }
-    & dotnet $exportServer --validate-content "--RegionExports:PackagePath=$exportCandidate"
+    & $GodotPath --headless --path (Join-Path $exportRepo "Content.Client") --log-file (Join-Path $exportArtifacts "surfaces.log") res://Tools/Regions/ExportSurfaces.tscn -- "--output=$surfaceCandidate"
+    if ($LASTEXITCODE -ne 0) { throw "Surface export failed; published geometry unchanged." }
+    & dotnet $exportServer --validate-content "--RegionExports:PackagePath=$exportCandidate" "--RegionExports:SurfacePackagePath=$surfaceCandidate"
     if ($LASTEXITCODE -ne 0) { throw 'Server graph/content validation failed; published package unchanged.' }
     $exportBytes = [IO.File]::ReadAllBytes($exportCandidate)
     if ($CheckOnly) {
         if (-not (Test-Path -LiteralPath $exportPublished) -or
-            [Convert]::ToBase64String($exportBytes) -cne [Convert]::ToBase64String([IO.File]::ReadAllBytes($exportPublished))) {
+            [Convert]::ToBase64String($exportBytes) -cne [Convert]::ToBase64String([IO.File]::ReadAllBytes($exportPublished)) -or
+            -not (Test-Path -LiteralPath $surfacePublished) -or
+            [Convert]::ToBase64String([IO.File]::ReadAllBytes($surfaceCandidate)) -cne [Convert]::ToBase64String([IO.File]::ReadAllBytes($surfacePublished))) {
             throw 'Published export is stale. Run tools/Export-Regions.ps1.'
         }
         Write-Host 'REGION_EXPORT_CURRENT'
@@ -63,10 +69,21 @@ try {
             if (Test-Path -LiteralPath $exportTemporary) { Remove-Item -LiteralPath $exportTemporary }
             if (Test-Path -LiteralPath $exportBackup) { Remove-Item -LiteralPath $exportBackup }
         }
+        $surfaceTemporary = $surfacePublished + "." + [guid]::NewGuid().ToString("N") + ".tmp"
+        [IO.File]::Copy($surfaceCandidate, $surfaceTemporary, $false)
+        $surfaceBackup = $surfaceTemporary + '.previous'
+        try {
+            if (Test-Path -LiteralPath $surfacePublished) { [IO.File]::Replace($surfaceTemporary, $surfacePublished, $surfaceBackup) } else { [IO.File]::Move($surfaceTemporary, $surfacePublished) }
+        }
+        finally {
+            if (Test-Path -LiteralPath $surfaceTemporary) { Remove-Item -LiteralPath $surfaceTemporary }
+            if (Test-Path -LiteralPath $surfaceBackup) { Remove-Item -LiteralPath $surfaceBackup }
+        }
         Write-Host 'REGION_EXPORT_PUBLISHED'
     }
 }
 finally {
+    if (Test-Path -LiteralPath $surfaceCandidate) { Remove-Item -LiteralPath $surfaceCandidate }
     if (Test-Path -LiteralPath $exportCandidate) { Remove-Item -LiteralPath $exportCandidate }
     if (Test-Path -LiteralPath ($exportCandidate + '.pck')) { Remove-Item -LiteralPath ($exportCandidate + '.pck') }
     if ($exportLock) { $exportLock.Dispose() }

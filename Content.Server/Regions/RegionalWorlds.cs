@@ -15,7 +15,7 @@ namespace Content.Server.Regions;
 /// <summary>Validated server-only region composition; persistence is opened by the host.</summary>
 public sealed class RegionalWorlds
 {
-    public const int MaxRegions = 3;
+    public const int MaxRegions = 5;
     public IReadOnlyList<ServerWorld> Worlds { get; }
     public IReadOnlyList<RegionBoundary> Routes { get; }
     public ServerWorld Primary => Worlds[0];
@@ -42,7 +42,7 @@ public sealed class RegionalWorlds
                 var target = Worlds.SingleOrDefault(w => w.RegionId == route.Destination) ?? throw new InvalidDataException("Unknown gate destination.");
                 route.Validate(world, target);
                 if (!Routes.Any(r => r.Source == target.RegionId && r.Destination == world.RegionId) ||
-                    Routes.Any(r => r.Source == target.RegionId && r.Contains(route.Arrival)))
+                    Routes.Any(r => r.Source == target.RegionId && r.Contains(route.Arrival, route.ArrivalHeight)))
                     throw new InvalidDataException("Missing return route or arrival overlaps a gate.");
             }
             for (var i = 0; i < gates.Length; i++)
@@ -73,6 +73,15 @@ public sealed class RegionalWorlds
             foreach (var definition in definitions)
                 if (definition.Navigation?.GeometryFile is { } geometryFile)
                     definition.Navigation.ExportedGeometry = exports.Require(definition.Id, geometryFile, definition.PlacementsFile).Geometry;
+        }
+        if (definitions.Any(d => d.Navigation?.SurfaceFile is not null))
+        {
+            var repository = RegionExportCatalog.FindSourceRoot(AppContext.BaseDirectory);
+            var surfacePath = configuration["RegionExports:SurfacePackagePath"] ?? Path.Combine(AppContext.BaseDirectory, SurfaceCatalog.PackagePath);
+            var surfaces = SurfaceCatalog.Load(surfacePath, configuration.GetValue("RegionExports:VerifySources", true) ? repository : null);
+            var expected = definitions.Where(d => d.Navigation?.SurfaceFile is not null).Select(d => d.Id).Order();
+            if (!expected.SequenceEqual(surfaces.Keys.Order())) throw new InvalidDataException("Surface export and region graph differ.");
+            foreach (var definition in definitions) if (definition.Navigation?.SurfaceFile is not null) definition.Navigation.ExportedSurface = surfaces[definition.Id];
         }
         var placements = new Dictionary<string, Dictionary<string,float[]>>(StringComparer.Ordinal);
         foreach (var definition in definitions)
@@ -134,12 +143,12 @@ public sealed class RegionalWorlds
         var routes = new List<RegionBoundary>();
         foreach (var d in definitions)
         {
-            routes.Add(Boundary(d.Id,d.Destination,d.ExitX,d.ExitZ,d.ArrivalX,d.ArrivalZ,d.Radius,d.ExitAnchor,d.ArrivalAnchor));
-            foreach (var r in d.AdditionalRoutes ?? []) routes.Add(Boundary(d.Id,r.Destination,r.ExitX,r.ExitZ,r.ArrivalX,r.ArrivalZ,r.Radius,r.ExitAnchor,r.ArrivalAnchor));
+            routes.Add(Boundary(d.Id,d.Destination,d.ExitX,d.ExitZ,d.ArrivalX,d.ArrivalZ,d.Radius,d.ExitAnchor,d.ArrivalAnchor,d.ExitHeight,d.ArrivalHeight));
+            foreach (var r in d.AdditionalRoutes ?? []) routes.Add(Boundary(d.Id,r.Destination,r.ExitX,r.ExitZ,r.ArrivalX,r.ArrivalZ,r.Radius,r.ExitAnchor,r.ArrivalAnchor,r.ExitHeight,r.ArrivalHeight));
         }
         return new(worlds,routes,configuration["Server:StartingRegion"]);
 
-        RegionBoundary Boundary(string source,string destination,float x,float z,float ax,float az,float radius,string? exit,string? arrival)
+        RegionBoundary Boundary(string source,string destination,float x,float z,float ax,float az,float radius,string? exit,string? arrival,float exitHeight,float arrivalHeight)
         {
             // Named legacy bindings resolve to stable UUIDs, including marker type/radius checks.
             if (exports is not null)
@@ -147,7 +156,7 @@ public sealed class RegionalWorlds
                 if (exit is not null) RegionExportCatalog.RequireRouteAnchor(exports.Package.Regions.Single(r => r.Id == source), exit, "gate", radius);
                 if (arrival is not null) RegionExportCatalog.RequireRouteAnchor(exports.Package.Regions.Single(r => r.Id == destination), arrival, "entry");
             }
-            return new(source,destination,exit is null ? new(x,z) : Point(source,exit),arrival is null ? new(ax,az) : Point(destination,arrival),radius);
+            return new(source,destination,exit is null ? new(x,z) : Point(source,exit),arrival is null ? new(ax,az) : Point(destination,arrival),radius,exitHeight,arrivalHeight);
         }
     }
 
@@ -160,6 +169,8 @@ public sealed class RegionalWorlds
         public required float ArrivalX { get; init; }
         public required float ArrivalZ { get; init; }
         public required float Radius { get; init; }
+        public float ExitHeight { get; init; }
+        public float ArrivalHeight { get; init; }
         public string? ExitAnchor { get; init; }
         public string? ArrivalAnchor { get; init; }
         public string? PlacementsFile { get; init; }
@@ -175,5 +186,5 @@ public sealed class RegionalWorlds
         public StarterZoneDefinition? StarterZone { get; init; }
     }
     private sealed record Route(string Destination,float ExitX,float ExitZ,float ArrivalX,float ArrivalZ,float Radius,
-        string? ExitAnchor=null,string? ArrivalAnchor=null);
+        string? ExitAnchor=null,string? ArrivalAnchor=null,float ExitHeight=0,float ArrivalHeight=0);
 }

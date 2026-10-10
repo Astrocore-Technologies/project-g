@@ -16,11 +16,13 @@ internal struct AbilityEffect
     public Vector2 Origin;
     public Vector2 Position;
     public Vector2 Direction;
+    public float OriginHeight, Height, DirectionY;
+    public readonly Vector3 Foot => new(Position.X, Height, Position.Y);
     public float Remaining;
     public float DistanceLeft;
     public float CompensationSeconds;
     public double FocusFactor;
 
     public readonly AbilityEffectState State(uint tick) => new(Id, ActorId, Sequence, tick, Profile.Id, Profile.Form,
-        Phase, Origin, Position, Direction, Profile.Form == AbilityForm.Melee ? Profile.Range : Profile.Radius, Profile.Speed, Math.Max(0, Remaining));
+        Phase, Origin, Position, Direction, Profile.Form == AbilityForm.Melee ? Profile.Range : Profile.Radius, Profile.Speed, Math.Max(0, Remaining), OriginHeight, Height, DirectionY);
 }

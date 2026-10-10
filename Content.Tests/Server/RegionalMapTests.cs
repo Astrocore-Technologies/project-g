@@ -44,6 +44,6 @@ public sealed class RegionalMapTests
         var two = state with { OtherExplorations = [map with { RegionKey = "a" }, map with { RegionKey = "b" }] };
         Assert.Equal(2, SavedProgression.Deserialize(two.Serialize()).OtherExplorations!.Length);
         Assert.Throws<InvalidDataException>(() => (state with { OtherExplorations = [map with { RegionKey = "a" }, map with { RegionKey = "a" }] }).Validate());
-        Assert.Throws<InvalidDataException>(() => (state with { OtherExplorations = [map with { RegionKey = "a" }, map with { RegionKey = "b" }, map with { RegionKey = "c" }] }).Validate());
+        Assert.Throws<InvalidDataException>(() => (state with { OtherExplorations = [map with { RegionKey = "a" }, map with { RegionKey = "b" }, map with { RegionKey = "c" }, map with { RegionKey = "d" }, map with { RegionKey = "e" }] }).Validate());
     }
 }

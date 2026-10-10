@@ -18,7 +18,13 @@ public sealed class StarterZoneTests
         npc:Options.Create(new NpcOptions { Enabled=node,X=13,Z=13 }),worldStory:Options.Create(new WorldStoryOptions { Enabled=node }),starterZone:Options.Create(new StarterZoneOptions { Enabled=true }));
     internal static int Count(ExplorationState state) => state.Cells.Sum(b=>System.Numerics.BitOperations.PopCount((uint)b));
     internal static void Walk(ServerWorld w,int connection,Vector2 target,uint seq=1)
-    { Assert.True(w.TryApplyMove(connection,new(seq,0,target))); ProfessionTests.Step(w,140); }
+    {
+        Assert.True(w.TryApplyMove(connection,new(seq,0,target)));
+        var player=w.Players.Single(p=>p.ConnectionId==connection);
+        // Discovery assertions require a completed route, including the detour around this fixture's wall.
+        for(var tick=0;tick<600 && player.Motion.IsMoving;tick++)w.Simulate(.05f);
+        Assert.InRange(Vector2.Distance(player.Position,target),0,.11f);
+    }
     [Fact] public void InitialRevealIsFixedTickBoundedAndIdleHasNoMovementOrRewards()
     {
         var w=World(); var p=w.AddPlayer(42,new(1),w.CreateInitialCharacter());

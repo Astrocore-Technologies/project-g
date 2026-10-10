@@ -42,7 +42,8 @@ public sealed class NpcSimulation
             throw new ArgumentException("Invalid bounded NPC settings.");
         Id = id; _combat = combat; _spatial = spatial; _grid = grid; _options = options;
         Home = combat.Get(id).Position;
-        Motion = new NavigationMover(grid, movement with { Speed = options.Speed }, new NavigationPathfinder(grid), Home);
+        Motion = new NavigationMover(grid, movement with { Speed = options.Speed }, new NavigationPathfinder(grid), Home, combat.Get(id).Height);
+        HomeHeight = Motion.Height; _combat.Move(Id, Motion.Position, Motion.Height);
         _area = area; _boss = boss;
         if (boss is not null)
         {
@@ -68,6 +69,7 @@ public sealed class NpcSimulation
     public NetworkEntityId Id { get; private set; }
     internal NpcOptions Options => _options;
     public Vector2 Home { get; }
+    public float HomeHeight { get; private set; }
     public NavigationMover Motion { get; }
     public NetworkEntityId TargetId { get; private set; }
     public NpcBehavior Behavior { get; private set; }
@@ -91,7 +93,7 @@ public sealed class NpcSimulation
         }
         Motion.Step(delta * _combat.OrdinaryMovement(Id));
         _spatial.Move(Id, Motion.Position);
-        _combat.Move(Id, Motion.Position);
+        _combat.Move(Id, Motion.Position, Motion.Height);
     }
 
     public void Resolve(float delta, uint tick)
@@ -117,7 +119,7 @@ public sealed class NpcSimulation
         if (_castingArea)
         {
             var zone = Area!.Value;
-            if (_combat.ExecuteNpcArea(Id, _sequence, zone.Center, _area!, tick))
+            if (_combat.ExecuteNpcArea(Id, _sequence, zone.Center, _area!, tick, zone.Height))
             {
                 Area = zone with { Phase = NpcAreaPhase.Impact, RemainingSeconds = _boss!.ImpactSeconds, ServerTick = tick };
                 AreaVersion++;
@@ -134,7 +136,7 @@ public sealed class NpcSimulation
         if (Behavior == NpcBehavior.Returning)
         {
             if (Vector2.DistanceSquared(Motion.Position, Home) < 0.001f) Behavior = NpcBehavior.Idle;
-            else { Motion.TrySetTarget(Home); return; }
+            else { Motion.TrySetTarget(Home, HomeHeight); return; }
         }
         if (TargetId.IsValid && !ValidTarget(out _)) { Return(tick); return; }
         if (!TargetId.IsValid)
@@ -143,9 +145,9 @@ public sealed class NpcSimulation
             var nearest = float.MaxValue;
             foreach (var id in _candidates)
             {
-                if (!_combat.TryGet(id, out var candidate) || candidate.Kind != CombatEntityKind.Player || candidate.Health <= 0 ||
-                    !_grid.CanTraverse(Motion.Position, candidate.Position)) continue;
-                var distance = Vector2.DistanceSquared(Motion.Position, candidate.Position);
+                if (!_combat.TryGet(id, out var candidate) || candidate.Kind != CombatEntityKind.Player || candidate.Health <= 0 || !candidate.Active ||
+                    !_grid.ClearAttack(Motion.Foot, candidate.Foot)) continue;
+                var distance = Vector3.DistanceSquared(Motion.Foot, candidate.Foot);
                 if (distance > EffectiveAggroRadius * EffectiveAggroRadius) continue;
                 if (distance < nearest || (distance == nearest && id.Value < TargetId.Value)) { nearest = distance; TargetId = id; }
             }
@@ -155,8 +157,8 @@ public sealed class NpcSimulation
         var actor = _combat.Get(Id);
         var areaAttack = _area is not null && _nextArea;
         var attackRange = areaAttack ? _area!.Range : actor.Weapon.Range;
-        if (Vector2.DistanceSquared(Motion.Position, target.Position) <= attackRange * attackRange &&
-            _grid.CanTraverse(Motion.Position, target.Position))
+        if (Vector3.DistanceSquared(Motion.Foot, target.Foot) <= attackRange * attackRange &&
+            _grid.ClearAttack(Motion.Foot, target.Foot))
         {
             Motion.Reset(Motion.Position, Motion.Position);
             if (actor.ReadyAt > 0 && actor.ReadyAt > _time) return;
@@ -168,7 +170,7 @@ public sealed class NpcSimulation
             Behavior = NpcBehavior.Windup;
             if (areaAttack)
             {
-                Area = new(Id, _sequence, tick, target.Position, (float)_area!.Radius, _windupRemaining, NpcAreaPhase.Telegraph);
+                Area = new(Id, _sequence, tick, target.Position, (float)_area!.Radius, _windupRemaining, NpcAreaPhase.Telegraph,target.Height);
                 AreaVersion++;
             }
             else
@@ -182,7 +184,7 @@ public sealed class NpcSimulation
         else
         {
             Behavior = NpcBehavior.Chasing;
-            if (!Motion.TrySetTarget(target.Position)) Return(tick);
+            if (!Motion.TrySetTarget(target.Position, target.Height)) Return(tick);
         }
     }
 
@@ -194,14 +196,14 @@ public sealed class NpcSimulation
         Motion.Reset(Motion.Position, Motion.Position);
     }
 
-    private bool ValidTarget(out Combatant target) => _combat.TryGet(TargetId, out target!) && target.Health > 0 &&
+    private bool ValidTarget(out Combatant target) => _combat.TryGet(TargetId, out target!) && target.Health > 0 && target.Active &&
         target.Kind == CombatEntityKind.Player && Vector2.DistanceSquared(Home, target.Position) <= _options.LeashRadius * _options.LeashRadius &&
         Vector2.DistanceSquared(Home, Motion.Position) <= _options.LeashRadius * _options.LeashRadius;
 
     private void Return(uint tick)
     {
         EndTelegraph(tick); EndArea(tick); _castingArea = false; TargetId = default; Behavior = NpcBehavior.Returning;
-        Motion.Reset(Motion.Position, Home);
+        Motion.Reset(Motion.Position, Home, Motion.Height, HomeHeight);
     }
 
     internal void Defeat(uint tick)
@@ -217,7 +219,8 @@ public sealed class NpcSimulation
         Id = id;
         TargetId = default;
         Behavior = NpcBehavior.Idle;
-        Motion.Reset(Home, Home);
+        Motion.Reset(Home, Home, HomeHeight, HomeHeight);
+        _combat.Move(Id, Motion.Position, Motion.Height);
         _decisionRemaining = _windupRemaining = 0;
         _direction = default;
         _sequence = 0;

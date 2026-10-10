@@ -56,7 +56,7 @@ public sealed partial class RegionalSimulation
             throw new InvalidDataException("Regions need reciprocal routes.");
         // Arrivals cannot immediately trigger the reverse journey and create a transfer loop.
         foreach (var route in routes)
-            if (boundaries[route.Destination].Any(gate => gate.Contains(route.Arrival)))
+            if (boundaries[route.Destination].Any(gate => gate.Contains(route.Arrival, route.ArrivalHeight)))
                 throw new InvalidDataException("Arrival overlaps the reverse boundary.");
         foreach (var gates in boundaries.Values)
             for (var i = 0; i < gates.Length; i++)
@@ -131,7 +131,7 @@ public sealed partial class RegionalSimulation
         var world = World(connection); var actor = world.GetPlayer(connection);
         // Only this region's bounded gate list is visited, never the world's entities.
         foreach (var route in boundaries[world.RegionId])
-            if (route.Contains(actor.Position)) return route;
+            if (route.Contains(actor.Position, actor.Height)) return route;
         return null;
     }
 

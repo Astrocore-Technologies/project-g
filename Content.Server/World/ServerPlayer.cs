@@ -17,6 +17,9 @@ public sealed class ServerPlayer(
     public NetworkEntityId EntityId { get; } = entityId;
     public Vector2 Position => Motion.Position;
     public Vector2 Target => Motion.Target;
+    public float Height => Motion.Height;
+    public Vector3 Foot => Motion.Foot;
+    public bool Loaded { get; internal set; } = true;
     internal NavigationMover Motion { get; } = motion;
     internal uint? LastPathRequestTick { get; set; }
     public uint LastProcessedSequence { get; internal set; }

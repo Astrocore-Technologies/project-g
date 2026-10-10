@@ -20,7 +20,7 @@ public partial class GroundItemPresentation : Node3D
     {
         if (_items.ContainsKey(state.Handle)) return;
         if (_items.Count >= 256) { GD.PushError("Ground presentation budget exceeded."); return; }
-        var item = new Node3D { Position = new(state.Position.X, .2f, state.Position.Y) };
+        var item = new Node3D { Position = new(state.Position.X, state.Height + .2f, state.Position.Y) };
         AddChild(item); _items.Add(state.Handle, item);
         item.AddChild(new MeshInstance3D { Mesh = _mesh, MaterialOverride = _material });
         item.AddChild(new Label3D
@@ -40,16 +40,14 @@ public partial class GroundItemPresentation : Node3D
     public override void _UnhandledInput(InputEvent @event)
     {
         if (@event is not InputEventKey { Pressed: true, Echo: false, Keycode: Key.G } || _pending is not null) return;
-        var camera = GetViewport().GetCamera3D(); if (camera is null) return;
-        var mouse = GetViewport().GetMousePosition(); var origin = camera.ProjectRayOrigin(mouse); var direction = camera.ProjectRayNormal(mouse);
-        if (Mathf.Abs(direction.Y) < .0001f) return;
-        var distance = -origin.Y / direction.Y; if (distance <= 0) return;
-        var cursor = origin + direction * distance;
+        var player=GetParent().GetChildren().OfType<ProjectG.Gameplay.PlayerController>().FirstOrDefault(p=>p.GetNode<Camera3D>("CameraRig/Camera3D").Current);
+        if(player is null || !player.TryCursorSurface(out var point,out var height))return;
+        var cursor=new Vector3(point.X,height+.2f,point.Y);
         ulong selected = 0; var best = 1.5f * 1.5f;
         // Bounded scan only on a manual input event, not every frame. Server checks actual distance/LOS.
         foreach (var (handle, item) in _items)
         {
-            var offset = item.GlobalPosition - cursor; offset.Y = 0;
+            var offset = item.GlobalPosition - cursor;
             var squared = offset.LengthSquared();
             if (squared < best) { selected = handle; best = squared; }
         }

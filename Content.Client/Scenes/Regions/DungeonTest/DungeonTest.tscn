@@ -1,0 +1,87 @@
+[gd_scene load_steps=11 format=3]
+
+[sub_resource type="StandardMaterial3D" id="Stone"]
+albedo_color = Color(0.24,0.25,0.3,1)
+
+[sub_resource type="Environment" id="Env"]
+background_mode = 1
+background_color = Color(0.08,0.08,0.1,1)
+ambient_light_source = 3
+ambient_light_color = Color(0.65,0.7,0.85,1)
+ambient_light_energy = 0.8
+
+[sub_resource type="BoxMesh" id="FloorMesh"]
+material = SubResource("Stone")
+size = Vector3(40, 1, 32)
+
+[sub_resource type="BoxShape3D" id="FloorShape"]
+size = Vector3(40, 1, 32)
+
+[sub_resource type="BoxMesh" id="GalleryMesh"]
+material = SubResource("Stone")
+size = Vector3(12, 0.6, 8)
+
+[sub_resource type="BoxShape3D" id="GalleryShape"]
+size = Vector3(12, 0.6, 8)
+
+[sub_resource type="BoxMesh" id="RampMesh"]
+material = SubResource("Stone")
+size = Vector3(8.944272, 1, 6)
+
+[sub_resource type="BoxShape3D" id="RampShape"]
+size = Vector3(8.944272, 1, 6)
+
+[sub_resource type="BoxMesh" id="WestWallMesh"]
+material = SubResource("Stone")
+size = Vector3(1, 6, 30)
+
+[sub_resource type="BoxShape3D" id="WestWallShape"]
+size = Vector3(1, 6, 30)
+
+[node name="DungeonTest" type="Node3D"]
+
+[node name="Geometry" type="Node3D" parent="." groups=["surface_geometry"]]
+
+[node name="Floor" type="StaticBody3D" parent="Geometry"]
+position = Vector3(0, -0.5, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Floor"]
+mesh = SubResource("FloorMesh")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/Floor"]
+shape = SubResource("FloorShape")
+
+[node name="Gallery" type="StaticBody3D" parent="Geometry"]
+position = Vector3(7, 3.7, -6)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Gallery"]
+mesh = SubResource("GalleryMesh")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/Gallery"]
+shape = SubResource("GalleryShape")
+
+[node name="Ramp" type="StaticBody3D" parent="Geometry"]
+position = Vector3(-2.776393, 1.5527864, -6)
+rotation = Vector3(0, 0, 0.4636476)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Ramp"]
+mesh = SubResource("RampMesh")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/Ramp"]
+shape = SubResource("RampShape")
+
+[node name="WestWall" type="StaticBody3D" parent="Geometry"]
+position = Vector3(-19, 2, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/WestWall"]
+mesh = SubResource("WestWallMesh")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WestWall"]
+shape = SubResource("WestWallShape")
+
+[node name="Environment" type="WorldEnvironment" parent="."]
+environment = SubResource("Env")
+
+[node name="Light" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-60,-25,0)
+light_energy = 0.8

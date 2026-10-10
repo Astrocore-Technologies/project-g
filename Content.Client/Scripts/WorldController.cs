@@ -130,7 +130,9 @@ public partial class WorldController : Node3D
     }
     private void OnNavigationReceived(NavigationGrid grid)
     {
+        if (grid.Surface is not null) { LoadSurfaceRegion(grid); if (_contentReady) _network.ConfirmRegionScene(); return; }
         if (!_contentReady) return;
+        if (_network.CurrentRegion is not null) _network.ConfirmRegionScene();
         if (_authoredRegion is not null) { ApplyAuthoredNavigation(grid); return; }
         _navigationVisual?.QueueFree();
         _navigationVisual = new NavigationVisual { Name = "NavigationGeometry" };
@@ -221,7 +223,7 @@ public partial class WorldController : Node3D
             actor = state.Kind is CombatEntityKind.Monster or CombatEntityKind.Boss ? new NpcPresentation() : new Node3D();
             actor.Name = $"{state.Kind}-{state.EntityId.Value}";
             AddChild(actor);
-            actor.Position = new Vector3(state.Position.X, 1, state.Position.Y);
+            actor.Position = new Vector3(state.Position.X, state.Height + 1, state.Position.Y);
             if (actor is NpcPresentation npc) npc.Initialize(state, _network.Navigation!);
             if (state.Kind == CombatEntityKind.TrainingTarget)
             {
@@ -249,6 +251,7 @@ public partial class WorldController : Node3D
 
     private void OnPvpPublic(PvpPublicState s)
     {
+        if (s.EntityId == _localEntityId) foreach (var gate in _gateLabels) { gate.Text = s.Tagged ? "Переход закрыт: действует метка боя" : "Выход в другую локацию"; gate.Modulate = s.Tagged ? Colors.Orange : Colors.White; }
         if(!_players.TryGetValue(s.EntityId,out var player))return;
         if(!_pvpLabels.TryGetValue(s.EntityId,out var label)){label=new Label3D(){Position=new Vector3(0,2.7f,0),Billboard=BaseMaterial3D.BillboardModeEnum.Enabled,FontSize=24};player.AddChild(label);_pvpLabels[s.EntityId]=label;}
         label.Text=s.Dead?"Погиб":s.Aggressor?"Агрессор":s.Protected?"Защита":s.Tagged?"PvP-тег":s.Mode==PvpMode.Peaceful?"":"PvP";label.Modulate=s.Aggressor?Colors.Red:s.Tagged?Colors.Orange:Colors.LightGreen;

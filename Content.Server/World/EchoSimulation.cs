@@ -71,9 +71,9 @@ public sealed class EchoSimulation
         {
             var source = saved.Active[i]; if (source.DefinitionId != _options.DefinitionId) throw new InvalidDataException("Unknown Echo definition.");
             Vector2 position;
-            if (source.X is { } x) { position = new(x,source.Z!.Value); if (!_grid.IsWalkable(position)) throw new InvalidDataException("Blocked saved Echo position."); }
-            else if (!_grid.TryFindSpawn(MovementSimulation.ClampTarget(master.Position+Offset(source.Slot),_movement),out position)) throw new InvalidDataException("No Echo spawn.");
-            actors[i] = new(allocate(),owner,source,new(_grid,_movement,_pathfinder,position))
+            if (source.X is { } x) { position = new(x,source.Z!.Value); if (!_grid.IsOnSurface(new Vector3(position.X,source.Surface?.Height ?? 0,position.Y)) || (_grid.SurfaceHash != 0 && source.Surface?.GeometryHash != _grid.SurfaceHash)) throw new InvalidDataException("Blocked saved Echo position."); }
+            else { position = MovementSimulation.ClampTarget(master.Position+Offset(source.Slot),_movement); if (_grid.Surface is null) { if (!_grid.TryFindSpawn(position,out position)) throw new InvalidDataException("No Echo spawn."); } else if (!_grid.IsOnSurface(new(position.X,_combat.Get(owner).Height,position.Y))) position = master.Position; }
+            actors[i] = new(allocate(),owner,source,new(_grid,_movement,_pathfinder,position,source.Surface?.Height ?? _combat.Get(owner).Height))
             { AttackReady = _time+Math.Max(0,source.AttackCooldownSeconds-offlineSeconds), SignatureReady = _time+Math.Max(0,source.SignatureCooldownSeconds-offlineSeconds) };
         }
         _owners.Add(owner,new(actors));
@@ -86,7 +86,7 @@ public sealed class EchoSimulation
     {
         if(!_owners.TryGetValue(owner,out var state))return;var position=_ownerState(owner).Position;
         state.Target=default;state.AssistUntil=0;
-        foreach(var actor in state.Actors){if(!_grid.TryFindSpawn(MovementSimulation.ClampTarget(position+Offset(actor.Saved.Slot),_movement),out var spawn))throw new InvalidOperationException("No Echo respawn.");actor.Motion.Reset(spawn,spawn);_spatial.Move(actor.Id,spawn);}
+        foreach(var actor in state.Actors){if(!_grid.TryFindSpawn(MovementSimulation.ClampTarget(position+Offset(actor.Saved.Slot),_movement),out var spawn))throw new InvalidOperationException("No Echo respawn.");actor.Motion.Reset(spawn,spawn,_combat.Get(owner).Height,_combat.Get(owner).Height);_spatial.Move(actor.Id,spawn);}
         _dirty.Add(owner);Wake(owner);
     }
     public void Wake(NetworkEntityId owner) { if (_owners.ContainsKey(owner)) _active.Add(owner); }
@@ -96,9 +96,9 @@ public sealed class EchoSimulation
         _active.Remove(owner); _pending.Remove(owner); _results.Remove(owner); _dirty.Remove(owner); _loadoutDirty.Remove(owner);
     }
     public SavedEchoes Capture(NetworkEntityId owner) => new() { Active = _owners[owner].Actors.Select(actor => actor.Saved with
-    { X = actor.Motion.Position.X, Z = actor.Motion.Position.Y, AttackCooldownSeconds = Math.Max(0,actor.AttackReady-_time), SignatureCooldownSeconds = Math.Max(0,actor.SignatureReady-_time) }).ToArray() };
+    { X = actor.Motion.Position.X, Z = actor.Motion.Position.Y, Surface = _grid.SurfaceHash == 0 ? null : new(1, actor.Motion.Height, _grid.SurfaceHash), AttackCooldownSeconds = Math.Max(0,actor.AttackReady-_time), SignatureCooldownSeconds = Math.Max(0,actor.SignatureReady-_time) }).ToArray() };
     public EchoSpawn Spawn(NetworkEntityId id, uint tick)
-    { var actor = _actors[id]; return new(id,actor.OwnerId,actor.Saved.Slot,tick,actor.Motion.Position,_options.Name); }
+    { var actor = _actors[id]; return new(id,actor.OwnerId,actor.Saved.Slot,tick,actor.Motion.Position,_options.Name,actor.Motion.Height); }
     public bool IsLoadoutDirty(NetworkEntityId owner) => _loadoutDirty.Contains(owner);
     public EchoLoadout Loadout(NetworkEntityId owner, uint tick) => new(owner,tick,_owners[owner].Actors.Select(actor =>
         new EchoSlot(actor.Saved.Slot,actor.Id,_options.SignatureRange,_options.SignatureRadius,(float)Math.Max(0,actor.SignatureReady-_time))).ToArray());
@@ -110,7 +110,7 @@ public sealed class EchoSimulation
     public bool Queue(NetworkEntityId owner, EchoSignatureCommand command, uint tick)
     {
         if (!_owners.TryGetValue(owner,out var state) || command.Sequence == 0 || command.Slot is < 1 or > NetworkConstants.MaxActiveEchoes ||
-            !float.IsFinite(command.Aim.X) || !float.IsFinite(command.Aim.Y) || !MovementSimulation.IsSequenceNewer(command.Sequence,state.Sequence)) return false;
+            !float.IsFinite(command.Aim.X) || !float.IsFinite(command.Aim.Y) || !float.IsFinite(command.AimHeight) || MathF.Abs(command.AimHeight)>128 || !MovementSimulation.IsSequenceNewer(command.Sequence,state.Sequence)) return false;
         state.Sequence = command.Sequence;
         if (state.RequestTick == tick) { _pending.Remove(owner); _results[owner] = new(command.Sequence,tick,command.Slot,EchoCommandOutcome.RateLimited,0); return false; }
         state.RequestTick = tick; _pending[owner] = command; return true;
@@ -126,7 +126,7 @@ public sealed class EchoSimulation
             foreach (var actor in state.Actors)
             {
                 var before = actor.Motion.Position;
-                if (!master.Alive) actor.Motion.Reset(before,before);
+                if (!master.Alive || !_combat.Get(owner).Active) actor.Motion.Reset(before,before,actor.Motion.Height,actor.Motion.Height);
                 else
                 {
                     // Final owner movement must replan before the Echo is allowed to sleep.
@@ -134,12 +134,14 @@ public sealed class EchoSimulation
                     {
                         actor.DecisionReady = _time+_options.DecisionSeconds;
                         var destination = target?.Position ?? MovementSimulation.ClampTarget(master.Position+Offset(actor.Saved.Slot),_movement);
-                        if (_grid.TryFindSpawn(destination,out destination)) actor.Motion.TrySetTarget(destination);
+                        var height = target?.Height ?? _combat.Get(owner).Height;
+                        if (_grid.Surface is null ? _grid.TryFindSpawn(destination,out destination) : _grid.IsOnSurface(new(destination.X,height,destination.Y))) actor.Motion.TrySetTarget(destination, height);
+                        else if (target is null) actor.Motion.TrySetTarget(master.Position, height);
                     }
                     actor.Motion.Step(delta);
-                    if (target is { Health: > 0 } && Vector2.DistanceSquared(actor.Motion.Position,target.Position) <= _options.AttackRange*_options.AttackRange && _grid.CanTraverse(actor.Motion.Position,target.Position))
+                    if (target is { Health: > 0 } && Vector3.DistanceSquared(actor.Motion.Foot,target.Foot) <= _options.AttackRange*_options.AttackRange && _grid.ClearAttack(actor.Motion.Foot,target.Foot))
                     {
-                        actor.Motion.Reset(actor.Motion.Position,actor.Motion.Position);
+                        actor.Motion.Reset(actor.Motion.Position,actor.Motion.Position,actor.Motion.Height,actor.Motion.Height);
                         if (_time >= actor.AttackReady) { actor.AttackReady = _time+_options.AttackIntervalSeconds; _dirty.Add(owner); Hit(actor,target,EchoActionKind.BasicAttack,actor.Motion.Position,_options.AttackRange,_options.AttackPower,tick); }
                     }
                 }
@@ -157,25 +159,27 @@ public sealed class EchoSimulation
     private void ResolveSignature(NetworkEntityId owner, EchoSignatureCommand command, uint tick)
     {
         var actor = Array.Find(_owners[owner].Actors,actor => actor.Saved.Slot == command.Slot);
-        var outcome = actor is null ? EchoCommandOutcome.NotOwned : !_ownerState(owner).Alive || _combat.Get(owner).IsCasting ? EchoCommandOutcome.InvalidState
+        var center = new Vector3(command.Aim.X,command.AimHeight,command.Aim.Y);
+        if(_grid.Surface is { } surface && surface.TryLocate(center,.35f,out var ground))center=ground.Position;
+        var outcome = actor is null ? EchoCommandOutcome.NotOwned : !_ownerState(owner).Alive || !_combat.Get(owner).Active || _combat.Get(owner).IsCasting ? EchoCommandOutcome.InvalidState
             : _time < actor.SignatureReady ? EchoCommandOutcome.Cooldown
-            : Vector2.DistanceSquared(actor.Motion.Position,command.Aim) > _options.SignatureRange*_options.SignatureRange ? EchoCommandOutcome.OutOfRange
-            : !_grid.CanTraverse(actor.Motion.Position,command.Aim) ? EchoCommandOutcome.Blocked : EchoCommandOutcome.Accepted;
+            : Vector3.DistanceSquared(actor.Motion.Foot,center) > _options.SignatureRange*_options.SignatureRange ? EchoCommandOutcome.OutOfRange
+            : !_grid.IsOnSurface(center) || !_grid.ClearAttack(actor.Motion.Foot,center) ? EchoCommandOutcome.Blocked : EchoCommandOutcome.Accepted;
         // Client timestamps cannot accelerate cooldowns or grant unbounded rewind.
         if (command.ClientTick != tick && MovementSimulation.IsSequenceNewer(command.ClientTick,tick)) outcome = EchoCommandOutcome.InvalidState;
         if (outcome == EchoCommandOutcome.Accepted)
         {
             _combat.PlayerAction?.Invoke(owner);
             actor!.SignatureReady = _time+_options.SignatureCooldownSeconds; _dirty.Add(owner); _loadoutDirty.Add(owner);
-            _actions.Add(new(actor.Id,tick,EchoActionKind.Signature,default,command.Aim,_options.SignatureRadius,0,0));
+            _actions.Add(new(actor.Id,tick,EchoActionKind.Signature,default,command.Aim,_options.SignatureRadius,0,0,center.Y));
             _spatial.Query(command.Aim,_options.SignatureRadius,_candidates);
             foreach (var id in _candidates)
-                if (_combat.TryGet(id,out var target) && _combat.CanTarget(owner,target.Id) && target.Health > 0 && _grid.CanTraverse(command.Aim,target.Position))
-                    Hit(actor,target,EchoActionKind.Signature,command.Aim,_options.SignatureRadius,_options.SignaturePower,tick);
+                if (_combat.TryGet(id,out var target) && _combat.CanTarget(owner,target.Id) && target.Health > 0 && Vector3.DistanceSquared(center,target.Foot)<=_options.SignatureRadius*_options.SignatureRadius && _grid.ClearAttack(center,target.Foot))
+                    Hit(actor,target,EchoActionKind.Signature,command.Aim,_options.SignatureRadius,_options.SignaturePower,tick,center.Y);
         }
         _results[owner] = new(command.Sequence,tick,command.Slot,outcome,actor is null ? 0 : (float)Math.Max(0,actor.SignatureReady-_time));
     }
-    private void Hit(Actor actor, Combatant target, EchoActionKind kind, Vector2 position, float radius, double power, uint tick)
-    { var damage = _combat.ApplyEchoDamage(target.Id,power,actor.OwnerId,actor.Motion.Position); _actions.Add(new(actor.Id,tick,kind,target.Id,position,radius,damage,target.Health)); }
+    private void Hit(Actor actor, Combatant target, EchoActionKind kind, Vector2 position, float radius, double power, uint tick, float? height=null)
+    { var damage = _combat.ApplyEchoDamage(target.Id,power,actor.OwnerId,actor.Motion.Position); _actions.Add(new(actor.Id,tick,kind,target.Id,position,radius,damage,target.Health,height ?? actor.Motion.Height)); }
     public void ClearResults() { _actions.Clear(); _results.Clear(); _dirty.Clear(); _loadoutDirty.Clear(); }
 }

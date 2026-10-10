@@ -67,7 +67,7 @@ public sealed partial class ServerWorld
                 if (actor.Health <= 0) outcome = QuestOutcome.InvalidState;
                 else if (npc is null) outcome = QuestOutcome.Unavailable;
                 else if (actor.IsCasting || player.Motion.IsDashing || player.Motion.IsMoving || Inventory!.IsTrading(id)) outcome = QuestOutcome.Busy;
-                else if (Vector2.DistanceSquared(player.Position, npc.Position) > q.InteractionRange * q.InteractionRange || !Navigation.CanTraverse(player.Position, npc.Position)) outcome = QuestOutcome.TooFar;
+                else if (Vector3.DistanceSquared(player.Foot, GroundFoot(npc.Position)) > q.InteractionRange * q.InteractionRange || !Navigation.ClearAttack(player.Foot, GroundFoot(npc.Position))) outcome = QuestOutcome.TooFar;
                 else if (c.Action == QuestAction.Accept)
                 {
                     if (c.NpcId != _questGiver) outcome = QuestOutcome.Unavailable;

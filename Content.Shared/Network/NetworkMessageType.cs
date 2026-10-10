@@ -73,4 +73,9 @@ public enum NetworkMessageType : ushort
     // NC: bounded public animation state and owner social intention.
     AvatarState = 90,
     EmoteCommand = 91,
+    SurfaceChunk = 92,
+    RegionReady = 93,
+    RegionApplied = 94,
+    RegionActivated = 95,
+    RegionBaseline = 96,
 }

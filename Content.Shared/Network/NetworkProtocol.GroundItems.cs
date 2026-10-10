@@ -39,7 +39,7 @@ public static partial class NetworkProtocol
             value.Slot is not (EquipmentSlot.Weapon or EquipmentSlot.Armor)) throw new ArgumentException("Invalid ground item.");
         var writer = CreateWriter(NetworkMessageType.GroundItemSpawn);
         writer.Put(value.Handle); writer.Put(value.ServerTick); writer.Put(value.Position.X); writer.Put(value.Position.Y);
-        writer.Put(value.Name); writer.Put((byte)value.Slot); return writer;
+        writer.Put(value.Name); writer.Put((byte)value.Slot); WriteHeight(writer, value.Height); return writer;
     }
     public static bool TryReadGroundItemSpawn(NetDataReader reader, out GroundItemSpawn value)
     {
@@ -47,8 +47,8 @@ public static partial class NetworkProtocol
         if (!reader.TryGetULong(out var handle) || handle == 0 || !reader.TryGetUInt(out var tick) ||
             !reader.TryGetFloat(out var x) || !reader.TryGetFloat(out var z) || !float.IsFinite(x) || !float.IsFinite(z) ||
             !reader.TryGetString(out var name) || name is not { Length: > 0 and <= 24 } || Encoding.UTF8.GetByteCount(name) > 48 ||
-            !reader.TryGetByte(out var slot) || (EquipmentSlot)slot is not (EquipmentSlot.Weapon or EquipmentSlot.Armor) || reader.AvailableBytes != 0) return false;
-        value = new(handle, tick, new Vector2(x, z), name, (EquipmentSlot)slot); return true;
+            !reader.TryGetByte(out var slot) || (EquipmentSlot)slot is not (EquipmentSlot.Weapon or EquipmentSlot.Armor) || !ReadHeight(reader, out var height) || reader.AvailableBytes != 0) return false;
+        value = new(handle, tick, new Vector2(x, z), name, (EquipmentSlot)slot, height); return true;
     }
     public static NetDataWriter Write(GroundItemDespawn value)
     {

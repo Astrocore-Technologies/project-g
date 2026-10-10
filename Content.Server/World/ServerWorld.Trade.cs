@@ -27,7 +27,7 @@ public sealed partial class ServerWorld
     }
     private bool TradeReady(NetworkEntityId id)
     { if(!_playersByEntity.TryGetValue(id,out var player)) return false; var actor=Combat!.Get(id); return actor.Health>0 && !actor.IsCasting && !player.Motion.IsMoving && !player.Motion.IsDashing && !Abilities!.HasActiveEffects(id); }
-    private bool TradeNear(NetworkEntityId a,NetworkEntityId b) => TradeReady(a) && TradeReady(b) && Vector2.DistanceSquared(_playersByEntity[a].Position,_playersByEntity[b].Position)<=9 && Navigation.CanTraverse(_playersByEntity[a].Position,_playersByEntity[b].Position);
+    private bool TradeNear(NetworkEntityId a,NetworkEntityId b) => TradeReady(a) && TradeReady(b) && Vector3.DistanceSquared(_playersByEntity[a].Foot,_playersByEntity[b].Foot)<=9 && Navigation.ClearAttack(_playersByEntity[a].Foot,_playersByEntity[b].Foot);
     private TradeItem[] TradePreview(NetworkEntityId id,ExchangeOffer offer)
     { var conditions=Inventory!.ConditionState(id,Tick).Items.ToDictionary(i=>i.Handle); return Inventory.OfferPreview(id,offer).Select(i=> { conditions.TryGetValue(i.Handle,out var c); return new TradeItem(i.Handle,i.Name,i.Slot,i.AttackBonus,i.DefenseBonus,i.HealthBonus,c.Current,c.Maximum); }).ToArray(); }
     private void PublishTrade(Trade trade)

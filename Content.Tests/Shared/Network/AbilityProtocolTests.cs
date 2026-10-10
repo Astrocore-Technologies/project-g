@@ -36,7 +36,7 @@ public sealed class AbilityProtocolTests
     public void ExactValuesAndBoundedPrivateLoadoutRoundTrip()
     {
         var command = new AbilityCommand(123, 45, 1, Vector2.UnitY);
-        Assert.Equal(24, NetworkProtocol.Write(command).Length);
+        Assert.Equal(32, NetworkProtocol.Write(command).Length);
         Assert.True(NetworkProtocol.TryReadAbilityCommand(Body(NetworkProtocol.Write(command)), out var parsed));
         Assert.Equal(command, parsed);
         var loadout = new AbilityLoadout(new(1), 2, 40, 55, new[] { Profile });

@@ -2,8 +2,10 @@
 
 ## Status
 
-**Предложено по результатам первого блока R7, 2026-10-10.** Пользователь разрешил
-исследование; окончательная приёмка backend и production limits ещё впереди.
+**Принято для интеграционного среза, 2026-10-10.** После исследования пользователь
+разрешил подключить высоты к движению, бою, сети, сохранениям и общему подземелью.
+Дальность атак — прямая 3D; combat tag блокирует все региональные переходы.
+Limits крупного мира и нагрузочная приёмка остаются отдельной проверкой.
 Связано с [ADR 0014](0014-terrain-and-shared-dungeons.md).
 Полные сценарии, команды и границы замеров — [отчёт исследования](../development/navigation-study.md).
 
@@ -15,7 +17,7 @@
 graph. Оба backend проходят reachability, height continuity, ceiling visibility,
 clearance, dynamic blocking и stale revision проверки.
 
-## Proposed decision
+## Decision
 
 Использовать **offline polygon navigation с независимыми .NET queries** как
 основу следующего вертикального среза. Godot запекает authored geometry в
@@ -69,12 +71,27 @@ prediction/reconciliation, snapshots и reconnect. Затем боевые heigh
 отдельное одобрение до применения к рабочим сохранениям. Production rollback
 должен учитывать protocol/content/save version вместе.
 
-В этом исследовании production protocol, БД и movement не меняются. Новый
-service/process boundary и зависимость Server от Godot не вводятся.
+Исследовательский этап не менял runtime. Последующий разрешённый срез использует
+protocol 32, native polygon export v1 и аддитивный SavedSurface v1 (высота + hash
+региона). Legacy flat saves сохраняются; перенос старых карт в вертикальные
+по-прежнему требует явного mapping. Server остаётся независимым от Godot.
+
+Пределы среза: до 4096 vertices/polygons и 256 OBB blockers, geometry до 256 KiB
+на регион, chunks по 900 bytes. Две тестовые вертикальные карты входят в общий
+bounded graph из пяти регионов. Рёбра сопоставляются по XYZ с точностью 1 мм;
+пол и этаж выбираются высотой, а hash фиксирует точную revision. Это prototype
+budgets; расширение на большую карту требует измерений и tile packaging.
+
+Переход сначала сохраняет destination через существующий durable checkpoint.
+Далее идут epoch + geometry, scene-ready, baseline, applied и activation.
+До activation команды не выполняются; при обрыве вход восстанавливается из
+durable destination. Preload до commit и полный R4 этим срезом не реализованы.
+Подробности — [terrain integration](../development/terrain-integration.md).
 
 ## Outstanding verification
 
 Большая связная карта, smoothing quality, tile seams, релевантная доставка
 геометрии и snapshot bandwidth, Mobile native/GPU peak memory, loss/reorder и
 нагрузочная ёмкость. Исследование подтверждает выбранные geometry/query сценарии,
-но не объявляет законченный R7/R8 или поддержку высот в текущей сетевой игре.
+но не объявляет законченный R7/R8. Поддержка высот в текущей сетевой игре
+проверена на двух тестовых картах, а не на production масштабе.

@@ -241,7 +241,7 @@ public sealed partial class AbilitySimulation
         var index = -1;
         for (var i = 0; i < actor.Profiles.Length; i++) if (actor.Profiles[i].Id == command.AbilityId) { index = i; break; }
         var outcome = index < 0 || !actor.Enabled.Contains(command.AbilityId) ? AbilityOutcome.UnknownAbility
-            : combatant.Health <= 0 || _combat.IsStunned(id) ? AbilityOutcome.InvalidState
+            : combatant.Health <= 0 || !combatant.Active || _combat.IsStunned(id) ? AbilityOutcome.InvalidState
             : combatant.IsCasting ? AbilityOutcome.Busy
             : _time < actor.ReadyAt[index] ? AbilityOutcome.Cooldown
             : actor.Mana < actor.Profiles[index].ManaCost ? AbilityOutcome.NoMana
@@ -254,21 +254,31 @@ public sealed partial class AbilitySimulation
             : AbilityOutcome.Accepted;
         if (outcome != AbilityOutcome.Accepted) { _results[id] = new(command.Sequence, tick, outcome); return; }
         var profile = ExecutionProfile(id, actor, index);
+        // AimHeight identifies a floor; the server snaps it before spending range or creating an effect.
+        if (profile.Form==AbilityForm.GroundArea && _grid.Surface is { } surface &&
+            surface.TryLocate(new(command.Aim.X,command.AimHeight,command.Aim.Y),.35f,out var ground))
+            command=command with { AimHeight=ground.Position.Y };
         var direction = profile.Form == AbilityForm.GroundArea ? Vector2.UnitY : command.Aim;
         var destination = profile.Form == AbilityForm.GroundArea ? command.Aim : combatant.Position;
         if (MovementSimulation.IsSequenceNewer(command.ObservedServerTick, tick) ||
             !float.IsFinite(command.Aim.X) || !float.IsFinite(command.Aim.Y) ||
+            !float.IsFinite(command.AimHeight) || MathF.Abs(command.AimHeight) > 128 ||
+            !float.IsFinite(command.DirectionY) || MathF.Abs(command.DirectionY) > 1 ||
+            (profile.Form != AbilityForm.Projectile && command.DirectionY != 0) ||
             !float.IsFinite(command.DashDistance) || command.DashDistance < 0 || command.DashDistance > profile.Range ||
             (profile.Form != AbilityForm.Dash && command.DashDistance != 0) ||
             (profile.Form == AbilityForm.GroundArea
-                ? Vector2.DistanceSquared(combatant.Position, command.Aim) > profile.Range * profile.Range || !_grid.CanTraverse(combatant.Position, command.Aim)
-                : !BasicAttackShape.IsValidDirection(direction)))
+                ? Vector3.DistanceSquared(combatant.Foot, new(command.Aim.X, command.AimHeight, command.Aim.Y)) > profile.Range * profile.Range || !_grid.IsOnSurface(new(command.Aim.X, command.AimHeight, command.Aim.Y)) || !_grid.ClearAttack(combatant.Foot, new(command.Aim.X, command.AimHeight, command.Aim.Y))
+                : profile.Form == AbilityForm.Projectile
+                    ? direction.LengthSquared()+command.DirectionY*command.DirectionY is < .99f or > 1.01f
+                    : !BasicAttackShape.IsValidDirection(direction)))
         {
             _results[id] = new(command.Sequence, tick, AbilityOutcome.InvalidAim); return;
         }
-        direction = Vector2.Normalize(direction);
+        var directionLength = MathF.Sqrt(direction.LengthSquared() + command.DirectionY * command.DirectionY);
+        direction /= directionLength;
         if (profile.Form == AbilityForm.Dash &&
-            (!DashGeometry.TryDestination(_grid, combatant.Position, direction, command.DashDistance > 0 ? command.DashDistance : profile.Range, out destination) ||
+            (!SurfaceDash.TryDestination(_grid, combatant.Foot, direction, command.DashDistance > 0 ? command.DashDistance : profile.Range, out destination, out _) ||
              !_startDash(id, destination, profile.Speed)))
         {
             _results[id] = new(command.Sequence, tick, AbilityOutcome.InvalidAim); return;
@@ -288,7 +298,8 @@ public sealed partial class AbilitySimulation
             Id = _nextEffectId++, ActorId = id, Sequence = command.Sequence, Definition = actor.Definitions[index] with
             { Power = actor.Definitions[index].Power * PowerFactor(actor,profile.Id),
               MagicAttackScale = actor.Definitions[index].MagicAttackScale * PowerFactor(actor,profile.Id) }, Profile = profile,
-            Origin = combatant.Position, Position = destination, Direction = direction, Phase = AbilityPhase.Telegraph,
+            Origin = combatant.Position, Position = destination, Direction = direction, OriginHeight = combatant.Height,
+            Height = profile.Form == AbilityForm.GroundArea ? command.AimHeight : combatant.Height, DirectionY = command.DirectionY / directionLength, Phase = AbilityPhase.Telegraph,
             Remaining = (float)profile.CastSeconds, DistanceLeft = profile.Range,
             FocusFactor = profile.Form == AbilityForm.Melee ? _combat.ConsumeFocus(id) : 1,
             // Old observations do not earn catch-up. Nothing rewinds actor position or resources.
@@ -322,12 +333,12 @@ public sealed partial class AbilitySimulation
             }
             if (effect.Profile.Form == AbilityForm.GroundArea)
             {
-                if (Vector2.DistanceSquared(caster.Position, effect.Position) <= effect.Profile.Range * effect.Profile.Range &&
-                    _grid.CanTraverse(caster.Position, effect.Position)) HitArea(effect, tick);
+                if (Vector3.DistanceSquared(caster.Foot, effect.Foot) <= effect.Profile.Range * effect.Profile.Range &&
+                    _grid.ClearAttack(caster.Foot, effect.Foot)) HitArea(effect, tick);
                 effect.Phase = AbilityPhase.Impact; effect.Remaining = _options.ImpactSeconds;
                 return;
             }
-            effect.Phase = AbilityPhase.Flying; effect.Origin = effect.Position = caster.Position;
+            effect.Phase = AbilityPhase.Flying; effect.Origin = effect.Position = caster.Position; effect.Height = effect.OriginHeight = caster.Height;
         }
         if (effect.Phase == AbilityPhase.Dash || effect.Phase == AbilityPhase.Impact)
         {
@@ -347,21 +358,24 @@ public sealed partial class AbilitySimulation
         effect.CompensationSeconds = 0; // One bounded catch-up segment; still collision-tested.
         var from = effect.Position;
         var intended = from + effect.Direction * distance;
-        var blocked = !_grid.CanTraverse(from, intended);
+        var from3 = effect.Foot; var toHeight = effect.Height + effect.DirectionY * distance;
+        var to3 = new Vector3(intended.X, toHeight, intended.Y);
+        var blocked = !_grid.ClearAttack(from3, to3);
         var to = intended;
-        if (blocked && !DashGeometry.TryDestination(_grid, from, effect.Direction, distance, out to)) to = from;
+        if (blocked) { var fraction = SurfaceCollision.ClearFraction(_grid, from3, to3); to = Vector2.Lerp(from, intended, fraction); toHeight = float.Lerp(effect.Height, toHeight, fraction); }
         var midpoint = (from + to) * 0.5f;
         _spatial.Query(midpoint, Vector2.Distance(from, to) * 0.5f + effect.Profile.Radius + _grid.AgentRadius, _candidates);
         Combatant? target = null; var first = float.MaxValue;
         foreach (var id in _candidates)
         {
             if (!_combat.TryGet(id, out var candidate) || !_combat.CanTarget(effect.ActorId,candidate.Id) || candidate.Health <= 0 ||
-                !SweptCircle.TryHit(from, to, candidate.Position, effect.Profile.Radius + _grid.AgentRadius, out var fraction) ||
-                !_grid.CanTraverse(from, candidate.Position)) continue;
+                !SurfaceCollision.SweptHit(from3, new(to.X, toHeight, to.Y), candidate.Foot, effect.Profile.Radius + _grid.AgentRadius, out var fraction) ||
+                !_grid.ClearAttack(from3, candidate.Foot)) continue;
             if (fraction < first || (fraction == first && (target is null || id.Value < target.Id.Value))) { first = fraction; target = candidate; }
         }
         effect.Position = target is null ? to : Vector2.Lerp(from, to, first);
-        effect.DistanceLeft -= Vector2.Distance(from, effect.Position);
+        effect.Height = target is null ? toHeight : float.Lerp(effect.Height, toHeight, first);
+        effect.DistanceLeft -= Vector3.Distance(from3, effect.Foot);
         effect.Remaining = effect.DistanceLeft / effect.Profile.Speed;
         if (target is not null) Hit(effect, target, tick);
         if (target is not null || blocked || effect.DistanceLeft <= 0.0001f) effect.Phase = AbilityPhase.Finished;
@@ -372,7 +386,8 @@ public sealed partial class AbilitySimulation
         _spatial.Query(effect.Position, effect.Profile.Radius, _candidates);
         foreach (var id in _candidates)
             if (_combat.TryGet(id, out var target) && _combat.CanTarget(effect.ActorId,target.Id) && target.Health > 0 &&
-                _grid.CanTraverse(effect.Position, target.Position)) Hit(effect, target, tick);
+                Vector3.DistanceSquared(effect.Foot, target.Foot) <= effect.Profile.Radius * effect.Profile.Radius &&
+                _grid.TraverseSurface(effect.Foot, target.Foot) && _grid.ClearAttack(effect.Foot, target.Foot)) Hit(effect, target, tick);
     }
 
     private void Hit(AbilityEffect effect, Combatant target, uint tick)

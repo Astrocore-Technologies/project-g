@@ -76,7 +76,7 @@ public sealed partial class ServerWorld
             _spatial.Remove(oldId);
             _npcSpawnActors.Remove(oldId);
             var nextId = AllocateEntityId();
-            Combat.Add(nextId, actor.Home, spawn.Kind, actor.Options.DefinitionId);
+            Combat.Add(nextId, actor.Home, spawn.Kind, actor.Options.DefinitionId, height: actor.HomeHeight);
             _spatial.Add(nextId, actor.Home);
             actor.BeginNewLife(nextId);
             _npcSpawnActors.Add(nextId, spawn);

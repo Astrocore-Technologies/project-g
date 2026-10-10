@@ -21,7 +21,7 @@ public static class DevelopmentRegionExport
 
         var published = Path.Combine(repository, "Content.Server", PackagePath);
         var needsExport = false;
-        try { _ = new RegionExportCatalog(published, repository); }
+        try { _ = new RegionExportCatalog(published, repository); if (File.Exists(Path.Combine(repository,"Content.Client/Scenes/Regions/TerrainTest/TerrainTest.tscn"))) _ = SurfaceCatalog.Load(Path.Combine(repository,"Content.Server",SurfaceCatalog.PackagePath),repository); }
         catch (Exception error) when (error is InvalidDataException or JsonException or FileNotFoundException)
         {
             needsExport = true;
@@ -31,13 +31,14 @@ public static class DevelopmentRegionExport
             await log.WriteLineAsync("Region data changed; exporting maps automatically.");
             await export(repository);
             // A successful process exit alone does not establish that the newly published data is current.
-            _ = new RegionExportCatalog(published, repository);
+            _ = new RegionExportCatalog(published, repository); if (File.Exists(Path.Combine(repository,"Content.Client/Scenes/Regions/TerrainTest/TerrainTest.tscn"))) _ = SurfaceCatalog.Load(Path.Combine(repository,"Content.Server",SurfaceCatalog.PackagePath),repository);
             await log.WriteLineAsync("Region export ready. Continuing server startup.");
         }
 
         // dotnet run may have copied the previous package before this export. Load the published source
         // directly instead of rebuilding/replacing assemblies of the already running server.
         configuration["RegionExports:PackagePath"] = published;
+        configuration["RegionExports:SurfacePackagePath"] = Path.Combine(repository,"Content.Server",SurfaceCatalog.PackagePath);
     }
 
     public static async Task RunExporterAsync(string repository)

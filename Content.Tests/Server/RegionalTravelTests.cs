@@ -13,6 +13,16 @@ namespace Content.Tests.Server;
 
 public sealed class RegionalTravelTests
 {
+    [Fact]
+    public async Task CombatTagBlocksTravelUntilItExpires()
+    {
+        await using var f = await Fixture.Create(); await f.Add();
+        Assert.True(f.Source.TryQueuePvp(42,new(1,PvpAction.Mode,PvpMode.Voluntary,false,0)));
+        f.Realm.Simulate(.05f);
+        Assert.True(f.Source.IsCombatTagged(42)); Assert.False(f.Begin()); Assert.False(f.Realm.HasPendingJourney);
+        f.Now += 120_000; f.Realm.Simulate(.05f);
+        Assert.False(f.Source.IsCombatTagged(42)); Assert.True(f.Begin()); await f.Complete();
+    }
     private sealed class Fixture : IAsyncDisposable
     {
         public SqliteCharacterStore Store { get; } = new();

@@ -21,6 +21,7 @@ public sealed record CharacterState
     public required string ProfileId { get; init; }
     public required BaseStats Stats { get; init; }
     public required float X { get; init; }
+    public SavedSurface? Surface { get; init; }
     public required float Z { get; init; }
     public required double Health { get; init; }
     public required double Mana { get; init; }
@@ -39,7 +40,7 @@ public sealed record CharacterState
 
     public void Validate()
     {
-        Defense?.Validate();
+        Defense?.Validate(); Surface?.Validate();
         if (Version != CurrentVersion || WorldLayoutVersion is < 0 or > 1 || !ValidRegion(RegionId) ||
             string.IsNullOrWhiteSpace(ProfileId) || ProfileId.Length > 64 ||
             !float.IsFinite(X) || !float.IsFinite(Z) ||

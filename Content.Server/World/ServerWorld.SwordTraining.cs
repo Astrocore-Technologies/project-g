@@ -66,7 +66,7 @@ public sealed partial class ServerWorld
         var position = _questNpcs[_swordTrainer].Position;
         var range = _progressionCatalog!.Swordsman!.InteractionRange;
         return !player.Motion.IsMoving && !player.Motion.IsDashing && !Inventory!.IsTrading(id) &&
-            Vector2.DistanceSquared(player.Position, position) <= range * range && Navigation.CanTraverse(player.Position, position);
+            Vector3.DistanceSquared(player.Foot, GroundFoot(position)) <= range * range && Navigation.ClearAttack(player.Foot, GroundFoot(position));
     }
 
     private void TalkSwordTrainer(NetworkEntityId id, QuestCommand command)

@@ -35,7 +35,7 @@ public sealed class RiverCityTests
     {
         var worlds=Worlds(); var city=worlds.StartingWorld;
         Assert.Equal("river_city",city.RegionId); Assert.Equal("prototype",worlds.Primary.RegionId);
-        Assert.Equal(3,worlds.Worlds.Count); Assert.Equal(2,worlds.Routes.Count(r=>r.Source==city.RegionId));
+        Assert.Equal(5,worlds.Worlds.Count); Assert.Equal(2,worlds.Routes.Count(r=>r.Source==city.RegionId));
         Assert.True(city.HasWorldNode); Assert.False(city.HasWorldEvent); Assert.Null(city.Npc); Assert.Null(city.Boss);
         Assert.All(worlds.Worlds, world => { Assert.Null(world.Echoes); Assert.Empty(world.CreateInitialCharacter().Echoes!.Active); });
         var placements=JsonSerializer.Deserialize<Dictionary<string,float[]>>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory,"Data/Regions/river-city-placements.json")))!;

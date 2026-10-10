@@ -4,9 +4,9 @@ using LiteNetLib.Utils;
 namespace Content.Shared.Network;
 
 // Public boundary geometry only; no destination content or unexplored map is sent.
-public readonly record struct RegionGate(Vector2 Exit, float Radius);
+public readonly record struct RegionGate(Vector2 Exit, float Radius, float Height = 0);
 public readonly record struct RegionEnter(ulong Epoch, string Region, Vector2 Exit, float Radius, ulong GeometryHash = 0,
-    RegionGate[]? AdditionalGates = null);
+    RegionGate[]? AdditionalGates = null, bool HasSurface = false, float ExitHeight = 0);
 
 public static partial class NetworkProtocol
 {
@@ -15,11 +15,11 @@ public static partial class NetworkProtocol
     private static bool ValidRegion(RegionEnter value) => value.Epoch > 0 &&
         value.Region is { Length: > 0 and <= 64 } &&
         value.Region.All(c => c is >= 'a' and <= 'z' or >= '0' and <= '9' or '_') &&
-        float.IsFinite(value.Exit.X) && float.IsFinite(value.Exit.Y) &&
+        float.IsFinite(value.ExitHeight) && MathF.Abs(value.ExitHeight) <= 128 && float.IsFinite(value.Exit.X) && float.IsFinite(value.Exit.Y) &&
         float.IsFinite(value.Radius) && value.Radius is > 0 and <= 3 &&
         (value.AdditionalGates is null || value.AdditionalGates.Length < NetworkConstants.MaxRegionGates &&
             value.AdditionalGates.All(g => float.IsFinite(g.Exit.X) && float.IsFinite(g.Exit.Y) &&
-                float.IsFinite(g.Radius) && g.Radius is > 0 and <= 3));
+                float.IsFinite(g.Radius) && g.Radius is > 0 and <= 3 && float.IsFinite(g.Height) && MathF.Abs(g.Height) <= 128));
 
     public static NetDataWriter Write(RegionEnter value)
     {
@@ -27,29 +27,29 @@ public static partial class NetworkProtocol
         var writer = CreateWriter(NetworkMessageType.RegionEnter);
         writer.Put(value.Epoch); writer.Put(value.Region);
         writer.Put(value.Exit.X); writer.Put(value.Exit.Y); writer.Put(value.Radius);
-        writer.Put(value.GeometryHash);
+        writer.Put(value.GeometryHash); writer.Put(value.HasSurface); WriteHeight(writer, value.ExitHeight);
         writer.Put((byte)(value.AdditionalGates?.Length ?? 0));
         foreach (var gate in value.AdditionalGates ?? [])
-        { writer.Put(gate.Exit.X); writer.Put(gate.Exit.Y); writer.Put(gate.Radius); }
+        { writer.Put(gate.Exit.X); writer.Put(gate.Exit.Y); writer.Put(gate.Radius); WriteHeight(writer, gate.Height); }
         return writer;
     }
 
     public static bool TryReadRegionEnter(NetDataReader reader, out RegionEnter value)
     {
         value = default;
-        if (reader.AvailableBytes > 95 + 12 * (NetworkConstants.MaxRegionGates - 1) || !reader.TryGetULong(out var epoch) ||
+        if (reader.AvailableBytes > 100 + 16 * (NetworkConstants.MaxRegionGates - 1) || !reader.TryGetULong(out var epoch) ||
             !reader.TryGetString(out var region) || !reader.TryGetFloat(out var x) ||
             !reader.TryGetFloat(out var z) || !reader.TryGetFloat(out var radius) ||
-            !reader.TryGetULong(out var geometryHash) || !reader.TryGetByte(out var count) ||
-            count >= NetworkConstants.MaxRegionGates || reader.AvailableBytes != count * 12)
+            !reader.TryGetULong(out var geometryHash) || !reader.TryGetByte(out var surface) || surface > 1 || !ReadHeight(reader, out var height) || !reader.TryGetByte(out var count) ||
+            count >= NetworkConstants.MaxRegionGates || reader.AvailableBytes != count * 16)
             return false;
         var gates = count == 0 ? null : new RegionGate[count];
         for (var i = 0; i < count; i++)
         {
-            if (!reader.TryGetFloat(out var gx) || !reader.TryGetFloat(out var gz) || !reader.TryGetFloat(out var gr)) return false;
-            gates![i] = new(new(gx, gz), gr);
+            if (!reader.TryGetFloat(out var gx) || !reader.TryGetFloat(out var gz) || !reader.TryGetFloat(out var gr) || !ReadHeight(reader, out var gh)) return false;
+            gates![i] = new(new(gx, gz), gr, gh);
         }
-        var candidate = new RegionEnter(epoch, region, new(x, z), radius, geometryHash, gates);
+        var candidate = new RegionEnter(epoch, region, new(x, z), radius, geometryHash, gates, surface == 1, height);
         if (!ValidRegion(candidate)) return false;
         value = candidate; return true;
     }

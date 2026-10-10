@@ -14,6 +14,29 @@ public sealed class NavigationGrid
     public int Height { get; }
     public int CellCount => Width * Height;
     public uint Revision { get; private set; }
+    public SurfaceNavigation? Surface { get; private set; }
+    public SurfaceVisibility? Visibility { get; private set; }
+    public ulong SurfaceHash => Surface?.Map.Hash ?? 0;
+
+    public void AttachSurface(SurfaceGeometry geometry)
+    {
+        if (Surface is not null) throw new InvalidOperationException("Surface already attached.");
+        if (MathF.Abs(geometry.AgentRadius - AgentRadius) > .001f)
+            throw new InvalidDataException("Surface agent does not match navigation settings.");
+        Surface = new(geometry); Visibility = new(geometry);
+    }
+
+    public bool IsOnSurface(Vector3 point) => Surface is { } mesh
+        ? mesh.TryLocate(point, .35f, out _) : MathF.Abs(point.Y) < .001f && IsWalkable(new Vector2(point.X, point.Z));
+
+    public bool TraverseSurface(Vector3 from, Vector3 to) => Surface is { } mesh
+        ? mesh.TryLocate(from, .35f, out var a) && mesh.TryLocate(to, .35f, out var b) && mesh.Trace(a, b)
+        : MathF.Abs(from.Y) < .001f && MathF.Abs(to.Y) < .001f && CanTraverse(new Vector2(from.X, from.Z), new Vector2(to.X, to.Z));
+
+    // Attack rays use body height. Walkable adjacency alone cannot detect floors and ceilings.
+    public bool ClearAttack(Vector3 from, Vector3 to) => Visibility is { } visibility
+        ? visibility.Clear(from + Vector3.UnitY, to + Vector3.UnitY)
+        : CanTraverse(new Vector2(from.X, from.Z), new Vector2(to.X, to.Z));
 
     public NavigationGrid(RegionNavigation data)
     {
@@ -71,6 +94,7 @@ public sealed class NavigationGrid
 
     public bool CanTraverse(Vector2 from, Vector2 to)
     {
+        if (Surface is not null) return TraverseSurface(new Vector3(from.X, 0, from.Y), new Vector3(to.X, 0, to.Y));
         if (!InsideBounds(from) || !InsideBounds(to))
             return false;
         var min = Vector2.Min(from, to) - new Vector2(AgentRadius);

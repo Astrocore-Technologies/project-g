@@ -34,7 +34,7 @@ public sealed record SavedPvp
     }
     private static bool Time(long n)=>n is >=0 and <=253402300799000L;
 }
-public sealed record SavedDeathLoot(SavedItem Item,float X,float Z,long Expires)
+public sealed record SavedDeathLoot(SavedItem Item,float X,float Z,long Expires, SavedSurface? Surface = null)
 {
-    public void Validate(){new SavedInventory{Items=[Item]}.Validate();if(Item.EquippedSlot!=EquipmentSlot.None||Item.Bound||!float.IsFinite(X)||!float.IsFinite(Z)||Expires is <=0 or >253402300799000L)throw new InvalidDataException("Invalid death loot.");}
+    public void Validate(){Surface?.Validate();new SavedInventory{Items=[Item]}.Validate();if(Item.EquippedSlot!=EquipmentSlot.None||Item.Bound||!float.IsFinite(X)||!float.IsFinite(Z)||Expires is <=0 or >253402300799000L)throw new InvalidDataException("Invalid death loot.");}
 }

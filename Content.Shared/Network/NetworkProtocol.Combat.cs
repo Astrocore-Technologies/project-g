@@ -100,21 +100,21 @@ public static partial class NetworkProtocol
         writer.Put(message.MaxHealth);
         writer.Put(message.AttackInterval);
         writer.Put(message.Range);
-        writer.Put(message.HalfAngleRadians);
+        writer.Put(message.HalfAngleRadians); WriteHeight(writer, message.Height);
         return writer;
     }
 
     public static bool TryReadCombatState(NetDataReader reader, out CombatState message)
     {
         message = default;
-        if (reader.AvailableBytes != 53 || !reader.TryGetULong(out var actor) ||
+        if (reader.AvailableBytes != 57 || !reader.TryGetULong(out var actor) ||
             !reader.TryGetUInt(out var tick) || !reader.TryGetByte(out var kind) ||
             !TryReadVector2(reader, out var position) || !reader.TryGetDouble(out var health) ||
             !reader.TryGetDouble(out var maxHealth) || !reader.TryGetDouble(out var interval) ||
-            !reader.TryGetFloat(out var range) || !reader.TryGetFloat(out var angle))
+            !reader.TryGetFloat(out var range) || !reader.TryGetFloat(out var angle) || !ReadHeight(reader, out var height))
             return false;
         var value = new CombatState(new(actor), tick, (CombatEntityKind)kind,
-            position, health, maxHealth, interval, range, angle);
+            position, health, maxHealth, interval, range, angle, height);
         if (!ValidCombatState(value))
             return false;
         message = value;

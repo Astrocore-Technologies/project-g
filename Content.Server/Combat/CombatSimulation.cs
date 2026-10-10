@@ -65,7 +65,9 @@ public sealed partial class CombatSimulation
     internal ulong DamageSerial(NetworkEntityId id)=>_damageSerial.GetValueOrDefault(id);
     internal bool CanTarget(NetworkEntityId source,NetworkEntityId target,Vector2? origin=null)
     {
-        if(source==target||!_actors.TryGetValue(target,out var victim)||victim.Health<=0)return false;
+        if(source==target||!_actors.TryGetValue(target,out var victim)||victim.Health<=0||!victim.Active)return false;
+        // Server-owned environment damage may have no actor; a specified actor must remain active.
+        if(source.IsValid&&(!_actors.TryGetValue(source,out var actor)||!actor.Active))return false;
         if(origin is {} position&&victim.Kind==CombatEntityKind.Player&&DamageOriginPermission?.Invoke(position)==false)return false;
         if(DamagePermission is not null)return DamagePermission(source,target);
         return _actors.TryGetValue(source,out var owner)&&IsNpc(owner.Kind)?victim.Kind==CombatEntityKind.Player:IsHostileTarget(victim.Kind);
@@ -146,17 +148,18 @@ public sealed partial class CombatSimulation
     public static bool IsNpc(CombatEntityKind kind) => kind is CombatEntityKind.Monster or CombatEntityKind.Boss;
 
     public void Add(NetworkEntityId id, Vector2 position, CombatEntityKind kind, string? definitionId = null,
-        BaseStats? baseStats = null)
+        BaseStats? baseStats = null, float height = 0)
     {
-        if (!id.IsValid || !Enum.IsDefined(kind) || !_navigation.IsWalkable(position))
+        if (!id.IsValid || !Enum.IsDefined(kind) || !_navigation.IsOnSurface(new Vector3(position.X, height, position.Y)))
             throw new ArgumentException("Combat actor needs a valid ID, kind and walkable position.");
         var definition = _catalog.Creatures[definitionId ?? (kind == CombatEntityKind.Player ? _playerDefinition : _targetDefinition)];
         ValidateProfile(definition);
         var stats = _calculator.Calculate(baseStats is { } saved ? definition with { Stats = saved } : definition);
         var weapon = _catalog.Weapons[definition.WeaponId];
+        if (_navigation.Surface is { } surface && surface.TryLocate(new(position.X,height,position.Y),.35f,out var located)) height=located.Position.Y;
         _actors.Add(id, new Combatant(id, kind, position, stats, weapon,
             Math.Max(_minimumInterval, _calculator.AttackInterval(weapon.AttackIntervalSeconds, stats)))
-            { CanBleed = definition.CanBleed && kind != CombatEntityKind.TrainingTarget, CanBeStunned = definition.CanBeStunned && kind != CombatEntityKind.Boss && kind != CombatEntityKind.TrainingTarget });
+            { Height = height, CanBleed = definition.CanBleed && kind != CombatEntityKind.TrainingTarget, CanBeStunned = definition.CanBeStunned && kind != CombatEntityKind.Boss && kind != CombatEntityKind.TrainingTarget });
         if (kind==CombatEntityKind.Player) _defense.Add(id,new DefenseActor { Stamina=_catalog.Defense.MaxStamina });
     }
 
@@ -168,11 +171,11 @@ public sealed partial class CombatSimulation
         _recoveringHealth.Remove(id); _healthRecovered.Remove(id);
     }
 
-    public void Move(NetworkEntityId id, Vector2 position) => _actors[id].Position = position;
+    public void Move(NetworkEntityId id, Vector2 position, float height = 0) { _actors[id].Position = position; _actors[id].Height = height; }
 
     public bool Queue(NetworkEntityId id, AttackCommand command, uint serverTick)
     {
-        if (!_actors.TryGetValue(id, out var actor) || actor.Kind != CombatEntityKind.Player ||
+        if (!_actors.TryGetValue(id, out var actor) || actor.Kind != CombatEntityKind.Player || !actor.Active ||
             command.Sequence == 0 || !MovementSimulation.IsSequenceNewer(command.Sequence, actor.LastSequence))
             return false;
         actor.LastSequence = command.Sequence;
@@ -203,7 +206,7 @@ public sealed partial class CombatSimulation
         foreach (var (id, command) in _pending)
         {
             var actor = _actors[id];
-            var outcome = actor.Health <= 0 || actor.IsCasting || IsStunned(id) || IsDefending(id) || WeaponUsable?.Invoke(id)==false ? AttackOutcome.InvalidState
+            var outcome = actor.Health <= 0 || !actor.Active || actor.IsCasting || IsStunned(id) || IsDefending(id) || WeaponUsable?.Invoke(id)==false ? AttackOutcome.InvalidState
                 : _time < actor.ReadyAt ? AttackOutcome.Cooldown : AttackOutcome.Accepted;
             _results[id] = new(command.Sequence, tick, outcome);
             if (outcome != AttackOutcome.Accepted)
@@ -232,16 +235,17 @@ public sealed partial class CombatSimulation
     {
         var actor = _actors[id];
         return new(id, tick, actor.Kind, actor.Position, actor.Health, actor.Stats.MaxHealth,
-            actor.AttackInterval, (float)actor.Weapon.Range, _halfAngle);
+            actor.AttackInterval, (float)actor.Weapon.Range, _halfAngle, actor.Height);
     }
 
     /// <summary>One server-only area strike; each living player in the spatial query is hit at most once.</summary>
-    public bool ExecuteNpcArea(NetworkEntityId id, uint sequence, Vector2 center, AbilityDefinition ability, uint tick)
+    public bool ExecuteNpcArea(NetworkEntityId id, uint sequence, Vector2 center, AbilityDefinition ability, uint tick, float height=0)
     {
+        var foot = new Vector3(center.X,height,center.Y);
         if (!_actors.TryGetValue(id, out var actor) || actor.Kind != CombatEntityKind.Boss || actor.Health <= 0 ||
             !MovementSimulation.IsSequenceNewer(sequence, actor.LastSequence) || _time < actor.ReadyAt ||
-            Vector2.DistanceSquared(actor.Position, center) > ability.Range * ability.Range ||
-            !_navigation.CanTraverse(actor.Position, center)) return false;
+            Vector3.DistanceSquared(actor.Foot, foot) > ability.Range * ability.Range ||
+            !_navigation.IsOnSurface(foot) || !_navigation.ClearAttack(actor.Foot, foot)) return false;
         actor.LastSequence = sequence;
         actor.ReadyAt = StatMath.Add(_time, ability.CooldownSeconds);
         _spatial.Query(center, (float)ability.Radius, _candidates);
@@ -249,7 +253,7 @@ public sealed partial class CombatSimulation
         foreach (var candidateId in _candidates)
         {
             if (!_actors.TryGetValue(candidateId, out var target) || target.Kind != CombatEntityKind.Player || target.Health <= 0 ||
-                !_navigation.CanTraverse(center, target.Position)) continue;
+                !target.Active || Vector3.DistanceSquared(foot,target.Foot)>ability.Radius*ability.Radius || !_navigation.ClearAttack(foot,target.Foot)) continue;
             var damage = Math.Min(target.Health, _calculator.ApplyDefense(power, target.Stats.MagicDefense));
             target.Health = Math.Max(0, target.Health - damage);
             NotifyDamage(id,target.Id,damage);
@@ -271,9 +275,9 @@ public sealed partial class CombatSimulation
                 (command.TargetId.IsValid && command.TargetId!=id) ||
                 !CanTarget(actor.Id,candidate.Id) ||
                 candidate.Health <= 0 || !BasicAttackShape.Contains(actor.Position, direction, candidate.Position, range, _halfAngle) ||
-                !_navigation.CanTraverse(actor.Position, candidate.Position))
+                Vector3.DistanceSquared(actor.Foot, candidate.Foot) > range * range || !_navigation.ClearAttack(actor.Foot, candidate.Foot))
                 continue;
-            var distance = Vector2.DistanceSquared(actor.Position, candidate.Position);
+            var distance = Vector3.DistanceSquared(actor.Foot, candidate.Foot);
             if (distance < nearest || (distance == nearest && (target is null || id.Value < target.Id.Value)))
             {
                 target = candidate;

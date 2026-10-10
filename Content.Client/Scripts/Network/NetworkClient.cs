@@ -324,6 +324,20 @@ public partial class NetworkClient : Node
 
             switch (messageType)
             {
+                case NetworkMessageType.SurfaceChunk:
+                    if (deliveryMethod != DeliveryMethod.ReliableOrdered || Navigation is null || CurrentRegion is not { HasSurface: true } surfaceRegion || !NetworkProtocol.TryReadSurfaceChunk(reader, out var chunk)) { DisconnectMalformed(peer); break; }
+                    try { if (_surfaceAssembly.Add(chunk) is { } geometry) { if (geometry.Hash != surfaceRegion.GeometryHash) throw new InvalidDataException("Wrong region surface."); Navigation.AttachSurface(geometry); NavigationReceived?.Invoke(Navigation); } }
+                    catch (Exception error) when (error is InvalidDataException or System.Text.Json.JsonException or ArgumentException) { DisconnectMalformed(peer); }
+                    break;
+                case NetworkMessageType.RegionBaseline:
+                    if (deliveryMethod == DeliveryMethod.ReliableOrdered && NetworkProtocol.TryReadRegionLoadState(reader, messageType, out var baseline) && baseline.GeometryHash == CurrentRegion?.GeometryHash && KnownPlayers.Values.Any(p => p.PlayerId == LocalPlayerId))
+                        SendGame(NetworkProtocol.Write(new RegionLoadState(NetworkMessageType.RegionApplied, baseline.GeometryHash)), DeliveryMethod.ReliableOrdered);
+                    else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.RegionActivated:
+                    if (deliveryMethod == DeliveryMethod.ReliableOrdered && NetworkProtocol.TryReadRegionLoadState(reader, messageType, out var activated) && activated.GeometryHash == CurrentRegion?.GeometryHash) RegionActive = true;
+                    else DisconnectMalformed(peer);
+                    break;
                 case NetworkMessageType.AvatarState:
                     if (_handshakeComplete && NetworkProtocol.TryReadAvatarState(reader, out var avatar)) AvatarReceived?.Invoke(avatar); else DisconnectMalformed(peer);
                     break;
@@ -440,7 +454,7 @@ public partial class NetworkClient : Node
                     else DisconnectMalformed(peer);
                     break;
                 case NetworkMessageType.EchoSpawn:
-                    if (_handshakeComplete && Navigation is not null && NetworkProtocol.TryReadEchoSpawn(reader, out var echoSpawn) && Navigation.IsWalkable(echoSpawn.Position)) EchoSpawned?.Invoke(echoSpawn);
+                    if (_handshakeComplete && Navigation is not null && NetworkProtocol.TryReadEchoSpawn(reader, out var echoSpawn) && Navigation.IsOnSurface(new System.Numerics.Vector3(echoSpawn.Position.X,echoSpawn.Height,echoSpawn.Position.Y))) EchoSpawned?.Invoke(echoSpawn);
                     else DisconnectMalformed(peer);
                     break;
                 case NetworkMessageType.EchoLoadout:
@@ -463,7 +477,7 @@ public partial class NetworkClient : Node
                     break;
                 case NetworkMessageType.PlayerSpawn:
                     if (Navigation is not null && NetworkProtocol.TryReadPlayerSpawn(reader, out var spawn) &&
-                        Navigation.IsWalkable(spawn.Position))
+                        Navigation.IsOnSurface(new System.Numerics.Vector3(spawn.Position.X, spawn.Height, spawn.Position.Y)))
                     {
                         if (Content.Shared.Movement.MovementSimulation.IsSequenceNewer(spawn.ServerTick, LatestServerTick))
                             LatestServerTick = spawn.ServerTick;
@@ -483,7 +497,7 @@ public partial class NetworkClient : Node
                             try { Navigation.ApplyOpening(region); }
                             catch(ArgumentException) { DisconnectMalformed(peer); break; }
                         }
-                        NavigationReceived?.Invoke(Navigation);
+                        if (CurrentRegion?.HasSurface != true || Navigation.Surface is not null) NavigationReceived?.Invoke(Navigation);
                     }
                     else
                         DisconnectMalformed(peer);

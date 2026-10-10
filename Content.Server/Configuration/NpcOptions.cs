@@ -11,6 +11,7 @@ public sealed class NpcOptions
     public int RespawnSeconds { get; init; }
     public float X { get; init; } = 7;
     public float Z { get; init; } = 3;
+    public float Height { get; init; }
     public float Speed { get; init; } = 3;
     public float AggroRadius { get; init; } = 6;
     public float LeashRadius { get; init; } = 10;

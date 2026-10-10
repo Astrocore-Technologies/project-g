@@ -85,8 +85,9 @@ public sealed class RecoveryReplicationTests
             var oldId = f.Npc.Id;
             await Poll(first, second, () => first.CombatStates.ContainsKey(oldId) && second.CombatStates.ContainsKey(oldId));
             Assert.Equal(0, first.CombatStates[oldId].Health); Assert.Equal(0, second.CombatStates[oldId].Health);
-            gate = store.PauseSaves(); Interlocked.Exchange(ref now, 130000);
-            await Poll(first, second, () => store.PendingSave);
+            // A login/equipment checkpoint may still be in flight; pause the respawn write specifically.
+            gate = store.PauseSaves("NpcRespawned"); Interlocked.Exchange(ref now, 130000);
+            await Poll(first, second, () => f.Npc.Id!=oldId && store.PendingSave);
             var nextId = f.Npc.Id;
             Assert.NotEqual(oldId, nextId);
             Assert.False(first.CombatStates.ContainsKey(nextId)); Assert.False(second.CombatStates.ContainsKey(nextId));

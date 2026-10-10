@@ -8,7 +8,7 @@ public sealed partial class ServerWorld
     {
         var player = _playersByConnection[connection]; var actor = Combat!.Get(player.EntityId);
         // Wait for transient actions rather than discarding projectiles, casts or item reservations.
-        return actor.Health > 0 && !_starterPending.Contains(player.EntityId) && !actor.IsCasting && !player.Motion.IsDashing &&
+        return player.Loaded && !IsCombatTagged(connection) && actor.Health > 0 && !_starterPending.Contains(player.EntityId) && !actor.IsCasting && !player.Motion.IsDashing &&
             !Abilities!.HasActiveEffects(player.EntityId) && Inventory?.IsTrading(player.EntityId) != true;
     }
 

@@ -1,0 +1,183 @@
+[gd_scene load_steps=29 format=3]
+
+
+[sub_resource type="StandardMaterial3D" id="GroundMaterial"]
+albedo_color = Color(0.28, 0.4, 0.32, 1)
+[sub_resource type="StandardMaterial3D" id="HillMaterial"]
+albedo_color = Color(0.55, 0.65, 0.32, 1)
+[sub_resource type="StandardMaterial3D" id="PitMaterial"]
+albedo_color = Color(0.3, 0.42, 0.55, 1)
+[sub_resource type="StandardMaterial3D" id="BridgeMaterial"]
+albedo_color = Color(0.7, 0.48, 0.25, 1)
+[sub_resource type="StandardMaterial3D" id="WallMaterial"]
+albedo_color = Color(0.48, 0.48, 0.52, 1)
+[sub_resource type="BoxMesh" id="WestMesh"]
+material = SubResource("GroundMaterial")
+size = Vector3(20, 1, 32)
+[sub_resource type="BoxShape3D" id="WestShape"]
+size = Vector3(20, 1, 32)
+[sub_resource type="BoxMesh" id="NorthMesh"]
+material = SubResource("GroundMaterial")
+size = Vector3(20, 1, 20)
+[sub_resource type="BoxShape3D" id="NorthShape"]
+size = Vector3(20, 1, 20)
+[sub_resource type="BoxMesh" id="SouthMesh"]
+material = SubResource("GroundMaterial")
+size = Vector3(20, 1, 4)
+[sub_resource type="BoxShape3D" id="SouthShape"]
+size = Vector3(20, 1, 4)
+[sub_resource type="BoxMesh" id="PitSideMesh"]
+material = SubResource("GroundMaterial")
+size = Vector3(6, 1, 8)
+[sub_resource type="BoxShape3D" id="PitSideShape"]
+size = Vector3(6, 1, 8)
+[sub_resource type="BoxMesh" id="HillMesh"]
+material = SubResource("HillMaterial")
+size = Vector3(6, 5, 6)
+[sub_resource type="BoxShape3D" id="HillShape"]
+size = Vector3(6, 5, 6)
+[sub_resource type="BoxMesh" id="HillRampMesh"]
+material = SubResource("HillMaterial")
+size = Vector3(6, 1, 8.944272)
+[sub_resource type="BoxShape3D" id="HillRampShape"]
+size = Vector3(6, 1, 8.944272)
+[sub_resource type="BoxMesh" id="PitMesh"]
+material = SubResource("PitMaterial")
+size = Vector3(8, 1, 8)
+[sub_resource type="BoxShape3D" id="PitShape"]
+size = Vector3(8, 1, 8)
+[sub_resource type="BoxMesh" id="PitRampMesh"]
+material = SubResource("PitMaterial")
+size = Vector3(8, 1, 5)
+[sub_resource type="BoxShape3D" id="PitRampShape"]
+size = Vector3(8, 1, 5)
+[sub_resource type="BoxMesh" id="BridgeMesh"]
+material = SubResource("BridgeMaterial")
+size = Vector3(4, 0.6, 12)
+[sub_resource type="BoxShape3D" id="BridgeShape"]
+size = Vector3(4, 0.6, 12)
+[sub_resource type="BoxMesh" id="BridgeRampMesh"]
+material = SubResource("BridgeMaterial")
+size = Vector3(8.944272, 1, 4)
+[sub_resource type="BoxShape3D" id="BridgeRampShape"]
+size = Vector3(8.944272, 1, 4)
+[sub_resource type="BoxMesh" id="CliffMesh"]
+material = SubResource("WallMaterial")
+size = Vector3(4, 5, 4)
+[sub_resource type="BoxShape3D" id="CliffShape"]
+size = Vector3(4, 5, 4)
+[sub_resource type="Environment" id="Environment"]
+background_mode = 1
+background_color = Color(0.1, 0.14, 0.2, 1)
+ambient_light_source = 3
+ambient_light_color = Color(1, 1, 1, 1)
+ambient_light_energy = 0.7
+
+[node name="TerrainTest" type="Node3D"]
+
+[node name="Geometry" type="Node3D" parent="." groups=["surface_geometry"]]
+
+[node name="WestGround" type="StaticBody3D" parent="Geometry"]
+position = Vector3(-10, -0.5, 0)
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/WestGround"]
+mesh = SubResource("WestMesh")
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WestGround"]
+shape = SubResource("WestShape")
+
+[node name="NorthGround" type="StaticBody3D" parent="Geometry"]
+position = Vector3(10, -0.5, -6)
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/NorthGround"]
+mesh = SubResource("NorthMesh")
+[node name="Collision" type="CollisionShape3D" parent="Geometry/NorthGround"]
+shape = SubResource("NorthShape")
+
+[node name="SouthGround" type="StaticBody3D" parent="Geometry"]
+position = Vector3(10, -0.5, 14)
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/SouthGround"]
+mesh = SubResource("SouthMesh")
+[node name="Collision" type="CollisionShape3D" parent="Geometry/SouthGround"]
+shape = SubResource("SouthShape")
+
+[node name="PitWestGround" type="StaticBody3D" parent="Geometry"]
+position = Vector3(3, -0.5, 8)
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/PitWestGround"]
+mesh = SubResource("PitSideMesh")
+[node name="Collision" type="CollisionShape3D" parent="Geometry/PitWestGround"]
+shape = SubResource("PitSideShape")
+
+[node name="PitEastGround" type="StaticBody3D" parent="Geometry"]
+position = Vector3(17, -0.5, 8)
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/PitEastGround"]
+mesh = SubResource("PitSideMesh")
+[node name="Collision" type="CollisionShape3D" parent="Geometry/PitEastGround"]
+shape = SubResource("PitSideShape")
+
+[node name="Hill" type="StaticBody3D" parent="Geometry"]
+position = Vector3(-10, 1.5, -11)
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Hill"]
+mesh = SubResource("HillMesh")
+[node name="Collision" type="CollisionShape3D" parent="Geometry/Hill"]
+shape = SubResource("HillShape")
+
+[node name="HillRamp" type="StaticBody3D" parent="Geometry"]
+position = Vector3(-10, 1.5527864, -4.223607)
+rotation = Vector3(0.4636476, 0, 0)
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/HillRamp"]
+mesh = SubResource("HillRampMesh")
+[node name="Collision" type="CollisionShape3D" parent="Geometry/HillRamp"]
+shape = SubResource("HillRampShape")
+
+[node name="PitFloor" type="StaticBody3D" parent="Geometry"]
+position = Vector3(10, -3.5, 8)
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/PitFloor"]
+mesh = SubResource("PitMesh")
+[node name="Collision" type="CollisionShape3D" parent="Geometry/PitFloor"]
+shape = SubResource("PitShape")
+
+[node name="PitRamp" type="StaticBody3D" parent="Geometry"]
+position = Vector3(10, -1.9, 5.7)
+rotation = Vector3(0.6435011, 0, 0)
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/PitRamp"]
+mesh = SubResource("PitRampMesh")
+[node name="Collision" type="CollisionShape3D" parent="Geometry/PitRamp"]
+shape = SubResource("PitRampShape")
+
+[node name="Bridge" type="StaticBody3D" parent="Geometry"]
+position = Vector3(6, 3.7, -6)
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Bridge"]
+mesh = SubResource("BridgeMesh")
+[node name="Collision" type="CollisionShape3D" parent="Geometry/Bridge"]
+shape = SubResource("BridgeShape")
+
+[node name="BridgeRamp" type="StaticBody3D" parent="Geometry"]
+position = Vector3(0.223607, 1.5527864, -6)
+rotation = Vector3(0, 0, 0.4636476)
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/BridgeRamp"]
+mesh = SubResource("BridgeRampMesh")
+[node name="Collision" type="CollisionShape3D" parent="Geometry/BridgeRamp"]
+shape = SubResource("BridgeRampShape")
+
+[node name="Cliff" type="StaticBody3D" parent="Geometry"]
+position = Vector3(-16, 1.5, 8)
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Cliff"]
+mesh = SubResource("CliffMesh")
+[node name="Collision" type="CollisionShape3D" parent="Geometry/Cliff"]
+shape = SubResource("CliffShape")
+
+[node name="NarrowWallLeft" type="CSGBox3D" parent="Geometry"]
+position = Vector3(-8.45, 1.5, 8)
+size = Vector3(3.1, 3, 1)
+use_collision = true
+material = SubResource("WallMaterial")
+[node name="NarrowWallRight" type="CSGBox3D" parent="Geometry"]
+position = Vector3(-2.55, 1.5, 8)
+size = Vector3(5.1, 3, 1)
+use_collision = true
+material = SubResource("WallMaterial")
+
+[node name="Light" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-60, -25, 0)
+light_energy = 1.1
+shadow_enabled = true
+[node name="Environment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment")

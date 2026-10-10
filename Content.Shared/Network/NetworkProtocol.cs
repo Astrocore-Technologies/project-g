@@ -9,7 +9,7 @@ namespace Content.Shared.Network;
 /// </summary>
 public static partial class NetworkProtocol
 {
-    private const int EntitySnapshotBytes = sizeof(ulong) + 7 * sizeof(float) + 2 * sizeof(uint);
+    private const int EntitySnapshotBytes = sizeof(ulong) + 10 * sizeof(float) + 2 * sizeof(uint);
 
     /// <summary>Unreliable messages cannot fragment; respect the peer's current transport payload budget.</summary>
     public static int SnapshotCapacity(int payloadBudget) => payloadBudget <= 7 ? 0 : Math.Clamp(
@@ -67,6 +67,7 @@ public static partial class NetworkProtocol
         WriteVector2(writer, message.Position);
         WriteMovementSettings(writer, message.Movement);
         writer.Put(message.ServerTick);
+        WriteHeight(writer, message.Height);
         return writer;
     }
 
@@ -86,6 +87,7 @@ public static partial class NetworkProtocol
         writer.Put(message.Sequence);
         writer.Put(message.ClientTick);
         WriteVector2(writer, message.Target);
+        WriteHeight(writer, message.TargetHeight); writer.Put(message.GeometryHash);
         return writer;
     }
 
@@ -129,6 +131,7 @@ public static partial class NetworkProtocol
             writer.Put(entity.LastAbilitySequence);
             WriteVector2(writer, entity.DashDestination);
             writer.Put(entity.DashSpeed);
+            WriteHeight(writer, entity.Height); WriteHeight(writer, entity.TargetHeight); WriteHeight(writer, entity.DashHeight);
         }
     }
 
@@ -225,7 +228,7 @@ public static partial class NetworkProtocol
             !reader.TryGetULong(out var entityId) ||
             !TryReadVector2(reader, out var position) ||
             !TryReadMovementSettings(reader, out var movement) ||
-            !reader.TryGetUInt(out var serverTick) ||
+            !reader.TryGetUInt(out var serverTick) || !ReadHeight(reader, out var height) ||
             playerId == 0 || entityId == 0 || reader.AvailableBytes != 0)
         {
             return false;
@@ -236,7 +239,7 @@ public static partial class NetworkProtocol
             new NetworkEntityId(entityId),
             position,
             movement,
-            serverTick);
+            serverTick, height);
         return true;
     }
 
@@ -261,14 +264,14 @@ public static partial class NetworkProtocol
 
         if (!reader.TryGetUInt(out var sequence) ||
             !reader.TryGetUInt(out var clientTick) ||
-            !TryReadVector2(reader, out var target) ||
+            !TryReadVector2(reader, out var target) || !ReadHeight(reader, out var height) || !reader.TryGetULong(out var geometryHash) ||
             sequence == 0 ||
             reader.AvailableBytes != 0)
         {
             return false;
         }
 
-        message = new MoveCommand(sequence, clientTick, target);
+        message = new MoveCommand(sequence, clientTick, target, height, geometryHash);
         return true;
     }
 
@@ -294,7 +297,8 @@ public static partial class NetworkProtocol
                 !TryReadVector2(reader, out var target) ||
                 !reader.TryGetUInt(out var abilitySequence) ||
                 !TryReadVector2(reader, out var dashDestination) ||
-                !reader.TryGetFloat(out var dashSpeed) || !float.IsFinite(dashSpeed) || dashSpeed < 0)
+                !reader.TryGetFloat(out var dashSpeed) || !float.IsFinite(dashSpeed) || dashSpeed < 0 ||
+                !ReadHeight(reader, out var height) || !ReadHeight(reader, out var targetHeight) || !ReadHeight(reader, out var dashHeight))
             {
                 return false;
             }
@@ -303,7 +307,7 @@ public static partial class NetworkProtocol
                 new NetworkEntityId(entityId),
                 position,
                 sequence,
-                target, abilitySequence, dashDestination, dashSpeed);
+                target, abilitySequence, dashDestination, dashSpeed, height, targetHeight, dashHeight);
         }
 
         if (reader.AvailableBytes != 0)

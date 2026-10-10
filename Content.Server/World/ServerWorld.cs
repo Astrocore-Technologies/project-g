@@ -69,6 +69,7 @@ public sealed partial class ServerWorld
             worldNodeDefinition = (worldNodeDefinition ?? catalog?.WorldNode ?? throw new InvalidDataException("Missing region rules."))
                 with { OpeningCells = geometry.OpeningCells };
         }
+        if (Navigation.Surface is not null) GeometryHash = Navigation.SurfaceHash;
         _pathfinder = new NavigationPathfinder(Navigation);
         if (catalog is not null)
         {
@@ -78,11 +79,11 @@ public sealed partial class ServerWorld
             Combat = new CombatSimulation(catalog, _spatial, Navigation, settings,
                 server?.Value.TickRate ?? NetworkConstants.ServerTickRate, _interest.CellSize);
             var position = new Vector2(settings.TargetX, settings.TargetZ);
-            if (!Navigation.IsWalkable(position))
+            if (!Navigation.IsOnSurface(new Vector3(position.X,settings.TargetHeight,position.Y)))
                 throw new ArgumentException("Training target must have a walkable configured position.");
             TrainingTargetId = AllocateEntityId();
             Combat.Add(TrainingTargetId, position, CombatEntityKind.TrainingTarget,
-                catalog.Swordsman is { } sword && sword.RegionId == regionId ? sword.DummyDefinitionId : null);
+                catalog.Swordsman is { } sword && sword.RegionId == regionId ? sword.DummyDefinitionId : null, height: settings.TargetHeight);
             _spatial.Add(TrainingTargetId, position);
             Abilities = new AbilitySimulation(catalog, Combat, _spatial, Navigation, settings, _interest.CellSize, StartDash);
             Abilities.StopForCast = StopForSwordCast;
@@ -102,7 +103,7 @@ public sealed partial class ServerWorld
                     throw new ArgumentException("NPC creature definition is missing.");
                 var id = AllocateEntityId();
                 var home = new Vector2(npcSettings.X, npcSettings.Z);
-                Combat.Add(id, home, CombatEntityKind.Monster, npcSettings.DefinitionId);
+                Combat.Add(id, home, CombatEntityKind.Monster, npcSettings.DefinitionId, height: npcSettings.Height);
                 _spatial.Add(id, home);
                 Npc = new NpcSimulation(id, Combat, _spatial, Navigation, _movement, npcSettings, _interest.CellSize);
             }
@@ -115,7 +116,7 @@ public sealed partial class ServerWorld
                     throw new ArgumentException("Boss must own a known area ability and creature profile.");
                 var id = AllocateEntityId();
                 var home = new Vector2(actor.X, actor.Z);
-                Combat.Add(id, home, CombatEntityKind.Boss, actor.DefinitionId);
+                Combat.Add(id, home, CombatEntityKind.Boss, actor.DefinitionId, height: actor.Height);
                 _spatial.Add(id, home);
                 Boss = new NpcSimulation(id, Combat, _spatial, Navigation, _movement, actor, _interest.CellSize,
                     area, bossSettings, new StatCalculator(catalog.Balance));
@@ -156,19 +157,20 @@ public sealed partial class ServerWorld
         {
             saved.Validate();
             if (saved.RegionId != RegionId || _playerDefinition is null || saved.ProfileId != _playerDefinition.Id ||
-                !Navigation.IsWalkable(new Vector2(saved.X, saved.Z)))
+                !Navigation.IsOnSurface(new Vector3(saved.X, saved.Surface?.Height ?? 0, saved.Z)) ||
+                (Navigation.SurfaceHash != 0 && saved.Surface?.GeometryHash != Navigation.SurfaceHash))
                 throw new InvalidDataException("Saved profile/position is incompatible with this region.");
             spawn = new(saved.X, saved.Z);
         }
         var player = new ServerPlayer(connectionId, playerId, entityId,
-            new NavigationMover(Navigation, _movement, _pathfinder, spawn));
+            new NavigationMover(Navigation, _movement, _pathfinder, spawn, saved?.Surface?.Height ?? 0));
         player.BaseStats = saved?.Stats ?? _playerDefinition?.Stats ?? default;
         _playersByConnection.Add(connectionId, player);
         _playersByEntity.Add(entityId, player);
         _spatial.Add(entityId, spawn);
         try
         {
-            Combat?.Add(entityId, spawn, CombatEntityKind.Player, baseStats: player.BaseStats);
+            Combat?.Add(entityId, spawn, CombatEntityKind.Player, baseStats: player.BaseStats, height: player.Height);
             if (Abilities is not null && _playerDefinition is { } definition)
                 Abilities.AddPlayer(entityId, definition);
             Inventory?.Add(entityId, saved?.Inventory ?? InventorySimulation.CreateStarter(_playerDefinition!),saved?.OfflineSeconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()) ?? 0);
@@ -208,7 +210,7 @@ public sealed partial class ServerWorld
             // Companions require acquisition; login and legacy saves must never grant one.
             Echoes = SavedEchoes.Empty,
             Progression = SavedProgression.Starter(definition,_progressionCatalog!),
-            X = spawn.X, Z = spawn.Y, Health = stats.MaxHealth, Mana = Math.Max(0, stats.MaxMana),
+            X = spawn.X, Z = spawn.Y, Surface = Navigation.SurfaceHash == 0 ? null : new(1, LocateHeight(spawn), Navigation.SurfaceHash), Health = stats.MaxHealth, Mana = Math.Max(0, stats.MaxMana),
             AttackCooldownSeconds = 0, Cooldowns = definition.AbilityIds.Select(id => new SavedCooldown(id, 0)).ToArray(),
             SavedAtUnixMilliseconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
         };
@@ -224,7 +226,7 @@ public sealed partial class ServerWorld
             Inventory = Inventory?.Capture(player.EntityId),
             Echoes = Echoes?.Capture(player.EntityId),
             Progression = CaptureProgression(player.EntityId),
-            X = player.Position.X, Z = player.Position.Y, Health = actor.Health,
+            X = player.Position.X, Z = player.Position.Y, Surface = Navigation.SurfaceHash == 0 ? null : new(1, player.Height, Navigation.SurfaceHash), Health = actor.Health,
             Mana = Abilities!.Mana(player.EntityId), Cooldowns = Abilities.CaptureCooldowns(player.EntityId),
             AttackCooldownSeconds = Math.Max(0, actor.ReadyAt - Combat.Time),
             Defense = Combat.CaptureDefense(player.EntityId),
@@ -265,14 +267,20 @@ public sealed partial class ServerWorld
         if (!_playersByConnection.TryGetValue(connectionId, out var player) ||
             !MovementSimulation.IsSequenceNewer(command.Sequence, player.LastProcessedSequence) ||
             (Combat is not null && Combat.Get(player.EntityId).Health <= 0) ||
+            !player.Loaded || command.GeometryHash != Navigation.SurfaceHash || !float.IsFinite(command.TargetHeight) ||
             !MovementSimulation.IsValidTarget(command.Target, _movement))
         {
             return false;
         }
 
+        if (Navigation.Surface is { } surface)
+        {
+            if (!surface.TryLocate(new(command.Target.X,command.TargetHeight,command.Target.Y),.35f,out var goal)) return false;
+            command=command with { TargetHeight=goal.Position.Y };
+        }
         Abilities?.CancelRecovery(player.EntityId);
         if (Combat?.IsRooted(player.EntityId) == true) return false;
-        if (command.Target != player.Target)
+        if (command.Target != player.Target || command.TargetHeight != player.Motion.TargetHeight)
         {
             if (player.Motion.IsDashing)
             {
@@ -283,7 +291,7 @@ public sealed partial class ServerWorld
             if (player.LastPathRequestTick == Tick)
                 return false;
             player.LastPathRequestTick = Tick;
-            if (!player.Motion.TrySetTarget(command.Target))
+            if (!player.Motion.TrySetTarget(command.Target, command.TargetHeight))
                 return false;
         }
         player.LastProcessedSequence = command.Sequence;
@@ -316,7 +324,7 @@ public sealed partial class ServerWorld
     private bool StartDash(NetworkEntityId id, Vector2 destination, float speed)
     {
         if (!_playersByEntity.TryGetValue(id, out var player) || Combat?.Get(id).Health <= 0 ||
-            !player.Motion.TryStartDash(destination, speed)) return false;
+            !StartSurfaceDash(player.Motion, destination, speed)) return false;
         _movingPlayers.Add(player.ConnectionId);
         return true;
     }
@@ -359,7 +367,7 @@ public sealed partial class ServerWorld
             var previousPosition=player.Position;
             player.Motion.Step(fixedDeltaSeconds*(player.Motion.IsDashing ? 1 : Combat?.DefenseMovement(player.EntityId) ?? 1));
             _spatial.Move(player.EntityId, player.Position);
-            Combat?.Move(player.EntityId, player.Position);
+            Combat?.Move(player.EntityId, player.Position, player.Height);
             VisitDiscoveries(player);
             RevealStarterArea(player,player.Position!=previousPosition);
             Echoes?.Wake(player.EntityId);
@@ -430,7 +438,7 @@ public sealed partial class ServerWorld
     }
 
     public PlayerSpawn CreateSpawn(ServerPlayer player) =>
-        new(player.PlayerId, player.EntityId, player.Position, _movement, Tick);
+        new(player.PlayerId, player.EntityId, player.Position, _movement, Tick, player.Height);
 
     public PlayerSpawn CreateSpawn(NetworkEntityId id) => CreateSpawn(_playersByEntity[id]);
 
@@ -477,11 +485,11 @@ public sealed partial class ServerWorld
             if (player is null)
             {
                 if (Echoes?.TryGet(id,out var echoActor) == true)
-                    view.States.Add(new(id,echoActor.Motion.Position,0,echoActor.Motion.Target));
+                    view.States.Add(new(id,echoActor.Motion.Position,0,echoActor.Motion.Target, Height: echoActor.Motion.Height, TargetHeight: echoActor.Motion.TargetHeight));
                 else if (Npc is { } npcActor && id == npcActor.Id)
-                    view.States.Add(new(id, npcActor.Motion.Position, 0, npcActor.Motion.Target));
+                    view.States.Add(new(id, npcActor.Motion.Position, 0, npcActor.Motion.Target, Height: npcActor.Motion.Height, TargetHeight: npcActor.Motion.TargetHeight));
                 else if (Boss is { } bossActor && id == bossActor.Id)
-                    view.States.Add(new(id, bossActor.Motion.Position, 0, bossActor.Motion.Target));
+                    view.States.Add(new(id, bossActor.Motion.Position, 0, bossActor.Motion.Target, Height: bossActor.Motion.Height, TargetHeight: bossActor.Motion.TargetHeight));
                 continue;
             }
             view.States.Add(new EntitySnapshot(
@@ -491,7 +499,7 @@ public sealed partial class ServerWorld
                 player.Target,
                 Combat?.Get(player.EntityId).LastAbilitySequence ?? 0,
                 player.Motion.IsDashing ? player.Motion.DashDestination : default,
-                player.Motion.DashSpeed));
+                player.Motion.DashSpeed, player.Height, player.Motion.TargetHeight, player.Motion.DashHeight));
         }
     }
 }

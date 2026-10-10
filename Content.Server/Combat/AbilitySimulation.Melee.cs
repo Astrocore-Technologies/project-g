@@ -64,7 +64,7 @@ public sealed partial class AbilitySimulation
         foreach (var id in _candidates)
         {
             if (!MeleeCandidate(effect, actor, id, out var target)) continue;
-            var next = Vector2.DistanceSquared(actor.Position, target.Position);
+            var next = Vector3.DistanceSquared(actor.Foot, target.Foot);
             if (next < distance || next == distance && (first is null || id.Value < first.Id.Value)) { first = target; distance = next; }
         }
         if (first is null) return;
@@ -76,7 +76,7 @@ public sealed partial class AbilitySimulation
 
     private bool MeleeCandidate(AbilityEffect effect, Combatant actor, NetworkEntityId id, out Combatant target)
     {
-        if (!_combat.TryGet(id, out target!) || !_combat.CanTarget(actor.Id, id) || !_grid.CanTraverse(actor.Position, target.Position)) return false;
+        if (!_combat.TryGet(id, out target!) || !_combat.CanTarget(actor.Id, id) || Vector3.DistanceSquared(actor.Foot, target.Foot) > effect.Profile.Range * effect.Profile.Range || !_grid.ClearAttack(actor.Foot, target.Foot)) return false;
         var t = effect.Definition.Melee!;
         if (t.NarrowThrust)
         {

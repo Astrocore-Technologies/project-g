@@ -9,11 +9,14 @@ internal sealed class SqliteCharacterStore : IRegionalCharacterStore
     internal string DatabasePath { get; }
     private readonly DatabaseCharacterStore _inner;
     private TaskCompletionSource? _saveGate;
+    private string? _saveOperation;
     private int _pending;
     private int _opens;
     internal bool PendingSave => Volatile.Read(ref _pending) > 0;
     internal int OpenAttempts => Volatile.Read(ref _opens);
-    internal TaskCompletionSource PauseSaves() => _saveGate = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    internal TaskCompletionSource PauseSaves(string? operation=null)
+    { _saveOperation=operation;return _saveGate = new(TaskCreationOptions.RunContinuationsAsynchronously); }
+    private bool ShouldPause(IEnumerable<WorldNodeSave> worlds) => _saveOperation is null || worlds.Any(w=>w.Audit.Any(a=>a.Operation==_saveOperation));
     private TaskCompletionSource? _travelGate;
     private int _pendingTravel;
     internal bool PendingTravel => Volatile.Read(ref _pendingTravel) != 0;
@@ -49,7 +52,7 @@ internal sealed class SqliteCharacterStore : IRegionalCharacterStore
         Interlocked.Increment(ref _pending);
         try
         {
-            if (_saveGate is { } gate) await gate.Task.WaitAsync(token);
+            if (_saveGate is { } gate && ShouldPause(worlds)) await gate.Task.WaitAsync(token);
             if (_travelGate is { } travel && worlds.SelectMany(w => w.Audit).Any(a => a.Operation == "RegionArrival"))
             { Volatile.Write(ref _pendingTravel, 1); await travel.Task.WaitAsync(token); }
             await _inner.SaveRegionalCheckpointAsync(changes, worlds, social, token);
@@ -59,7 +62,7 @@ internal sealed class SqliteCharacterStore : IRegionalCharacterStore
     public async Task SaveSocialCheckpointAsync(IReadOnlyList<CharacterSave> changes,WorldNodeSave? world,SocialSave social,CancellationToken token)
     {
         Interlocked.Increment(ref _pending);
-        try { if(_saveGate is {} gate)await gate.Task.WaitAsync(token); await _inner.SaveSocialCheckpointAsync(changes,world,social,token); }
+        try { if(_saveGate is {} gate && ShouldPause(world is null ? [] : [world]))await gate.Task.WaitAsync(token); await _inner.SaveSocialCheckpointAsync(changes,world,social,token); }
         finally { Interlocked.Decrement(ref _pending); }
     }
     public Task InitializeAsync(CancellationToken token) => _inner.InitializeAsync(token);
@@ -77,7 +80,7 @@ internal sealed class SqliteCharacterStore : IRegionalCharacterStore
         Interlocked.Increment(ref _pending);
         try
         {
-            if (_saveGate is { } gate) await gate.Task.WaitAsync(token);
+            if (_saveGate is { } gate && ShouldPause(world is null ? [] : [world])) await gate.Task.WaitAsync(token);
             await _inner.SaveWithWorldAsync(changes,world,token);
         }
         finally { Interlocked.Decrement(ref _pending); }
