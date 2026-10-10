@@ -288,7 +288,7 @@ public sealed partial class CombatSimulation
         {
             critical = _roll() < StatCalculator.CriticalProbability(actor.Stats);
             var power = _calculator.WeaponPower(actor.Weapon, actor.Stats);
-            power *= focus * (IsSwordsman(actor.Id) ? 1 + _catalog.Swordsman!.BasicDamageBonus : 1);
+            power = CombatBalanceMath.BasicPower(power, IsSwordsman(actor.Id) ? _catalog.Swordsman!.BasicDamageBonus : 0, focus);
             if (critical)
                 power = StatMath.Multiply(power, _criticalMultiplier);
             damage = Math.Min(target.Health, Defend(target,actor,direction,_calculator.ApplyDefense(power, target.Stats.PhysicalDefense),out guard));

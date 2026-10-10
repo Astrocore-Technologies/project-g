@@ -195,6 +195,8 @@ public sealed partial class ServerWorld
 
     public CharacterState CreateInitialCharacter()
     {
+        if (_developmentBalanceCharacter is { } fixture)
+            return fixture with { Inventory = fixture.Inventory! with { Items = fixture.Inventory.Items.Select(i => i with { InstanceId = Guid.NewGuid() }).ToArray() } };
         var definition = _playerDefinition ?? throw new InvalidOperationException("Persistence requires player content.");
         if (!Navigation.TryFindSpawn(_spawn, out var spawn))
             throw new InvalidOperationException("Region has no spawn.");

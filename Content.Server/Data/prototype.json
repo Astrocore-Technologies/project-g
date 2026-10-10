@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "balanceVersion": 3,
   "swordsman": {
     "professionId": 2,
@@ -246,6 +246,21 @@
     },
     {
       "id": "trail_impulse",
+      "progression": {
+        "practicePerUse": 1,
+        "levels": [
+          { "practiceToNext": 3, "powerMultiplier": 1 },
+          { "practiceToNext": 6, "powerMultiplier": 1.05 },
+          { "practiceToNext": 9, "powerMultiplier": 1.1 },
+          { "practiceToNext": 12, "powerMultiplier": 1.15 },
+          { "practiceToNext": 15, "powerMultiplier": 1.2 },
+          { "practiceToNext": 18, "powerMultiplier": 1.25 },
+          { "practiceToNext": 21, "powerMultiplier": 1.3 },
+          { "practiceToNext": 24, "powerMultiplier": 1.35 },
+          { "practiceToNext": 27, "powerMultiplier": 1.4 },
+          { "practiceToNext": 0, "powerMultiplier": 1.45 }
+        ]
+      },
       "networkId": 6,
       "kind": "Projectile",
       "power": 20,
@@ -259,6 +274,21 @@
     },
     {
       "id": "sword_thrust",
+      "progression": {
+        "practicePerUse": 1,
+        "levels": [
+          { "practiceToNext": 3, "powerMultiplier": 1 },
+          { "practiceToNext": 6, "powerMultiplier": 1.05 },
+          { "practiceToNext": 9, "powerMultiplier": 1.1 },
+          { "practiceToNext": 12, "powerMultiplier": 1.15 },
+          { "practiceToNext": 15, "powerMultiplier": 1.2 },
+          { "practiceToNext": 18, "powerMultiplier": 1.25 },
+          { "practiceToNext": 21, "powerMultiplier": 1.3 },
+          { "practiceToNext": 24, "powerMultiplier": 1.35 },
+          { "practiceToNext": 27, "powerMultiplier": 1.4 },
+          { "practiceToNext": 0, "powerMultiplier": 1.45 }
+        ]
+      },
       "networkId": 20,
       "kind": "Melee",
       "power": 0,
@@ -278,6 +308,21 @@
     },
     {
       "id": "sword_sweep",
+      "progression": {
+        "practicePerUse": 1,
+        "levels": [
+          { "practiceToNext": 3, "powerMultiplier": 1 },
+          { "practiceToNext": 6, "powerMultiplier": 1.05 },
+          { "practiceToNext": 9, "powerMultiplier": 1.1 },
+          { "practiceToNext": 12, "powerMultiplier": 1.15 },
+          { "practiceToNext": 15, "powerMultiplier": 1.2 },
+          { "practiceToNext": 18, "powerMultiplier": 1.25 },
+          { "practiceToNext": 21, "powerMultiplier": 1.3 },
+          { "practiceToNext": 24, "powerMultiplier": 1.35 },
+          { "practiceToNext": 27, "powerMultiplier": 1.4 },
+          { "practiceToNext": 0, "powerMultiplier": 1.45 }
+        ]
+      },
       "networkId": 21,
       "kind": "Melee",
       "power": 0,
@@ -297,6 +342,21 @@
     },
     {
       "id": "sword_rend",
+      "progression": {
+        "practicePerUse": 1,
+        "levels": [
+          { "practiceToNext": 3, "powerMultiplier": 1 },
+          { "practiceToNext": 6, "powerMultiplier": 1.05 },
+          { "practiceToNext": 9, "powerMultiplier": 1.1 },
+          { "practiceToNext": 12, "powerMultiplier": 1.15 },
+          { "practiceToNext": 15, "powerMultiplier": 1.2 },
+          { "practiceToNext": 18, "powerMultiplier": 1.25 },
+          { "practiceToNext": 21, "powerMultiplier": 1.3 },
+          { "practiceToNext": 24, "powerMultiplier": 1.35 },
+          { "practiceToNext": 27, "powerMultiplier": 1.4 },
+          { "practiceToNext": 0, "powerMultiplier": 1.45 }
+        ]
+      },
       "networkId": 22,
       "kind": "Melee",
       "power": 0,
@@ -316,6 +376,21 @@
     },
     {
       "id": "sword_breaker",
+      "progression": {
+        "practicePerUse": 1,
+        "levels": [
+          { "practiceToNext": 3, "powerMultiplier": 1 },
+          { "practiceToNext": 6, "powerMultiplier": 1.05 },
+          { "practiceToNext": 9, "powerMultiplier": 1.1 },
+          { "practiceToNext": 12, "powerMultiplier": 1.15 },
+          { "practiceToNext": 15, "powerMultiplier": 1.2 },
+          { "practiceToNext": 18, "powerMultiplier": 1.25 },
+          { "practiceToNext": 21, "powerMultiplier": 1.3 },
+          { "practiceToNext": 24, "powerMultiplier": 1.35 },
+          { "practiceToNext": 27, "powerMultiplier": 1.4 },
+          { "practiceToNext": 0, "powerMultiplier": 1.45 }
+        ]
+      },
       "networkId": 23,
       "kind": "Melee",
       "power": 0,
@@ -334,6 +409,21 @@
     },
     {
       "id": "sword_pommel",
+      "progression": {
+        "practicePerUse": 1,
+        "levels": [
+          { "practiceToNext": 3, "powerMultiplier": 1 },
+          { "practiceToNext": 6, "powerMultiplier": 1.05 },
+          { "practiceToNext": 9, "powerMultiplier": 1.1 },
+          { "practiceToNext": 12, "powerMultiplier": 1.15 },
+          { "practiceToNext": 15, "powerMultiplier": 1.2 },
+          { "practiceToNext": 18, "powerMultiplier": 1.25 },
+          { "practiceToNext": 21, "powerMultiplier": 1.3 },
+          { "practiceToNext": 24, "powerMultiplier": 1.35 },
+          { "practiceToNext": 27, "powerMultiplier": 1.4 },
+          { "practiceToNext": 0, "powerMultiplier": 1.45 }
+        ]
+      },
       "networkId": 24,
       "kind": "Melee",
       "power": 0,
@@ -353,6 +443,21 @@
     },
     {
       "id": "sword_hamstring",
+      "progression": {
+        "practicePerUse": 1,
+        "levels": [
+          { "practiceToNext": 3, "powerMultiplier": 1 },
+          { "practiceToNext": 6, "powerMultiplier": 1.05 },
+          { "practiceToNext": 9, "powerMultiplier": 1.1 },
+          { "practiceToNext": 12, "powerMultiplier": 1.15 },
+          { "practiceToNext": 15, "powerMultiplier": 1.2 },
+          { "practiceToNext": 18, "powerMultiplier": 1.25 },
+          { "practiceToNext": 21, "powerMultiplier": 1.3 },
+          { "practiceToNext": 24, "powerMultiplier": 1.35 },
+          { "practiceToNext": 27, "powerMultiplier": 1.4 },
+          { "practiceToNext": 0, "powerMultiplier": 1.45 }
+        ]
+      },
       "networkId": 25,
       "kind": "Melee",
       "power": 0,
@@ -372,6 +477,21 @@
     },
     {
       "id": "sword_riposte",
+      "progression": {
+        "practicePerUse": 1,
+        "levels": [
+          { "practiceToNext": 3, "powerMultiplier": 1 },
+          { "practiceToNext": 6, "powerMultiplier": 1.05 },
+          { "practiceToNext": 9, "powerMultiplier": 1.1 },
+          { "practiceToNext": 12, "powerMultiplier": 1.15 },
+          { "practiceToNext": 15, "powerMultiplier": 1.2 },
+          { "practiceToNext": 18, "powerMultiplier": 1.25 },
+          { "practiceToNext": 21, "powerMultiplier": 1.3 },
+          { "practiceToNext": 24, "powerMultiplier": 1.35 },
+          { "practiceToNext": 27, "powerMultiplier": 1.4 },
+          { "practiceToNext": 0, "powerMultiplier": 1.45 }
+        ]
+      },
       "networkId": 26,
       "kind": "Melee",
       "power": 0,
@@ -390,6 +510,21 @@
     },
     {
       "id": "sword_whirl",
+      "progression": {
+        "practicePerUse": 1,
+        "levels": [
+          { "practiceToNext": 3, "powerMultiplier": 1 },
+          { "practiceToNext": 6, "powerMultiplier": 1.05 },
+          { "practiceToNext": 9, "powerMultiplier": 1.1 },
+          { "practiceToNext": 12, "powerMultiplier": 1.15 },
+          { "practiceToNext": 15, "powerMultiplier": 1.2 },
+          { "practiceToNext": 18, "powerMultiplier": 1.25 },
+          { "practiceToNext": 21, "powerMultiplier": 1.3 },
+          { "practiceToNext": 24, "powerMultiplier": 1.35 },
+          { "practiceToNext": 27, "powerMultiplier": 1.4 },
+          { "practiceToNext": 0, "powerMultiplier": 1.45 }
+        ]
+      },
       "networkId": 27,
       "kind": "Melee",
       "power": 0,
@@ -410,6 +545,21 @@
     },
     {
       "id": "sword_breath",
+      "progression": {
+        "practicePerUse": 1,
+        "levels": [
+          { "practiceToNext": 3, "powerMultiplier": 1 },
+          { "practiceToNext": 6, "powerMultiplier": 1.05 },
+          { "practiceToNext": 9, "powerMultiplier": 1.1 },
+          { "practiceToNext": 12, "powerMultiplier": 1.15 },
+          { "practiceToNext": 15, "powerMultiplier": 1.2 },
+          { "practiceToNext": 18, "powerMultiplier": 1.25 },
+          { "practiceToNext": 21, "powerMultiplier": 1.3 },
+          { "practiceToNext": 24, "powerMultiplier": 1.35 },
+          { "practiceToNext": 27, "powerMultiplier": 1.4 },
+          { "practiceToNext": 0, "powerMultiplier": 1.45 }
+        ]
+      },
       "networkId": 28,
       "kind": "Recovery",
       "power": 0,
@@ -429,6 +579,21 @@
     },
     {
       "id": "sword_finisher",
+      "progression": {
+        "practicePerUse": 1,
+        "levels": [
+          { "practiceToNext": 3, "powerMultiplier": 1 },
+          { "practiceToNext": 6, "powerMultiplier": 1.05 },
+          { "practiceToNext": 9, "powerMultiplier": 1.1 },
+          { "practiceToNext": 12, "powerMultiplier": 1.15 },
+          { "practiceToNext": 15, "powerMultiplier": 1.2 },
+          { "practiceToNext": 18, "powerMultiplier": 1.25 },
+          { "practiceToNext": 21, "powerMultiplier": 1.3 },
+          { "practiceToNext": 24, "powerMultiplier": 1.35 },
+          { "practiceToNext": 27, "powerMultiplier": 1.4 },
+          { "practiceToNext": 0, "powerMultiplier": 1.45 }
+        ]
+      },
       "networkId": 29,
       "kind": "Melee",
       "power": 0,

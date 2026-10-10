@@ -91,10 +91,10 @@ public sealed partial class AbilitySimulation
     private void TechniqueHit(AbilityEffect effect, Combatant target, uint tick, double focus)
     {
         var t = effect.Definition.Melee!;
-        var factor = t.ExecuteThreshold > 0 && target.Health <= target.Stats.MaxHealth * t.ExecuteThreshold ? t.ExecuteFactor : t.DamageFactor;
         var basePower = _combat.SwordPower(effect.ActorId);
         var level = PowerFactor(_actors[effect.ActorId], effect.Profile.Id);
-        var damage = _combat.ApplySwordDamage(effect.ActorId, target.Id, effect.Direction, basePower * factor * level * focus, t.ArmorIgnore, out var guard);
+        var power = CombatBalanceMath.TechniquePower(basePower, t, target.Health, target.Stats.MaxHealth, level, focus);
+        var damage = _combat.ApplySwordDamage(effect.ActorId, target.Id, effect.Direction, power, t.ArmorIgnore, out var guard);
         _hits.Add(new(effect.Id, effect.ActorId, target.Id, tick, damage, target.Health, guard));
         _combat.SwordHit(effect.ActorId, basic: false, success: damage > 0);
         if (damage <= 0) return;

@@ -33,9 +33,9 @@ public sealed partial class ServerWorld
         {
             if (!catalog.Abilities.TryGetValue(skill.DefinitionId,out var definition) ||
                 (!_playerDefinition!.AbilityIds.Contains(skill.DefinitionId) && definition.NetworkId != balance.DiscoverySkillId && !HasProfessionSkillSource(value,skill.DefinitionId)) ||
-                skill.Level > balance.SkillLevelCap || (skill.Level == balance.SkillLevelCap ? skill.Practice != 0 : skill.Practice >= balance.PracticeThreshold(skill.Level)) ||
+                !catalog.SkillProgressions[skill.DefinitionId].Accepts(skill.Level, skill.Practice) ||
                 (definition.Kind == AbilityKind.Dash && skill.Slot != 0))
-                throw new InvalidDataException("Saved skill/content requires migration.");
+                throw new InvalidDataException($"Saved skill '{skill.DefinitionId}' level/practice/source requires content migration.");
         }
         if (value.Skills.Count(s => catalog.Abilities[s.DefinitionId].Kind == AbilityKind.Dash) > 1 ||
             value.Skills.Any(s => catalog.Abilities[s.DefinitionId].NetworkId == balance.DiscoverySkillId && value.Discoveries == 0))
@@ -47,7 +47,7 @@ public sealed partial class ServerWorld
         var value = _progression[id]; var catalog = _progressionCatalog!; var balance = catalog.Progression;
         var stats = _playersByEntity[id].BaseStats;
         var skills = value.Skills.Select(s => new SkillProgress(catalog.Abilities[s.DefinitionId].NetworkId,s.Level,s.Practice,
-            s.Level == balance.SkillLevelCap ? 0 : balance.PracticeThreshold(s.Level),s.Slot,false)).ToList();
+            catalog.SkillProgressions[s.DefinitionId].PracticeThreshold(s.Level),s.Slot,false)).ToList();
         if (skills.Count < NetworkConstants.MaxLearnedSkills && !skills.Any(s => s.Id == balance.DiscoverySkillId)) skills.Add(new(balance.DiscoverySkillId,0,0,0,0,value.Discoveries != 0));
         return new(id,tick,value.Level,value.Experience,value.Level == balance.LevelCap ? 0 : balance.LevelThreshold(value.Level),value.StatPoints,value.Discoveries,
             [stats.Strength,stats.Agility,stats.Vitality,stats.Intelligence,stats.Dexterity,stats.Luck],skills.ToArray());
@@ -112,11 +112,9 @@ public sealed partial class ServerWorld
             if (!_progression.TryGetValue(use.ActorId,out var value)) continue;
             var index = Array.FindIndex(value.Skills,s => catalog.Abilities[s.DefinitionId].NetworkId == use.SkillId);
             if (index < 0) continue;
-            var skill = value.Skills[index]; var balance = catalog.Progression;
-            if (skill.Level == balance.SkillLevelCap) continue;
-            var practice = skill.Practice + 1; var level = skill.Level;
-            if (practice >= balance.PracticeThreshold(level)) { practice -= balance.PracticeThreshold(level); level++; }
-            if (level == balance.SkillLevelCap) practice = 0;
+            var skill = value.Skills[index]; var curve = catalog.SkillProgressions[skill.DefinitionId];
+            if (skill.Level == curve.LevelCap) continue;
+            var (level, practice) = curve.AwardPractice(skill.Level, skill.Practice);
             var skills = (SavedSkill[])value.Skills.Clone(); skills[index] = skill with { Level = level, Practice = practice };
             _progression[use.ActorId] = value with { Skills = skills };
             if (level != skill.Level) Abilities.ApplyProgression(use.ActorId,_progression[use.ActorId]);

@@ -384,7 +384,7 @@ public sealed partial class AbilitySimulation
         if (damage > 0 && target.Kind!=CombatEntityKind.Player && _practiced.Add(effect.Id)) _practice.Add((effect.ActorId,effect.Profile.Id));
     }
 
-    private double PowerFactor(AbilityActor actor, ushort id) => 1 + (actor.Levels.GetValueOrDefault(id,1) - 1) * _catalog.Progression.PowerPerSkillLevel;
+    private double PowerFactor(AbilityActor actor, ushort id) => _catalog.SkillProgressionByNetworkId[id].PowerFactor(actor.Levels.GetValueOrDefault(id, 1));
     internal void ApplyProgression(NetworkEntityId id, SavedProgression saved)
     {
         var old = _actors[id];

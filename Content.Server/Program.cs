@@ -99,10 +99,24 @@ if (!validateContentOnly)
 }
 
 // Parse once before opening the UDP port. Definitions remain server-only and immutable.
-var catalog = ContentCatalog.LoadFile(Path.Combine(AppContext.BaseDirectory, "Data", "prototype.json"));
+var balanceContent = builder.Configuration["Balance:ContentPath"];
+var balanceBuild = builder.Configuration["Balance:BuildPath"];
+var balanceRegions = builder.Configuration["Balance:RegionsPath"];
+if ((balanceContent is not null || balanceBuild is not null || balanceRegions is not null) && !builder.Environment.IsDevelopment())
+    throw new InvalidOperationException("Local balance overrides require Development.");
+var catalog = ContentCatalog.LoadFile(balanceContent ?? Path.Combine(AppContext.BaseDirectory, "Data", "prototype.json"));
 builder.Services.AddSingleton(catalog);
-builder.Services.AddSingleton(Content.Server.Regions.RegionalWorlds.Load(
-    Path.Combine(AppContext.BaseDirectory, "Data", "regions.json"), builder.Configuration, catalog));
+var regionalWorlds = Content.Server.Regions.RegionalWorlds.Load(
+    balanceRegions ?? Path.Combine(AppContext.BaseDirectory, "Data", "regions.json"), builder.Configuration, catalog);
+if (balanceBuild is not null)
+{
+    var presetBytes = File.ReadAllBytes(balanceBuild);
+    if (presetBytes.Length > 8192) throw new InvalidDataException("Balance build exceeds size budget.");
+    var preset = System.Text.Json.JsonSerializer.Deserialize<Content.Server.Development.BalanceTestBuild>(presetBytes)
+        ?? throw new InvalidDataException("Missing balance build.");
+    regionalWorlds.StartingWorld.ConfigureBalanceSandbox(preset);
+}
+builder.Services.AddSingleton(regionalWorlds);
 builder.Services.AddSingleton(services =>
 {
     var world = services.GetRequiredService<ServerWorld>();

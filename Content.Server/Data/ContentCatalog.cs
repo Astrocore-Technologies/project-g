@@ -16,7 +16,7 @@ public sealed class ContentCatalog
     public Content.Server.Quests.DeliveryQuestDefinition? DeliveryQuest {get;}
     public Content.Server.Pvp.PvpDefinition? Pvp {get;}
     public Content.Server.Economy.EconomyDefinition? Economy { get; }
-    public const int SchemaVersion = 3;
+    public const int SchemaVersion = 4;
     public const int MaxFileBytes = 4 * 1024 * 1024;
     private const int MaxDefinitions = 4096;
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -30,7 +30,7 @@ public sealed class ContentCatalog
 
     private ContentCatalog(ContentDocument document)
     {
-        if (document.SchemaVersion != SchemaVersion || document.BalanceVersion <= 0)
+        if (document.SchemaVersion is not (3 or SchemaVersion) || document.BalanceVersion <= 0)
             throw new ArgumentException("Unsupported schemaVersion or invalid balanceVersion.");
         ArgumentNullException.ThrowIfNull(document.Balance);
         document.Balance.Validate();
@@ -70,8 +70,14 @@ public sealed class ContentCatalog
             Positive(weapon.AttackIntervalSeconds, $"weapon {weapon.Id}.attackIntervalSeconds");
         }
         var abilityIds = new HashSet<ushort>();
+        var defaultSkillCurve = Content.Server.Progression.SkillProgressionDefinition.FromDefaults(Progression);
+        var skillCurves = new Dictionary<string, Content.Server.Progression.SkillProgressionDefinition>(StringComparer.Ordinal);
         foreach (var ability in Abilities.Values)
         {
+            Check(document.SchemaVersion >= 4 || ability.Progression is null, $"ability {ability.Id}: individual progression requires schemaVersion 4");
+            var curve = ability.Progression ?? defaultSkillCurve;
+            curve.Validate(ability.Id);
+            skillCurves.Add(ability.Id, curve);
             Check(ability.NetworkId != 0 && abilityIds.Add(ability.NetworkId), $"ability {ability.Id}: duplicate/zero networkId");
             Check(Enum.IsDefined(ability.Kind), $"ability {ability.Id}: unknown kind");
             NonNegative(ability.Power, $"ability {ability.Id}.power");
@@ -88,6 +94,8 @@ public sealed class ContentCatalog
             ability.Melee?.Validate();
             NonNegative(ability.MagicAttackScale, $"ability {ability.Id}.magicAttackScale");
         }
+        SkillProgressions = skillCurves.ToFrozenDictionary(StringComparer.Ordinal);
+        SkillProgressionByNetworkId = Abilities.Values.ToFrozenDictionary(a => a.NetworkId, a => skillCurves[a.Id]);
         Check(Abilities.Values.Any(a => a.NetworkId == Progression.DiscoverySkillId && a.Kind != AbilityKind.Dash), "progression: unknown discovery skill");
         if (document.Professions is null || document.Professions.Length > 8) throw new ArgumentException("Invalid profession budget.");
         var professionIds = new HashSet<ushort>();
@@ -131,6 +139,8 @@ public sealed class ContentCatalog
     public StatBalance Balance { get; }
     public FrozenDictionary<string, WeaponDefinition> Weapons { get; }
     public FrozenDictionary<string, AbilityDefinition> Abilities { get; }
+    public FrozenDictionary<string, Content.Server.Progression.SkillProgressionDefinition> SkillProgressions { get; }
+    public FrozenDictionary<ushort, Content.Server.Progression.SkillProgressionDefinition> SkillProgressionByNetworkId { get; }
     public FrozenDictionary<string, CreatureDefinition> Creatures { get; }
     public FrozenDictionary<string, ItemDefinition> Items { get; }
 

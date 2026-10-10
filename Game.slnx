@@ -4,5 +4,7 @@
   <Project Path="Content.Tests/Content.Tests.csproj" />
   <Project Path="Content.Shared/Content.Shared.csproj" />
   <Project Path="Content.Client/Project-G.csproj" />
+  <Project Path="tools/Balance.Core/Balance.Core.csproj" />
+  <Project Path="tools/BalanceStudio/BalanceStudio.csproj" />
 
 </Solution>

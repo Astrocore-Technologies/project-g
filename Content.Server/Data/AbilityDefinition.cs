@@ -17,4 +17,5 @@ public sealed record AbilityDefinition
     public double StaminaCost { get; init; }
     public MeleeTechnique? Melee { get; init; }
     public bool Interruptible { get; init; } = true;
+    public Content.Server.Progression.SkillProgressionDefinition? Progression { get; init; }
 }
