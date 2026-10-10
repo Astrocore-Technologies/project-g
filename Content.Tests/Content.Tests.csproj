@@ -20,6 +20,7 @@
     <ProjectReference Include="..\Content.Server\Content.Server.csproj" />
     <ProjectReference Include="..\Content.Shared\Content.Shared.csproj" />
     <ProjectReference Include="..\tools\Balance.Core\Balance.Core.csproj" />
+    <ProjectReference Include="..\tools\NavigationStudy\NavigationStudy.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="Fixtures/*.json" CopyToOutputDirectory="PreserveNewest" />

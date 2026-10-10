@@ -15,6 +15,10 @@ run/main_scene="res://Scenes/App/MainMenu.tscn"
 config/features=PackedStringArray("4.7", "C#", "Mobile")
 config/icon="res://icon.svg"
 
+[debug_draw_3d]
+
+settings/addon_root_folder="res://addons/debug_draw_3d"
+
 [display]
 
 window/size/viewport_width=1280
@@ -26,6 +30,10 @@ window/stretch/aspect="expand"
 [dotnet]
 
 project/assembly_name="Project-G"
+
+[filesystem]
+
+import/blender/enabled=false
 
 [physics]
 

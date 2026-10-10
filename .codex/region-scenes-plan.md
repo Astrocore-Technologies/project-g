@@ -1,8 +1,8 @@
 # Project G — от вертикального среза к полноценной игре
 
-Статус: **направление R0 принято; R1 реализован, ожидает проверки пользователя**.
+Статус: **направление R0 принято; R1/R2 реализованы, ожидают проверки пользователя. Рельеф и общие подземелья приняты 2026-10-10, runtime ещё плоский**.
 Подготовлен 2026-10-09 по [концепту регионов](https://app.notion.com/p/3f38867306b181b59c0cf8aa6df42dca).
-Архитектура: [ADR 0012](../docs/architecture/0012-scene-authored-regions.md).
+Архитектура: [ADR 0012](../docs/architecture/0012-scene-authored-regions.md); рельеф и общие подземелья — [ADR 0014](../docs/architecture/0014-terrain-and-shared-dungeons.md).
 Gameplay: [зафиксированный контракт](../docs/design/gameplay-contract.md).
 История прототипа: [основной план](plan.md), этапы 0–18.
 
@@ -65,6 +65,7 @@ Runtime actors/VFX могут создаваться кодом из подго�
 | D2 | Плоская текущая сетка только для demo; крупная navigation после spike | До R2 |
 | D3 | Поведение travel при combat tag и задержке загрузки | До R4 |
 | D4 | Наполнение/масштаб/арт первого полноценного региона | До G1 |
+| D5 | Рельеф внутри региона; подземелья/глубокие уровни — общие регионы через физические входы; несколько поверхностей для мостов | Направление принято 2026-10-10 в ADR 0014; backend определяется в R7 |
 
 D3 остаётся открытым: сейчас прототип разрешает travel с combat tag. Предложение
 временно запрещать начало такого travel — не принятое правило. Если сохраняем
@@ -194,14 +195,22 @@ content mismatch, clean build/tests/validation и Godot network smoke.
 сервер без потерь. После R6 pipeline малых регионов готов, масштабирование ещё не доказано.
 
 ### R7. Исследовать navigation большого региона
+Статус первого блока, 2026-10-10: тестовая сцена и оба .NET кандидата реализованы;
+41 navigation test, headless bake и графический preview прошли. Проверены склон,
+впадина, мост/нижний проход, радиус прохода, обрыв, patch и stale revision.
+[Отчёт и F6 preview](../docs/development/navigation-study.md),
+[предложение ADR 0015](../docs/architecture/0015-navigation-study-recommendation.md).
+Рекомендуется polygon backend. Приёмка, окончательные limits, большая связная
+карта, live bandwidth и Mobile замеры ещё впереди; весь R7 не закрыт.
 
 Цель: выбрать backend по измерениям, не расширять demo grid вслепую.
 
 - Подготовить representative blockout, длинные маршруты, узкие проходы и dynamic patch.
+- Обязательные fixtures ADR 0014: холм со склоном, впадина, обрыв и мост с двумя поверхностями на одинаковых X/Z. Сравнение только плоских карт недостаточно.
 - Сравнить bounded tiled grid + межтайловый граф с offline exported polygon navigation.
 - Измерить export size, query CPU/allocations, snapshot/nav bandwidth и память клиента.
 - Проверить radius, unreachable goals, prediction parity и stale revisions.
-- Решить coordinate/height semantics до многоэтажных/вертикальных локаций.
+- На основе принятого ADR 0014 определить coordinate/surface identity, bounded height queries, connectivity, clearance и отдельные combat LOS queries до вертикального контента.
 - Оформить отдельный ADR с выбранным вариантом, limits и migration strategy.
 
 Результат — измерения и выбор, не production rewrite. Приёмка: пользователь принимает
@@ -214,6 +223,8 @@ backend и ограничения. Если backend не подходит, ко�
 
 - Реализовать принятый R7 backend, chunk/tile budgets и bounded delivery/cache.
 - Согласовать client prediction с server route/collision semantics.
+- Первый vertical slice ADR 0014: клик на поверхность, подъём/спуск по склону, два клиента и NPC, snapshots/reconnect. Затем высотные боевые проверки и мост/нижний проход без ударов сквозь перекрытие.
+- До публикации вертикальных карт согласованно обновить координаты actors/items/placements и relevant wire/save models; не подменять server height клиентским terrain sampling.
 - Выделить versioned exploration по character/region/map revision, paged хранение.
 - Убрать ограничение одной OtherExplorations через явную миграцию, не безлимитный DTO.
 - Перенести legacy fog/navigation на известных mappings; неизвестные revisions fail closed.
@@ -318,6 +329,8 @@ Mobile profile выполняется на реальном согласован
 | Dynamic nav и visual согласованы | R5: server state + два клиента + restart |
 | Старый персонаж и мир сохранены | R6/R8: versioned SQLite fixtures, PG parity |
 | Большая карта и много регионов | R7/R8: benchmark + bounded network + fog migration |
+| Склон/впадина/мост и боевые перекрытия | R7/R8: geometry/path/LOS fixtures, prediction parity, два клиента + NPC + reconnect |
+| Открытое подземелье — одна территория | После R4/R6: разные группы через входы видят одни actors/items/world state; возврат и loading recovery |
 | Игровой цикл и читаемость | G1–G5: reproducible playtest checklist |
 | Capacity/security/операционная готовность | G6/G7: measured load + Staging drills |
 

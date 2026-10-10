@@ -1,0 +1,338 @@
+{
+  "Runtime": "10.0.3",
+  "Cpu": "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel",
+  "TieredCompilation": "0",
+  "Revision": "CEB41E1A8D5E1032",
+  "TimestampUtc": "2026-10-10T12:31:32.9244971Z",
+  "CellSize": 0.5,
+  "TileCells": 16,
+  "Note": "Release microbenchmark, warmed sequential queries; 32 disconnected copies model resident AOI data. Managed memory excludes Godot/native/rendering. No live network or server capacity claim.",
+  "Results": [
+    {
+      "Copies": 1,
+      "MeshBuildMs": 15.291,
+      "PolygonBuildMs": 6.5442,
+      "GridBuildMs": 26.3745,
+      "MeshManagedBytes": 45192,
+      "PolygonManagedBytes": 21216,
+      "GridManagedBytes": 1416600,
+      "ExportJsonBytes": 25116,
+      "PolygonNodes": 162,
+      "PolygonDirectedLinks": 356,
+      "GridNodes": 4818,
+      "GridDirectedLinks": 18456,
+      "TileComponents": 43,
+      "PolygonDiagnosticBinaryBytes": 8300,
+      "GridDiagnosticBinaryBytes": 374952,
+      "Measurements": [
+        {
+          "Backend": "polygon",
+          "Scenario": "Hill",
+          "Status": "Success",
+          "MicrosecondsPerQuery": 0.98575,
+          "BytesAllocatedPerQuery": 0,
+          "RouteLength": 18.818327,
+          "Expanded": 25
+        },
+        {
+          "Backend": "grid",
+          "Scenario": "Hill",
+          "Status": "Success",
+          "MicrosecondsPerQuery": 3.82365,
+          "BytesAllocatedPerQuery": 0,
+          "RouteLength": 14.697471,
+          "Expanded": 30
+        },
+        {
+          "Backend": "polygon",
+          "Scenario": "Pit",
+          "Status": "Success",
+          "MicrosecondsPerQuery": 1.4469,
+          "BytesAllocatedPerQuery": 0,
+          "RouteLength": 17.971735,
+          "Expanded": 35
+        },
+        {
+          "Backend": "grid",
+          "Scenario": "Pit",
+          "Status": "Success",
+          "MicrosecondsPerQuery": 2.6888,
+          "BytesAllocatedPerQuery": 0,
+          "RouteLength": 9.699303,
+          "Expanded": 19
+        },
+        {
+          "Backend": "polygon",
+          "Scenario": "BridgeTop",
+          "Status": "Success",
+          "MicrosecondsPerQuery": 0.41195,
+          "BytesAllocatedPerQuery": 0,
+          "RouteLength": 8.000481,
+          "Expanded": 7
+        },
+        {
+          "Backend": "grid",
+          "Scenario": "BridgeTop",
+          "Status": "Success",
+          "MicrosecondsPerQuery": 2.76585,
+          "BytesAllocatedPerQuery": 0,
+          "RouteLength": 8.707108,
+          "Expanded": 19
+        },
+        {
+          "Backend": "polygon",
+          "Scenario": "BridgeUnder",
+          "Status": "Success",
+          "MicrosecondsPerQuery": 0.31155,
+          "BytesAllocatedPerQuery": 0,
+          "RouteLength": 14.406661,
+          "Expanded": 2
+        },
+        {
+          "Backend": "grid",
+          "Scenario": "BridgeUnder",
+          "Status": "Success",
+          "MicrosecondsPerQuery": 2.35665,
+          "BytesAllocatedPerQuery": 0,
+          "RouteLength": 8.707108,
+          "Expanded": 19
+        },
+        {
+          "Backend": "polygon",
+          "Scenario": "BridgeClimb",
+          "Status": "Success",
+          "MicrosecondsPerQuery": 2.3912,
+          "BytesAllocatedPerQuery": 0,
+          "RouteLength": 32.15841,
+          "Expanded": 64
+        },
+        {
+          "Backend": "grid",
+          "Scenario": "BridgeClimb",
+          "Status": "Success",
+          "MicrosecondsPerQuery": 23.77995,
+          "BytesAllocatedPerQuery": 0,
+          "RouteLength": 27.591208,
+          "Expanded": 368
+        },
+        {
+          "Backend": "polygon",
+          "Scenario": "NarrowPassage",
+          "Status": "Success",
+          "MicrosecondsPerQuery": 0.14275,
+          "BytesAllocatedPerQuery": 0,
+          "RouteLength": 4,
+          "Expanded": 1
+        },
+        {
+          "Backend": "grid",
+          "Scenario": "NarrowPassage",
+          "Status": "Success",
+          "MicrosecondsPerQuery": 1.37425,
+          "BytesAllocatedPerQuery": 0,
+          "RouteLength": 4.7071066,
+          "Expanded": 11
+        },
+        {
+          "Backend": "polygon",
+          "Scenario": "Cliff",
+          "Status": "Unreachable",
+          "MicrosecondsPerQuery": 4.76035,
+          "BytesAllocatedPerQuery": 0,
+          "RouteLength": 0,
+          "Expanded": 156
+        },
+        {
+          "Backend": "grid",
+          "Scenario": "Cliff",
+          "Status": "Unreachable",
+          "MicrosecondsPerQuery": 1.7986,
+          "BytesAllocatedPerQuery": 0,
+          "RouteLength": 0,
+          "Expanded": 32
+        },
+        {
+          "Backend": "polygon",
+          "Scenario": "LongRoute",
+          "Status": "Success",
+          "MicrosecondsPerQuery": 2.69435,
+          "BytesAllocatedPerQuery": 0,
+          "RouteLength": 56.043995,
+          "Expanded": 85
+        },
+        {
+          "Backend": "grid",
+          "Scenario": "LongRoute",
+          "Status": "Success",
+          "MicrosecondsPerQuery": 73.89765,
+          "BytesAllocatedPerQuery": 0,
+          "RouteLength": 65.70711,
+          "Expanded": 925
+        }
+      ]
+    },
+    {
+      "Copies": 32,
+      "MeshBuildMs": 3.5646,
+      "PolygonBuildMs": 0.7472,
+      "GridBuildMs": 186.7434,
+      "MeshManagedBytes": 1468208,
+      "PolygonManagedBytes": 638168,
+      "GridManagedBytes": 40652856,
+      "ExportJsonBytes": 749138,
+      "PolygonNodes": 5184,
+      "PolygonDirectedLinks": 11392,
+      "GridNodes": 154176,
+      "GridDirectedLinks": 590800,
+      "TileComponents": 1352,
+      "PolygonDiagnosticBinaryBytes": 265228,
+      "GridDiagnosticBinaryBytes": 12000664,
+      "Measurements": [
+        {
+          "Backend": "polygon",
+          "Scenario": "Hill",
+          "Status": "Success",
+          "MicrosecondsPerQuery": 0.9833,
+          "BytesAllocatedPerQuery": 0,
+          "RouteLength": 18.818327,
+          "Expanded": 25
+        },
+        {
+          "Backend": "grid",
+          "Scenario": "Hill",
+          "Status": "Success",
+          "MicrosecondsPerQuery": 4.442,
+          "BytesAllocatedPerQuery": 0,
+          "RouteLength": 14.697471,
+          "Expanded": 30
+        },
+        {
+          "Backend": "polygon",
+          "Scenario": "Pit",
+          "Status": "Success",
+          "MicrosecondsPerQuery": 1.3733,
+          "BytesAllocatedPerQuery": 0,
+          "RouteLength": 17.971735,
+          "Expanded": 35
+        },
+        {
+          "Backend": "grid",
+          "Scenario": "Pit",
+          "Status": "Success",
+          "MicrosecondsPerQuery": 2.85105,
+          "BytesAllocatedPerQuery": 0,
+          "RouteLength": 9.699303,
+          "Expanded": 19
+        },
+        {
+          "Backend": "polygon",
+          "Scenario": "BridgeTop",
+          "Status": "Success",
+          "MicrosecondsPerQuery": 0.4167,
+          "BytesAllocatedPerQuery": 0,
+          "RouteLength": 8.000481,
+          "Expanded": 7
+        },
+        {
+          "Backend": "grid",
+          "Scenario": "BridgeTop",
+          "Status": "Success",
+          "MicrosecondsPerQuery": 2.8927000000000005,
+          "BytesAllocatedPerQuery": 0,
+          "RouteLength": 8.707108,
+          "Expanded": 19
+        },
+        {
+          "Backend": "polygon",
+          "Scenario": "BridgeUnder",
+          "Status": "Success",
+          "MicrosecondsPerQuery": 0.2827,
+          "BytesAllocatedPerQuery": 0,
+          "RouteLength": 14.406661,
+          "Expanded": 2
+        },
+        {
+          "Backend": "grid",
+          "Scenario": "BridgeUnder",
+          "Status": "Success",
+          "MicrosecondsPerQuery": 2.5403,
+          "BytesAllocatedPerQuery": 0,
+          "RouteLength": 8.707108,
+          "Expanded": 19
+        },
+        {
+          "Backend": "polygon",
+          "Scenario": "BridgeClimb",
+          "Status": "Success",
+          "MicrosecondsPerQuery": 2.38185,
+          "BytesAllocatedPerQuery": 0,
+          "RouteLength": 32.15841,
+          "Expanded": 64
+        },
+        {
+          "Backend": "grid",
+          "Scenario": "BridgeClimb",
+          "Status": "Success",
+          "MicrosecondsPerQuery": 24.3797,
+          "BytesAllocatedPerQuery": 0,
+          "RouteLength": 27.591208,
+          "Expanded": 368
+        },
+        {
+          "Backend": "polygon",
+          "Scenario": "NarrowPassage",
+          "Status": "Success",
+          "MicrosecondsPerQuery": 0.14235,
+          "BytesAllocatedPerQuery": 0,
+          "RouteLength": 4,
+          "Expanded": 1
+        },
+        {
+          "Backend": "grid",
+          "Scenario": "NarrowPassage",
+          "Status": "Success",
+          "MicrosecondsPerQuery": 1.4638,
+          "BytesAllocatedPerQuery": 0,
+          "RouteLength": 4.7071066,
+          "Expanded": 11
+        },
+        {
+          "Backend": "polygon",
+          "Scenario": "Cliff",
+          "Status": "Unreachable",
+          "MicrosecondsPerQuery": 4.93615,
+          "BytesAllocatedPerQuery": 0,
+          "RouteLength": 0,
+          "Expanded": 156
+        },
+        {
+          "Backend": "grid",
+          "Scenario": "Cliff",
+          "Status": "Unreachable",
+          "MicrosecondsPerQuery": 1.7549,
+          "BytesAllocatedPerQuery": 0,
+          "RouteLength": 0,
+          "Expanded": 32
+        },
+        {
+          "Backend": "polygon",
+          "Scenario": "LongRoute",
+          "Status": "Success",
+          "MicrosecondsPerQuery": 2.7521,
+          "BytesAllocatedPerQuery": 0,
+          "RouteLength": 56.043995,
+          "Expanded": 85
+        },
+        {
+          "Backend": "grid",
+          "Scenario": "LongRoute",
+          "Status": "Success",
+          "MicrosecondsPerQuery": 73.1285,
+          "BytesAllocatedPerQuery": 0,
+          "RouteLength": 65.70711,
+          "Expanded": 925
+        }
+      ]
+    }
+  ]
+}

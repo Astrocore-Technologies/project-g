@@ -6,5 +6,7 @@
   <Project Path="Content.Client/Project-G.csproj" />
   <Project Path="tools/Balance.Core/Balance.Core.csproj" />
   <Project Path="tools/BalanceStudio/BalanceStudio.csproj" />
+  <Project Path="tools/NavigationStudy/NavigationStudy.csproj" />
+  <Project Path="tools/NavigationStudy.Bench/NavigationStudy.Bench.csproj" />
 
 </Solution>
