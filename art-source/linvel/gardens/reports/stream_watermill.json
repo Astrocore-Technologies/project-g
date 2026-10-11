@@ -1,0 +1,73 @@
+{
+  "id": "stream_watermill",
+  "label": "Мельничный дом",
+  "triangles": 58742,
+  "bounds": [
+    [
+      -5.069999694824219,
+      6.449999809265137
+    ],
+    [
+      -6.845000267028809,
+      4.15500020980835
+    ],
+    [
+      -7.5,
+      9.640000343322754
+    ]
+  ],
+  "parts": 1935,
+  "checked_joints": [
+    {
+      "a": "FieldstoneFooting",
+      "b": "LimewashedWalls",
+      "axis": 2,
+      "overlap_m": 0.39
+    },
+    {
+      "a": "Corner_-4.6-3.7",
+      "b": "LimewashedWalls",
+      "axis": 0,
+      "overlap_m": 0.13
+    },
+    {
+      "a": "Corner_-4.63.7",
+      "b": "LimewashedWalls",
+      "axis": 0,
+      "overlap_m": 0.13
+    },
+    {
+      "a": "Corner_4.6-3.7",
+      "b": "LimewashedWalls",
+      "axis": 0,
+      "overlap_m": 0.13
+    },
+    {
+      "a": "Corner_4.63.7",
+      "b": "LimewashedWalls",
+      "axis": 0,
+      "overlap_m": 0.13
+    },
+    {
+      "a": "PorchDeck",
+      "b": "PorchPost-3.128",
+      "axis": 2,
+      "overlap_m": 0.27
+    },
+    {
+      "a": "PorchDeck",
+      "b": "PorchPost3.128",
+      "axis": 2,
+      "overlap_m": 0.27
+    },
+    {
+      "a": "WheelAxle",
+      "b": "LimewashedWalls",
+      "axis": 0,
+      "overlap_m": 0.35
+    }
+  ],
+  "uv": "PaintedUV",
+  "origin": "ground",
+  "materials": 1
+}

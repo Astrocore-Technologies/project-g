@@ -362,8 +362,8 @@ func build() -> Dictionary:
 	root.set_meta("region_id","linvel_beech")
 	root.set_meta("surface_cell_size",0.5)
 	root.set_meta("surface_cell_height",0.05)
-	root.set_meta("surface_detail_distance",24.0)
-	root.set_meta("surface_detail_error",4.0)
+	root.set_meta("surface_detail_distance",6.0)
+	root.set_meta("surface_detail_error",3.0)
 	root.set_meta("main_route_metres",profile.route_metres)
 	root.set_meta("style","Stylized Hand-Painted Anime 3D")
 	make_materials()
@@ -375,6 +375,7 @@ func build() -> Dictionary:
 	repair()
 	conform_to_ground()
 	polish_clearings()
+	refresh_collisions()
 	return {"trees":tree_count,"undergrowth":detail_count,"opaque_colliders":obstacles,"route_metres":profile.route_metres,"nodes":root.find_children("*","",true,false).size()}
 
 func preview_asset() -> Dictionary:
@@ -493,7 +494,19 @@ func conform_to_ground() -> Dictionary:
 			var box: BoxShape3D = body.get_node("Collision").shape
 			if box.size.x < 20:
 				body.position.y = height(body.position.x,body.position.z)+box.size.y/2
-	return {"conformed_models":count}
+	var collision_result: Dictionary = refresh_collisions()
+	return {"conformed_models":count,"collisions":collision_result}
+
+func refresh_collisions() -> Dictionary:
+	root = get_parent() as Node3D
+	# Refresh only bound structural blockers. Explicit editor action; runtime
+	# never invokes authoring helpers or regenerates this editable scene.
+	var tool := BeechCollisionTools.new()
+	root.add_child(tool)
+	var result: Dictionary = tool.align()
+	root.remove_child(tool)
+	tool.free()
+	return result
 
 func polish_clearings() -> Dictionary:
 	# Explicit one-time composition pass; repeated calls preserve manual edits.

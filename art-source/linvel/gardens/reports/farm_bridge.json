@@ -1,0 +1,505 @@
+{
+  "id": "farm_bridge",
+  "label": "Хозяйственный мост",
+  "triangles": 3664,
+  "bounds": [
+    [
+      -14.199999809265137,
+      14.199999809265137
+    ],
+    [
+      -1.7999999523162842,
+      1.7999999523162842
+    ],
+    [
+      -0.3100000023841858,
+      1.690000057220459
+    ]
+  ],
+  "parts": 84,
+  "checked_joints": [
+    {
+      "a": "RailPost-13.5-1.6",
+      "b": "Stringer-1.6",
+      "axis": 2,
+      "overlap_m": 0.28
+    },
+    {
+      "a": "RailPost-7-1.6",
+      "b": "Stringer-1.6",
+      "axis": 2,
+      "overlap_m": 0.28
+    },
+    {
+      "a": "RailPost0-1.6",
+      "b": "Stringer-1.6",
+      "axis": 2,
+      "overlap_m": 0.28
+    },
+    {
+      "a": "RailPost7-1.6",
+      "b": "Stringer-1.6",
+      "axis": 2,
+      "overlap_m": 0.28
+    },
+    {
+      "a": "RailPost13.5-1.6",
+      "b": "Stringer-1.6",
+      "axis": 2,
+      "overlap_m": 0.28
+    },
+    {
+      "a": "RailPost-13.51.6",
+      "b": "Stringer1.6",
+      "axis": 2,
+      "overlap_m": 0.28
+    },
+    {
+      "a": "RailPost-71.6",
+      "b": "Stringer1.6",
+      "axis": 2,
+      "overlap_m": 0.28
+    },
+    {
+      "a": "RailPost01.6",
+      "b": "Stringer1.6",
+      "axis": 2,
+      "overlap_m": 0.28
+    },
+    {
+      "a": "RailPost71.6",
+      "b": "Stringer1.6",
+      "axis": 2,
+      "overlap_m": 0.28
+    },
+    {
+      "a": "RailPost13.51.6",
+      "b": "Stringer1.6",
+      "axis": 2,
+      "overlap_m": 0.28
+    },
+    {
+      "a": "Deck0",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck1",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck2",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck3",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck4",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck5",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck6",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck7",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck8",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck9",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck10",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck11",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck12",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck13",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck14",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck15",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck16",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck17",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck18",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck19",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck20",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck21",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck22",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck23",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck24",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck25",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck26",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck27",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck28",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck29",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck30",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck31",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck32",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck33",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck34",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck35",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck36",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck37",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck38",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck39",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck40",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck41",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck42",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck43",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck44",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck45",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck46",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck47",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck48",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck49",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck50",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck51",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck52",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck53",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck54",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck55",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck56",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck57",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck58",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck59",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck60",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck61",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck62",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck63",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck64",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck65",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck66",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck67",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck68",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    },
+    {
+      "a": "Deck69",
+      "b": "Stringer-1.6",
+      "axis": 1,
+      "overlap_m": 0.32
+    }
+  ],
+  "uv": "PaintedUV",
+  "origin": "ground",
+  "materials": 1
+}

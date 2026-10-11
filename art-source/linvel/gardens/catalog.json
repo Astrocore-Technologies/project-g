@@ -1,0 +1,1474 @@
+[
+  {
+    "id": "farm_cottage",
+    "label": "Сельский дом с верандой",
+    "triangles": 45802,
+    "bounds": [
+      [
+        -4.269999980926514,
+        4.951991422008299
+      ],
+      [
+        -6.24500036239624,
+        3.554999828338623
+      ],
+      [
+        0.0,
+        9.640000343322754
+      ]
+    ],
+    "parts": 1576,
+    "checked_joints": [
+      {
+        "a": "FieldstoneFooting",
+        "b": "LimewashedWalls",
+        "axis": 2,
+        "overlap_m": 0.39
+      },
+      {
+        "a": "Corner_-3.8-3.1",
+        "b": "LimewashedWalls",
+        "axis": 0,
+        "overlap_m": 0.13
+      },
+      {
+        "a": "Corner_-3.83.1",
+        "b": "LimewashedWalls",
+        "axis": 0,
+        "overlap_m": 0.13
+      },
+      {
+        "a": "Corner_3.8-3.1",
+        "b": "LimewashedWalls",
+        "axis": 0,
+        "overlap_m": 0.13
+      },
+      {
+        "a": "Corner_3.83.1",
+        "b": "LimewashedWalls",
+        "axis": 0,
+        "overlap_m": 0.13
+      },
+      {
+        "a": "PorchDeck",
+        "b": "PorchPost-2.584",
+        "axis": 2,
+        "overlap_m": 0.27
+      },
+      {
+        "a": "PorchDeck",
+        "b": "PorchPost2.584",
+        "axis": 2,
+        "overlap_m": 0.27
+      }
+    ],
+    "uv": "PaintedUV",
+    "origin": "ground",
+    "materials": 1
+  },
+  {
+    "id": "stream_watermill",
+    "label": "Мельничный дом",
+    "triangles": 58742,
+    "bounds": [
+      [
+        -5.069999694824219,
+        6.449999809265137
+      ],
+      [
+        -6.845000267028809,
+        4.15500020980835
+      ],
+      [
+        -7.5,
+        9.640000343322754
+      ]
+    ],
+    "parts": 1935,
+    "checked_joints": [
+      {
+        "a": "FieldstoneFooting",
+        "b": "LimewashedWalls",
+        "axis": 2,
+        "overlap_m": 0.39
+      },
+      {
+        "a": "Corner_-4.6-3.7",
+        "b": "LimewashedWalls",
+        "axis": 0,
+        "overlap_m": 0.13
+      },
+      {
+        "a": "Corner_-4.63.7",
+        "b": "LimewashedWalls",
+        "axis": 0,
+        "overlap_m": 0.13
+      },
+      {
+        "a": "Corner_4.6-3.7",
+        "b": "LimewashedWalls",
+        "axis": 0,
+        "overlap_m": 0.13
+      },
+      {
+        "a": "Corner_4.63.7",
+        "b": "LimewashedWalls",
+        "axis": 0,
+        "overlap_m": 0.13
+      },
+      {
+        "a": "PorchDeck",
+        "b": "PorchPost-3.128",
+        "axis": 2,
+        "overlap_m": 0.27
+      },
+      {
+        "a": "PorchDeck",
+        "b": "PorchPost3.128",
+        "axis": 2,
+        "overlap_m": 0.27
+      },
+      {
+        "a": "WheelAxle",
+        "b": "LimewashedWalls",
+        "axis": 0,
+        "overlap_m": 0.35
+      }
+    ],
+    "uv": "PaintedUV",
+    "origin": "ground",
+    "materials": 1
+  },
+  {
+    "id": "raised_granary",
+    "label": "Приподнятый амбар",
+    "triangles": 18469,
+    "bounds": [
+      [
+        -3.2699999809265137,
+        3.2699999809265137
+      ],
+      [
+        -3.6500000953674316,
+        2.754999876022339
+      ],
+      [
+        0,
+        7.005000114440918
+      ]
+    ],
+    "parts": 590,
+    "checked_joints": [],
+    "uv": "PaintedUV",
+    "origin": "ground",
+    "materials": 1
+  },
+  {
+    "id": "farm_shed",
+    "label": "Навес для инструментов",
+    "triangles": 14424,
+    "bounds": [
+      [
+        -3.2199997901916504,
+        3.2199997901916504
+      ],
+      [
+        -2.3550000190734863,
+        2.3550000190734863
+      ],
+      [
+        -0.04999995231628418,
+        4.835000038146973
+      ]
+    ],
+    "parts": 458,
+    "checked_joints": [],
+    "uv": "PaintedUV",
+    "origin": "ground",
+    "materials": 1
+  },
+  {
+    "id": "orchard_apple",
+    "label": "Плодовое дерево",
+    "triangles": 6360,
+    "bounds": [
+      [
+        -3.6855835914611816,
+        4.104976654052734
+      ],
+      [
+        -3.8725504875183105,
+        3.607283115386963
+      ],
+      [
+        -0.19524259865283966,
+        6.799228668212891
+      ]
+    ],
+    "parts": 52,
+    "checked_joints": [
+      {
+        "a": "Trunk",
+        "b": "Root0",
+        "axis": 2,
+        "overlap_m": 0.5261
+      },
+      {
+        "a": "Trunk",
+        "b": "Root1",
+        "axis": 2,
+        "overlap_m": 0.5261
+      },
+      {
+        "a": "Trunk",
+        "b": "Root2",
+        "axis": 2,
+        "overlap_m": 0.5261
+      },
+      {
+        "a": "Trunk",
+        "b": "Root3",
+        "axis": 2,
+        "overlap_m": 0.5261
+      },
+      {
+        "a": "Trunk",
+        "b": "Root4",
+        "axis": 2,
+        "overlap_m": 0.5261
+      },
+      {
+        "a": "Trunk",
+        "b": "Bough0",
+        "axis": 2,
+        "overlap_m": 1.77189
+      },
+      {
+        "a": "Crown0",
+        "b": "Bough0",
+        "axis": 2,
+        "overlap_m": 1.29963
+      },
+      {
+        "a": "Trunk",
+        "b": "Bough1",
+        "axis": 2,
+        "overlap_m": 1.24722
+      },
+      {
+        "a": "Crown1",
+        "b": "Bough1",
+        "axis": 2,
+        "overlap_m": 1.27518
+      },
+      {
+        "a": "Trunk",
+        "b": "Bough2",
+        "axis": 2,
+        "overlap_m": 0.72213
+      },
+      {
+        "a": "Crown2",
+        "b": "Bough2",
+        "axis": 2,
+        "overlap_m": 1.312
+      },
+      {
+        "a": "Trunk",
+        "b": "Bough3",
+        "axis": 2,
+        "overlap_m": 1.76728
+      },
+      {
+        "a": "Crown3",
+        "b": "Bough3",
+        "axis": 2,
+        "overlap_m": 1.37732
+      },
+      {
+        "a": "Trunk",
+        "b": "Bough4",
+        "axis": 2,
+        "overlap_m": 1.2448
+      },
+      {
+        "a": "Crown4",
+        "b": "Bough4",
+        "axis": 2,
+        "overlap_m": 1.37268
+      },
+      {
+        "a": "Trunk",
+        "b": "Bough5",
+        "axis": 2,
+        "overlap_m": 0.72148
+      },
+      {
+        "a": "Crown5",
+        "b": "Bough5",
+        "axis": 2,
+        "overlap_m": 1.33218
+      },
+      {
+        "a": "Trunk",
+        "b": "Bough6",
+        "axis": 2,
+        "overlap_m": 1.77698
+      },
+      {
+        "a": "Crown6",
+        "b": "Bough6",
+        "axis": 2,
+        "overlap_m": 1.29792
+      },
+      {
+        "a": "Trunk",
+        "b": "Bough7",
+        "axis": 2,
+        "overlap_m": 1.24606
+      },
+      {
+        "a": "Crown7",
+        "b": "Bough7",
+        "axis": 2,
+        "overlap_m": 1.28663
+      },
+      {
+        "a": "Trunk",
+        "b": "Bough8",
+        "axis": 2,
+        "overlap_m": 0.7137
+      },
+      {
+        "a": "Crown8",
+        "b": "Bough8",
+        "axis": 2,
+        "overlap_m": 1.27495
+      }
+    ],
+    "uv": "PaintedUV",
+    "origin": "ground",
+    "materials": 1
+  },
+  {
+    "id": "orchard_blossom",
+    "label": "Цветущее плодовое дерево",
+    "triangles": 6360,
+    "bounds": [
+      [
+        -3.7860279083251953,
+        4.256545543670654
+      ],
+      [
+        -3.831552267074585,
+        3.579116106033325
+      ],
+      [
+        -0.19524259865283966,
+        6.8905792236328125
+      ]
+    ],
+    "parts": 52,
+    "checked_joints": [
+      {
+        "a": "Trunk",
+        "b": "Root0",
+        "axis": 2,
+        "overlap_m": 0.5261
+      },
+      {
+        "a": "Trunk",
+        "b": "Root1",
+        "axis": 2,
+        "overlap_m": 0.5261
+      },
+      {
+        "a": "Trunk",
+        "b": "Root2",
+        "axis": 2,
+        "overlap_m": 0.5261
+      },
+      {
+        "a": "Trunk",
+        "b": "Root3",
+        "axis": 2,
+        "overlap_m": 0.5261
+      },
+      {
+        "a": "Trunk",
+        "b": "Root4",
+        "axis": 2,
+        "overlap_m": 0.5261
+      },
+      {
+        "a": "Trunk",
+        "b": "Bough0",
+        "axis": 2,
+        "overlap_m": 1.78185
+      },
+      {
+        "a": "Crown0",
+        "b": "Bough0",
+        "axis": 2,
+        "overlap_m": 1.35215
+      },
+      {
+        "a": "Trunk",
+        "b": "Bough1",
+        "axis": 2,
+        "overlap_m": 1.24182
+      },
+      {
+        "a": "Crown1",
+        "b": "Bough1",
+        "axis": 2,
+        "overlap_m": 1.28908
+      },
+      {
+        "a": "Trunk",
+        "b": "Bough2",
+        "axis": 2,
+        "overlap_m": 0.72332
+      },
+      {
+        "a": "Crown2",
+        "b": "Bough2",
+        "axis": 2,
+        "overlap_m": 1.29689
+      },
+      {
+        "a": "Trunk",
+        "b": "Bough3",
+        "axis": 2,
+        "overlap_m": 1.76346
+      },
+      {
+        "a": "Crown3",
+        "b": "Bough3",
+        "axis": 2,
+        "overlap_m": 1.2615
+      },
+      {
+        "a": "Trunk",
+        "b": "Bough4",
+        "axis": 2,
+        "overlap_m": 1.24425
+      },
+      {
+        "a": "Crown4",
+        "b": "Bough4",
+        "axis": 2,
+        "overlap_m": 1.35402
+      },
+      {
+        "a": "Trunk",
+        "b": "Bough5",
+        "axis": 2,
+        "overlap_m": 0.71913
+      },
+      {
+        "a": "Crown5",
+        "b": "Bough5",
+        "axis": 2,
+        "overlap_m": 1.36802
+      },
+      {
+        "a": "Trunk",
+        "b": "Bough6",
+        "axis": 2,
+        "overlap_m": 1.77901
+      },
+      {
+        "a": "Crown6",
+        "b": "Bough6",
+        "axis": 2,
+        "overlap_m": 1.36598
+      },
+      {
+        "a": "Trunk",
+        "b": "Bough7",
+        "axis": 2,
+        "overlap_m": 1.24696
+      },
+      {
+        "a": "Crown7",
+        "b": "Bough7",
+        "axis": 2,
+        "overlap_m": 1.29352
+      },
+      {
+        "a": "Trunk",
+        "b": "Bough8",
+        "axis": 2,
+        "overlap_m": 0.71617
+      },
+      {
+        "a": "Crown8",
+        "b": "Bough8",
+        "axis": 2,
+        "overlap_m": 1.3003
+      }
+    ],
+    "uv": "PaintedUV",
+    "origin": "ground",
+    "materials": 1
+  },
+  {
+    "id": "orchard_pear",
+    "label": "Плодовое дерево",
+    "triangles": 6360,
+    "bounds": [
+      [
+        -3.8363771438598633,
+        4.004522323608398
+      ],
+      [
+        -3.8772854804992676,
+        3.6317286491394043
+      ],
+      [
+        -0.19524259865283966,
+        6.790441036224365
+      ]
+    ],
+    "parts": 52,
+    "checked_joints": [
+      {
+        "a": "Trunk",
+        "b": "Root0",
+        "axis": 2,
+        "overlap_m": 0.5261
+      },
+      {
+        "a": "Trunk",
+        "b": "Root1",
+        "axis": 2,
+        "overlap_m": 0.5261
+      },
+      {
+        "a": "Trunk",
+        "b": "Root2",
+        "axis": 2,
+        "overlap_m": 0.5261
+      },
+      {
+        "a": "Trunk",
+        "b": "Root3",
+        "axis": 2,
+        "overlap_m": 0.5261
+      },
+      {
+        "a": "Trunk",
+        "b": "Root4",
+        "axis": 2,
+        "overlap_m": 0.5261
+      },
+      {
+        "a": "Trunk",
+        "b": "Bough0",
+        "axis": 2,
+        "overlap_m": 1.78116
+      },
+      {
+        "a": "Crown0",
+        "b": "Bough0",
+        "axis": 2,
+        "overlap_m": 1.32929
+      },
+      {
+        "a": "Trunk",
+        "b": "Bough1",
+        "axis": 2,
+        "overlap_m": 1.23607
+      },
+      {
+        "a": "Crown1",
+        "b": "Bough1",
+        "axis": 2,
+        "overlap_m": 1.37596
+      },
+      {
+        "a": "Trunk",
+        "b": "Bough2",
+        "axis": 2,
+        "overlap_m": 0.71913
+      },
+      {
+        "a": "Crown2",
+        "b": "Bough2",
+        "axis": 2,
+        "overlap_m": 1.37243
+      },
+      {
+        "a": "Trunk",
+        "b": "Bough3",
+        "axis": 2,
+        "overlap_m": 1.76556
+      },
+      {
+        "a": "Crown3",
+        "b": "Bough3",
+        "axis": 2,
+        "overlap_m": 1.31751
+      },
+      {
+        "a": "Trunk",
+        "b": "Bough4",
+        "axis": 2,
+        "overlap_m": 1.25047
+      },
+      {
+        "a": "Crown4",
+        "b": "Bough4",
+        "axis": 2,
+        "overlap_m": 1.30025
+      },
+      {
+        "a": "Trunk",
+        "b": "Bough5",
+        "axis": 2,
+        "overlap_m": 0.71507
+      },
+      {
+        "a": "Crown5",
+        "b": "Bough5",
+        "axis": 2,
+        "overlap_m": 1.28055
+      },
+      {
+        "a": "Trunk",
+        "b": "Bough6",
+        "axis": 2,
+        "overlap_m": 1.77443
+      },
+      {
+        "a": "Crown6",
+        "b": "Bough6",
+        "axis": 2,
+        "overlap_m": 1.29497
+      },
+      {
+        "a": "Trunk",
+        "b": "Bough7",
+        "axis": 2,
+        "overlap_m": 1.25293
+      },
+      {
+        "a": "Crown7",
+        "b": "Bough7",
+        "axis": 2,
+        "overlap_m": 1.37773
+      },
+      {
+        "a": "Trunk",
+        "b": "Bough8",
+        "axis": 2,
+        "overlap_m": 0.71729
+      },
+      {
+        "a": "Crown8",
+        "b": "Bough8",
+        "axis": 2,
+        "overlap_m": 1.37267
+      }
+    ],
+    "uv": "PaintedUV",
+    "origin": "ground",
+    "materials": 1
+  },
+  {
+    "id": "fieldstone_wall",
+    "label": "Полевая каменная ограда",
+    "triangles": 1408,
+    "bounds": [
+      [
+        -2.0250000953674316,
+        2.0850000381469727
+      ],
+      [
+        -0.33000001311302185,
+        0.33000001311302185
+      ],
+      [
+        0.004999995231628418,
+        1.100000023841858
+      ]
+    ],
+    "parts": 32,
+    "checked_joints": [],
+    "uv": "PaintedUV",
+    "origin": "ground",
+    "materials": 1
+  },
+  {
+    "id": "pasture_fence",
+    "label": "Пастбищная ограда",
+    "triangles": 144,
+    "bounds": [
+      [
+        -2.609999895095825,
+        2.609999895095825
+      ],
+      [
+        -0.10999999940395355,
+        0.10999999940395355
+      ],
+      [
+        -0.05500000715255737,
+        1.3949999809265137
+      ]
+    ],
+    "parts": 4,
+    "checked_joints": [
+      {
+        "a": "Post-2.5",
+        "b": "Rail0.55",
+        "axis": 0,
+        "overlap_m": 0.21
+      },
+      {
+        "a": "Post-2.5",
+        "b": "Rail1.02",
+        "axis": 0,
+        "overlap_m": 0.21
+      }
+    ],
+    "uv": "PaintedUV",
+    "origin": "ground",
+    "materials": 1
+  },
+  {
+    "id": "farm_well",
+    "label": "Колодец и журавль",
+    "triangles": 7872,
+    "bounds": [
+      [
+        -1.9700000286102295,
+        1.9700000286102295
+      ],
+      [
+        -1.7549999952316284,
+        1.7549999952316284
+      ],
+      [
+        0.0,
+        4.255000114440918
+      ]
+    ],
+    "parts": 246,
+    "checked_joints": [],
+    "uv": "PaintedUV",
+    "origin": "ground",
+    "materials": 1
+  },
+  {
+    "id": "garden_trellis",
+    "label": "Садовая шпалера",
+    "triangles": 460,
+    "bounds": [
+      [
+        -1.600000023841858,
+        1.600000023841858
+      ],
+      [
+        -0.2718929052352905,
+        0.08500000089406967
+      ],
+      [
+        -0.04999995231628418,
+        3.25
+      ]
+    ],
+    "parts": 31,
+    "checked_joints": [],
+    "uv": "PaintedUV",
+    "origin": "ground",
+    "materials": 1
+  },
+  {
+    "id": "spring_crop_patch",
+    "label": "Весенняя грядка",
+    "triangles": 600,
+    "bounds": [
+      [
+        -0.7773679494857788,
+        0.7800000309944153
+      ],
+      [
+        -0.9793407917022705,
+        0.9425311088562012
+      ],
+      [
+        0.0,
+        0.3400000035762787
+      ]
+    ],
+    "parts": 100,
+    "checked_joints": [],
+    "uv": "PaintedUV",
+    "origin": "ground",
+    "materials": 1
+  },
+  {
+    "id": "meadow_patch",
+    "label": "Луговые травы и цветы",
+    "triangles": 352,
+    "bounds": [
+      [
+        -0.9495259523391724,
+        0.8130484819412231
+      ],
+      [
+        -0.9713338613510132,
+        0.967318058013916
+      ],
+      [
+        -0.09968641400337219,
+        0.5994999408721924
+      ]
+    ],
+    "parts": 60,
+    "checked_joints": [],
+    "uv": "PaintedUV",
+    "origin": "ground",
+    "materials": 1
+  },
+  {
+    "id": "hedgerow_shrub",
+    "label": "Куст живой изгороди",
+    "triangles": 1600,
+    "bounds": [
+      [
+        -1.8068890571594238,
+        1.7975635528564453
+      ],
+      [
+        -0.917751133441925,
+        0.9118132591247559
+      ],
+      [
+        -0.059037089347839355,
+        1.8699496984481812
+      ]
+    ],
+    "parts": 5,
+    "checked_joints": [],
+    "uv": "PaintedUV",
+    "origin": "ground",
+    "materials": 1
+  },
+  {
+    "id": "garden_boulder_a",
+    "label": "Светлый камень с мхом",
+    "triangles": 400,
+    "bounds": [
+      [
+        -1.7288178205490112,
+        1.5911428928375244
+      ],
+      [
+        -1.1874980926513672,
+        1.1941031217575073
+      ],
+      [
+        -0.3435664176940918,
+        1.7929044961929321
+      ]
+    ],
+    "parts": 2,
+    "checked_joints": [],
+    "uv": "PaintedUV",
+    "origin": "ground",
+    "materials": 1
+  },
+  {
+    "id": "garden_boulder_b",
+    "label": "Светлый камень с мхом",
+    "triangles": 400,
+    "bounds": [
+      [
+        -1.6505918502807617,
+        1.7242416143417358
+      ],
+      [
+        -1.0846699476242065,
+        1.0624264478683472
+      ],
+      [
+        -0.4253232479095459,
+        1.9496808052062988
+      ]
+    ],
+    "parts": 2,
+    "checked_joints": [],
+    "uv": "PaintedUV",
+    "origin": "ground",
+    "materials": 1
+  },
+  {
+    "id": "farm_bridge",
+    "label": "Хозяйственный мост",
+    "triangles": 3664,
+    "bounds": [
+      [
+        -14.199999809265137,
+        14.199999809265137
+      ],
+      [
+        -1.7999999523162842,
+        1.7999999523162842
+      ],
+      [
+        -0.3100000023841858,
+        1.690000057220459
+      ]
+    ],
+    "parts": 84,
+    "checked_joints": [
+      {
+        "a": "RailPost-13.5-1.6",
+        "b": "Stringer-1.6",
+        "axis": 2,
+        "overlap_m": 0.28
+      },
+      {
+        "a": "RailPost-7-1.6",
+        "b": "Stringer-1.6",
+        "axis": 2,
+        "overlap_m": 0.28
+      },
+      {
+        "a": "RailPost0-1.6",
+        "b": "Stringer-1.6",
+        "axis": 2,
+        "overlap_m": 0.28
+      },
+      {
+        "a": "RailPost7-1.6",
+        "b": "Stringer-1.6",
+        "axis": 2,
+        "overlap_m": 0.28
+      },
+      {
+        "a": "RailPost13.5-1.6",
+        "b": "Stringer-1.6",
+        "axis": 2,
+        "overlap_m": 0.28
+      },
+      {
+        "a": "RailPost-13.51.6",
+        "b": "Stringer1.6",
+        "axis": 2,
+        "overlap_m": 0.28
+      },
+      {
+        "a": "RailPost-71.6",
+        "b": "Stringer1.6",
+        "axis": 2,
+        "overlap_m": 0.28
+      },
+      {
+        "a": "RailPost01.6",
+        "b": "Stringer1.6",
+        "axis": 2,
+        "overlap_m": 0.28
+      },
+      {
+        "a": "RailPost71.6",
+        "b": "Stringer1.6",
+        "axis": 2,
+        "overlap_m": 0.28
+      },
+      {
+        "a": "RailPost13.51.6",
+        "b": "Stringer1.6",
+        "axis": 2,
+        "overlap_m": 0.28
+      },
+      {
+        "a": "Deck0",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck1",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck2",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck3",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck4",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck5",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck6",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck7",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck8",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck9",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck10",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck11",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck12",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck13",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck14",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck15",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck16",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck17",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck18",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck19",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck20",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck21",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck22",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck23",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck24",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck25",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck26",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck27",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck28",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck29",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck30",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck31",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck32",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck33",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck34",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck35",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck36",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck37",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck38",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck39",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck40",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck41",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck42",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck43",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck44",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck45",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck46",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck47",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck48",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck49",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck50",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck51",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck52",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck53",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck54",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck55",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck56",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck57",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck58",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck59",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck60",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck61",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck62",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck63",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck64",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck65",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck66",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck67",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck68",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      },
+      {
+        "a": "Deck69",
+        "b": "Stringer-1.6",
+        "axis": 1,
+        "overlap_m": 0.32
+      }
+    ],
+    "uv": "PaintedUV",
+    "origin": "ground",
+    "materials": 1
+  },
+  {
+    "id": "irrigation_trough",
+    "label": "Каменный водоотвод",
+    "triangles": 134,
+    "bounds": [
+      [
+        -3.049999952316284,
+        3.049999952316284
+      ],
+      [
+        -0.5,
+        0.5
+      ],
+      [
+        -0.019999999552965164,
+        0.5099999904632568
+      ]
+    ],
+    "parts": 4,
+    "checked_joints": [
+      {
+        "a": "ChannelBase",
+        "b": "ChannelWall-0.43",
+        "axis": 2,
+        "overlap_m": 0.13
+      },
+      {
+        "a": "ChannelBase",
+        "b": "ChannelWall0.43",
+        "axis": 2,
+        "overlap_m": 0.13
+      }
+    ],
+    "uv": "PaintedUV",
+    "origin": "ground",
+    "materials": 1
+  },
+  {
+    "id": "vegetable_bed",
+    "label": "Небольшой огород",
+    "triangles": 850,
+    "bounds": [
+      [
+        -1.2799999713897705,
+        1.2799999713897705
+      ],
+      [
+        -2.059999942779541,
+        2.059999942779541
+      ],
+      [
+        -0.020000003278255463,
+        0.42000001668930054
+      ]
+    ],
+    "parts": 110,
+    "checked_joints": [],
+    "uv": "PaintedUV",
+    "origin": "ground",
+    "materials": 1
+  }
+]

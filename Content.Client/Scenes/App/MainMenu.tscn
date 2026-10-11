@@ -1,8 +1,8 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene format=3 uid="uid://b6am7msigsvgi"]
 
-[ext_resource type="Script" path="res://Scripts/App/MainMenu.cs" id="1"]
-[ext_resource type="PackedScene" path="res://Scenes/World.tscn" id="2"]
+[ext_resource type="Script" uid="uid://d36ku1okaxyid" path="res://Scripts/App/MainMenu.cs" id="1"]
+[ext_resource type="PackedScene" uid="uid://dmxklxo60o5gn" path="res://Scenes/World.tscn" id="2"]
 
-[node name="MainMenu" type="Node"]
+[node name="MainMenu" type="Node" unique_id=1525681846]
 script = ExtResource("1")
 WorldScene = ExtResource("2")

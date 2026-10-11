@@ -7,6 +7,16 @@ namespace Content.Tests.Shared.Navigation;
 public sealed class SurfaceExportPackingTests
 {
     [Fact]
+    public void CompactionDropsOnlyUnreferencedVerticesAndKeepsFaceOrder()
+    {
+        int[][] faces = [[7,2,5],[5,2,9]];
+        var compact = SurfaceExportPacking.CompactVertices(faces);
+        Assert.Equal(new[]{2,5,7,9},compact.SourceVertices);
+        Assert.Equal(new[]{2,0,1},compact.Polygons[0]);
+        Assert.Equal(new[]{1,0,3},compact.Polygons[1]);
+    }
+
+    [Fact]
     public void ExportRemovesOnlyZeroFootprintFaces()
     {
         (float X, float Z)[] vertices = [(0,0),(1,1),(2,2),(2,0)];

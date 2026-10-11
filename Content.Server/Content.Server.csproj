@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Content.Shared\Content.Shared.csproj" />
     <ProjectReference Include="..\Content.Database\Content.Database.csproj" />
+    <Compile Include="..\tools\RegionAuthoring\SurfaceSourceFingerprint.cs" Link="Regions\SurfaceSourceFingerprint.cs" />
   </ItemGroup>
 
   <ItemGroup>

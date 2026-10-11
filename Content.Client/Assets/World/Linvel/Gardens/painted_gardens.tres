@@ -1,0 +1,26 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://dbp4mxyq6iao8"]
+
+[ext_resource type="Texture2D" uid="uid://dkn1dks5lbyu8" path="res://Assets/World/Linvel/Gardens/orchard_apple_garden_painted_atlas.png" id="1_r50fl"]
+
+[sub_resource type="Shader" id="Shader_wg1rs"]
+code = "shader_type spatial;
+render_mode specular_disabled;
+uniform sampler2D painted_atlas : source_color, filter_linear_mipmap;
+uniform vec3 focus_world = vec3(-10000.0);
+varying vec3 world_position;
+void vertex() { world_position=(MODEL_MATRIX*vec4(VERTEX,1.0)).xyz; }
+void fragment() {
+ vec3 ray=focus_world-CAMERA_POSITION_WORLD;
+ float t=dot(world_position-CAMERA_POSITION_WORLD,ray)/max(dot(ray,ray),1.0);
+ float d=length(world_position-(CAMERA_POSITION_WORLD+ray*t));
+ if(t>0.12 && t<0.95 && d<1.8 && mod(floor(FRAGCOORD.x)+floor(FRAGCOORD.y)*2.0,4.0)>0.5) discard;
+ ALBEDO=texture(painted_atlas,UV).rgb; ROUGHNESS=1.0;
+}
+void light() {float n=dot(NORMAL,LIGHT); float tone=mix(0.42,1.0,smoothstep(-0.05,0.65,n)); DIFFUSE_LIGHT+=ALBEDO*LIGHT_COLOR*ATTENUATION*tone/PI;}
+"
+
+[resource]
+render_priority = 0
+shader = SubResource("Shader_wg1rs")
+shader_parameter/painted_atlas = ExtResource("1_r50fl")
+shader_parameter/focus_world = Vector3(-10000, -10000, -10000)

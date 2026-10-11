@@ -1,0 +1,64 @@
+[gd_resource type="Terrain3DAssets" format=3 uid="uid://bcia12kwsedrs"]
+
+[ext_resource type="Texture2D" uid="uid://dvcgp77vgdgg7" path="res://Assets/World/Linvel/Gardens/Terrain/Textures/Meadow_albedo.res" id="1_hjfg1"]
+[ext_resource type="Texture2D" uid="uid://7ycyvubcqgf4" path="res://Assets/World/Linvel/Gardens/Terrain/Textures/Meadow_normal.res" id="2_3dqhx"]
+[ext_resource type="Texture2D" uid="uid://d2v15j60vv5mc" path="res://Assets/World/Linvel/Gardens/Terrain/Textures/Road_albedo.res" id="3_kybqf"]
+[ext_resource type="Texture2D" uid="uid://cqjfgn2y7np0" path="res://Assets/World/Linvel/Gardens/Terrain/Textures/Road_normal.res" id="4_hsfvv"]
+[ext_resource type="Texture2D" uid="uid://cr4r0hjku3ikp" path="res://Assets/World/Linvel/Gardens/Terrain/Textures/StonyBank_albedo.res" id="5_66rq6"]
+[ext_resource type="Texture2D" uid="uid://d34jky5kwgos8" path="res://Assets/World/Linvel/Gardens/Terrain/Textures/StonyBank_normal.res" id="6_3t0tu"]
+[ext_resource type="Texture2D" uid="uid://bylmsehh8yp00" path="res://Assets/World/Linvel/Gardens/Terrain/Textures/CultivatedSoil_albedo.res" id="7_lpp3l"]
+[ext_resource type="Texture2D" uid="uid://bcrutwmfixbqv" path="res://Assets/World/Linvel/Gardens/Terrain/Textures/CultivatedSoil_normal.res" id="8_3p6vi"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ls4h2"]
+transparency = 4
+cull_mode = 2
+vertex_color_use_as_albedo = true
+backlight_enabled = true
+backlight = Color(0.5, 0.5, 0.5, 1)
+distance_fade_mode = 1
+distance_fade_min_distance = 128.0
+distance_fade_max_distance = 96.0
+
+[sub_resource type="Terrain3DMeshAsset" id="Terrain3DMeshAsset_nw14e"]
+generated_type = 1
+height_offset = 0.5
+material_override = SubResource("StandardMaterial3D_ls4h2")
+last_lod = 0
+last_shadow_lod = 0
+lod0_range = 128.0
+
+[sub_resource type="Terrain3DTextureAsset" id="Terrain3DTextureAsset_hg1oa"]
+name = "Meadow"
+albedo_texture = ExtResource("1_hjfg1")
+normal_texture = ExtResource("2_3dqhx")
+normal_depth = 0.0
+ao_strength = 0.0
+
+[sub_resource type="Terrain3DTextureAsset" id="Terrain3DTextureAsset_f5inm"]
+name = "Road"
+id = 1
+albedo_texture = ExtResource("3_kybqf")
+normal_texture = ExtResource("4_hsfvv")
+normal_depth = 0.0
+ao_strength = 0.0
+
+[sub_resource type="Terrain3DTextureAsset" id="Terrain3DTextureAsset_60yb6"]
+name = "StonyBank"
+id = 2
+albedo_texture = ExtResource("5_66rq6")
+normal_texture = ExtResource("6_3t0tu")
+normal_depth = 0.0
+ao_strength = 0.0
+
+[sub_resource type="Terrain3DTextureAsset" id="Terrain3DTextureAsset_ydawk"]
+name = "CultivatedSoil"
+id = 3
+albedo_texture = ExtResource("7_lpp3l")
+normal_texture = ExtResource("8_3p6vi")
+normal_depth = 0.0
+ao_strength = 0.0
+uv_scale = 0.2
+
+[resource]
+mesh_list = Array[Terrain3DMeshAsset]([SubResource("Terrain3DMeshAsset_nw14e")])
+texture_list = Array[Terrain3DTextureAsset]([SubResource("Terrain3DTextureAsset_hg1oa"), SubResource("Terrain3DTextureAsset_f5inm"), SubResource("Terrain3DTextureAsset_60yb6"), SubResource("Terrain3DTextureAsset_ydawk")])

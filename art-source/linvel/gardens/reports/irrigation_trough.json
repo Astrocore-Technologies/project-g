@@ -1,0 +1,37 @@
+{
+  "id": "irrigation_trough",
+  "label": "Каменный водоотвод",
+  "triangles": 134,
+  "bounds": [
+    [
+      -3.049999952316284,
+      3.049999952316284
+    ],
+    [
+      -0.5,
+      0.5
+    ],
+    [
+      -0.019999999552965164,
+      0.5099999904632568
+    ]
+  ],
+  "parts": 4,
+  "checked_joints": [
+    {
+      "a": "ChannelBase",
+      "b": "ChannelWall-0.43",
+      "axis": 2,
+      "overlap_m": 0.13
+    },
+    {
+      "a": "ChannelBase",
+      "b": "ChannelWall0.43",
+      "axis": 2,
+      "overlap_m": 0.13
+    }
+  ],
+  "uv": "PaintedUV",
+  "origin": "ground",
+  "materials": 1
+}

@@ -83,6 +83,7 @@ public partial class WorldController
 
     private void UnloadAuthoredRegion()
     {
+        _surfaceTerrain = null;
         DetachPresentation(_surfaceRegion); _surfaceRegion = null;
         DetachPresentation(_authoredRegion); _authoredRegion = null; _authoredBase = null;
         GetNode<Node3D>("Ground").Show();

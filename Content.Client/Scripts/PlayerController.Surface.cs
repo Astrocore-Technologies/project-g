@@ -21,7 +21,10 @@ public partial class PlayerController
         var result = GetWorld3D().DirectSpaceState.IntersectRay(query);
         if (result.Count == 0) return false;
         var position = result["position"].AsVector3();
-        if (!_navigation.Surface.TryLocate(new(position.X, position.Y, position.Z), .35f, out var located)) return false;
+        // The outdoor bake samples half-metre cells. Project a physical terrain
+        // hit onto its nearby floor, without selecting a distant bridge/other storey.
+        var tolerance = result["collider"].AsGodotObject() is Node collider && collider.IsInGroup("surface_terrain") ? .5f : .35f;
+        if (!_navigation.Surface.TryLocate(new(position.X, position.Y, position.Z), tolerance, out var located)) return false;
         point = new(located.Position.X, located.Position.Z); height = located.Position.Y; return true;
     }
 }

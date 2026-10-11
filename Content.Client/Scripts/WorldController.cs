@@ -154,6 +154,7 @@ public partial class WorldController : Node3D
         if (spawn.PlayerId == _network.LocalPlayerId)
         {
             _localEntityId = spawn.EntityId;
+            AssignSurfaceCamera();
             if (_surfaceRegion is not null) { var occlusion = new ProjectG.Regions.ForestOcclusion(); player.AddChild(occlusion); occlusion.Initialize(player,_surfaceRegion); }
             if(_network.LatestPvpZone is {} pvpZone){_social=new();AddChild(_social);_social.Initialize(_network,player);_pvp=new();AddChild(_pvp);_pvp.Initialize(_network,player);DrawSafeZone(pvpZone);}
             if(_network.CraftRecipes.Count!=0) { _crafting=new(); AddChild(_crafting); _crafting.Initialize(_network,player); _trade=new(); AddChild(_trade); _trade.Initialize(_network,player); _economy=new(); AddChild(_economy); _economy.Initialize(_network,player); }

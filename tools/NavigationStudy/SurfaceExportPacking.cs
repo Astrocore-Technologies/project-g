@@ -3,6 +3,13 @@ namespace ProjectG.NavigationStudy;
 /// <summary>Offline packing only; retains the original triangle diagonal and heights.</summary>
 public static class SurfaceExportPacking
 {
+    public static (int[] SourceVertices,int[][] Polygons) CompactVertices(IReadOnlyList<int[]> polygons)
+    {
+        var used = polygons.SelectMany(p=>p).Distinct().Order().ToArray();
+        var remap = used.Select((source,index)=>(source,index)).ToDictionary(p=>p.source,p=>p.index);
+        return (used,polygons.Select(p=>p.Select(index=>remap[index]).ToArray()).ToArray());
+    }
+
     // Recast detail meshes can contain vertical/zero-area slivers. They have
     // no walkable X/Z footprint; retain every remaining original fan face.
     public static int[][] RemoveDegenerateFaces(IReadOnlyList<(float X, float Z)> vertices, IReadOnlyList<int[]> polygons)

@@ -7,13 +7,23 @@ public readonly record struct SurfaceTriangle(Vector3 A, Vector3 B, Vector3 C)
 {
     public Vector3 Center => (A + B + C) / 3;
 
-    public bool Sample(float x, float z, out float y, float tolerance = .0001f)
+    public bool Sample(double x, double z, out float y, float tolerance = .0001f)
     {
-        var denominator = (B.Z - C.Z) * (A.X - C.X) + (C.X - B.X) * (A.Z - C.Z);
-        var a = ((B.Z - C.Z) * (x - C.X) + (C.X - B.X) * (z - C.Z)) / denominator;
-        var b = ((C.Z - A.Z) * (x - C.X) + (A.X - C.X) * (z - C.Z)) / denominator;
-        y = a * A.Y + b * B.Y + (1 - a - b) * C.Y;
-        return a >= -tolerance && b >= -tolerance && a + b <= 1 + tolerance;
+        // Large world coordinates and thin baked triangles need double intermediates.
+        // The tolerance is a distance in metres, rather than a barycentric fraction
+        // that would admit centimetres outside the edge of a large polygon.
+        var denominator = ((double)B.Z-C.Z)*((double)A.X-C.X)+((double)C.X-B.X)*((double)A.Z-C.Z);
+        if (Math.Abs(denominator)<1e-12) { y=0; return false; }
+        var a = (((double)B.Z-C.Z)*((double)x-C.X)+((double)C.X-B.X)*((double)z-C.Z))/denominator;
+        var b = (((double)C.Z-A.Z)*((double)x-C.X)+((double)A.X-C.X)*((double)z-C.Z))/denominator;
+        var c = 1-a-b;
+        y = (float)(a*A.Y+b*B.Y+c*C.Y);
+        if (a>=0 && b>=0 && c>=0) return true;
+        if (tolerance<=0) return false;
+        var scale = tolerance/Math.Abs(denominator);
+        static double Length(Vector3 p,Vector3 q)
+        { var dx=(double)p.X-q.X; var dz=(double)p.Z-q.Z; return Math.Sqrt(dx*dx+dz*dz); }
+        return a >= -scale*Length(B,C) && b >= -scale*Length(C,A) && c >= -scale*Length(A,B);
     }
 }
 
@@ -86,17 +96,23 @@ public sealed class SurfaceNavigation
         if (!Finite(requested) || !float.IsFinite(heightTolerance) || heightTolerance < 0 || heightTolerance > 1)
             return false;
         if (!_buckets.TryGetValue((Bucket(requested.X), Bucket(requested.Z)), out var candidates)) return false;
-        var best = float.PositiveInfinity;
-        foreach (var id in candidates)
+        // Prefer the actual containing face. A tolerant test may also accept
+        // the previous face just beyond a portal, stranding the next movement tick.
+        for (var pass=0; pass<2; pass++)
         {
-            if (Blocked[id]) continue;
-            if (!Triangles[id].Sample(requested.X, requested.Z, out var y)) continue;
-            var difference = MathF.Abs(y - requested.Y);
-            if (difference > heightTolerance || difference >= best) continue;
-            best = difference;
-            point = new(id, new(requested.X, y, requested.Z));
+            var best = float.PositiveInfinity;
+            foreach (var id in candidates)
+            {
+                if (Blocked[id]) continue;
+                if (!Triangles[id].Sample(requested.X, requested.Z, out var y,pass==0 ? 0 : .0001f)) continue;
+                var difference = MathF.Abs(y - requested.Y);
+                if (difference > heightTolerance || difference >= best) continue;
+                best = difference;
+                point = new(id, new(requested.X, y, requested.Z));
+            }
+            if (best != float.PositiveInfinity) return true;
         }
-        return best != float.PositiveInfinity;
+        return false;
     }
 
     public bool HasWalkableColumn(float x, float z)
@@ -127,11 +143,13 @@ public sealed class SurfaceNavigation
             !Finite(start.Position) || !Finite(goal.Position) || maxCrossings <= 0 ||
             Blocked[start.Triangle] || Blocked[goal.Triangle]) return false;
         var origin = new Vector2(start.Position.X, start.Position.Z);
-        var direction = new Vector2(goal.Position.X, goal.Position.Z) - origin;
-        if (direction.LengthSquared() < .000001f)
+        var dx = (double)goal.Position.X-origin.X;
+        var dz = (double)goal.Position.Z-origin.Y;
+        var length = Math.Sqrt(dx*dx+dz*dz);
+        if (length < .001)
             return Vector3.DistanceSquared(start.Position, goal.Position) < .0001f;
         var current = start.Triangle;
-        var parameter = -.0001f;
+        var parameter = -1e-8;
         for (var crossed = 0; crossed < maxCrossings; crossed++)
         {
             // A portal endpoint belongs to both triangles. Do not require crossing beyond t=1,
@@ -139,28 +157,30 @@ public sealed class SurfaceNavigation
             if (current == goal.Triangle || Triangles[current].Sample(goal.Position.X, goal.Position.Z, out var endHeight) &&
                 MathF.Abs(endHeight-goal.Position.Y) < .001f) return true;
             var next = -1;
-            var exit = float.PositiveInfinity;
+            var exit = double.PositiveInfinity;
             foreach (var edge in Edges[current])
             {
                 if (Blocked[edge.To]) continue;
-                var a = new Vector2(edge.A.X, edge.A.Z);
-                var span = new Vector2(edge.B.X, edge.B.Z) - a;
-                var denominator = Cross(direction, span);
-                if (MathF.Abs(denominator) < .000001f) continue;
-                var t = Cross(a - origin, span) / denominator;
-                var u = Cross(a - origin, direction) / denominator;
-                if (t <= parameter + .00001f || t > 1.0001f || u < -.0001f || u > 1.0001f || t >= exit) continue;
+                // Convert before subtraction too: opposite-sign coordinates can
+                // lose precision even when the subsequent cross product is double.
+                var ax = (double)edge.A.X-origin.X;
+                var az = (double)edge.A.Z-origin.Y;
+                var sx = (double)edge.B.X-edge.A.X;
+                var sz = (double)edge.B.Z-edge.A.Z;
+                var denominator = Cross(dx,dz,sx,sz);
+                if (Math.Abs(denominator) < 1e-12) continue;
+                var t = Cross(ax,az,sx,sz) / denominator;
+                var u = Cross(ax,az,dx,dz) / denominator;
+                if (t <= parameter + 1e-10 || t > 1.00000001 || u < -1e-8 || u > 1.00000001 || t >= exit) continue;
                 // A vertex hit can have two incident edges. Select the triangle beyond the crossing.
-                // A parameter-only nudge rounds back onto the edge for short
-                // segments at large coordinates. Keep at least a millimetre
-                // of world-space progress, matching the exported edge keys.
-                var probeAdvance = MathF.Max(.0001f, .001f / direction.Length());
-                var probe = origin + direction * MathF.Min(t + probeAdvance, 1);
-                if (!Triangles[edge.To].Sample(probe.X, probe.Y, out _, .0000001f)) continue;
+                // Keep the probe in double precision. Casting it back to world
+                // floats loses small progress, while a 1 mm nudge skips thin faces.
+                var probe = Math.Min(t + 1e-7 / length,1);
+                if (!Triangles[edge.To].Sample(origin.X+dx*probe,origin.Y+dz*probe,out _,0)) continue;
                 next = edge.To; exit = t;
             }
             if (next < 0) return false;
-            var crossedPoint = origin + direction * exit;
+            var crossedPoint = new Vector2((float)(origin.X+dx*exit),(float)(origin.Y+dz*exit));
             Triangles[current].Sample(crossedPoint.X, crossedPoint.Y, out var height);
             crossings?.Add(new(crossedPoint.X, height, crossedPoint.Y));
             current = next; parameter = exit;
@@ -180,7 +200,7 @@ public sealed class SurfaceNavigation
         Revision = $"{Map.Revision}:{PatchGeneration}";
     }
 
-    private static float Cross(Vector2 a, Vector2 b) => a.X * b.Y - a.Y * b.X;
+    private static double Cross(double ax,double az,double bx,double bz) => ax*bz-az*bx;
     private static int Bucket(float value) => (int)MathF.Floor(value / BucketSize);
     private static bool Finite(Vector3 v) => float.IsFinite(v.X) && float.IsFinite(v.Y) && float.IsFinite(v.Z);
     private readonly record struct VertexKey(int X, int Y, int Z) : IComparable<VertexKey>

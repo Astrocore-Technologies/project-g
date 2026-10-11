@@ -1,0 +1,16 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://bqkfpem5k7qla"]
+
+[ext_resource type="Texture2D" uid="uid://cahsxxbtuhuaa" path="res://Assets/World/Linvel/Gardens/garden_terrain_garden_ground.png" id="1_hj6ni"]
+
+[sub_resource type="Shader" id="Shader_xwepo"]
+code = "shader_type spatial;
+render_mode specular_disabled;
+uniform sampler2D brush : source_color, filter_linear_mipmap;
+void fragment(){ALBEDO=texture(brush,vec2(UV.x,1.0-UV.y)).rgb;ROUGHNESS=1.0;}
+void light(){float shade=mix(0.45,1.0,smoothstep(0.05,0.7,dot(NORMAL,LIGHT)));DIFFUSE_LIGHT+=ALBEDO*LIGHT_COLOR*ATTENUATION*shade/PI;}
+"
+
+[resource]
+render_priority = 0
+shader = SubResource("Shader_xwepo")
+shader_parameter/brush = ExtResource("1_hj6ni")

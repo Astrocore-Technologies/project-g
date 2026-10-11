@@ -154,6 +154,9 @@
     "Destination": "prototype",
     "ExitX": -445, "ExitZ": 330, "ExitHeight": 7.1,
     "ArrivalX": -24, "ArrivalZ": 21, "Radius": 2.5,
+    "AdditionalRoutes": [
+      { "Destination": "linvel_gardens", "ExitX": -435, "ExitZ": 330, "ExitHeight": 7.1, "ArrivalX": 428, "ArrivalZ": -220, "ArrivalHeight": 25.1, "Radius": 2.5 }
+    ],
     "Movement": { "MinX": -480, "MaxX": 480, "MinZ": -400, "MaxZ": 400, "SpawnX": -425, "SpawnZ": 330, "SpawnHeight": 7.05, "WorldLayoutVersion": 1 },
     "Navigation": { "CellSize": 16, "SurfaceFile": "Data/Regions/surface-package.json", "SurfaceRegion": "linvel_beech" },
     "Combat": { "TargetX": -414, "TargetZ": 321, "TargetHeight": 7.1 },
@@ -242,6 +245,27 @@
           "X": 17,
           "Z": 12
         }
+      ]
+    }
+  },
+  {
+    "Id": "linvel_gardens", "Destination": "linvel_beech",
+    "ExitX": 445, "ExitZ": -225, "ExitHeight": 25.1,
+    "ArrivalX": -425, "ArrivalZ": 330, "ArrivalHeight": 7.1, "Radius": 2.5,
+    "Movement": { "MinX": -480, "MaxX": 480, "MinZ": -400, "MaxZ": 400, "SpawnX": -420, "SpawnZ": 230, "SpawnHeight": 14.1, "WorldLayoutVersion": 1 },
+    "Navigation": { "CellSize": 16, "SurfaceFile": "Data/Regions/surface-package.json", "SurfaceRegion": "linvel_gardens" },
+    "Combat": { "TargetX": -413, "TargetZ": 226, "TargetHeight": 14.1 },
+    "Npc": { "Enabled": false },
+    "Boss": { "Actor": { "Enabled": false } },
+    "Crafting": { "Enabled": false },
+    "Pvp": { "SafeMinX": -432, "SafeMaxX": -408, "SafeMinZ": 218, "SafeMaxZ": 242, "RespawnX": -420, "RespawnZ": 230 },
+    "WorldNode": { "Key": "linvel-gardens", "Interactive": false, "OpeningCells": [], "X": -420, "Z": 230 },
+    "StarterZone": {
+      "RegionName": "Садовые долины", "TownName": "Ближние хозяйства", "GuideName": "Садовый проводник",
+      "TownX": -420, "TownZ": 230, "GuideX": -425, "GuideZ": 234, "RevealRadiusCells": 2,
+      "Landmarks": [
+        { "Id": 1, "Name": "Мельничная низина", "X": -57, "Z": 82 },
+        { "Id": 2, "Name": "Солнечные сады", "X": 212, "Z": -65 }
       ]
     }
   }

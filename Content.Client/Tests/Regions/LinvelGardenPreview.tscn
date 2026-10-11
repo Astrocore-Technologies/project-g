@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://dwn2n8ctjqe53"]
+
+[ext_resource type="Script" uid="uid://s1sd8bhdl0ra" path="res://Tests/Regions/LinvelGardenPreview.gd" id="1_in3ax"]
+[ext_resource type="PackedScene" uid="uid://bx2h27dnrc1e8" path="res://Scenes/Regions/Linvel/GardenValleys.tscn" id="2_bosc1"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_dgfip"]
+radius = 0.4
+
+[node name="LinvelGardenPreview" type="Node3D" unique_id=811249372]
+script = ExtResource("1_in3ax")
+
+[node name="GardenValleys" parent="." unique_id=1546354913 instance=ExtResource("2_bosc1")]
+metadata/surface_detail_distance = 6.0
+metadata/surface_detail_error = 3.0
+
+[node name="PreviewCamera" type="Camera3D" parent="." unique_id=2056894914]
+current = true
+
+[node name="PlayerFigure" type="MeshInstance3D" parent="." unique_id=970051274]
+mesh = SubResource("CapsuleMesh_dgfip")

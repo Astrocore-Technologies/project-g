@@ -1,0 +1,13 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://buxjvk31fetsj"]
+
+[sub_resource type="Shader" id="Shader_0t2r1"]
+code = "shader_type spatial;
+render_mode unshaded;
+varying vec3 p;
+void vertex(){p=(MODEL_MATRIX*vec4(VERTEX,1.0)).xyz;}
+void fragment(){float w=sin(p.z*1.15+TIME*1.1)*sin(p.x*.8-TIME*.75);ALBEDO=mix(vec3(.075,.24,.26),vec3(.17,.43,.44),w*.25+.5);ROUGHNESS=.9;}
+"
+
+[resource]
+render_priority = 0
+shader = SubResource("Shader_0t2r1")

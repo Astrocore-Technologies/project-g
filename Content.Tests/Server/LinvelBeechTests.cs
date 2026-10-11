@@ -15,6 +15,48 @@ namespace Content.Tests.Server;
 public sealed class LinvelBeechTests
 {
     [Fact]
+    public void RealTrunksStillBlockMovementAndFormerOrphanPostLocationsAreFree()
+    {
+        var world = TerrainIntegrationTests.Worlds().Worlds.Single(w=>w.RegionId=="linvel_beech");
+        var mesh = world.Navigation.Surface!;
+        foreach (var box in mesh.Map.Occluders.Where(b=>b.Size.Y>4))
+        {
+            var foot = new Vector3(box.Center.X,box.Center.Y-box.Size.Y/2+.05f,box.Center.Z);
+            Assert.False(mesh.TryLocate(foot,.35f,out _),$"Trunk was removed from navigation at {foot}");
+        }
+        foreach (var point in new[]{new Vector3(-323,10.05f,228),new(-302,10.05f,241),new(-296,10.05f,241)})
+            Assert.True(mesh.TryLocate(point,.35f,out _),$"Old detached post still blocks {point}");
+    }
+
+    [Fact]
+    public void WalkingCrossesEveryConnectedForestPortalWithoutInvisibleStops()
+    {
+        var world = TerrainIntegrationTests.Worlds().Worlds.Single(w => w.RegionId == "linvel_beech");
+        var mesh = world.Navigation.Surface!;
+        var start = mesh.Triangles[0].Center;
+        var settings = new Content.Shared.Movement.MovementSettings(3.5f,.1f,-480,480,-400,400);
+        var mover = new NavigationMover(world.Navigation,settings,new NavigationPathfinder(world.Navigation),new(start.X,start.Z),start.Y);
+        var failures = new List<string>();
+        var checkedPortals = 0;
+        for (var i = 0; i < mesh.Triangles.Length; i++)
+        foreach (var edge in mesh.Edges[i])
+        {
+            // Exercise the fixed-tick solver, including sub-millimetre steps at
+            // portal endpoints; a successful path search alone misses these stops.
+            var from = Vector3.Lerp(edge.Portal,mesh.Triangles[i].Center,.2f);
+            var to = Vector3.Lerp(edge.Portal,mesh.Triangles[edge.To].Center,.2f);
+            Assert.True(mover.Reset(new(from.X,from.Z),new(to.X,to.Z),from.Y,to.Y));
+            var expected = new Vector3(mover.Target.X,mover.TargetHeight,mover.Target.Y);
+            for (var tick = 0; tick < 4000 && mover.IsMoving; tick++) mover.Step(.05f);
+            if (Vector3.Distance(mover.Foot,expected)>.002f)
+                failures.Add($"{i}->{edge.To}: {from} -> {expected}, stopped {mover.Foot}");
+            checkedPortals++;
+        }
+        Assert.True(checkedPortals>1000);
+        Assert.True(failures.Count==0,$"{failures.Count}/{checkedPortals} portals stopped: {string.Join("; ",failures.Take(8))}");
+    }
+
+    [Fact]
     public async Task TwoNetworkClientsCrossTheBridgeAndSeeTheSameElevatedPlayers()
     {
         var worlds = TerrainIntegrationTests.Worlds();

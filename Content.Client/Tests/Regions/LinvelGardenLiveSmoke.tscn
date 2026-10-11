@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://cd443q0ml0xoc"]
+
+[ext_resource type="Script" uid="uid://bm3oe6327oqu8" path="res://Tests/Regions/LinvelGardenLiveSmoke.cs" id="1_q4iqu"]
+
+[node name="LinvelGardenLiveSmoke" type="Node" unique_id=715519381]
+script = ExtResource("1_q4iqu")

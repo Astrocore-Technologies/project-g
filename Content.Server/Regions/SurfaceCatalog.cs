@@ -19,8 +19,7 @@ public static class SurfaceCatalog
         {
             RegionOwnership.ValidateRegion(id); geometry.Validate(); _ = new SurfaceNavigation(geometry); _ = SurfaceGeometry.Decode(geometry.Encode());
             if (repository is null) continue;
-            var source = Path.Combine(repository, "Content.Client", geometry.ScenePath[6..]);
-            if (SurfaceGeometry.Fingerprint(File.ReadAllText(source)) != geometry.SourceHash)
+            if (ProjectG.Authoring.SurfaceSourceFingerprint.Compute(Path.Combine(repository,"Content.Client"),geometry.ScenePath) != geometry.SourceHash)
                 throw new InvalidDataException("Authored surface scene changed; automatic export is required.");
         }
         return result;

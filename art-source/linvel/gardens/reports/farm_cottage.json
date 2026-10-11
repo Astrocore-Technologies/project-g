@@ -1,0 +1,67 @@
+{
+  "id": "farm_cottage",
+  "label": "Сельский дом с верандой",
+  "triangles": 45802,
+  "bounds": [
+    [
+      -4.269999980926514,
+      4.951991422008299
+    ],
+    [
+      -6.24500036239624,
+      3.554999828338623
+    ],
+    [
+      0.0,
+      9.640000343322754
+    ]
+  ],
+  "parts": 1576,
+  "checked_joints": [
+    {
+      "a": "FieldstoneFooting",
+      "b": "LimewashedWalls",
+      "axis": 2,
+      "overlap_m": 0.39
+    },
+    {
+      "a": "Corner_-3.8-3.1",
+      "b": "LimewashedWalls",
+      "axis": 0,
+      "overlap_m": 0.13
+    },
+    {
+      "a": "Corner_-3.83.1",
+      "b": "LimewashedWalls",
+      "axis": 0,
+      "overlap_m": 0.13
+    },
+    {
+      "a": "Corner_3.8-3.1",
+      "b": "LimewashedWalls",
+      "axis": 0,
+      "overlap_m": 0.13
+    },
+    {
+      "a": "Corner_3.83.1",
+      "b": "LimewashedWalls",
+      "axis": 0,
+      "overlap_m": 0.13
+    },
+    {
+      "a": "PorchDeck",
+      "b": "PorchPost-2.584",
+      "axis": 2,
+      "overlap_m": 0.27
+    },
+    {
+      "a": "PorchDeck",
+      "b": "PorchPost2.584",
+      "axis": 2,
+      "overlap_m": 0.27
+    }
+  ],
+  "uv": "PaintedUV",
+  "origin": "ground",
+  "materials": 1
+}

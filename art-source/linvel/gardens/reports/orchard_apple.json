@@ -1,0 +1,163 @@
+{
+  "id": "orchard_apple",
+  "label": "Плодовое дерево",
+  "triangles": 6360,
+  "bounds": [
+    [
+      -3.6855835914611816,
+      4.104976654052734
+    ],
+    [
+      -3.8725504875183105,
+      3.607283115386963
+    ],
+    [
+      -0.19524259865283966,
+      6.799228668212891
+    ]
+  ],
+  "parts": 52,
+  "checked_joints": [
+    {
+      "a": "Trunk",
+      "b": "Root0",
+      "axis": 2,
+      "overlap_m": 0.5261
+    },
+    {
+      "a": "Trunk",
+      "b": "Root1",
+      "axis": 2,
+      "overlap_m": 0.5261
+    },
+    {
+      "a": "Trunk",
+      "b": "Root2",
+      "axis": 2,
+      "overlap_m": 0.5261
+    },
+    {
+      "a": "Trunk",
+      "b": "Root3",
+      "axis": 2,
+      "overlap_m": 0.5261
+    },
+    {
+      "a": "Trunk",
+      "b": "Root4",
+      "axis": 2,
+      "overlap_m": 0.5261
+    },
+    {
+      "a": "Trunk",
+      "b": "Bough0",
+      "axis": 2,
+      "overlap_m": 1.77189
+    },
+    {
+      "a": "Crown0",
+      "b": "Bough0",
+      "axis": 2,
+      "overlap_m": 1.29963
+    },
+    {
+      "a": "Trunk",
+      "b": "Bough1",
+      "axis": 2,
+      "overlap_m": 1.24722
+    },
+    {
+      "a": "Crown1",
+      "b": "Bough1",
+      "axis": 2,
+      "overlap_m": 1.27518
+    },
+    {
+      "a": "Trunk",
+      "b": "Bough2",
+      "axis": 2,
+      "overlap_m": 0.72213
+    },
+    {
+      "a": "Crown2",
+      "b": "Bough2",
+      "axis": 2,
+      "overlap_m": 1.312
+    },
+    {
+      "a": "Trunk",
+      "b": "Bough3",
+      "axis": 2,
+      "overlap_m": 1.76728
+    },
+    {
+      "a": "Crown3",
+      "b": "Bough3",
+      "axis": 2,
+      "overlap_m": 1.37732
+    },
+    {
+      "a": "Trunk",
+      "b": "Bough4",
+      "axis": 2,
+      "overlap_m": 1.2448
+    },
+    {
+      "a": "Crown4",
+      "b": "Bough4",
+      "axis": 2,
+      "overlap_m": 1.37268
+    },
+    {
+      "a": "Trunk",
+      "b": "Bough5",
+      "axis": 2,
+      "overlap_m": 0.72148
+    },
+    {
+      "a": "Crown5",
+      "b": "Bough5",
+      "axis": 2,
+      "overlap_m": 1.33218
+    },
+    {
+      "a": "Trunk",
+      "b": "Bough6",
+      "axis": 2,
+      "overlap_m": 1.77698
+    },
+    {
+      "a": "Crown6",
+      "b": "Bough6",
+      "axis": 2,
+      "overlap_m": 1.29792
+    },
+    {
+      "a": "Trunk",
+      "b": "Bough7",
+      "axis": 2,
+      "overlap_m": 1.24606
+    },
+    {
+      "a": "Crown7",
+      "b": "Bough7",
+      "axis": 2,
+      "overlap_m": 1.28663
+    },
+    {
+      "a": "Trunk",
+      "b": "Bough8",
+      "axis": 2,
+      "overlap_m": 0.7137
+    },
+    {
+      "a": "Crown8",
+      "b": "Bough8",
+      "axis": 2,
+      "overlap_m": 1.27495
+    }
+  ],
+  "uv": "PaintedUV",
+  "origin": "ground",
+  "materials": 1
+}

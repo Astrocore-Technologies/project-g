@@ -3,6 +3,7 @@
    <ItemGroup>
     <ProjectReference Include="..\Content.Shared\Content.Shared.csproj" />
     <ProjectReference Include="..\tools\NavigationStudy\NavigationStudy.csproj" />
+    <Compile Include="..\tools\RegionAuthoring\SurfaceSourceFingerprint.cs" Link="Tools\Regions\SurfaceSourceFingerprint.cs" />
   </ItemGroup>
 
    <ItemGroup>

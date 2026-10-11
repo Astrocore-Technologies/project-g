@@ -26,6 +26,7 @@ public partial class LinvelBeechLiveSmoke : Node
             await Wait(() => _network.RegionActive && _network.CurrentRegion?.Region == "linvel_beech");
             _player = _world.GetChildren().OfType<PlayerController>().Single(p => p.GetNode<Camera3D>("CameraRig/Camera3D").Current);
             await Wait(() => _confirmed.EntityId == _player.EntityId);
+            ValidateForestPicking();
             var initial = _confirmed.Position;
             var goal = initial+new V2(7,-5);
             var worldPoint = ProjectG.Regions.PublicSurfaceAnchors.Position(_network,goal);
@@ -51,6 +52,32 @@ public partial class LinvelBeechLiveSmoke : Node
         if (_player is null) return;
         foreach (var state in value.Entities)
             if (state.EntityId == _player.EntityId) _confirmed=state;
+    }
+
+    private void ValidateForestPicking()
+    {
+        var camera = GetViewport().GetCamera3D();
+        var original = camera.GlobalTransform;
+        V2[] points = [new(290,-275),new(300,-315),new(300,-320),new(300,-325),new(70,-160),
+            new(70,-165),new(-325,170),new(-330,165),new(-315,165)];
+        try
+        {
+            foreach (var point in points)
+            {
+                // Use the production floor layer and physical ray, including
+                // places where Recast height differs slightly from the collider.
+                var ray = PhysicsRayQueryParameters3D.Create(new(point.X,100,point.Y),new(point.X,-50,point.Y),1);
+                var hit = _world.GetWorld3D().DirectSpaceState.IntersectRay(ray);
+                if (hit.Count==0) throw new InvalidOperationException($"Missing terrain at {point}");
+                var physical = hit["position"].AsVector3();
+                camera.GlobalPosition = physical+new Vector3(0,12,12); camera.LookAt(physical);
+                if (!_player!.TryCursorSurface(out var picked,out var height,camera.UnprojectPosition(physical)) ||
+                    V2.Distance(point,picked)>.01f || Math.Abs(height-physical.Y)>.501f)
+                    throw new InvalidOperationException($"Forest RMB pick failed at {point}, physical height {physical.Y}");
+            }
+            GD.Print($"LINVEL_BEECH_PICK_OK: {points.Length} physical forest picks.");
+        }
+        finally { camera.GlobalTransform=original; }
     }
 
     private async Task Wait(Func<bool> done)
