@@ -6,7 +6,7 @@
 
 ## Просмотр и редактирование
 
-Открой `Content.Client/Scenes/NavigationStudy/NavigationStudy.tscn` в Godot и нажми
+Открой `Content.Client/Tests/Navigation/NavigationStudy.tscn` в Godot и нажми
 **F6**. При запуске сцена сама запекает навигацию, рассчитывает два набора маршрутов
 и запускает шарики по ним. Жёлтые линии — полигональный вариант, голубые — сетка.
 В левом верхнем углу показаны результаты каждого сценария.
@@ -104,7 +104,7 @@ dotnet build Game.slnx --no-restore -m:1
 dotnet test Content.Tests/Content.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~Navigation
 
 # При изменении сцены — обновить snapshot fixture после успешной проверки.
-& 'D:/Godot_v4.7.1-stable_mono_win64/Godot_v4.7.1-stable_mono_win64_console.exe' --headless --path Content.Client res://Scenes/NavigationStudy/NavigationStudy.tscn -- --navigation-study-export=D:/projects/project-g/.artifacts/navigation-study/map.json
+& 'D:/Godot_v4.7.1-stable_mono_win64/Godot_v4.7.1-stable_mono_win64_console.exe' --headless --path Content.Client res://Tests/Navigation/NavigationStudy.tscn -- --navigation-study-export=D:/projects/project-g/.artifacts/navigation-study/map.json
 
 $env:DOTNET_TieredCompilation = '0'
 dotnet run --project tools/NavigationStudy.Bench -c Release --no-restore -- Content.Tests/Fixtures/navigation-study.json .artifacts/navigation-study/benchmark.json

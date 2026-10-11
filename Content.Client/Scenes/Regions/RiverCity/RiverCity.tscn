@@ -1,13 +1,14 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://cr602yy0mwmrc"]
 
-[ext_resource type="Script" path="res://Scripts/Editor/Regions/RegionRoot.cs" id="1_vrtlg"]
-[ext_resource type="Script" path="res://Scripts/Editor/Regions/EntryMarker.cs" id="2_oybx4"]
-[ext_resource type="Script" path="res://Scripts/Editor/Regions/ActorSpawnMarker.cs" id="3_aa7fi"]
-[ext_resource type="Script" path="res://Scripts/Editor/Regions/InteractionMarker.cs" id="4_1w66s"]
-[ext_resource type="Script" path="res://Scripts/Editor/Regions/GateMarker.cs" id="5_ktfjt"]
-[ext_resource type="Script" path="res://Scripts/Regions/BlockoutPreview.cs" id="6_1j258"]
-[ext_resource type="PackedScene" path="res://Scenes/Actors/TrainingDummy.tscn" id="7_dummy"]
-[ext_resource type="PackedScene" path="res://Scenes/Actors/SwordTrainer.tscn" id="8_trainer"]
+[ext_resource type="Script" uid="uid://bmwh822lwtbxu" path="res://Scripts/Editor/Regions/RegionRoot.cs" id="1_vrtlg"]
+[ext_resource type="Script" uid="uid://dfedbrvltwpyv" path="res://Scripts/Editor/Regions/EntryMarker.cs" id="2_oybx4"]
+[ext_resource type="Script" uid="uid://dl4mfls2ukh4p" path="res://Scripts/Editor/Regions/ActorSpawnMarker.cs" id="3_aa7fi"]
+[ext_resource type="Script" uid="uid://clx7e4yqiyy70" path="res://Scripts/Editor/Regions/InteractionMarker.cs" id="4_1w66s"]
+[ext_resource type="Script" uid="uid://coyc23fgrufde" path="res://Scripts/Editor/Regions/GateMarker.cs" id="5_ktfjt"]
+[ext_resource type="Script" uid="uid://gq2riv51otb0" path="res://Scripts/Regions/BlockoutPreview.cs" id="6_1j258"]
+[ext_resource type="PackedScene" uid="uid://d18snt6h8ax2g" path="res://Scenes/Actors/Primitives/TrainerFigure.tscn" id="6_wb5rc"]
+[ext_resource type="PackedScene" uid="uid://cmjh3ic1djewx" path="res://Scenes/Actors/TrainingDummy.tscn" id="7_dummy"]
+[ext_resource type="Script" uid="uid://h2scsig7wel4" path="res://Scripts/_NC/Actors/CapsuleActorVisual.cs" id="7_lo2pr"]
 
 [sub_resource type="Environment" id="Environment_vlk5j"]
 background_mode = 1
@@ -4973,28 +4974,32 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0, -14)
 script = ExtResource("3_aa7fi")
 AuthoredObjectId = "41000000-0000-4000-8000-000000000005"
 
-[node name="Preview" parent="AuthoringAnchors/SwordTarget" instance=ExtResource("7_dummy")]
+[node name="Preview" parent="AuthoringAnchors/SwordTarget" unique_id=460708316 instance=ExtResource("7_dummy")]
 
-[node name="SwordDummyWest" type="Marker3D" parent="AuthoringAnchors"]
-position = Vector3(12, 0, -16)
+[node name="SwordDummyWest" type="Marker3D" parent="AuthoringAnchors" unique_id=1032365222]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, -16)
 script = ExtResource("3_aa7fi")
 AuthoredObjectId = "41000000-0000-4000-8000-000000000010"
 
-[node name="Preview" parent="AuthoringAnchors/SwordDummyWest" instance=ExtResource("7_dummy")]
+[node name="Preview" parent="AuthoringAnchors/SwordDummyWest" unique_id=1956566673 instance=ExtResource("7_dummy")]
 
-[node name="SwordDummyEast" type="Marker3D" parent="AuthoringAnchors"]
-position = Vector3(18, 0, -16)
+[node name="SwordDummyEast" type="Marker3D" parent="AuthoringAnchors" unique_id=1192074857]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0, -16)
 script = ExtResource("3_aa7fi")
 AuthoredObjectId = "41000000-0000-4000-8000-000000000011"
 
-[node name="Preview" parent="AuthoringAnchors/SwordDummyEast" instance=ExtResource("7_dummy")]
+[node name="Preview" parent="AuthoringAnchors/SwordDummyEast" unique_id=1305148744 instance=ExtResource("7_dummy")]
 
-[node name="SwordTrainer" type="Marker3D" parent="AuthoringAnchors"]
-position = Vector3(15, 0, -6)
+[node name="SwordTrainer" type="Marker3D" parent="AuthoringAnchors" unique_id=135817110]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0, -6)
 script = ExtResource("3_aa7fi")
 AuthoredObjectId = "41000000-0000-4000-8000-000000000012"
 
-[node name="Preview" parent="AuthoringAnchors/SwordTrainer" instance=ExtResource("8_trainer")]
+[node name="Preview" type="Node3D" parent="AuthoringAnchors/SwordTrainer" unique_id=426080947 instance=ExtResource("6_wb5rc")]
+script = ExtResource("7_lo2pr")
+PreviewArmed = true
+BodyTint = Color(0.23, 0.39, 0.65, 1)
+PreviewOnly = true
 
 [node name="SouthGate" type="Marker3D" parent="AuthoringAnchors" unique_id=765679080]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 29)

@@ -1,0 +1,319 @@
+[gd_scene format=3 uid="uid://bgwyg21k6yaa6"]
+
+[ext_resource type="Script" uid="uid://djg7s0sjhqlpb" path="res://Tests/Navigation/NavigationStudy.cs" id="1_n5gvc"]
+
+[sub_resource type="StandardMaterial3D" id="GroundMaterial"]
+albedo_color = Color(0.28, 0.4, 0.32, 1)
+
+[sub_resource type="BoxMesh" id="WestMesh"]
+material = SubResource("GroundMaterial")
+size = Vector3(20, 1, 32)
+
+[sub_resource type="BoxShape3D" id="WestShape"]
+size = Vector3(20, 1, 32)
+
+[sub_resource type="BoxMesh" id="NorthMesh"]
+material = SubResource("GroundMaterial")
+size = Vector3(20, 1, 20)
+
+[sub_resource type="BoxShape3D" id="NorthShape"]
+size = Vector3(20, 1, 20)
+
+[sub_resource type="BoxMesh" id="SouthMesh"]
+material = SubResource("GroundMaterial")
+size = Vector3(20, 1, 4)
+
+[sub_resource type="BoxShape3D" id="SouthShape"]
+size = Vector3(20, 1, 4)
+
+[sub_resource type="BoxMesh" id="PitSideMesh"]
+material = SubResource("GroundMaterial")
+size = Vector3(6, 1, 8)
+
+[sub_resource type="BoxShape3D" id="PitSideShape"]
+size = Vector3(6, 1, 8)
+
+[sub_resource type="StandardMaterial3D" id="HillMaterial"]
+albedo_color = Color(0.55, 0.65, 0.32, 1)
+
+[sub_resource type="BoxMesh" id="HillMesh"]
+material = SubResource("HillMaterial")
+size = Vector3(6, 5, 6)
+
+[sub_resource type="BoxShape3D" id="HillShape"]
+size = Vector3(6, 5, 6)
+
+[sub_resource type="BoxMesh" id="HillRampMesh"]
+material = SubResource("HillMaterial")
+size = Vector3(6, 1, 8.944272)
+
+[sub_resource type="BoxShape3D" id="HillRampShape"]
+size = Vector3(6, 1, 8.944272)
+
+[sub_resource type="StandardMaterial3D" id="PitMaterial"]
+albedo_color = Color(0.3, 0.42, 0.55, 1)
+
+[sub_resource type="BoxMesh" id="PitMesh"]
+material = SubResource("PitMaterial")
+size = Vector3(8, 1, 8)
+
+[sub_resource type="BoxShape3D" id="PitShape"]
+size = Vector3(8, 1, 8)
+
+[sub_resource type="BoxMesh" id="PitRampMesh"]
+material = SubResource("PitMaterial")
+size = Vector3(8, 1, 5)
+
+[sub_resource type="BoxShape3D" id="PitRampShape"]
+size = Vector3(8, 1, 5)
+
+[sub_resource type="StandardMaterial3D" id="BridgeMaterial"]
+albedo_color = Color(0.7, 0.48, 0.25, 1)
+
+[sub_resource type="BoxMesh" id="BridgeMesh"]
+material = SubResource("BridgeMaterial")
+size = Vector3(4, 0.6, 12)
+
+[sub_resource type="BoxShape3D" id="BridgeShape"]
+size = Vector3(4, 0.6, 12)
+
+[sub_resource type="BoxMesh" id="BridgeRampMesh"]
+material = SubResource("BridgeMaterial")
+size = Vector3(8.944272, 1, 4)
+
+[sub_resource type="BoxShape3D" id="BridgeRampShape"]
+size = Vector3(8.944272, 1, 4)
+
+[sub_resource type="StandardMaterial3D" id="WallMaterial"]
+albedo_color = Color(0.48, 0.48, 0.52, 1)
+
+[sub_resource type="BoxMesh" id="CliffMesh"]
+material = SubResource("WallMaterial")
+size = Vector3(4, 5, 4)
+
+[sub_resource type="BoxShape3D" id="CliffShape"]
+size = Vector3(4, 5, 4)
+
+[sub_resource type="Environment" id="Environment"]
+background_mode = 1
+background_color = Color(0.1, 0.14, 0.2, 1)
+ambient_light_source = 3
+ambient_light_color = Color(1, 1, 1, 1)
+ambient_light_energy = 0.7
+
+[node name="NavigationStudy" type="Node3D" unique_id=885214293]
+script = ExtResource("1_n5gvc")
+
+[node name="Geometry" type="Node3D" parent="." unique_id=125754876 groups=["navigation_study_geometry"]]
+
+[node name="WestGround" type="StaticBody3D" parent="Geometry" unique_id=821424493]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, -0.5, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/WestGround" unique_id=809686686]
+mesh = SubResource("WestMesh")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WestGround" unique_id=493035587]
+shape = SubResource("WestShape")
+
+[node name="NorthGround" type="StaticBody3D" parent="Geometry" unique_id=246611466]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, -0.5, -6)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/NorthGround" unique_id=1767799378]
+mesh = SubResource("NorthMesh")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/NorthGround" unique_id=598012673]
+shape = SubResource("NorthShape")
+
+[node name="SouthGround" type="StaticBody3D" parent="Geometry" unique_id=1250779807]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, -0.5, 14)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/SouthGround" unique_id=709441423]
+mesh = SubResource("SouthMesh")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/SouthGround" unique_id=1586326547]
+shape = SubResource("SouthShape")
+
+[node name="PitWestGround" type="StaticBody3D" parent="Geometry" unique_id=1254754592]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, -0.5, 8)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/PitWestGround" unique_id=1052916224]
+mesh = SubResource("PitSideMesh")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/PitWestGround" unique_id=1112449337]
+shape = SubResource("PitSideShape")
+
+[node name="PitEastGround" type="StaticBody3D" parent="Geometry" unique_id=1548699823]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17, -0.5, 8)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/PitEastGround" unique_id=1509300162]
+mesh = SubResource("PitSideMesh")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/PitEastGround" unique_id=1678273884]
+shape = SubResource("PitSideShape")
+
+[node name="Hill" type="StaticBody3D" parent="Geometry" unique_id=1463895652]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 1.5, -11)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Hill" unique_id=1392416685]
+mesh = SubResource("HillMesh")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/Hill" unique_id=245468253]
+shape = SubResource("HillShape")
+
+[node name="HillRamp" type="StaticBody3D" parent="Geometry" unique_id=804442663]
+transform = Transform3D(1, 0, 0, 0, 0.8944272, -0.4472136, 0, 0.4472136, 0.8944272, -10, 1.5527864, -4.223607)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/HillRamp" unique_id=1074103270]
+mesh = SubResource("HillRampMesh")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/HillRamp" unique_id=963340079]
+shape = SubResource("HillRampShape")
+
+[node name="PitFloor" type="StaticBody3D" parent="Geometry" unique_id=571800644]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, -3.5, 8)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/PitFloor" unique_id=1650847102]
+mesh = SubResource("PitMesh")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/PitFloor" unique_id=289119084]
+shape = SubResource("PitShape")
+
+[node name="PitRamp" type="StaticBody3D" parent="Geometry" unique_id=2120113979]
+transform = Transform3D(1, 0, 0, 0, 0.8, -0.6, 0, 0.6, 0.8, 10, -1.9, 5.7)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/PitRamp" unique_id=1007991723]
+mesh = SubResource("PitRampMesh")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/PitRamp" unique_id=55477006]
+shape = SubResource("PitRampShape")
+
+[node name="Bridge" type="StaticBody3D" parent="Geometry" unique_id=1012399363]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 3.7, -6)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Bridge" unique_id=1955732691]
+mesh = SubResource("BridgeMesh")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/Bridge" unique_id=1210706867]
+shape = SubResource("BridgeShape")
+
+[node name="BridgeRamp" type="StaticBody3D" parent="Geometry" unique_id=1556338721]
+transform = Transform3D(0.8944272, -0.4472136, 0, 0.4472136, 0.8944272, 0, 0, 0, 1, 0.223607, 1.5527864, -6)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/BridgeRamp" unique_id=1926412073]
+mesh = SubResource("BridgeRampMesh")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/BridgeRamp" unique_id=286195218]
+shape = SubResource("BridgeRampShape")
+
+[node name="Cliff" type="StaticBody3D" parent="Geometry" unique_id=2064455196]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 1.5, 8)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Cliff" unique_id=1058692367]
+mesh = SubResource("CliffMesh")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/Cliff" unique_id=642027406]
+shape = SubResource("CliffShape")
+
+[node name="NarrowWallLeft" type="CSGBox3D" parent="Geometry" unique_id=165236985]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.45, 1.5, 8)
+use_collision = true
+size = Vector3(3.1, 3, 1)
+material = SubResource("WallMaterial")
+
+[node name="NarrowWallRight" type="CSGBox3D" parent="Geometry" unique_id=1431617693]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.55, 1.5, 8)
+use_collision = true
+size = Vector3(5.1, 3, 1)
+material = SubResource("WallMaterial")
+
+[node name="Scenarios" type="Node3D" parent="." unique_id=106841943]
+
+[node name="Hill" type="Node3D" parent="Scenarios" unique_id=142934932]
+
+[node name="Start" type="Marker3D" parent="Scenarios/Hill" unique_id=1464208950]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, 2)
+
+[node name="Goal" type="Marker3D" parent="Scenarios/Hill" unique_id=1074658691]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 4, -11)
+
+[node name="Pit" type="Node3D" parent="Scenarios" unique_id=757121482]
+
+[node name="Start" type="Marker3D" parent="Scenarios/Pit" unique_id=940740425]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, 2)
+
+[node name="Goal" type="Marker3D" parent="Scenarios/Pit" unique_id=1722432791]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, -3, 10)
+
+[node name="BridgeTop" type="Node3D" parent="Scenarios" unique_id=517078590]
+
+[node name="Start" type="Marker3D" parent="Scenarios/BridgeTop" unique_id=462665889]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 4, -10)
+
+[node name="Goal" type="Marker3D" parent="Scenarios/BridgeTop" unique_id=197504906]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 4, -2)
+
+[node name="BridgeUnder" type="Node3D" parent="Scenarios" unique_id=316019693]
+
+[node name="Start" type="Marker3D" parent="Scenarios/BridgeUnder" unique_id=1031299679]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, -10)
+
+[node name="Goal" type="Marker3D" parent="Scenarios/BridgeUnder" unique_id=700567647]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, -2)
+
+[node name="BridgeClimb" type="Node3D" parent="Scenarios" unique_id=664638565]
+
+[node name="Start" type="Marker3D" parent="Scenarios/BridgeClimb" unique_id=1150864779]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, -6)
+
+[node name="Goal" type="Marker3D" parent="Scenarios/BridgeClimb" unique_id=88984478]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 4, -6)
+
+[node name="NarrowPassage" type="Node3D" parent="Scenarios" unique_id=578715334]
+
+[node name="Start" type="Marker3D" parent="Scenarios/NarrowPassage" unique_id=1938294590]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, 6)
+
+[node name="Goal" type="Marker3D" parent="Scenarios/NarrowPassage" unique_id=707309785]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, 10)
+
+[node name="Cliff" type="Node3D" parent="Scenarios" unique_id=99832616]
+metadata/reachable = false
+
+[node name="Start" type="Marker3D" parent="Scenarios/Cliff" unique_id=1295955659]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 0, 12)
+
+[node name="Goal" type="Marker3D" parent="Scenarios/Cliff" unique_id=109926283]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 4, 8)
+
+[node name="LongRoute" type="Node3D" parent="Scenarios" unique_id=1954631828]
+
+[node name="Start" type="Marker3D" parent="Scenarios/LongRoute" unique_id=1984534569]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0, -14)
+
+[node name="Goal" type="Marker3D" parent="Scenarios/LongRoute" unique_id=1932901455]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0, 14)
+
+[node name="Camera" type="Camera3D" parent="." unique_id=1272384697]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 34, 40, 42)
+projection = 1
+current = true
+size = 53.0
+
+[node name="Light" type="DirectionalLight3D" parent="." unique_id=1145034612]
+transform = Transform3D(0.90630776, 0.36599818, -0.21130912, 0, 0.49999997, 0.86602545, 0.42261827, -0.7848856, 0.45315385, 0, 0, 0)
+light_energy = 1.1
+shadow_enabled = true
+
+[node name="Environment" type="WorldEnvironment" parent="." unique_id=1808764734]
+environment = SubResource("Environment")
+
+[node name="UI" type="CanvasLayer" parent="." unique_id=195777143]
+
+[node name="Status" type="Label" parent="UI" unique_id=1409269282]
+offset_left = 16.0
+offset_top = 16.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+text = "Navigation study: baking..."

@@ -11,7 +11,7 @@ public partial class RegionAuthoringSmoke : Node
     {
         try
         {
-            var shellScene = GD.Load<PackedScene>("res://Scenes/App/GameRoot.tscn");
+            var shellScene = GD.Load<PackedScene>("res://Tests/Regions/Fixtures/GameRoot.tscn");
             var shell = shellScene.Instantiate<GameRoot>();
             AddChild(shell);
             Require(shell.ActiveRegion?.RegionId == "prototype", "Initial preview did not load.");

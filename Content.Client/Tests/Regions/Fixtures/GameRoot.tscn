@@ -1,0 +1,49 @@
+[gd_scene format=3 uid="uid://vx2r5weftype"]
+
+[ext_resource type="Script" uid="uid://cr2t0gm5xlma" path="res://Scripts/Regions/GameRoot.cs" id="1_715fd"]
+[ext_resource type="PackedScene" uid="uid://bnc0u2tpetn7u" path="res://Tests/Regions/Fixtures/Prototype.tscn" id="2_ke57g"]
+[ext_resource type="PackedScene" uid="uid://5fotott2s50v" path="res://Tests/Regions/Fixtures/Outskirts.tscn" id="3_kfysk"]
+
+[node name="GameRoot" type="Node" unique_id=915672469 node_paths=PackedStringArray("RegionHost", "PrototypeButton", "OutskirtsButton", "StatusLabel")]
+script = ExtResource("1_715fd")
+RegionHost = NodePath("RegionHost")
+PrototypeScene = ExtResource("2_ke57g")
+OutskirtsScene = ExtResource("3_kfysk")
+PrototypeButton = NodePath("PreviewUI/Panel/Margin/Controls/Buttons/Prototype")
+OutskirtsButton = NodePath("PreviewUI/Panel/Margin/Controls/Buttons/Outskirts")
+StatusLabel = NodePath("PreviewUI/Panel/Margin/Controls/Status")
+
+[node name="RegionHost" type="Node3D" parent="." unique_id=1016183417]
+
+[node name="PreviewUI" type="CanvasLayer" parent="." unique_id=158108518]
+
+[node name="Panel" type="PanelContainer" parent="PreviewUI" unique_id=1627888104]
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 610.0
+offset_bottom = 120.0
+
+[node name="Margin" type="MarginContainer" parent="PreviewUI/Panel" unique_id=1212952856]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="Controls" type="VBoxContainer" parent="PreviewUI/Panel/Margin" unique_id=651442380]
+layout_mode = 2
+
+[node name="Buttons" type="HBoxContainer" parent="PreviewUI/Panel/Margin/Controls" unique_id=933510377]
+layout_mode = 2
+
+[node name="Prototype" type="Button" parent="PreviewUI/Panel/Margin/Controls/Buttons" unique_id=723424059]
+layout_mode = 2
+text = "Prototype"
+
+[node name="Outskirts" type="Button" parent="PreviewUI/Panel/Margin/Controls/Buttons" unique_id=1418058231]
+layout_mode = 2
+text = "Outskirts"
+
+[node name="Status" type="Label" parent="PreviewUI/Panel/Margin/Controls" unique_id=1061867535]
+layout_mode = 2
+text = "Offline region preview"

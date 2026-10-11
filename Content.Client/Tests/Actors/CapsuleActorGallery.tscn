@@ -1,16 +1,16 @@
-[gd_scene format=3 uid="uid://casyyvlpv2xke"]
+[gd_scene format=3 uid="uid://x3mt8axdld4l"]
 
-[ext_resource type="Script" uid="uid://cp5lic36e3con" path="res://Scripts/_NC/Actors/CapsuleActorGallery.cs" id="1_atmhf"]
-[ext_resource type="PackedScene" uid="uid://cw826teiol84h" path="res://Scenes/Actors/Primitives/PlayerFigure.tscn" id="2_fdw5u"]
-[ext_resource type="Script" uid="uid://h2scsig7wel4" path="res://Scripts/_NC/Actors/CapsuleActorVisual.cs" id="3_2w0qv"]
-[ext_resource type="PackedScene" uid="uid://d4dwfk6qie46c" path="res://Scenes/Actors/Primitives/ResidentFigure.tscn" id="4_gvrpo"]
-[ext_resource type="PackedScene" uid="uid://d18snt6h8ax2g" path="res://Scenes/Actors/Primitives/TrainerFigure.tscn" id="5_noiju"]
-[ext_resource type="PackedScene" uid="uid://b82vqk8qp8lke" path="res://Scenes/Actors/Primitives/GuideFigure.tscn" id="6_202a6"]
-[ext_resource type="PackedScene" uid="uid://b8a531i0q67l" path="res://Scenes/Actors/Primitives/KeeperFigure.tscn" id="7_maoso"]
-[ext_resource type="PackedScene" uid="uid://bwysm6rmkbje4" path="res://Scenes/Actors/Primitives/MonsterFigure.tscn" id="8_yd0ap"]
-[ext_resource type="PackedScene" uid="uid://ctiw22g6dv6jx" path="res://Scenes/Actors/Primitives/BossFigure.tscn" id="9_gat07"]
-[ext_resource type="PackedScene" uid="uid://cmjh3ic1djewx" path="res://Scenes/Actors/TrainingDummy.tscn" id="10_50df0"]
-[ext_resource type="Script" uid="uid://c6eslp7smri02" path="res://Scripts/_NC/Actors/DummyReaction.cs" id="11_pc1iw"]
+[ext_resource type="Script" uid="uid://cp5lic36e3con" path="res://Scripts/_NC/Actors/CapsuleActorGallery.cs" id="1_f4cvf"]
+[ext_resource type="PackedScene" uid="uid://cw826teiol84h" path="res://Scenes/Actors/Primitives/PlayerFigure.tscn" id="2_787gq"]
+[ext_resource type="Script" uid="uid://h2scsig7wel4" path="res://Scripts/_NC/Actors/CapsuleActorVisual.cs" id="3_1qtr6"]
+[ext_resource type="PackedScene" uid="uid://d4dwfk6qie46c" path="res://Scenes/Actors/Primitives/ResidentFigure.tscn" id="4_pabuw"]
+[ext_resource type="PackedScene" uid="uid://d18snt6h8ax2g" path="res://Scenes/Actors/Primitives/TrainerFigure.tscn" id="5_h0btx"]
+[ext_resource type="PackedScene" uid="uid://b82vqk8qp8lke" path="res://Scenes/Actors/Primitives/GuideFigure.tscn" id="6_b7eor"]
+[ext_resource type="PackedScene" uid="uid://b8a531i0q67l" path="res://Scenes/Actors/Primitives/KeeperFigure.tscn" id="7_oeswb"]
+[ext_resource type="PackedScene" uid="uid://bwysm6rmkbje4" path="res://Scenes/Actors/Primitives/MonsterFigure.tscn" id="8_q73hj"]
+[ext_resource type="PackedScene" uid="uid://ctiw22g6dv6jx" path="res://Scenes/Actors/Primitives/BossFigure.tscn" id="9_2oucs"]
+[ext_resource type="PackedScene" uid="uid://cmjh3ic1djewx" path="res://Scenes/Actors/TrainingDummy.tscn" id="10_64q6v"]
+[ext_resource type="Script" uid="uid://c6eslp7smri02" path="res://Scripts/_NC/Actors/DummyReaction.cs" id="11_wyvv3"]
 
 [sub_resource type="Environment" id="Environment_r84qo"]
 background_mode = 1
@@ -26,50 +26,50 @@ albedo_color = Color(0.2, 0.25, 0.27, 1)
 size = Vector3(23, 0.1, 14)
 
 [node name="CapsuleActorGallery" type="Node3D" unique_id=1007100581]
-script = ExtResource("1_atmhf")
+script = ExtResource("1_f4cvf")
 
 [node name="Actors" type="Node3D" parent="." unique_id=1328012213]
 
-[node name="PlayerFigure" type="Node3D" parent="Actors" unique_id=1675102066 instance=ExtResource("2_fdw5u")]
+[node name="PlayerFigure" type="Node3D" parent="Actors" unique_id=1675102066 instance=ExtResource("2_787gq")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, -2.5)
-script = ExtResource("3_2w0qv")
+script = ExtResource("3_1qtr6")
 PreviewArmed = true
 PreviewOnly = true
 
-[node name="ResidentFigure" type="Node3D" parent="Actors" unique_id=2058491865 instance=ExtResource("4_gvrpo")]
+[node name="ResidentFigure" type="Node3D" parent="Actors" unique_id=2058491865 instance=ExtResource("4_pabuw")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -2.5)
-script = ExtResource("3_2w0qv")
+script = ExtResource("3_1qtr6")
 BodyTint = Color(0.67, 0.47, 0.24, 1)
 PreviewOnly = true
 
-[node name="TrainerFigure" type="Node3D" parent="Actors" unique_id=426080947 instance=ExtResource("5_noiju")]
+[node name="TrainerFigure" type="Node3D" parent="Actors" unique_id=426080947 instance=ExtResource("5_h0btx")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -2.5)
-script = ExtResource("3_2w0qv")
+script = ExtResource("3_1qtr6")
 PreviewArmed = true
 BodyTint = Color(0.23, 0.39, 0.65, 1)
 PreviewOnly = true
 
-[node name="GuideFigure" type="Node3D" parent="Actors" unique_id=1425756495 instance=ExtResource("6_202a6")]
+[node name="GuideFigure" type="Node3D" parent="Actors" unique_id=1425756495 instance=ExtResource("6_b7eor")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, -2.5)
-script = ExtResource("3_2w0qv")
+script = ExtResource("3_1qtr6")
 BodyTint = Color(0.27, 0.55, 0.8, 1)
 PreviewOnly = true
 
-[node name="KeeperFigure" type="Node3D" parent="Actors" unique_id=539153946 instance=ExtResource("7_maoso")]
+[node name="KeeperFigure" type="Node3D" parent="Actors" unique_id=539153946 instance=ExtResource("7_oeswb")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, 3)
-script = ExtResource("3_2w0qv")
+script = ExtResource("3_1qtr6")
 BodyTint = Color(0.18, 0.72, 0.7, 1)
 PreviewOnly = true
 
-[node name="MonsterFigure" type="Node3D" parent="Actors" unique_id=966248435 instance=ExtResource("8_yd0ap")]
+[node name="MonsterFigure" type="Node3D" parent="Actors" unique_id=966248435 instance=ExtResource("8_q73hj")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 3)
-script = ExtResource("3_2w0qv")
+script = ExtResource("3_1qtr6")
 BodyTint = Color(0.68, 0.18, 0.14, 1)
 PreviewOnly = true
 
-[node name="BossFigure" type="Node3D" parent="Actors" unique_id=1404510489 instance=ExtResource("9_gat07")]
+[node name="BossFigure" type="Node3D" parent="Actors" unique_id=1404510489 instance=ExtResource("9_2oucs")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 3)
-script = ExtResource("3_2w0qv")
+script = ExtResource("3_1qtr6")
 BodyTint = Color(0.62, 0.36, 0.1, 1)
 PreviewOnly = true
 
@@ -148,9 +148,9 @@ no_depth_test = true
 text = "Босс"
 font_size = 34
 
-[node name="Dummy" type="Node3D" parent="." unique_id=1558914989 instance=ExtResource("10_50df0")]
+[node name="Dummy" type="Node3D" parent="." unique_id=1558914989 instance=ExtResource("10_64q6v")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 3)
-script = ExtResource("11_pc1iw")
+script = ExtResource("11_wyvv3")
 
 [node name="DummyLabel" type="Label3D" parent="." unique_id=421347907]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 2.8, 3)

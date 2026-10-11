@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://bwhoh2d6bbrfn"]
+
+[ext_resource type="Script" uid="uid://c2yrbojymu8vh" path="res://Tests/App/MainMenuSmoke.cs" id="1_gfgdm"]
+
+[node name="MainMenuSmoke" type="Node" unique_id=1413800657]
+script = ExtResource("1_gfgdm")

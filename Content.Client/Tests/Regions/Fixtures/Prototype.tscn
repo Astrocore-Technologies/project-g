@@ -1,0 +1,97 @@
+[gd_scene format=3 uid="uid://bnc0u2tpetn7u"]
+
+[ext_resource type="Script" uid="uid://bmwh822lwtbxu" path="res://Scripts/Editor/Regions/RegionRoot.cs" id="1_50bp2"]
+[ext_resource type="Script" uid="uid://dfedbrvltwpyv" path="res://Scripts/Editor/Regions/EntryMarker.cs" id="2_7x3tj"]
+[ext_resource type="Script" uid="uid://coyc23fgrufde" path="res://Scripts/Editor/Regions/GateMarker.cs" id="3_uglav"]
+[ext_resource type="Script" uid="uid://dl4mfls2ukh4p" path="res://Scripts/Editor/Regions/ActorSpawnMarker.cs" id="4_yoomq"]
+[ext_resource type="Script" uid="uid://clx7e4yqiyy70" path="res://Scripts/Editor/Regions/InteractionMarker.cs" id="5_eud47"]
+[ext_resource type="Script" uid="uid://bp608ni13i5dd" path="res://Scripts/Editor/Regions/NavigationPatchMarker.cs" id="6_qm0by"]
+
+[sub_resource type="StandardMaterial3D" id="GroundMaterial"]
+albedo_color = Color(0.24, 0.38, 0.29, 1)
+
+[sub_resource type="BoxMesh" id="GroundMesh"]
+material = SubResource("GroundMaterial")
+size = Vector3(30, 0.2, 30)
+
+[sub_resource type="BoxShape3D" id="GroundShape"]
+size = Vector3(30, 0.2, 30)
+
+[sub_resource type="StandardMaterial3D" id="BlockMaterial"]
+albedo_color = Color(0.48, 0.53, 0.58, 1)
+
+[sub_resource type="BoxMesh" id="BlockMesh"]
+material = SubResource("BlockMaterial")
+size = Vector3(2, 2, 5)
+
+[sub_resource type="BoxShape3D" id="BlockShape"]
+size = Vector3(2, 2, 5)
+
+[node name="Prototype" type="Node3D" unique_id=432265164]
+script = ExtResource("1_50bp2")
+RegionId = "prototype"
+
+[node name="Environment" type="Node3D" parent="." unique_id=1452323376]
+
+[node name="Sun" type="DirectionalLight3D" parent="Environment" unique_id=918963026]
+transform = Transform3D(0.90630776, 0.36599818, -0.21130912, 0, 0.49999997, 0.86602545, 0.42261827, -0.7848856, 0.45315385, 0, 0, 0)
+light_energy = 1.2
+shadow_enabled = true
+
+[node name="PreviewCamera" type="Camera3D" parent="Environment" unique_id=1437727630]
+transform = Transform3D(1, 0, 0, 0, 0.6507742, 0.7592713, 0, -0.7592713, 0.6507742, 0, 28, 24)
+projection = 1
+current = true
+size = 42.0
+
+[node name="Terrain" type="Node3D" parent="." unique_id=877864563]
+
+[node name="Ground" type="StaticBody3D" parent="Terrain" unique_id=1637693298 groups=["region_walkable"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Terrain/Ground" unique_id=361958505]
+mesh = SubResource("GroundMesh")
+
+[node name="Collision" type="CollisionShape3D" parent="Terrain/Ground" unique_id=1430176811]
+shape = SubResource("GroundShape")
+
+[node name="DemoBlocker" type="StaticBody3D" parent="Terrain" unique_id=2066461351 groups=["region_movement_blocker"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 1, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Terrain/DemoBlocker" unique_id=1543453852]
+mesh = SubResource("BlockMesh")
+
+[node name="Collision" type="CollisionShape3D" parent="Terrain/DemoBlocker" unique_id=1701817440]
+shape = SubResource("BlockShape")
+
+[node name="Decorations" type="Node3D" parent="." unique_id=608064510]
+
+[node name="PublicStateBindings" type="Node3D" parent="." unique_id=1391479564]
+
+[node name="AuthoringAnchors" type="Node3D" parent="." unique_id=1729051683]
+
+[node name="Entry" type="Marker3D" parent="AuthoringAnchors" unique_id=487662672]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, 10)
+script = ExtResource("2_7x3tj")
+AuthoredObjectId = "10000000-0000-4000-8000-000000000001"
+
+[node name="Gate" type="Marker3D" parent="AuthoringAnchors" unique_id=414812710]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, 10)
+script = ExtResource("3_uglav")
+AuthoredObjectId = "10000000-0000-4000-8000-000000000002"
+
+[node name="ActorSpawn" type="Marker3D" parent="AuthoringAnchors" unique_id=887153164]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 0, 2)
+script = ExtResource("4_yoomq")
+AuthoredObjectId = "10000000-0000-4000-8000-000000000003"
+
+[node name="Interaction" type="Marker3D" parent="AuthoringAnchors" unique_id=402948326]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, -1)
+script = ExtResource("5_eud47")
+AuthoredObjectId = "10000000-0000-4000-8000-000000000004"
+
+[node name="NavigationPatch" type="Marker3D" parent="AuthoringAnchors" unique_id=903511992]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 7)
+script = ExtResource("6_qm0by")
+Footprint = Vector2(2, 2)
+AuthoredObjectId = "10000000-0000-4000-8000-000000000005"

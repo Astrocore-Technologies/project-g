@@ -11,15 +11,16 @@
 ## Проверка в редакторе
 
 1. Собрать C# проект, открыть `Content.Client/project.godot` в Godot .NET 4.7.1.
-2. Открыть `Scenes/Regions/Prototype/Prototype.tscn` либо `Outskirts/Outskirts.tscn`.
+2. Открыть `Tests/Regions/Fixtures/Prototype.tscn` либо `Tests/Regions/Fixtures/Outskirts.tscn`.
 3. Переместить `Terrain/DemoBlocker`, сохранить. F6 показывает текущую сцену.
-4. Открыть `Scenes/App/GameRoot.tscn`, F6. Кнопки переключают обе карты; строка
+4. Открыть `Tests/Regions/Fixtures/GameRoot.tscn`, F6. Кнопки переключают обе карты; строка
    OFFLINE PREVIEW подтверждает, что серверное подключение не требуется.
 5. Изменить ID Gate на ID Entry и сохранить. Preview покажет duplicate ID;
    вернуть исходный ID. Некорректная сцена не заменяет уже открытый регион.
 
-F5 по-прежнему запускает существующую сетевую игру. Preview GameRoot будет расширяться
-до полноценного session shell при переносе presentation/activation на R3/R4.
+F5 запускает сетевую игру через `Scenes/App/MainMenu.tscn`. GameRoot — отдельный
+offline стенд, а его две карты — test fixtures. При очистке 2026-10-11 они перенесены
+из `Scenes` в `Tests`; активные игровые карты и серверный экспорт сохранены.
 
 ## Authoring contract v1
 

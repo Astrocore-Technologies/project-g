@@ -89,7 +89,7 @@
 | Игрок | `Scenes/PlayerAvatar.tscn`, `Scripts/PlayerController.cs`, вызовы визуала в `Scripts/WorldController.cs` |
 | Анимации | Новые `_NC/Actors` классы, `Scripts/Combat/SwordAttackAnimation.cs`, `Scripts/_NC/Animation/CharacterFeedback.cs`; адаптация старого аниматора к общему контракту |
 | Мобы | `Scripts/Combat/NpcPresentation.cs`, визуальные события/состояния в `WorldController` и `CombatPresentation` |
-| Мирные NPC | `Scripts/Quests/QuestPresentation.cs`, `Scripts/StarterZone/StarterZonePresentation.cs`, `Scripts/WorldStory/WorldNodePresentation.cs`, `Scenes/Actors/SwordTrainer.tscn` |
+| Мирные NPC | `Scripts/Quests/QuestPresentation.cs`, `Scripts/StarterZone/StarterZonePresentation.cs`, `Scripts/WorldStory/WorldNodePresentation.cs`, `Scenes/Actors/Primitives/TrainerFigure.tscn` |
 | Превью/проверки | Использование `UiModelPreview`, новые сцены стенда, адаптация `AvatarLiveSmoke`, проверка новой ветки в `SwordAnimationSmoke` |
 | Ассеты | Нативные Godot mesh-ресурсы и сцены внутри `Content.Client/Scenes/Actors/Primitives/` |
 
@@ -112,7 +112,7 @@
 - Анимации: общий редактируемый `CapsuleAnimations.tres`, 65 клипов. Дорожки меняют только `Center/Pose` и оружие. Жесты условные: наклоны и покачивания капсулы. `Tools/Actors/CapsuleAnimationAuthor.gd` сохраняет существующий ресурс при повторном запуске и не перезаписывает ручные правки.
 - `PlayerAvatar.AppearanceScene` назначает капсулу; тот же визуал используется в окне персонажа. NPC-портреты используют полный вариант сцены. NPC, проводник, хранитель, мобы и босс подключены к общей основе; деревянный манекен сохранён.
 - Общий `ActorVisual` отделяет игровой код от скелета. Прежние модели и скелетная галерея сохранены. Ошибочный Blender-вариант убран из игровых ресурсов и архивирован в `.artifacts/archive/primitive-actors-blender-20261011/`; ассеты Линвеля не затронуты.
-- Стенд: `Content.Client/Scenes/Actors/CapsuleActorGallery.tscn`. Открыть в Godot и нажать F6: выбор клипа, Space для паузы, ползунок времени.
+- Стенд: `Content.Client/Tests/Actors/CapsuleActorGallery.tscn`. Открыть в Godot и нажать F6: выбор клипа, Space для паузы, ползунок времени. При очистке Scenes 2026-10-11 стенд перенесён в Tests; старый SwordTrainer заменён капсулой в preview города и удалён.
 
 Серверная логика, протокол, физическая коллизия, камера и баланс не менялись. Штатный экспорт регионов обновлён из-за новой клиентской реакции манекена; изменились его source hashes, геометрия регионов осталась прежней.
 
