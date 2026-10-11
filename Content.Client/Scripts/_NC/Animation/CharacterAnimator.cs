@@ -199,6 +199,6 @@ public partial class CharacterAnimator : ProjectG.Actors.ActorVisual
     }
     private void SavePose()
     { for (var i = 0; i < _previous.Length; i++) { _previous[i] = _skeleton.GetBonePoseRotation(i); _positions[i] = _skeleton.GetBonePosePosition(i); } }
-    public static string GestureClip(AvatarGesture g) => g switch
+    public new static string GestureClip(AvatarGesture g) => g switch
     { AvatarGesture.Wave => "wave", AvatarGesture.Nod => "nod", AvatarGesture.No => "no", AvatarGesture.Bow => "bow", AvatarGesture.Point => "point", AvatarGesture.Cheer => "cheer", AvatarGesture.Clap => "clap", AvatarGesture.Sit => "sit_down", AvatarGesture.Talk => "talk", AvatarGesture.Pickup => "pickup", AvatarGesture.Gather => "gather", AvatarGesture.Craft => "craft", _ => "interact" };
 }

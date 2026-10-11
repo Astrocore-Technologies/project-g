@@ -74,6 +74,8 @@ public partial class SwordAnimationSmoke : Node3D
             test.ApplyAbility(State(28,AbilityPhase.Finished,0)); Check(!test.IsAnimating,"Interrupted recovery stuck.");
             test.PredictBasic(102,V2.UnitY,1); test._Process(2.1); Check(!test.IsAnimating,"Prediction timeout stuck.");
             var avatar=GD.Load<PackedScene>("res://Scenes/PlayerAvatar.tscn").Instantiate<ProjectG.Gameplay.PlayerController>(); AddChild(avatar);
+            // This scene checks poses; real spatial audio is exercised by AvatarLiveSmoke.
+            if(avatar.Animator is ProjectG.Actors.CapsuleActorVisual capsule) capsule.PreviewOnly=true;
             avatar.SwordAnimation.PredictBasic(1,V2.UnitY,1); avatar.SetAlive(false); Check(!avatar.SwordAnimation.IsAnimating,"Death animation cleanup missing.");
             avatar.QueueFree(); await ToSignal(GetTree(),SceneTree.SignalName.ProcessFrame);
             GD.Print("SWORD_ANIMATION_SMOKE_OK: 13 clips, distinct poses, confirmation, rejection, interruption, timeout, death, rest and authority isolation.");

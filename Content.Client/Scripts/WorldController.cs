@@ -236,7 +236,7 @@ public partial class WorldController : Node3D
                 if(actor is NpcPresentation npc) npc.Initialize(state,_network.Navigation!);
             }
             _targets.Add(state.EntityId, actor);
-            // NC: articulated NPCs own their feedback; the retained wooden dummy receives it here.
+            // NC: capsule NPCs own their feedback; the retained wooden dummy receives it here.
             if(state.Kind==CombatEntityKind.TrainingTarget)
                 actor.AddChild(new ProjectG.Animation.CharacterFeedback { Name="ContactFeedback", Position=new(0,-1,0) });
         }

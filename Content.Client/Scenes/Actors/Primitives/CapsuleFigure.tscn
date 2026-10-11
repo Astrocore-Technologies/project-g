@@ -1,0 +1,67 @@
+[gd_scene format=3 uid="uid://7d4eqm6yrf0a"]
+
+[ext_resource type="Script" uid="uid://h2scsig7wel4" path="res://Scripts/_NC/Actors/CapsuleActorVisual.cs" id="1_47pw7"]
+[ext_resource type="AnimationLibrary" uid="uid://slu0itf2tyxf" path="res://Scenes/Actors/Primitives/CapsuleAnimations.tres" id="2_fqvww"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_fqvww"]
+radius = 0.4
+radial_segments = 24
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1gcvd"]
+albedo_color = Color(0.17, 0.1, 0.055, 1)
+roughness = 0.8
+
+[sub_resource type="BoxMesh" id="BoxMesh_t7sls"]
+size = Vector3(0.09, 0.28, 0.09)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_msfo8"]
+albedo_color = Color(0.65, 0.46, 0.2, 1)
+roughness = 0.6
+
+[sub_resource type="BoxMesh" id="BoxMesh_17dp5"]
+size = Vector3(0.32, 0.07, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kug4e"]
+albedo_color = Color(0.68, 0.77, 0.83, 1)
+roughness = 0.45
+
+[sub_resource type="BoxMesh" id="BoxMesh_g4sas"]
+size = Vector3(0.09, 0.95, 0.035)
+
+[node name="CapsuleFigure" type="Node3D" unique_id=1635736641]
+script = ExtResource("1_47pw7")
+
+[node name="Center" type="Node3D" parent="." unique_id=787732417]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+
+[node name="Pose" type="Node3D" parent="Center" unique_id=1696321382]
+
+[node name="Body" type="MeshInstance3D" parent="Center/Pose" unique_id=1506517237]
+mesh = SubResource("CapsuleMesh_fqvww")
+
+[node name="Weapon" type="Node3D" parent="Center/Pose" unique_id=129763224]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.43, 0.12, 0.08)
+visible = false
+
+[node name="Grip" type="MeshInstance3D" parent="Center/Pose/Weapon" unique_id=461025998]
+material_override = SubResource("StandardMaterial3D_1gcvd")
+mesh = SubResource("BoxMesh_t7sls")
+
+[node name="Guard" type="MeshInstance3D" parent="Center/Pose/Weapon" unique_id=1040483350]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.18, 0)
+material_override = SubResource("StandardMaterial3D_msfo8")
+mesh = SubResource("BoxMesh_17dp5")
+
+[node name="Blade" type="MeshInstance3D" parent="Center/Pose/Weapon" unique_id=1659972401]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.69, 0)
+material_override = SubResource("StandardMaterial3D_kug4e")
+mesh = SubResource("BoxMesh_g4sas")
+
+[node name="BladeBase" type="Marker3D" parent="Center/Pose/Weapon" unique_id=421408030]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.22, 0)
+
+[node name="BladeTip" type="Marker3D" parent="Center/Pose/Weapon" unique_id=312061594]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.165, 0)
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=2040732249]
+libraries/ = ExtResource("2_fqvww")

@@ -1,25 +1,25 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene format=3 uid="uid://cjm0qbhvx4xdh"]
 
-[ext_resource type="Script" path="res://Scripts/PlayerController.cs" id="1_player"]
+[ext_resource type="Script" uid="uid://cbm0l7xsdox8g" path="res://Scripts/PlayerController.cs" id="1_player"]
+[ext_resource type="PackedScene" uid="uid://dpuroft1t00x3" path="res://Scenes/Actors/Primitives/PlayerFigure.tscn" id="2_jgndg"]
 [ext_resource type="PackedScene" path="res://Scenes/Actors/SwordAttackRig.tscn" id="2_sword"]
-[ext_resource type="PackedScene" path="res://Assets/Characters/MaleBase/MaleCharacter.tscn" id="3_appearance"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape_player"]
 
-[node name="PlayerAvatar" type="CharacterBody3D"]
+[node name="PlayerAvatar" type="CharacterBody3D" unique_id=277870252]
 script = ExtResource("1_player")
-AppearanceScene = ExtResource("3_appearance")
+AppearanceScene = ExtResource("2_jgndg")
 
-[node name="Visual" type="Node3D" parent="."]
+[node name="Visual" type="Node3D" parent="." unique_id=2104267776]
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=2019698980]
 shape = SubResource("CapsuleShape_player")
 
-[node name="SwordAttackRig" parent="." instance=ExtResource("2_sword")]
+[node name="SwordAttackRig" parent="." unique_id=1920885792 instance=ExtResource("2_sword")]
 BodyPath = NodePath("../Visual")
 
-[node name="CameraRig" type="Node3D" parent="."]
+[node name="CameraRig" type="Node3D" parent="." unique_id=1701059270]
 
-[node name="Camera3D" type="Camera3D" parent="CameraRig"]
+[node name="Camera3D" type="Camera3D" parent="CameraRig" unique_id=8237628]
 transform = Transform3D(1, 0, 0, 0, 0.70710677, 0.70710677, 0, -0.70710677, 0.70710677, 0, 12, 12)
 fov = 50.0

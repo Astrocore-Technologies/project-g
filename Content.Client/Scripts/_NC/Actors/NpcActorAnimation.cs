@@ -8,7 +8,7 @@ namespace ProjectG.Actors;
 public partial class NpcActorAnimation : Node
 {
     private ActorVisual _visual=null!;
-    private uint _spawnTick, _tick, _sequence, _confirmed, _confirmedTick;
+    private uint _spawnTick, _tick, _sequence, _confirmed;
     private bool _hasTick, _hasConfirmed, _active, _waiting, _area, _boss, _alive=true, _sounded;
     private double _elapsed, _duration, _age;
     private float _from, _yaw;
@@ -26,7 +26,7 @@ public partial class NpcActorAnimation : Node
     public void Windup(NpcWindup state)
     {
         if(!Accept(state.ServerTick,state.Sequence)) return;
-        if(state.RemainingSeconds<=0) { if(_waiting && !_area) Stop(); return; }
+        if(state.RemainingSeconds<=0) { _tick=state.ServerTick; _hasTick=true; if(_waiting && !_area) Stop(); return; }
         if(_hasConfirmed && state.Sequence==_confirmed) return;
         if(_active && _waiting && !_area && state.Sequence==_sequence && state.ServerTick==_tick) return;
         Begin(state.Sequence,state.ServerTick,false,Mathf.Atan2(state.Direction.X,state.Direction.Y),state.RemainingSeconds);
@@ -53,13 +53,15 @@ public partial class NpcActorAnimation : Node
         _from=same?Math.Min(.35f,(float)(_from+(.35f-_from)*Math.Clamp(_elapsed/_duration,0,1))):0;
         _sequence=sequence; _tick=tick; _hasTick=true; _area=area; _yaw=yaw;
         _clip=area||_boss?"boss_slam":"npc_strike";
-        _elapsed=0; _duration=Math.Max(.001,remaining); _age=0; _waiting=_active=true; _sounded=false; SetProcess(true);
+        _elapsed=0; _duration=Math.Max(.001,remaining); _age=0; _waiting=_active=true;
+        if(!same) _sounded=false;
+        SetProcess(true);
     }
     public void Confirm(AttackEvent state)
     {
         if(!Accept(state.ServerTick,state.Sequence)) return;
         // An AoE attack has one pose but may deliver one AttackEvent per victim.
-        if(_hasConfirmed && state.Sequence==_confirmed && state.ServerTick==_confirmedTick) return;
+        if(_hasConfirmed && state.Sequence==_confirmed) return;
         if(_hasConfirmed && state.Sequence!=_confirmed && !MovementSimulation.IsSequenceNewer(state.Sequence,_confirmed)) return;
         if(!_active || state.Sequence!=_sequence) Begin(state.Sequence,state.ServerTick,false,Mathf.Atan2(state.Direction.X,state.Direction.Y),0);
         Contact(state.Sequence,state.ServerTick);
@@ -67,7 +69,7 @@ public partial class NpcActorAnimation : Node
     private void Contact(uint sequence,uint tick)
     {
         if(!_waiting) return;
-        _confirmed=sequence; _confirmedTick=tick; _hasConfirmed=true; _waiting=false;
+        _confirmed=sequence; _tick=tick; _hasConfirmed=true; _waiting=false;
         _from=.35f; _elapsed=0; _duration=.32; _visual.ContactCue(_clip);
     }
     public void SetAlive(bool alive)

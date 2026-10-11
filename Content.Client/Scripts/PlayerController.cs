@@ -29,7 +29,6 @@ public partial class PlayerController : CharacterBody3D
 	private NumericsVector2 _target;
 	private float _predictedHeight, _targetHeight, _airOffset;
 	private Node3D _visual = null!;
-	private Vector3 _visualRestPosition;
 	public CombatControlPhase Control { get; private set; }
 	public float AirOffset => _airOffset;
 	private double _controlUntil, _recoveryUntil;
@@ -74,12 +73,11 @@ public partial class PlayerController : CharacterBody3D
 		SwordAnimation = GetNode<ProjectG.Combat.SwordAttackAnimation>("SwordAttackRig");
 		if (AppearanceScene is null)
 			throw new InvalidOperationException("PlayerAvatar requires an appearance scene.");
-		// NC: animate the visual pivot while the imported model keeps its feet at ground level.
+		// NC: the appearance starts at the feet; its pose never moves the collision or camera.
 		_appearance = AppearanceScene.Instantiate<Node3D>();
 		_appearance.Name = "Appearance";
 		_appearance.Position = new Vector3(0, -1, 0);
 		_visual=GetNode<Node3D>("Visual"); _visual.AddChild(_appearance);
-		_visualRestPosition=_visual.Position;
 		SwordAnimation.Bind(Animator);
 	}
 	public void SetAlive(bool alive)
@@ -166,7 +164,7 @@ public partial class PlayerController : CharacterBody3D
 	{
 		if (!_isLocal)
             UpdateRemote();
-        // NC: snapshot control affects rigid joints, never the collision or camera root.
+        // NC: snapshot control tilts only the capsule appearance, never the collision or camera root.
         Animator.SetControl(Control, ControlRemaining, IsDashing);
 	}
 

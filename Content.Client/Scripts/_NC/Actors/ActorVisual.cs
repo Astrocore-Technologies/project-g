@@ -20,4 +20,9 @@ public abstract partial class ActorVisual : Node3D
     public abstract void Sample(string clip, double time);
     // Snapshots control only the appearance. The actor's authoritative root stays upright.
     public virtual void SetControl(CombatControlPhase phase, double remaining, bool dashing = false) { }
+    public static string GestureClip(AvatarGesture gesture) => gesture switch
+    { AvatarGesture.Wave=>"wave", AvatarGesture.Nod=>"nod", AvatarGesture.No=>"no", AvatarGesture.Bow=>"bow",
+      AvatarGesture.Point=>"point", AvatarGesture.Cheer=>"cheer", AvatarGesture.Clap=>"clap", AvatarGesture.Sit=>"sit_down",
+      AvatarGesture.Talk=>"talk", AvatarGesture.Pickup=>"pickup", AvatarGesture.Gather=>"gather",
+      AvatarGesture.Craft=>"craft", _=>"interact" };
 }

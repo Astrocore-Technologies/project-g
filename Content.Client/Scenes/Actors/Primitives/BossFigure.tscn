@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://ctiw22g6dv6jx"]
+
+[ext_resource type="PackedScene" uid="uid://7d4eqm6yrf0a" path="res://Scenes/Actors/Primitives/CapsuleFigure.tscn" id="1"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_s03n2"]
+diffuse_mode = 3
+specular_mode = 2
+albedo_color = Color(0.62, 0.36, 0.1, 1)
+roughness = 0.85
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_u1may"]
+radius = 0.7
+radial_segments = 24
+
+[node name="BossFigure" unique_id=1404510489 instance=ExtResource("1")]
+BodyTint = Color(0.62, 0.36, 0.1, 1)
+
+[node name="Body" parent="Center/Pose" parent_id_path=PackedInt32Array(1696321382) index="0" unique_id=1506517237]
+material_override = SubResource("StandardMaterial3D_s03n2")
+mesh = SubResource("CapsuleMesh_u1may")

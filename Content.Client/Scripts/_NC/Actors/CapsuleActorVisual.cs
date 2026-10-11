@@ -5,23 +5,19 @@ using ProjectG.Animation;
 
 namespace ProjectG.Actors;
 
-/// <summary>Rigid-part, in-place AnimationPlayer presentation, shared by avatars and NPCs.</summary>
-public partial class PrimitiveActorVisual : ActorVisual
+/// <summary>CapsuleMesh, in-place AnimationPlayer presentation, shared by avatars and NPCs.</summary>
+public partial class CapsuleActorVisual : ActorVisual
 {
     [Export] public bool PreviewArmed { get; set; }
     [Export] public Color BodyTint { get; set; } = new(.16f,.35f,.52f);
-    [Export] public Color HeadTint { get; set; } = new(.85f,.74f,.55f);
-    [Export(PropertyHint.Range,"0.5,2,0.05")] public float WidthScale { get; set; } = 1;
     [Export] public bool PreviewOnly { get; set; }
     private AnimationPlayer _player = null!;
-    private Node3D _model = null!, _pose = null!, _torso = null!, _weapon = null!, _bladeBase = null!, _bladeTip = null!;
+    private Node3D _center = null!, _pose = null!, _weapon = null!, _bladeBase = null!, _bladeTip = null!;
+    private Transform3D _poseRest, _weaponRest, _posePrevious, _weaponPrevious;
+    private float _groundDrop;
     private CharacterFeedback _feedback = null!;
     private readonly Dictionary<string,StringName> _clips = new();
     private readonly Dictionary<string,double> _lengths = new();
-    private readonly List<Node3D> _joints = new();
-    private readonly List<Node3D> _legs = new();
-    private readonly List<Transform3D> _rest = new(), _previous = new();
-    private readonly Dictionary<Node3D,Transform3D> _legPose = new();
     private Vector3 _lastPosition, _hitTilt;
     private bool _started, _alive = true, _armed, _blocking, _preparing, _hasState, _focused, _dashing;
     private string _clip = "", _attack = "", _oneShot = "";
@@ -31,7 +27,7 @@ public partial class PrimitiveActorVisual : ActorVisual
     private AvatarGesture _gesture;
     private double _gestureAt, _controlRemaining;
     private CombatControlPhase _control;
-    // Materials are shared per palette, rather than copied per mesh or frame.
+    // One capsule and shared palette materials; no imported rig or per-frame mesh construction.
     private static readonly Dictionary<Color,StandardMaterial3D> Materials = new();
     public override string CurrentClip => _clip;
     public override bool Armed => _armed;
@@ -41,26 +37,17 @@ public partial class PrimitiveActorVisual : ActorVisual
 
     public override void _Ready()
     {
-        _model = GetNode<Node3D>("Model");
-        _model.Scale = new(WidthScale,1,WidthScale);
-        foreach(var node in _model.FindChildren("*","",true,false))
-        {
-            if(node is AnimationPlayer ap) _player = ap;
-            if(node is Node3D part && part.Name.ToString() is "Pose" or "Torso" or "Head" or "ArmL" or "ArmR" or
-                "ForearmL" or "ForearmR" or "HandL" or "HandR" or "LegL" or "LegR" or "ShinL" or "ShinR")
-            {
-                _joints.Add(part); _rest.Add(part.Transform); _previous.Add(part.Transform);
-                if(part.Name.ToString().StartsWith("Leg") || part.Name.ToString().StartsWith("Shin")) _legs.Add(part);
-            }
-            if(node is not MeshInstance3D mesh) continue;
-            var name=mesh.Name.ToString();
-            if(name is "Body" or "Pelvis" || name.StartsWith("UpperArm") || name.StartsWith("LowerArm") || name.StartsWith("Thigh"))
-                mesh.MaterialOverride = Palette(BodyTint);
-            if(name is "Face" or "Neck" or "Nose" || name.StartsWith("Palm")) mesh.MaterialOverride = Palette(HeadTint);
-        }
-        _pose = Part("Pose"); _torso = Part("Torso"); _weapon = Part("Weapon");
-        _bladeBase = Part("BladeBase"); _bladeTip = Part("BladeTip");
-        if(_player is null || _joints.Count != 13) throw new InvalidOperationException("Primitive actor requires 13 rigid joints and AnimationPlayer.");
+        _center = GetNode<Node3D>("Center");
+        _pose = GetNode<Node3D>("Center/Pose");
+        _weapon = GetNode<Node3D>("Center/Pose/Weapon");
+        _bladeBase = GetNode<Node3D>("Center/Pose/Weapon/BladeBase");
+        _bladeTip = GetNode<Node3D>("Center/Pose/Weapon/BladeTip");
+        _player = GetNode<AnimationPlayer>("AnimationPlayer");
+        var body = GetNode<MeshInstance3D>("Center/Pose/Body");
+        if(body.Mesh is not CapsuleMesh capsule) throw new InvalidOperationException("Actor body must be a native CapsuleMesh.");
+        body.MaterialOverride = Palette(BodyTint);
+        _groundDrop = Math.Max(0, _center.Position.Y-capsule.Radius-.03f);
+        _poseRest = _pose.Transform; _weaponRest = _weapon.Transform;
         foreach(var key in _player.GetAnimationList())
         {
             var name = key.ToString().Split('|','/').Last();
@@ -72,8 +59,6 @@ public partial class PrimitiveActorVisual : ActorVisual
         _armed = PreviewArmed; _weapon.Visible = _armed;
         Sample("idle",0); SavePose();
     }
-    private Node3D Part(string name) => _model.FindChild(name,true,false) as Node3D
-        ?? throw new InvalidOperationException("Missing primitive part: "+name);
     private static StandardMaterial3D Palette(Color color)
     {
         if(!Materials.TryGetValue(color,out var material))
@@ -160,10 +145,10 @@ public partial class PrimitiveActorVisual : ActorVisual
             if(_alive && _clock>=_stepAt && _speed<6 && _control==CombatControlPhase.None)
             { Cue("footstep"); _stepAt=_clock+(running?.325:.5)*Math.Clamp((running?2.5:1.2)/_speed,.4,2); }
         }
-        var locomotion=clip; var locomotionTime=time;
+        
         if(_gesture!=AvatarGesture.None && _speed<.12f)
         {
-            time=_clock-_gestureAt; clip=CharacterAnimator.GestureClip(_gesture);
+            time=_clock-_gestureAt; clip=ActorVisual.GestureClip(_gesture);
             if(_gesture==AvatarGesture.Sit && time>=.8) { clip="sit_idle"; time-=.8; }
         }
         if(_blocking) clip="block_hold";
@@ -189,32 +174,32 @@ public partial class PrimitiveActorVisual : ActorVisual
         Rotation=new(0,Mathf.LerpAngle(Rotation.Y,_yaw,Math.Min(1,(float)delta*18)),0);
         _weapon.Visible=_armed && _gesture==AvatarGesture.None && !clip.StartsWith("cast") && clip!="breath";
         if(_clip!=clip) _transition=.12;
-        var mixLegs=_alive && _speed>.12f && _control==CombatControlPhase.None && _clock>=_stunUntil &&
-            (clip.StartsWith("block") || clip.StartsWith("parry") || clip.StartsWith("cast") || _attack.Length>0 && clip is not "dash" and not "whirl" and not "breath");
-        if(mixLegs) { Sample(locomotion,locomotionTime); foreach(var leg in _legs) _legPose[leg]=leg.Transform; }
         Sample(clip,time);
-        if(mixLegs) foreach(var leg in _legs) leg.Transform=_legPose[leg];
         if(_transition>0)
         {
             var amount=Math.Min(1,(float)(delta/Math.Max(delta,_transition)));
-            for(var i=0;i<_joints.Count;i++) _joints[i].Transform=_previous[i].InterpolateWith(_joints[i].Transform,amount);
+            _pose.Transform=_posePrevious.InterpolateWith(_pose.Transform,amount);
+            _weapon.Transform=_weaponPrevious.InterpolateWith(_weapon.Transform,amount);
             _transition-=delta;
         }
         SavePose();
-        if(_hitWeight>0) { _torso.RotateObjectLocal(Vector3.Right,_hitTilt.X*_hitWeight); _torso.RotateObjectLocal(Vector3.Back,_hitTilt.Z*_hitWeight); _hitWeight=Math.Max(0,_hitWeight-(float)delta*5); }
+        if(_hitWeight>0) { _pose.RotateObjectLocal(Vector3.Right,_hitTilt.X*_hitWeight); _pose.RotateObjectLocal(Vector3.Back,_hitTilt.Z*_hitWeight); _hitWeight=Math.Max(0,_hitWeight-(float)delta*5); }
         _feedback.Trail(_bladeBase.GlobalPosition,_bladeTip.GlobalPosition,
             _alive && _armed && _control==CombatControlPhase.None && _attack.Length>0 && _attack is not "breath" and not "dash" && !_attack.StartsWith("cast")?_attackTime:0);
         _feedback.Stun(_alive && _clock<_stunUntil);
     }
     public override void Sample(string clip,double time)
     {
-        if(!_clips.TryGetValue(clip,out var key)) throw new InvalidOperationException("Missing primitive animation: "+clip);
+        if(!_clips.TryGetValue(clip,out var key)) throw new InvalidOperationException("Missing capsule animation: "+clip);
         if(_clip!=clip) { _player.Play(key); _player.Pause(); _clip=clip; }
-        for(var i=0;i<_joints.Count;i++) _joints[i].Transform=_rest[i];
+        _pose.Transform=_poseRest; _weapon.Transform=_weaponRest;
         var length=_lengths[clip];
         var loop=clip is "idle" or "combat_idle" or "walk" or "walk_sword" or "run" or "run_sword" or "stun_loop" or
             "cast_hold" or "sit_idle" or "block_hold" or "dead_back" or "dead_front" or "down_hold" or "airborne";
         _player.Seek(loop && length>0?time%length:Math.Clamp(time,0,length),true);
+        // Grounded poses adapt to the authored capsule radius/height, including the broader boss.
+        if(clip is "death_back" or "dead_back" or "death_front" or "dead_front" or "knockdown" or "down_hold" or "recover")
+            _pose.Position=new(_pose.Position.X,_pose.Position.Y*_groundDrop/.55f,_pose.Position.Z);
     }
-    private void SavePose() { for(var i=0;i<_joints.Count;i++) _previous[i]=_joints[i].Transform; }
+    private void SavePose() { _posePrevious=_pose.Transform; _weaponPrevious=_weapon.Transform; }
 }

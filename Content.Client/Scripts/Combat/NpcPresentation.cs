@@ -34,7 +34,7 @@ public partial class NpcPresentation : Node3D
     {
         if (!MovementSimulation.IsSequenceNewer(tick, _tick)) return;
         _control=state.Control; _controlUntil=Now()+state.ControlRemaining;
-        if(_control!=CombatControlPhase.None) Animation.Stop();
+        if(_control!=CombatControlPhase.None) Animation?.Stop();
         _tick = tick; _points.Add(new(Now(), state.Position, state.Height,state.AirOffset));
         if (_points.Count > 20) _points.RemoveAt(0);
     }

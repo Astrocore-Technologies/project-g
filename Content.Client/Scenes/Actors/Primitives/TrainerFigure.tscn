@@ -1,0 +1,21 @@
+[gd_scene format=3 uid="uid://d18snt6h8ax2g"]
+
+[ext_resource type="PackedScene" uid="uid://7d4eqm6yrf0a" path="res://Scenes/Actors/Primitives/CapsuleFigure.tscn" id="1"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_o4q1k"]
+diffuse_mode = 3
+specular_mode = 2
+albedo_color = Color(0.23, 0.39, 0.65, 1)
+roughness = 0.85
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_p75vp"]
+radius = 0.4
+radial_segments = 24
+
+[node name="TrainerFigure" unique_id=426080947 instance=ExtResource("1")]
+PreviewArmed = true
+BodyTint = Color(0.23, 0.39, 0.65, 1)
+
+[node name="Body" parent="Center/Pose" parent_id_path=PackedInt32Array(1696321382) index="0" unique_id=1506517237]
+material_override = SubResource("StandardMaterial3D_o4q1k")
+mesh = SubResource("CapsuleMesh_p75vp")

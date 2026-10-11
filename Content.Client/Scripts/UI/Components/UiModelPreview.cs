@@ -29,6 +29,7 @@ public partial class UiModelPreview : SubViewportContainer
         _zoom=5; _minZoom=2; _maxZoom=8; _camera.Position=new(0,1.2f,_zoom);
         var node=visual.Instantiate();
         if(node is not Node3D model) { node.Free(); GD.PushError("UI model preview expects a visual-only Node3D scene."); return; }
+        if(model is ProjectG.Actors.CapsuleActorVisual capsule) capsule.PreviewOnly=true;
         _visual=model; _pivot.AddChild(model);
     }
     public void SetMesh(Mesh? mesh,Material? material)

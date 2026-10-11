@@ -19,9 +19,14 @@ public partial class AvatarLiveSmoke : Node
             PlayerController? local=null;
             await Until(()=> {local=world.GetChildren().OfType<PlayerController>().FirstOrDefault(p=>p.GetNode<Camera3D>("CameraRig/Camera3D").Current);return local is not null;},"Owner spawn");
             var observer=new NetworkClient {DevelopmentIdentityProfile="anim-peer-"+tag,SimulateNetworkConditions=true,SimulatedMinLatencyMs=60,SimulatedMaxLatencyMs=90,SimulatedPacketLossPercent=3};
+            // The lightweight observer shares the already loaded scene but must still acknowledge its region baseline.
+            observer.RegionChanged+=observer.ConfirmRegionScene;
             AddChild(observer);observer.ConnectToServer();
             PlayerController? remote=null;
             await Until(()=> {remote=world.GetChildren().OfType<PlayerController>().FirstOrDefault(p=>p.EntityId!=local!.EntityId);return remote is not null;},"Observer spawn");
+            await Until(()=>owner.RegionActive && observer.RegionActive,"Both region baselines activated");
+            if(local!.Animator is not ProjectG.Actors.CapsuleActorVisual || remote!.Animator is not ProjectG.Actors.CapsuleActorVisual)
+                throw new Exception("Actual network avatars must use CapsuleMesh scenes.");
             AvatarState observed=default;observer.AvatarReceived+=s=> {if(s.EntityId==local!.EntityId)observed=s;};
             owner.SendEmote(new(1,AvatarGesture.Wave));
             await Until(()=>local!.Animator.CurrentClip=="wave" && observed.Gesture==AvatarGesture.Wave,"Local emote observed over UDP");
@@ -76,7 +81,7 @@ public partial class AvatarLiveSmoke : Node
             await Delay(.7);
             local.SwordAnimation.PredictBasic(1,V2.UnitY,1);
             owner.SendAttack(new(1,owner.LatestServerTick,V2.UnitY));
-            await Until(()=>local.Animator.CurrentClip.StartsWith("basic"),"Skinned attack playback");
+            await Until(()=>local.Animator.CurrentClip.StartsWith("basic"),"Capsule attack playback");
             if(OS.GetCmdlineUserArgs().Contains("--capture"))
             {
                 await ToSignal(RenderingServer.Singleton,RenderingServer.SignalName.FramePostDraw);
@@ -96,8 +101,9 @@ public partial class AvatarLiveSmoke : Node
                 await ToSignal(RenderingServer.Singleton,RenderingServer.SignalName.FramePostDraw);
                 GetViewport().GetTexture().GetImage().SavePng("res://../.artifacts/animated-player-closeup.png");
             }
+            observer.RegionChanged-=observer.ConfirmRegionScene;
             observer.QueueFree();world.QueueFree();await ToSignal(GetTree(),SceneTree.SignalName.ProcessFrame);
-            GD.Print("AVATAR_LIVE_OK: two clients, latency/loss, local/remote emotes, movement, parry/block, F4, trainer/equip, skinned attack, cleanup.");GetTree().Quit();
+            GD.Print("AVATAR_LIVE_OK: two clients, latency/loss, local/remote emotes, movement, parry/block, F4, trainer/equip, capsule attack, cleanup.");GetTree().Quit();
         }
         catch(Exception error){GD.PushError(error.ToString());GetTree().Quit(1);}
     }
