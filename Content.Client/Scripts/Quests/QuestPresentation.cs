@@ -82,8 +82,7 @@ public partial class QuestPresentation : CanvasLayer
         if (_npcs.ContainsKey(npc.EntityId)) return;
         var actor = new Node3D { Name = $"QuestNpc-{npc.EntityId.Value}", Position = new(npc.Position.X, 0, npc.Position.Y) };
         AddChild(actor);
-        if (npc.Role == "Наставник мечников") actor.AddChild(GD.Load<PackedScene>("res://Scenes/Actors/SwordTrainer.tscn").Instantiate<Node3D>());
-        else actor.AddChild(new MeshInstance3D { Position = new(0, 1, 0), Mesh = new CapsuleMesh { Radius = .4f, Height = 2 }, MaterialOverride = new StandardMaterial3D { AlbedoColor = new(.67f, .55f, .34f) } });
+        actor.AddChild(ProjectG.Actors.ActorScenes.ForRole(npc.Role).Instantiate<Node3D>());
         actor.AddChild(new Label3D { Position = new(0, 3.1f, 0), Text = npc.Name + "\n" + npc.Role,
             Billboard = BaseMaterial3D.BillboardModeEnum.Enabled, FontSize = 32, PixelSize = .006f, OutlineSize = 4, NoDepthTest = false });
         _npcs.Add(npc.EntityId, (npc, actor));
@@ -146,12 +145,7 @@ public partial class QuestPresentation : CanvasLayer
             if(_npcs.TryGetValue(npc,out var known))
             {
                 _title.Text=known.State.Name;
-                if (known.State.Role == "Наставник мечников") _speakerVisual.SetVisual(GD.Load<PackedScene>("res://Scenes/Actors/SwordTrainer.tscn"));
-                else
-                {
-                    var mesh=known.Visual.GetChildren().OfType<MeshInstance3D>().FirstOrDefault();
-                    _speakerVisual.SetMesh(mesh?.Mesh,mesh?.MaterialOverride);
-                }
+                _speakerVisual.SetVisual(ProjectG.Actors.ActorScenes.ForRole(known.State.Role));
             }
         }
         if (++_sequence == 0) ++_sequence; _pending = _sequence; _pendingAction = action; _sentAt = Now(); _status.Text = "Ожидание ответа…";

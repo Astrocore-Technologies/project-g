@@ -19,10 +19,10 @@ public partial class SwordAttackAnimation : Node3D
     private bool _ability, _waiting, _predicted, _active;
     private double _elapsed, _duration, _age;
     private float _from;
-    // NC: production actors sample the shared skinned library; the standalone legacy test rig stays usable.
-    private ProjectG.Animation.CharacterAnimator? _character;
+    // NC: production actors sample their own editable animation library; the standalone legacy test rig stays usable.
+    private ProjectG.Actors.ActorVisual? _character;
     private bool _sounded;
-    public void Bind(ProjectG.Animation.CharacterAnimator character) { _character=character; }
+    public void Bind(ProjectG.Actors.ActorVisual character) { _character=character; }
     public bool IsAnimating => _active;
     public StringName Clip { get; private set; } = "";
     public float ClipPosition { get; private set; }
@@ -142,7 +142,7 @@ public partial class SwordAttackAnimation : Node3D
         _active = false; Visible = false; SetProcess(false);
         _character?.EndAttack();
         if (_animation is null) return;
-        _animation.Stop(); _body.Transform = _rest;
+        _animation.Stop(); if (_character is null) _body.Transform = _rest;
     }
 
     internal static string AbilityClip(ushort id) => id switch

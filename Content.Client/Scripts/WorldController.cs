@@ -56,7 +56,7 @@ public partial class WorldController : Node3D
         _network.NavigationReceived += OnNavigationReceived;
         _network.CombatStateReceived += OnCombatState;
         _network.AttackReceived += OnAttack;
-        _network.AvatarReceived += OnAvatar; // NC: skinned presentation for all visible players.
+        _network.AvatarReceived += OnAvatar; // NC: public visual state for all visible players.
         _network.PvpPublicReceived+=OnPvpPublic;
         _network.AttackResultReceived += OnAttackResult;
         _network.AbilityLoadoutReceived += OnAbilityLoadout;
@@ -224,23 +224,21 @@ public partial class WorldController : Node3D
             actor.Name = $"{state.Kind}-{state.EntityId.Value}";
             AddChild(actor);
             actor.Position = new Vector3(state.Position.X, state.Height + 1, state.Position.Y);
-            if (actor is NpcPresentation npc) npc.Initialize(state, _network.Navigation!);
             if (state.Kind == CombatEntityKind.TrainingTarget)
             {
                 var dummy = GD.Load<PackedScene>("res://Scenes/Actors/TrainingDummy.tscn").Instantiate<Node3D>();
-                dummy.Position = Vector3.Down; actor.AddChild(dummy);
+                dummy.Name="Dummy"; dummy.Position = Vector3.Down; actor.AddChild(dummy);
             }
-            else actor.AddChild(new MeshInstance3D
+            else
             {
-                Mesh = new CylinderMesh { TopRadius = state.Kind == CombatEntityKind.Boss ? 0.7f : 0.4f,
-                    BottomRadius = state.Kind == CombatEntityKind.Boss ? 0.7f : 0.4f, Height = 2 },
-                MaterialOverride = new StandardMaterial3D { AlbedoColor = state.Kind == CombatEntityKind.Monster
-                    ? new Color(0.9f, 0.15f, 0.1f) : state.Kind == CombatEntityKind.Boss
-                        ? new Color(1, 0.5f, 0.05f) : new Color(0.65f, 0.3f, 0.8f) }
-            });
+                var figure=ProjectG.Actors.ActorScenes.ForKind(state.Kind).Instantiate<ProjectG.Actors.ActorVisual>();
+                figure.Name="Figure"; figure.Position=Vector3.Down; actor.AddChild(figure);
+                if(actor is NpcPresentation npc) npc.Initialize(state,_network.Navigation!);
+            }
             _targets.Add(state.EntityId, actor);
-            // NC: NPCs and training dummies also provide spatial contact feedback.
-            actor.AddChild(new ProjectG.Animation.CharacterFeedback { Name="ContactFeedback", Position=new(0,-1,0) });
+            // NC: articulated NPCs own their feedback; the retained wooden dummy receives it here.
+            if(state.Kind==CombatEntityKind.TrainingTarget)
+                actor.AddChild(new ProjectG.Animation.CharacterFeedback { Name="ContactFeedback", Position=new(0,-1,0) });
         }
         var presentation = new CombatPresentation { Name = "CombatPresentation" };
         actor.AddChild(presentation);
@@ -266,13 +264,15 @@ public partial class WorldController : Node3D
     {
         if (_combat.TryGetValue(action.AttackerId, out var actor))
             actor.Confirm(action);
+        if(_targets.TryGetValue(action.AttackerId,out var attacking) && attacking is NpcPresentation animatedNpc)
+            animatedNpc.Animation.Confirm(action);
         if (action.TargetId.IsValid && _combat.TryGetValue(action.TargetId, out var target))
             target.ApplyDamage(action);
         RefreshAlive(action.TargetId);
         if(action.Damage > 0 || action.Guard != GuardImpact.None)
         {
             if (_players.TryGetValue(action.TargetId, out var victim)) victim.Animator.Hit(new Vector3(action.Direction.X,0,action.Direction.Y), action.Guard);
-            else if(_targets.TryGetValue(action.TargetId,out var npc)) npc.GetNodeOrNull<ProjectG.Animation.CharacterFeedback>("ContactFeedback")?.Impact(action.Guard);
+            else ApplyTargetHit(action.TargetId,new Vector3(action.Direction.X,0,action.Direction.Y),action.Guard);
         }
     }
 
@@ -302,8 +302,19 @@ public partial class WorldController : Node3D
         RefreshAlive(value.TargetId);
         if (_players.TryGetValue(value.TargetId, out var victim) && (value.Damage > 0 || value.Guard != GuardImpact.None))
             victim.Animator.Hit(Vector3.Forward, value.Guard);
-        else if((value.Damage > 0 || value.Guard != GuardImpact.None) && _targets.TryGetValue(value.TargetId,out var npc))
-            npc.GetNodeOrNull<ProjectG.Animation.CharacterFeedback>("ContactFeedback")?.Impact(value.Guard);
+        else if(value.Damage > 0 || value.Guard != GuardImpact.None)
+            ApplyTargetHit(value.TargetId,Vector3.Forward,value.Guard);
+    }
+
+    private void ApplyTargetHit(NetworkEntityId id,Vector3 direction,GuardImpact guard)
+    {
+        if(!_targets.TryGetValue(id,out var target)) return;
+        if(target is NpcPresentation npc) npc.Visual.Hit(direction,guard);
+        else
+        {
+            target.GetNodeOrNull<ProjectG.Actors.DummyReaction>("Dummy")?.Hit();
+            target.GetNodeOrNull<ProjectG.Animation.CharacterFeedback>("ContactFeedback")?.Impact(guard);
+        }
     }
 
     private void OnAvatar(AvatarState value)
@@ -317,14 +328,21 @@ public partial class WorldController : Node3D
         if (id == _localEntityId && _combat.TryGetValue(id, out var owner)) _echoControls?.ApplyAlive(owner.IsAlive);
         if (_players.TryGetValue(id, out var player) && _combat.TryGetValue(id, out var presentation))
             player.SetAlive(presentation.IsAlive);
+        if(_targets.TryGetValue(id,out var target) && _combat.TryGetValue(id,out var npcState))
+        {
+            if(target is NpcPresentation npc) npc.Animation.SetAlive(npcState.IsAlive);
+            else target.GetNodeOrNull<ProjectG.Actors.DummyReaction>("Dummy")?.SetAlive(npcState.IsAlive);
+        }
     }
     private void OnNpcWindup(NpcWindup windup)
     {
         if (_combat.TryGetValue(windup.ActorId, out var presentation)) presentation.ShowWindup(windup);
+        if(_targets.TryGetValue(windup.ActorId,out var target) && target is NpcPresentation npc) npc.Animation.Windup(windup);
     }
     private void OnNpcArea(NpcArea value)
     {
         if (_combat.TryGetValue(value.ActorId, out var presentation)) presentation.ShowArea(value);
+        if(_targets.TryGetValue(value.ActorId,out var target) && target is NpcPresentation npc) npc.Animation.Area(value);
     }
 
     private void OnAbilityEffect(AbilityEffectState value)

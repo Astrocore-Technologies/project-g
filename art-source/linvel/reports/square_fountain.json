@@ -1,0 +1,67 @@
+{
+  "key": "square_fountain",
+  "label_ru": "Фонтан центральной площади",
+  "category": "civic",
+  "bounds_blender_m": [
+    [
+      -2.95,
+      2.95
+    ],
+    [
+      -2.95,
+      2.95
+    ],
+    [
+      0,
+      3.92
+    ]
+  ],
+  "dimensions_m": [
+    5.9,
+    5.9,
+    3.92
+  ],
+  "triangles": 6520,
+  "meshes": 4,
+  "parts": 30,
+  "checked_joints": [
+    {
+      "a": "CarvedBasin",
+      "b": "StatuePlinth",
+      "axis": 2,
+      "overlap_m": 0.26
+    }
+  ],
+  "part_ids": [
+    "BasinWater",
+    "CarvedBasin",
+    "CompassOrb",
+    "FountainSteps",
+    "RobeFold0",
+    "RobeFold1",
+    "RobeFold10",
+    "RobeFold11",
+    "RobeFold2",
+    "RobeFold3",
+    "RobeFold4",
+    "RobeFold5",
+    "RobeFold6",
+    "RobeFold7",
+    "RobeFold8",
+    "RobeFold9",
+    "StatueArm",
+    "StatueHead",
+    "StatuePlinth",
+    "StatueRobe",
+    "UpperBowl",
+    "UpperWater",
+    "WaterSpill0",
+    "WaterSpill1",
+    "WaterSpill2",
+    "WaterSpill3",
+    "WaterSpill4",
+    "WaterSpill5",
+    "WaterSpill6",
+    "WaterSpill7"
+  ]
+}

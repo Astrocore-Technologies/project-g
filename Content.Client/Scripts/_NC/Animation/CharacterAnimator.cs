@@ -3,7 +3,7 @@ using Godot;
 namespace ProjectG.Animation;
 
 /// <summary>Reusable in-place skeleton animation. Never changes navigation, collision or damage.</summary>
-public partial class CharacterAnimator : Node3D
+public partial class CharacterAnimator : ProjectG.Actors.ActorVisual
 {
     [Export(PropertyHint.Range, "1,3,1")] public int FaceVariant { get; set; } = 1;
     [Export(PropertyHint.Range, "1,3,1")] public int HairVariant { get; set; } = 1;
@@ -33,10 +33,10 @@ public partial class CharacterAnimator : Node3D
     private Vector3 _hitTilt;
     private int _chest;
     private CharacterFeedback _feedback = null!;
-    public string CurrentClip => _clip;
+    public override string CurrentClip => _clip;
     public Skeleton3D Skeleton => _skeleton;
-    public bool Armed => _armed;
-    public IReadOnlyCollection<string> ClipNames => _clips.Keys;
+    public override bool Armed => _armed;
+    public override IReadOnlyCollection<string> ClipNames => _clips.Keys;
 
     public override void _Ready()
     {
@@ -67,7 +67,7 @@ public partial class CharacterAnimator : Node3D
         _armed = PreviewArmed;
         Sample("idle", 0); SavePose();
     }
-    public void Apply(AvatarState state)
+    public override void Apply(AvatarState state)
     {
         if (_hasState && !Content.Shared.Movement.MovementSimulation.IsSequenceNewer(state.ServerTick, _stateTick)) return;
         if(_hasState && state.RhythmCue != _rhythmCue) { _feedback.Pulse(new(.6f,.85f,.6f)); _feedback.Cue("recover"); }
@@ -87,25 +87,25 @@ public partial class CharacterAnimator : Node3D
             _gesture = state.Gesture; _gestureSequence = state.GestureSequence; _gestureAt = _clock - state.GestureAge;
         }
     }
-    public void SetAlive(bool alive)
+    public override void SetAlive(bool alive)
     {
         if (alive == _alive) return;
         _alive = alive; _attack = _oneShot = ""; _gesture = AvatarGesture.None; _blocking = false;
         _deathAt = _clock; _stunUntil = _parryUntil = 0;
         if (!alive) _feedback.Cue("death");
     }
-    public void Attack(string clip, float normalized, float yaw, bool preparing = false)
+    public override void Attack(string clip, float normalized, float yaw, bool preparing = false)
     {
         if (!_alive) return;
         _attack = clip; _attackTime = normalized; _yaw = yaw; _gesture = AvatarGesture.None; _preparing=preparing;
     }
-    public void EndAttack() { _attack = ""; _feedback?.CancelCue("breath"); }
-    public void SwingCue(string clip) => _feedback.Cue(clip);
-    public void ContactCue(string clip)
+    public override void EndAttack() { _attack = ""; _feedback?.CancelCue("breath"); }
+    public override void SwingCue(string clip) => _feedback.Cue(clip);
+    public override void ContactCue(string clip)
     {
         if (clip == "breath") _feedback.Cue("recover");
     }
-    public void Hit(Vector3 direction, GuardImpact guard)
+    public override void Hit(Vector3 direction, GuardImpact guard)
     {
         if (!_alive) return;
         if (guard == GuardImpact.Parried) { PlayGesture("parry_success"); _feedback.Impact(guard); return; }
@@ -117,7 +117,7 @@ public partial class CharacterAnimator : Node3D
         }
         _feedback.Impact(guard);
     }
-    public void PlayGesture(string clip)
+    public override void PlayGesture(string clip)
     {
         if (!_alive || !_lengths.TryGetValue(clip, out var duration)) return;
         _oneShot = clip; _oneUntil = _clock + duration;
@@ -188,7 +188,7 @@ public partial class CharacterAnimator : Node3D
         if (_hitWeight > 0 && _chest >= 0)
         { _skeleton.SetBonePoseRotation(_chest, _skeleton.GetBonePoseRotation(_chest) * Quaternion.FromEuler(_hitTilt * _hitWeight)); _hitWeight = Math.Max(0, _hitWeight - (float)delta * 5); }
     }
-    public void Sample(string clip, double time)
+    public override void Sample(string clip, double time)
     {
         if (!_clips.TryGetValue(clip, out var key)) return;
         if (_clip != clip) { _player.Play(key); _player.Pause(); _clip = clip; }

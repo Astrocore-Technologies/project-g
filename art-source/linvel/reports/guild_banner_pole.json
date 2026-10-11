@@ -1,0 +1,40 @@
+{
+  "key": "guild_banner_pole",
+  "label_ru": "Стойка с городским знаменем",
+  "category": "civic",
+  "bounds_blender_m": [
+    [
+      -0.32,
+      1.1729999780654907
+    ],
+    [
+      -0.32,
+      0.32
+    ],
+    [
+      0,
+      5.180000000000001
+    ]
+  ],
+  "dimensions_m": [
+    1.4929999780654908,
+    0.64,
+    5.180000000000001
+  ],
+  "triangles": 1948,
+  "meshes": 4,
+  "parts": 10,
+  "checked_joints": [],
+  "part_ids": [
+    "BannerFoot",
+    "BannerPole",
+    "FreestandingStandard_Cloth",
+    "FreestandingStandard_Compass",
+    "FreestandingStandard_GoldHem-1",
+    "FreestandingStandard_GoldHem1",
+    "FreestandingStandard_Horizon",
+    "FreestandingStandard_Mountain",
+    "FreestandingStandard_Rod",
+    "PoleFinial"
+  ]
+}

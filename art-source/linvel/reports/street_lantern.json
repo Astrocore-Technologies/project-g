@@ -1,0 +1,63 @@
+{
+  "key": "street_lantern",
+  "label_ru": "Уличный фонарь",
+  "category": "props",
+  "bounds_blender_m": [
+    [
+      -0.25,
+      0.9399964469489908
+    ],
+    [
+      -0.3199964469489907,
+      0.3199964469489907
+    ],
+    [
+      0,
+      4.04
+    ]
+  ],
+  "dimensions_m": [
+    1.1899964469489908,
+    0.6399928938979814,
+    4.04
+  ],
+  "triangles": 636,
+  "meshes": 4,
+  "parts": 33,
+  "checked_joints": [],
+  "part_ids": [
+    "CurledBracket",
+    "LampCap_0_0",
+    "LampCap_0_1",
+    "LampCap_0_2",
+    "LampCap_0_3",
+    "LampCap_1_0",
+    "LampCap_1_1",
+    "LampCap_1_2",
+    "LampCap_1_3",
+    "LampCap_2_0",
+    "LampCap_2_1",
+    "LampCap_2_2",
+    "LampCap_2_3",
+    "LampCap_3_0",
+    "LampCap_3_1",
+    "LampCap_3_2",
+    "LampCap_3_3",
+    "LampCap_4_0",
+    "LampCap_4_1",
+    "LampCap_4_2",
+    "LampCap_4_3",
+    "LampCap_5_0",
+    "LampCap_5_1",
+    "LampCap_5_2",
+    "LampCap_5_3",
+    "LampCap_Finial",
+    "LampFoot",
+    "LampFrame0.44-0.16",
+    "LampFrame0.440.16",
+    "LampFrame0.8-0.16",
+    "LampFrame0.80.16",
+    "LampGlass",
+    "LampPole"
+  ]
+}

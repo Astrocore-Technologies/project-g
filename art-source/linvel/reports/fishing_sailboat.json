@@ -1,0 +1,77 @@
+{
+  "key": "fishing_sailboat",
+  "label_ru": "Рыбацкий парусник",
+  "category": "harbor",
+  "bounds_blender_m": [
+    [
+      -1.0897421836853027,
+      2.6325454711914062
+    ],
+    [
+      -3.2799999713897705,
+      3.047267436981201
+    ],
+    [
+      -0.6399999856948853,
+      5.5
+    ]
+  ],
+  "dimensions_m": [
+    3.722287654876709,
+    6.327267408370972,
+    6.139999985694885
+  ],
+  "triangles": 13320,
+  "meshes": 4,
+  "parts": 40,
+  "checked_joints": [
+    {
+      "a": "Mast",
+      "b": "MastPartner",
+      "axis": 2,
+      "overlap_m": 0.2
+    }
+  ],
+  "part_ids": [
+    "BillowingSail",
+    "Boom",
+    "ClinkerSeam-1_1",
+    "ClinkerSeam-1_2",
+    "ClinkerSeam-1_3",
+    "ClinkerSeam-1_4",
+    "ClinkerSeam1_1",
+    "ClinkerSeam1_2",
+    "ClinkerSeam1_3",
+    "ClinkerSeam1_4",
+    "DeckRope",
+    "Gunwale-1",
+    "Gunwale1",
+    "InnerHull",
+    "Keel",
+    "Mast",
+    "MastPartner",
+    "OuterHull",
+    "Rib2",
+    "Rib3",
+    "Rib4",
+    "Rib5",
+    "Rib6",
+    "Rib7",
+    "Rib8",
+    "Rib9",
+    "Rudder",
+    "SailBoltRope0",
+    "SailBoltRope1",
+    "SailBoltRope2",
+    "StandingRigging0",
+    "StandingRigging1",
+    "StandingRigging2",
+    "StandingRigging3",
+    "Thwart0",
+    "Thwart1",
+    "Thwart2",
+    "Thwart3",
+    "Tiller",
+    "Yard"
+  ]
+}

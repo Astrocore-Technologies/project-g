@@ -1,0 +1,76 @@
+{
+  "key": "harbor_seawall",
+  "label_ru": "Каменный модуль — seawall",
+  "category": "modular",
+  "bounds_blender_m": [
+    [
+      -2.0999999046325684,
+      2.0999999046325684
+    ],
+    [
+      -0.5799999833106995,
+      0.4399999976158142
+    ],
+    [
+      -0.0350000262260437,
+      1.415000081062317
+    ]
+  ],
+  "dimensions_m": [
+    4.199999809265137,
+    1.0199999809265137,
+    1.4500001072883606
+  ],
+  "triangles": 2024,
+  "meshes": 1,
+  "parts": 46,
+  "checked_joints": [],
+  "part_ids": [
+    "WallCap",
+    "WallCore",
+    "WallCourse_0_0_0",
+    "WallCourse_0_0_1",
+    "WallCourse_0_0_2",
+    "WallCourse_0_0_3",
+    "WallCourse_0_0_4",
+    "WallCourse_0_0_5",
+    "WallCourse_0_1_0",
+    "WallCourse_0_1_1",
+    "WallCourse_0_1_2",
+    "WallCourse_0_1_3",
+    "WallCourse_0_1_4",
+    "WallCourse_0_1_5",
+    "WallCourse_0_2_0",
+    "WallCourse_0_3_0",
+    "WallCourse_1_0_0",
+    "WallCourse_1_0_1",
+    "WallCourse_1_0_2",
+    "WallCourse_1_0_3",
+    "WallCourse_1_0_4",
+    "WallCourse_1_0_5",
+    "WallCourse_1_1_0",
+    "WallCourse_1_1_1",
+    "WallCourse_1_1_2",
+    "WallCourse_1_1_3",
+    "WallCourse_1_1_4",
+    "WallCourse_1_1_5",
+    "WallCourse_1_2_0",
+    "WallCourse_1_3_0",
+    "WallCourse_2_0_0",
+    "WallCourse_2_0_1",
+    "WallCourse_2_0_2",
+    "WallCourse_2_0_3",
+    "WallCourse_2_0_4",
+    "WallCourse_2_0_5",
+    "WallCourse_2_1_0",
+    "WallCourse_2_1_1",
+    "WallCourse_2_1_2",
+    "WallCourse_2_1_3",
+    "WallCourse_2_1_4",
+    "WallCourse_2_1_5",
+    "WallCourse_2_2_0",
+    "WallCourse_2_3_0",
+    "WallPier-1.72",
+    "WallPier1.72"
+  ]
+}

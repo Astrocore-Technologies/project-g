@@ -1,0 +1,668 @@
+{
+  "blender_version": "5.2.2 LTS",
+  "modeling_transport": "official Blender Lab MCP",
+  "reference": "User-supplied Linvel art sheet codex-clipboard-db2c4496-7746-414c-bef3-b0f40036da7b.png",
+  "asset_count": 50,
+  "triangles_total": 847229,
+  "units": "metres",
+  "export_up_axis": "+Y",
+  "export_front_axis": "+Z",
+  "atlas_size_px": [
+    2048,
+    2048
+  ],
+  "external_model_or_texture_assets_used": false,
+  "failures": [],
+  "assets": [
+    {
+      "key": "adventurers_guild",
+      "label_ru": "Гильдия авантюристов",
+      "category": "architecture",
+      "triangles": 91617,
+      "meshes": 8,
+      "parts": 3203,
+      "dimensions_m": [
+        9.9399995803833,
+        11.980000019073486,
+        15.719999999999999
+      ]
+    },
+    {
+      "key": "blossoming_tree",
+      "label_ru": "Цветущее плодовое дерево",
+      "category": "vegetation",
+      "triangles": 101692,
+      "meshes": 2,
+      "parts": 17615,
+      "dimensions_m": [
+        5.590696334838867,
+        5.557468414306641,
+        5.85841098614037
+      ]
+    },
+    {
+      "key": "boatshed_closed",
+      "label_ru": "Лодочный сарай — закрытый",
+      "category": "harbor",
+      "triangles": 23206,
+      "meshes": 3,
+      "parts": 747,
+      "dimensions_m": [
+        6.139999866485596,
+        7.210000038146973,
+        5.195000171661377
+      ]
+    },
+    {
+      "key": "boatshed_open",
+      "label_ru": "Лодочный сарай — открытый",
+      "category": "harbor",
+      "triangles": 24118,
+      "meshes": 4,
+      "parts": 670,
+      "dimensions_m": [
+        6.139999866485596,
+        7.210000038146973,
+        5.195000171661377
+      ]
+    },
+    {
+      "key": "cargo_barrel",
+      "label_ru": "Деревянная бочка",
+      "category": "props",
+      "triangles": 1560,
+      "meshes": 2,
+      "parts": 28,
+      "dimensions_m": [
+        0.8799785550207474,
+        0.8676765126220443,
+        1.0579999685287476
+      ]
+    },
+    {
+      "key": "cargo_crate",
+      "label_ru": "Транспортный ящик",
+      "category": "props",
+      "triangles": 1376,
+      "meshes": 1,
+      "parts": 32,
+      "dimensions_m": [
+        1.0299999713897705,
+        0.9099999666213989,
+        0.8100000321865082
+      ]
+    },
+    {
+      "key": "cargo_sacks",
+      "label_ru": "Связка мешков с грузом",
+      "category": "props",
+      "triangles": 1080,
+      "meshes": 2,
+      "parts": 6,
+      "dimensions_m": [
+        1.2600000000000002,
+        1.1300000000000001,
+        0.82
+      ]
+    },
+    {
+      "key": "carpenter_workshop",
+      "label_ru": "Столярная мастерская",
+      "category": "architecture",
+      "triangles": 43147,
+      "meshes": 8,
+      "parts": 1488,
+      "dimensions_m": [
+        10.514999961853027,
+        8.519999980926514,
+        6.572499752044678
+      ]
+    },
+    {
+      "key": "coastal_boulder_a",
+      "label_ru": "Прибрежный валун",
+      "category": "nature",
+      "triangles": 320,
+      "meshes": 1,
+      "parts": 1,
+      "dimensions_m": [
+        2.672680616378784,
+        2.243687629699707,
+        2.0054688453674316
+      ]
+    },
+    {
+      "key": "coastal_boulder_b",
+      "label_ru": "Прибрежный валун",
+      "category": "nature",
+      "triangles": 320,
+      "meshes": 1,
+      "parts": 1,
+      "dimensions_m": [
+        1.7186062932014465,
+        2.520286798477173,
+        1.1997915506362915
+      ]
+    },
+    {
+      "key": "cobblestone_paving",
+      "label_ru": "Каменный модуль — cobbles",
+      "category": "modular",
+      "triangles": 3520,
+      "meshes": 1,
+      "parts": 80,
+      "dimensions_m": [
+        1.9850000143051147,
+        1.9859999418258667,
+        0.08466653898358345
+      ]
+    },
+    {
+      "key": "crop_row",
+      "label_ru": "Ряд огородных растений",
+      "category": "vegetation",
+      "triangles": 432,
+      "meshes": 1,
+      "parts": 72,
+      "dimensions_m": [
+        2.179999828338623,
+        0.3799999952316284,
+        0.2000000048428774
+      ]
+    },
+    {
+      "key": "cypress_tree",
+      "label_ru": "Кипарис",
+      "category": "vegetation",
+      "triangles": 28164,
+      "meshes": 2,
+      "parts": 4193,
+      "dimensions_m": [
+        2.3438806533813477,
+        2.351003050804138,
+        7.10887018032372
+      ]
+    },
+    {
+      "key": "dock_landing",
+      "label_ru": "Причал — landing",
+      "category": "harbor",
+      "triangles": 10528,
+      "meshes": 3,
+      "parts": 47,
+      "dimensions_m": [
+        5.159999847412109,
+        4.064593553543091,
+        3.35
+      ]
+    },
+    {
+      "key": "dock_straight",
+      "label_ru": "Причал — straight",
+      "category": "harbor",
+      "triangles": 6552,
+      "meshes": 3,
+      "parts": 54,
+      "dimensions_m": [
+        2.6600000858306885,
+        6.064593553543091,
+        3.35
+      ]
+    },
+    {
+      "key": "dorn_pavilion",
+      "label_ru": "Навес тренировочного двора Дорна",
+      "category": "training",
+      "triangles": 14724,
+      "meshes": 5,
+      "parts": 419,
+      "dimensions_m": [
+        6.939999580383301,
+        4.309999942779541,
+        4.735000133514404
+      ]
+    },
+    {
+      "key": "fishing_net_rack",
+      "label_ru": "Сушильная стойка с рыбацкой сетью",
+      "category": "harbor",
+      "triangles": 6168,
+      "meshes": 2,
+      "parts": 49,
+      "dimensions_m": [
+        2.450000047683716,
+        0.6499999761581421,
+        2.0
+      ]
+    },
+    {
+      "key": "fishing_rowboat",
+      "label_ru": "Гребная рыбацкая лодка",
+      "category": "harbor",
+      "triangles": 7708,
+      "meshes": 3,
+      "parts": 33,
+      "dimensions_m": [
+        4.224634647369385,
+        4.424414873123169,
+        1.3798269033432007
+      ]
+    },
+    {
+      "key": "fishing_sailboat",
+      "label_ru": "Рыбацкий парусник",
+      "category": "harbor",
+      "triangles": 13320,
+      "meshes": 4,
+      "parts": 40,
+      "dimensions_m": [
+        3.722287654876709,
+        6.327267408370972,
+        6.139999985694885
+      ]
+    },
+    {
+      "key": "flower_planter",
+      "label_ru": "Керамический горшок с цветами",
+      "category": "vegetation",
+      "triangles": 2040,
+      "meshes": 2,
+      "parts": 194,
+      "dimensions_m": [
+        0.7282373011112213,
+        0.7270198166370392,
+        1.2838786840438843
+      ]
+    },
+    {
+      "key": "garden_shrub",
+      "label_ru": "Садовый кустарник",
+      "category": "vegetation",
+      "triangles": 3900,
+      "meshes": 1,
+      "parts": 650,
+      "dimensions_m": [
+        1.7878785133361816,
+        1.7891820669174194,
+        0.8229988142848015
+      ]
+    },
+    {
+      "key": "guild_banner_pole",
+      "label_ru": "Стойка с городским знаменем",
+      "category": "civic",
+      "triangles": 1948,
+      "meshes": 4,
+      "parts": 10,
+      "dimensions_m": [
+        1.4929999780654908,
+        0.64,
+        5.180000000000001
+      ]
+    },
+    {
+      "key": "handcart",
+      "label_ru": "Хозяйственная телега",
+      "category": "props",
+      "triangles": 5180,
+      "meshes": 2,
+      "parts": 61,
+      "dimensions_m": [
+        2.0799999237060547,
+        4.004215717315674,
+        1.4349999763071537
+      ]
+    },
+    {
+      "key": "harbor_arch_bridge",
+      "label_ru": "Каменный арочный мост гавани",
+      "category": "modular",
+      "triangles": 2652,
+      "meshes": 2,
+      "parts": 157,
+      "dimensions_m": [
+        6.920000076293945,
+        3.25,
+        3.8874998837709427
+      ]
+    },
+    {
+      "key": "harbor_bollard",
+      "label_ru": "Каменный кнехт",
+      "category": "harbor",
+      "triangles": 284,
+      "meshes": 1,
+      "parts": 1,
+      "dimensions_m": [
+        0.56,
+        0.56,
+        0.81
+      ]
+    },
+    {
+      "key": "harbor_seawall",
+      "label_ru": "Каменный модуль — seawall",
+      "category": "modular",
+      "triangles": 2024,
+      "meshes": 1,
+      "parts": 46,
+      "dimensions_m": [
+        4.199999809265137,
+        1.0199999809265137,
+        1.4500001072883606
+      ]
+    },
+    {
+      "key": "harbor_shrine",
+      "label_ru": "Прибрежное святилище",
+      "category": "architecture",
+      "triangles": 32395,
+      "meshes": 7,
+      "parts": 1039,
+      "dimensions_m": [
+        5.139999866485596,
+        7.304999923706054,
+        8.62
+      ]
+    },
+    {
+      "key": "harbor_warehouse",
+      "label_ru": "Портовый склад",
+      "category": "architecture",
+      "triangles": 48469,
+      "meshes": 8,
+      "parts": 1682,
+      "dimensions_m": [
+        9.559999942779541,
+        9.71999979019165,
+        7.037499904632568
+      ]
+    },
+    {
+      "key": "harbor_watchtower",
+      "label_ru": "Портовая сигнальная башня",
+      "category": "harbor",
+      "triangles": 4278,
+      "meshes": 7,
+      "parts": 138,
+      "dimensions_m": [
+        3.899989174282681,
+        3.899989174282681,
+        11.07
+      ]
+    },
+    {
+      "key": "healing_house",
+      "label_ru": "Лечебный дом",
+      "category": "architecture",
+      "triangles": 65840,
+      "meshes": 8,
+      "parts": 2232,
+      "dimensions_m": [
+        10.789999628067017,
+        8.91999979019165,
+        9.732500076293945
+      ]
+    },
+    {
+      "key": "market_bread",
+      "label_ru": "Рыночная лавка — bread",
+      "category": "market",
+      "triangles": 9357,
+      "meshes": 3,
+      "parts": 175,
+      "dimensions_m": [
+        3.5,
+        2.319999933242798,
+        2.7100000381469727
+      ]
+    },
+    {
+      "key": "market_fruit",
+      "label_ru": "Рыночная лавка — fruit",
+      "category": "market",
+      "triangles": 10581,
+      "meshes": 3,
+      "parts": 175,
+      "dimensions_m": [
+        3.5,
+        2.319999933242798,
+        2.7100000381469727
+      ]
+    },
+    {
+      "key": "market_shop",
+      "label_ru": "Городская лавка",
+      "category": "architecture",
+      "triangles": 37309,
+      "meshes": 8,
+      "parts": 1275,
+      "dimensions_m": [
+        6.621999740600586,
+        7.71999979019165,
+        9.081500053405762
+      ]
+    },
+    {
+      "key": "meadow_flowers",
+      "label_ru": "Луговые цветы и трава",
+      "category": "vegetation",
+      "triangles": 1704,
+      "meshes": 1,
+      "parts": 268,
+      "dimensions_m": [
+        1.137156903743744,
+        1.1697299480438232,
+        0.394081175327301
+      ]
+    },
+    {
+      "key": "mooring_rope",
+      "label_ru": "Бухта швартового каната",
+      "category": "harbor",
+      "triangles": 4328,
+      "meshes": 1,
+      "parts": 1,
+      "dimensions_m": [
+        0.976622074842453,
+        0.9473234713077545,
+        0.06483696773648262
+      ]
+    },
+    {
+      "key": "orchard_cottage",
+      "label_ru": "Садовый жилой дом",
+      "category": "architecture",
+      "triangles": 25943,
+      "meshes": 7,
+      "parts": 876,
+      "dimensions_m": [
+        5.339999675750732,
+        5.409999847412109,
+        5.921499729156494
+      ]
+    },
+    {
+      "key": "orchard_fence",
+      "label_ru": "Ограда садов и пастбищ",
+      "category": "modular",
+      "triangles": 328,
+      "meshes": 1,
+      "parts": 10,
+      "dimensions_m": [
+        4.24,
+        0.24,
+        1.3499999999999999
+      ]
+    },
+    {
+      "key": "orchard_tree",
+      "label_ru": "Плодовое дерево",
+      "category": "vegetation",
+      "triangles": 23500,
+      "meshes": 2,
+      "parts": 3647,
+      "dimensions_m": [
+        5.996288537979126,
+        5.674890518188477,
+        5.705679090693593
+      ]
+    },
+    {
+      "key": "public_bench",
+      "label_ru": "Деревянная городская скамья",
+      "category": "props",
+      "triangles": 452,
+      "meshes": 2,
+      "parts": 11,
+      "dimensions_m": [
+        2.0,
+        0.6197386980056763,
+        1.105354905128479
+      ]
+    },
+    {
+      "key": "smith_workshop",
+      "label_ru": "Кузнечная мастерская",
+      "category": "architecture",
+      "triangles": 43043,
+      "meshes": 8,
+      "parts": 1486,
+      "dimensions_m": [
+        10.514999961853027,
+        8.519999980926514,
+        6.572499752044678
+      ]
+    },
+    {
+      "key": "square_fountain",
+      "label_ru": "Фонтан центральной площади",
+      "category": "civic",
+      "triangles": 6520,
+      "meshes": 4,
+      "parts": 30,
+      "dimensions_m": [
+        5.9,
+        5.9,
+        3.92
+      ]
+    },
+    {
+      "key": "stone_balustrade",
+      "label_ru": "Каменный модуль — balustrade",
+      "category": "modular",
+      "triangles": 2068,
+      "meshes": 1,
+      "parts": 11,
+      "dimensions_m": [
+        4.099999904632568,
+        0.5,
+        1.2300000190734863
+      ]
+    },
+    {
+      "key": "street_lantern",
+      "label_ru": "Уличный фонарь",
+      "category": "props",
+      "triangles": 636,
+      "meshes": 4,
+      "parts": 33,
+      "dimensions_m": [
+        1.1899964469489908,
+        0.6399928938979814,
+        4.04
+      ]
+    },
+    {
+      "key": "terrace_retaining_wall",
+      "label_ru": "Каменный модуль — retaining",
+      "category": "modular",
+      "triangles": 5104,
+      "meshes": 1,
+      "parts": 116,
+      "dimensions_m": [
+        4.199999809265137,
+        1.0199999809265137,
+        2.9999998807907104
+      ]
+    },
+    {
+      "key": "terrace_stairs",
+      "label_ru": "Каменный модуль — stairs",
+      "category": "modular",
+      "triangles": 760,
+      "meshes": 2,
+      "parts": 18,
+      "dimensions_m": [
+        3.43999981880188,
+        3.4145283699035645,
+        2.3458192348480225
+      ]
+    },
+    {
+      "key": "townhouse_a",
+      "label_ru": "Жилой дом — камень и терракота",
+      "category": "architecture",
+      "triangles": 38962,
+      "meshes": 7,
+      "parts": 1319,
+      "dimensions_m": [
+        6.939999580383301,
+        6.109999656677246,
+        9.267499923706055
+      ]
+    },
+    {
+      "key": "townhouse_b",
+      "label_ru": "Узкий трёхэтажный дом",
+      "category": "architecture",
+      "triangles": 44885,
+      "meshes": 7,
+      "parts": 1524,
+      "dimensions_m": [
+        5.739999771118164,
+        7.619999885559082,
+        11.745499610900879
+      ]
+    },
+    {
+      "key": "training_dummy",
+      "label_ru": "Тренировочный манекен Дорна",
+      "category": "training",
+      "triangles": 2652,
+      "meshes": 4,
+      "parts": 37,
+      "dimensions_m": [
+        1.340000033378601,
+        0.7200000286102295,
+        2.09
+      ]
+    },
+    {
+      "key": "training_weapon_rack",
+      "label_ru": "Стойка тренировочного оружия",
+      "category": "training",
+      "triangles": 752,
+      "meshes": 1,
+      "parts": 24,
+      "dimensions_m": [
+        2.379999876022339,
+        0.800000011920929,
+        1.7000000476837158
+      ]
+    },
+    {
+      "key": "watermill",
+      "label_ru": "Водяная мельница",
+      "category": "architecture",
+      "triangles": 39783,
+      "meshes": 7,
+      "parts": 1295,
+      "dimensions_m": [
+        7.269999742507935,
+        6.509999752044678,
+        9.019499778747559
+      ]
+    }
+  ]
+}

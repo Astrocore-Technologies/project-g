@@ -1,0 +1,507 @@
+{
+  "asset_count": 50,
+  "all_passed": true,
+  "total_bytes": 185238836,
+  "assets": [
+    {
+      "file": "adventurers_guild.glb",
+      "bytes": 8802752,
+      "triangles": 91617,
+      "meshes": 8,
+      "materials": 4,
+      "embedded_images": 1,
+      "sha256": "c408412b0a792e3fd02d3cb19828a59d1cde1a256bb749bfd99dff7d77916f27",
+      "failures": []
+    },
+    {
+      "file": "blossoming_tree.glb",
+      "bytes": 11076112,
+      "triangles": 101692,
+      "meshes": 2,
+      "materials": 2,
+      "embedded_images": 1,
+      "sha256": "8e678d6a315bc792a526a40d4c70d37b24c2f91a125dd0bf133eb00442f583c8",
+      "failures": []
+    },
+    {
+      "file": "boatshed_closed.glb",
+      "bytes": 3998348,
+      "triangles": 23206,
+      "meshes": 3,
+      "materials": 1,
+      "embedded_images": 1,
+      "sha256": "324abbde9ec4db2642ff5dbc660c99f7461eaf85a389629530a351d80bb32d6e",
+      "failures": []
+    },
+    {
+      "file": "boatshed_open.glb",
+      "bytes": 4043516,
+      "triangles": 24118,
+      "meshes": 4,
+      "materials": 1,
+      "embedded_images": 1,
+      "sha256": "3421519fa5029e3b3de36537894ebf47e3f81cb61bcfdeb3039bd5249ae79ecb",
+      "failures": []
+    },
+    {
+      "file": "cargo_barrel.glb",
+      "bytes": 2639168,
+      "triangles": 1560,
+      "meshes": 2,
+      "materials": 2,
+      "embedded_images": 1,
+      "sha256": "9aaa85b8e91ec055fa87c03d63e199d6e1c35db88c33de3b216364ddeb3168db",
+      "failures": []
+    },
+    {
+      "file": "cargo_crate.glb",
+      "bytes": 2643824,
+      "triangles": 1376,
+      "meshes": 1,
+      "materials": 1,
+      "embedded_images": 1,
+      "sha256": "6131e6c43c3f6a82828450f9b62f2feb16ca9ad373ca26a95a029134ca1e7cdc",
+      "failures": []
+    },
+    {
+      "file": "cargo_sacks.glb",
+      "bytes": 2609988,
+      "triangles": 1080,
+      "meshes": 2,
+      "materials": 1,
+      "embedded_images": 1,
+      "sha256": "06b27e0167be8f11f47f3e317f7395b911b642a679aded6a1bbc986a866f91bd",
+      "failures": []
+    },
+    {
+      "file": "carpenter_workshop.glb",
+      "bytes": 5273356,
+      "triangles": 43147,
+      "meshes": 8,
+      "materials": 4,
+      "embedded_images": 1,
+      "sha256": "b3ffca9e532e08afb8269df4e1835d6c86527146e763749b8ba51ed839e22d98",
+      "failures": []
+    },
+    {
+      "file": "coastal_boulder_a.glb",
+      "bytes": 2557624,
+      "triangles": 320,
+      "meshes": 1,
+      "materials": 1,
+      "embedded_images": 1,
+      "sha256": "d026bfa268252e76dc760bbb645425f603c8742e33f246e2e9f8f441d8c1788a",
+      "failures": []
+    },
+    {
+      "file": "coastal_boulder_b.glb",
+      "bytes": 2557624,
+      "triangles": 320,
+      "meshes": 1,
+      "materials": 1,
+      "embedded_images": 1,
+      "sha256": "2b1e854c711e31a0c2d0752d9f986e931080c610c0ee829b358592b50b348e1e",
+      "failures": []
+    },
+    {
+      "file": "cobblestone_paving.glb",
+      "bytes": 2807260,
+      "triangles": 3520,
+      "meshes": 1,
+      "materials": 1,
+      "embedded_images": 1,
+      "sha256": "b97e2137638a6dff43c24c81378b004df121f693dc0c6e6843b87f8c64d5681b",
+      "failures": []
+    },
+    {
+      "file": "crop_row.glb",
+      "bytes": 2572892,
+      "triangles": 432,
+      "meshes": 1,
+      "materials": 1,
+      "embedded_images": 1,
+      "sha256": "ed3a9d823f638a67dbbcc62f5eec39ffe363532d594d2e4057be68ed654273d7",
+      "failures": []
+    },
+    {
+      "file": "cypress_tree.glb",
+      "bytes": 4614900,
+      "triangles": 28164,
+      "meshes": 2,
+      "materials": 2,
+      "embedded_images": 1,
+      "sha256": "f23ba2184e21a11a3faf840a9325c0d504e2268333caf00034c93b1db75e9ee9",
+      "failures": []
+    },
+    {
+      "file": "dock_landing.glb",
+      "bytes": 3273768,
+      "triangles": 10528,
+      "meshes": 3,
+      "materials": 1,
+      "embedded_images": 1,
+      "sha256": "c2b4a80036b508242c3d58fe368defe8545a53fa8c927a7ff04b3d6dedc7db37",
+      "failures": []
+    },
+    {
+      "file": "dock_straight.glb",
+      "bytes": 2997632,
+      "triangles": 6552,
+      "meshes": 3,
+      "materials": 1,
+      "embedded_images": 1,
+      "sha256": "b4e85f015316f66cd89cd0bc021e6241a9bbcd12ae2356c8e9a08bdad453395e",
+      "failures": []
+    },
+    {
+      "file": "dorn_pavilion.glb",
+      "bytes": 3443376,
+      "triangles": 14724,
+      "meshes": 5,
+      "materials": 2,
+      "embedded_images": 1,
+      "sha256": "cb82648a623da40162150ee002900d90e8ef9c76652baf2168a9aa7ac14a6b22",
+      "failures": []
+    },
+    {
+      "file": "fishing_net_rack.glb",
+      "bytes": 2964884,
+      "triangles": 6168,
+      "meshes": 2,
+      "materials": 1,
+      "embedded_images": 1,
+      "sha256": "b0021c1261f7aea905672d92b04523db0587def8e1988c5904ce79c7155f2837",
+      "failures": []
+    },
+    {
+      "file": "fishing_rowboat.glb",
+      "bytes": 3076172,
+      "triangles": 7708,
+      "meshes": 3,
+      "materials": 2,
+      "embedded_images": 1,
+      "sha256": "017599338994b71ae50168e2c624c1805dc9e92603771449ef193f078405b41f",
+      "failures": []
+    },
+    {
+      "file": "fishing_sailboat.glb",
+      "bytes": 3464844,
+      "triangles": 13320,
+      "meshes": 4,
+      "materials": 1,
+      "embedded_images": 1,
+      "sha256": "5646ca800ff3ab2bcb3caf59c32a8a08ef187df3d41f50fb29be3efbd35b5c53",
+      "failures": []
+    },
+    {
+      "file": "flower_planter.glb",
+      "bytes": 2685936,
+      "triangles": 2040,
+      "meshes": 2,
+      "materials": 2,
+      "embedded_images": 1,
+      "sha256": "6309e70ea2c943adf3fa01c6c0d89207212041346f526d1b338aef81d61c16ca",
+      "failures": []
+    },
+    {
+      "file": "garden_shrub.glb",
+      "bytes": 2834192,
+      "triangles": 3900,
+      "meshes": 1,
+      "materials": 1,
+      "embedded_images": 1,
+      "sha256": "447cb82f08b85808c3c786e025fb2566d8c2fe891c8b2fe543e90d982827bf1c",
+      "failures": []
+    },
+    {
+      "file": "guild_banner_pole.glb",
+      "bytes": 2675144,
+      "triangles": 1948,
+      "meshes": 4,
+      "materials": 2,
+      "embedded_images": 1,
+      "sha256": "13b9470bdab54832876a96dd9c12b5692ed9805b0e841ac57298d5f642b0b4b4",
+      "failures": []
+    },
+    {
+      "file": "handcart.glb",
+      "bytes": 2899512,
+      "triangles": 5180,
+      "meshes": 2,
+      "materials": 2,
+      "embedded_images": 1,
+      "sha256": "ea781d352fd8ee43b7b7753e4f43306f5755fc82e1c033f4ab58e9e8fedc3f6e",
+      "failures": []
+    },
+    {
+      "file": "harbor_arch_bridge.glb",
+      "bytes": 2736920,
+      "triangles": 2652,
+      "meshes": 2,
+      "materials": 1,
+      "embedded_images": 1,
+      "sha256": "008e02fa2369b4f70013b58df052c4b74266ba96fde30808628bfaee0a518ad4",
+      "failures": []
+    },
+    {
+      "file": "harbor_bollard.glb",
+      "bytes": 2558924,
+      "triangles": 284,
+      "meshes": 1,
+      "materials": 1,
+      "embedded_images": 1,
+      "sha256": "22a4303bd4382c78483a288b8a0f84389380ea205c912b60260b59716303a873",
+      "failures": []
+    },
+    {
+      "file": "harbor_seawall.glb",
+      "bytes": 2693832,
+      "triangles": 2024,
+      "meshes": 1,
+      "materials": 1,
+      "embedded_images": 1,
+      "sha256": "139d8bedd47a901e954de07897eaedd6044be9018c4b208344470dc37c6af4fc",
+      "failures": []
+    },
+    {
+      "file": "harbor_shrine.glb",
+      "bytes": 4631148,
+      "triangles": 32395,
+      "meshes": 7,
+      "materials": 3,
+      "embedded_images": 1,
+      "sha256": "d3cb9fa089c607709e43dd16789e9ad9b18e65c36a5c62c4f3fbc851811bae44",
+      "failures": []
+    },
+    {
+      "file": "harbor_warehouse.glb",
+      "bytes": 5605132,
+      "triangles": 48469,
+      "meshes": 8,
+      "materials": 4,
+      "embedded_images": 1,
+      "sha256": "4572940b6016eac5b8ef66a76d8acfcb214f895755f49821a9fdc6f0b639fb79",
+      "failures": []
+    },
+    {
+      "file": "harbor_watchtower.glb",
+      "bytes": 2840136,
+      "triangles": 4278,
+      "meshes": 7,
+      "materials": 3,
+      "embedded_images": 1,
+      "sha256": "fbe112098a5cefb27b17a5b4e6fabbab84673f6f246043350274f1751f274d59",
+      "failures": []
+    },
+    {
+      "file": "healing_house.glb",
+      "bytes": 6859148,
+      "triangles": 65840,
+      "meshes": 8,
+      "materials": 4,
+      "embedded_images": 1,
+      "sha256": "c0004a608f66805e551f1599b0c3739d47deef471783f2f106080bd58d557376",
+      "failures": []
+    },
+    {
+      "file": "market_bread.glb",
+      "bytes": 3188952,
+      "triangles": 9357,
+      "meshes": 3,
+      "materials": 1,
+      "embedded_images": 1,
+      "sha256": "fbc862ef0c7fefcbb3c7a4a08d570b40614dc319e9f1b48041b04481f0d1b18b",
+      "failures": []
+    },
+    {
+      "file": "market_fruit.glb",
+      "bytes": 3274648,
+      "triangles": 10581,
+      "meshes": 3,
+      "materials": 1,
+      "embedded_images": 1,
+      "sha256": "0b77979ec5a5ce9d00cc42a5a8579f3eca34474f0ef6d4de29449e9339b3874a",
+      "failures": []
+    },
+    {
+      "file": "market_shop.glb",
+      "bytes": 5010864,
+      "triangles": 37309,
+      "meshes": 8,
+      "materials": 4,
+      "embedded_images": 1,
+      "sha256": "c3f31c8be9d1a74aaf5dd75e54d8e03b39f04f1117cda143df17d79dd1a0a9b7",
+      "failures": []
+    },
+    {
+      "file": "meadow_flowers.glb",
+      "bytes": 2669796,
+      "triangles": 1704,
+      "meshes": 1,
+      "materials": 1,
+      "embedded_images": 1,
+      "sha256": "c4f17a7fc092f49a4cd21dd467ee7bb06e0fc36b9effa769a5652747cd8f7649",
+      "failures": []
+    },
+    {
+      "file": "mooring_rope.glb",
+      "bytes": 2843248,
+      "triangles": 4328,
+      "meshes": 1,
+      "materials": 1,
+      "embedded_images": 1,
+      "sha256": "97cb87971f1bb2010de1459b73ebfc2498c8b363d1109677154478be599f18f3",
+      "failures": []
+    },
+    {
+      "file": "orchard_cottage.glb",
+      "bytes": 4227224,
+      "triangles": 25943,
+      "meshes": 7,
+      "materials": 4,
+      "embedded_images": 1,
+      "sha256": "8f39c8f44badcb4f3e220e8219ec4dc33da32cf5ee19ea4f7b6febd6ab6a2b19",
+      "failures": []
+    },
+    {
+      "file": "orchard_fence.glb",
+      "bytes": 2560752,
+      "triangles": 328,
+      "meshes": 1,
+      "materials": 1,
+      "embedded_images": 1,
+      "sha256": "9fb31540c020e8f63464c198ac33447bfa89007c4970caa3b45672cd9829eeae",
+      "failures": []
+    },
+    {
+      "file": "orchard_tree.glb",
+      "bytes": 4287300,
+      "triangles": 23500,
+      "meshes": 2,
+      "materials": 2,
+      "embedded_images": 1,
+      "sha256": "1ffb5dfdcd52d2b129224bc85d454c2253b0635e9dc414847d6cf4dd109747ca",
+      "failures": []
+    },
+    {
+      "file": "public_bench.glb",
+      "bytes": 2574676,
+      "triangles": 452,
+      "meshes": 2,
+      "materials": 1,
+      "embedded_images": 1,
+      "sha256": "420f5f1b2ed93392bb00b8807ae227745d7bcfaf3fce10029b8fff2ec5653eff",
+      "failures": []
+    },
+    {
+      "file": "smith_workshop.glb",
+      "bytes": 5265764,
+      "triangles": 43043,
+      "meshes": 8,
+      "materials": 4,
+      "embedded_images": 1,
+      "sha256": "2723f927ad6dee5f78d6b3905a22e94aeae62f685942ab16e3a50c6d2b27759d",
+      "failures": []
+    },
+    {
+      "file": "square_fountain.glb",
+      "bytes": 2971380,
+      "triangles": 6520,
+      "meshes": 4,
+      "materials": 2,
+      "embedded_images": 1,
+      "sha256": "ea8b807410d83d6b415adc1ac75c4ecce5dd68cf1f2875c33f41c0827012e6d8",
+      "failures": []
+    },
+    {
+      "file": "stone_balustrade.glb",
+      "bytes": 2678696,
+      "triangles": 2068,
+      "meshes": 1,
+      "materials": 1,
+      "embedded_images": 1,
+      "sha256": "e4398bf7a2ef1950c5f8ed128438d80fe7d838cb4c20037bd59a6d64c00689da",
+      "failures": []
+    },
+    {
+      "file": "street_lantern.glb",
+      "bytes": 2584372,
+      "triangles": 636,
+      "meshes": 4,
+      "materials": 3,
+      "embedded_images": 1,
+      "sha256": "06cb281504eb38f0f0c89db99560751f32360cdead895f652791acb02861c291",
+      "failures": []
+    },
+    {
+      "file": "terrace_retaining_wall.glb",
+      "bytes": 2927376,
+      "triangles": 5104,
+      "meshes": 1,
+      "materials": 1,
+      "embedded_images": 1,
+      "sha256": "4184d6a66df7dc2d68a69ae01f69ec9dbb8b4f1ab7057d18cd9c63c012966ae3",
+      "failures": []
+    },
+    {
+      "file": "terrace_stairs.glb",
+      "bytes": 2598016,
+      "triangles": 760,
+      "meshes": 2,
+      "materials": 1,
+      "embedded_images": 1,
+      "sha256": "3d59c95ce92d5d44397ae5aea63caeacd9c1808b9b5a7d302e3696dd553829e2",
+      "failures": []
+    },
+    {
+      "file": "townhouse_a.glb",
+      "bytes": 5108796,
+      "triangles": 38962,
+      "meshes": 7,
+      "materials": 4,
+      "embedded_images": 1,
+      "sha256": "741f99f18622d4c38a332a97595fce0509087324e6d8378ab2a12ae703e1c81d",
+      "failures": []
+    },
+    {
+      "file": "townhouse_b.glb",
+      "bytes": 5555244,
+      "triangles": 44885,
+      "meshes": 7,
+      "materials": 4,
+      "embedded_images": 1,
+      "sha256": "5e9e33e2ddb79aa960f15bf273e05ed74854b74c597bcef65335bb5261d9ee6a",
+      "failures": []
+    },
+    {
+      "file": "training_dummy.glb",
+      "bytes": 2722116,
+      "triangles": 2652,
+      "meshes": 4,
+      "materials": 2,
+      "embedded_images": 1,
+      "sha256": "b73a835a665980df9ff37ebf6af60740b2a03edd41bf6e7df6a4e44337e8b57d",
+      "failures": []
+    },
+    {
+      "file": "training_weapon_rack.glb",
+      "bytes": 2587184,
+      "triangles": 752,
+      "meshes": 1,
+      "materials": 1,
+      "embedded_images": 1,
+      "sha256": "50b3196522431a3fbdc6909390ead2d93f2f2eb3c85ee45ab923d7fd78b28607",
+      "failures": []
+    },
+    {
+      "file": "watermill.glb",
+      "bytes": 5164368,
+      "triangles": 39783,
+      "meshes": 7,
+      "materials": 4,
+      "embedded_images": 1,
+      "sha256": "e751a25b3748f5fd6934fb70279a86d08f3c7b346d2b80e6f93063052e4310e3",
+      "failures": []
+    }
+  ]
+}

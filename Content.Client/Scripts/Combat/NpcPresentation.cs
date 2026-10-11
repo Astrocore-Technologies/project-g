@@ -12,10 +12,18 @@ public partial class NpcPresentation : Node3D
     private readonly List<Point> _points = new();
     private NavigationGrid _grid = null!;
     private uint _tick;
-    private MeshInstance3D? _body;
+    public ProjectG.Actors.ActorVisual Visual { get; private set; } = null!;
+    public ProjectG.Actors.NpcActorAnimation Animation { get; private set; } = null!;
+    private double _controlUntil;
     private CombatControlPhase _control;
     public void Initialize(CombatState state, NavigationGrid grid)
-        => Initialize(state.Position, state.ServerTick, grid, state.Height);
+    {
+        Visual=GetNode<ProjectG.Actors.ActorVisual>("Figure");
+        Animation=new ProjectG.Actors.NpcActorAnimation(); AddChild(Animation);
+        Animation.Bind(Visual,state.ServerTick,state.Kind==CombatEntityKind.Boss);
+        Initialize(state.Position,state.ServerTick,grid,state.Height);
+        Animation.SetAlive(state.Health>0);
+    }
     public void Initialize(NumericsVector2 position, uint tick, NavigationGrid grid, float height = 0)
     {
         _grid = grid; _tick = tick;
@@ -25,7 +33,8 @@ public partial class NpcPresentation : Node3D
     public void Apply(EntitySnapshot state, uint tick)
     {
         if (!MovementSimulation.IsSequenceNewer(tick, _tick)) return;
-        _control=state.Control; _body ??= GetChildren().OfType<MeshInstance3D>().FirstOrDefault();
+        _control=state.Control; _controlUntil=Now()+state.ControlRemaining;
+        if(_control!=CombatControlPhase.None) Animation.Stop();
         _tick = tick; _points.Add(new(Now(), state.Position, state.Height,state.AirOffset));
         if (_points.Count > 20) _points.RemoveAt(0);
     }
@@ -41,7 +50,7 @@ public partial class NpcPresentation : Node3D
             position = NumericsVector2.Lerp(position, _points[1].Position, amount); height = float.Lerp(height, _points[1].Height, amount); air=float.Lerp(air,_points[1].Air,amount);
         }
         Position = new(position.X, height + air + 1, position.Y);
-        if (GodotObject.IsInstanceValid(_body)) _body!.Rotation=new(0,0,_control==CombatControlPhase.KnockedDown ? 1.35f : 0);
+        if(Visual is not null) Visual.SetControl(_control,Math.Max(0,_controlUntil-Now()));
     }
     private static double Now() => Time.GetTicksMsec() / 1000d;
     private readonly record struct Point(double Time, NumericsVector2 Position, float Height, float Air=0);

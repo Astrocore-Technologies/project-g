@@ -1,0 +1,48 @@
+{
+  "key": "terrace_stairs",
+  "label_ru": "Каменный модуль — stairs",
+  "category": "modular",
+  "bounds_blender_m": [
+    [
+      -1.71999990940094,
+      1.71999990940094
+    ],
+    [
+      -1.7072641849517822,
+      1.7072641849517822
+    ],
+    [
+      0.0,
+      2.3458192348480225
+    ]
+  ],
+  "dimensions_m": [
+    3.43999981880188,
+    3.4145283699035645,
+    2.3458192348480225
+  ],
+  "triangles": 760,
+  "meshes": 2,
+  "parts": 18,
+  "checked_joints": [],
+  "part_ids": [
+    "Nosing0",
+    "Nosing1",
+    "Nosing2",
+    "Nosing3",
+    "Nosing4",
+    "Nosing5",
+    "Nosing6",
+    "Nosing7",
+    "StairParapet-1",
+    "StairParapet1",
+    "Step0",
+    "Step1",
+    "Step2",
+    "Step3",
+    "Step4",
+    "Step5",
+    "Step6",
+    "Step7"
+  ]
+}

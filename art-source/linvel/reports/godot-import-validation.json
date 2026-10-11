@@ -1,0 +1,457 @@
+{
+	"asset_count": 50,
+	"assets": [
+		{
+			"counts": {
+				"materials": 8,
+				"meshes": 8,
+				"surfaces": 8,
+				"vertices": 169147
+			},
+			"file": "adventurers_guild.glb"
+		},
+		{
+			"counts": {
+				"materials": 2,
+				"meshes": 2,
+				"surfaces": 2,
+				"vertices": 228924
+			},
+			"file": "blossoming_tree.glb"
+		},
+		{
+			"counts": {
+				"materials": 3,
+				"meshes": 3,
+				"surfaces": 3,
+				"vertices": 41154
+			},
+			"file": "boatshed_closed.glb"
+		},
+		{
+			"counts": {
+				"materials": 4,
+				"meshes": 4,
+				"surfaces": 4,
+				"vertices": 42366
+			},
+			"file": "boatshed_open.glb"
+		},
+		{
+			"counts": {
+				"materials": 2,
+				"meshes": 2,
+				"surfaces": 2,
+				"vertices": 2760
+			},
+			"file": "cargo_barrel.glb"
+		},
+		{
+			"counts": {
+				"materials": 1,
+				"meshes": 1,
+				"surfaces": 1,
+				"vertices": 2976
+			},
+			"file": "cargo_crate.glb"
+		},
+		{
+			"counts": {
+				"materials": 2,
+				"meshes": 2,
+				"surfaces": 2,
+				"vertices": 1944
+			},
+			"file": "cargo_sacks.glb"
+		},
+		{
+			"counts": {
+				"materials": 8,
+				"meshes": 8,
+				"surfaces": 8,
+				"vertices": 77087
+			},
+			"file": "carpenter_workshop.glb"
+		},
+		{
+			"counts": {
+				"materials": 1,
+				"meshes": 1,
+				"surfaces": 1,
+				"vertices": 479
+			},
+			"file": "coastal_boulder_a.glb"
+		},
+		{
+			"counts": {
+				"materials": 1,
+				"meshes": 1,
+				"surfaces": 1,
+				"vertices": 479
+			},
+			"file": "coastal_boulder_b.glb"
+		},
+		{
+			"counts": {
+				"materials": 1,
+				"meshes": 1,
+				"surfaces": 1,
+				"vertices": 7680
+			},
+			"file": "cobblestone_paving.glb"
+		},
+		{
+			"counts": {
+				"materials": 1,
+				"meshes": 1,
+				"surfaces": 1,
+				"vertices": 936
+			},
+			"file": "crop_row.glb"
+		},
+		{
+			"counts": {
+				"materials": 2,
+				"meshes": 2,
+				"surfaces": 2,
+				"vertices": 59512
+			},
+			"file": "cypress_tree.glb"
+		},
+		{
+			"counts": {
+				"materials": 3,
+				"meshes": 3,
+				"surfaces": 3,
+				"vertices": 20892
+			},
+			"file": "dock_landing.glb"
+		},
+		{
+			"counts": {
+				"materials": 3,
+				"meshes": 3,
+				"surfaces": 3,
+				"vertices": 13008
+			},
+			"file": "dock_straight.glb"
+		},
+		{
+			"counts": {
+				"materials": 5,
+				"meshes": 5,
+				"surfaces": 5,
+				"vertices": 25336
+			},
+			"file": "dorn_pavilion.glb"
+		},
+		{
+			"counts": {
+				"materials": 2,
+				"meshes": 2,
+				"surfaces": 2,
+				"vertices": 12080
+			},
+			"file": "fishing_net_rack.glb"
+		},
+		{
+			"counts": {
+				"materials": 3,
+				"meshes": 3,
+				"surfaces": 3,
+				"vertices": 15232
+			},
+			"file": "fishing_rowboat.glb"
+		},
+		{
+			"counts": {
+				"materials": 4,
+				"meshes": 4,
+				"surfaces": 4,
+				"vertices": 26305
+			},
+			"file": "fishing_sailboat.glb"
+		},
+		{
+			"counts": {
+				"materials": 2,
+				"meshes": 2,
+				"surfaces": 2,
+				"vertices": 4128
+			},
+			"file": "flower_planter.glb"
+		},
+		{
+			"counts": {
+				"materials": 1,
+				"meshes": 1,
+				"surfaces": 1,
+				"vertices": 8450
+			},
+			"file": "garden_shrub.glb"
+		},
+		{
+			"counts": {
+				"materials": 4,
+				"meshes": 4,
+				"surfaces": 4,
+				"vertices": 3752
+			},
+			"file": "guild_banner_pole.glb"
+		},
+		{
+			"counts": {
+				"materials": 2,
+				"meshes": 2,
+				"surfaces": 2,
+				"vertices": 10216
+			},
+			"file": "handcart.glb"
+		},
+		{
+			"counts": {
+				"materials": 2,
+				"meshes": 2,
+				"surfaces": 2,
+				"vertices": 5616
+			},
+			"file": "harbor_arch_bridge.glb"
+		},
+		{
+			"counts": {
+				"materials": 1,
+				"meshes": 1,
+				"surfaces": 1,
+				"vertices": 528
+			},
+			"file": "harbor_bollard.glb"
+		},
+		{
+			"counts": {
+				"materials": 1,
+				"meshes": 1,
+				"surfaces": 1,
+				"vertices": 4416
+			},
+			"file": "harbor_seawall.glb"
+		},
+		{
+			"counts": {
+				"materials": 7,
+				"meshes": 7,
+				"surfaces": 7,
+				"vertices": 59077
+			},
+			"file": "harbor_shrine.glb"
+		},
+		{
+			"counts": {
+				"materials": 8,
+				"meshes": 8,
+				"surfaces": 8,
+				"vertices": 86461
+			},
+			"file": "harbor_warehouse.glb"
+		},
+		{
+			"counts": {
+				"materials": 7,
+				"meshes": 7,
+				"surfaces": 7,
+				"vertices": 8382
+			},
+			"file": "harbor_watchtower.glb"
+		},
+		{
+			"counts": {
+				"materials": 8,
+				"meshes": 8,
+				"surfaces": 8,
+				"vertices": 122391
+			},
+			"file": "healing_house.glb"
+		},
+		{
+			"counts": {
+				"materials": 3,
+				"meshes": 3,
+				"surfaces": 3,
+				"vertices": 18459
+			},
+			"file": "market_bread.glb"
+		},
+		{
+			"counts": {
+				"materials": 3,
+				"meshes": 3,
+				"surfaces": 3,
+				"vertices": 20907
+			},
+			"file": "market_fruit.glb"
+		},
+		{
+			"counts": {
+				"materials": 8,
+				"meshes": 8,
+				"surfaces": 8,
+				"vertices": 69985
+			},
+			"file": "market_shop.glb"
+		},
+		{
+			"counts": {
+				"materials": 1,
+				"meshes": 1,
+				"surfaces": 1,
+				"vertices": 3724
+			},
+			"file": "meadow_flowers.glb"
+		},
+		{
+			"counts": {
+				"materials": 1,
+				"meshes": 1,
+				"surfaces": 1,
+				"vertices": 8652
+			},
+			"file": "mooring_rope.glb"
+		},
+		{
+			"counts": {
+				"materials": 7,
+				"meshes": 7,
+				"surfaces": 7,
+				"vertices": 47655
+			},
+			"file": "orchard_cottage.glb"
+		},
+		{
+			"counts": {
+				"materials": 1,
+				"meshes": 1,
+				"surfaces": 1,
+				"vertices": 576
+			},
+			"file": "orchard_fence.glb"
+		},
+		{
+			"counts": {
+				"materials": 2,
+				"meshes": 2,
+				"surfaces": 2,
+				"vertices": 50148
+			},
+			"file": "orchard_tree.glb"
+		},
+		{
+			"counts": {
+				"materials": 2,
+				"meshes": 2,
+				"surfaces": 2,
+				"vertices": 960
+			},
+			"file": "public_bench.glb"
+		},
+		{
+			"counts": {
+				"materials": 8,
+				"meshes": 8,
+				"surfaces": 8,
+				"vertices": 76871
+			},
+			"file": "smith_workshop.glb"
+		},
+		{
+			"counts": {
+				"materials": 4,
+				"meshes": 4,
+				"surfaces": 4,
+				"vertices": 12152
+			},
+			"file": "square_fountain.glb"
+		},
+		{
+			"counts": {
+				"materials": 1,
+				"meshes": 1,
+				"surfaces": 1,
+				"vertices": 3936
+			},
+			"file": "stone_balustrade.glb"
+		},
+		{
+			"counts": {
+				"materials": 4,
+				"meshes": 4,
+				"surfaces": 4,
+				"vertices": 1160
+			},
+			"file": "street_lantern.glb"
+		},
+		{
+			"counts": {
+				"materials": 1,
+				"meshes": 1,
+				"surfaces": 1,
+				"vertices": 11136
+			},
+			"file": "terrace_retaining_wall.glb"
+		},
+		{
+			"counts": {
+				"materials": 2,
+				"meshes": 2,
+				"surfaces": 2,
+				"vertices": 1632
+			},
+			"file": "terrace_stairs.glb"
+		},
+		{
+			"counts": {
+				"materials": 7,
+				"meshes": 7,
+				"surfaces": 7,
+				"vertices": 72764
+			},
+			"file": "townhouse_a.glb"
+		},
+		{
+			"counts": {
+				"materials": 7,
+				"meshes": 7,
+				"surfaces": 7,
+				"vertices": 85605
+			},
+			"file": "townhouse_b.glb"
+		},
+		{
+			"counts": {
+				"materials": 4,
+				"meshes": 4,
+				"surfaces": 4,
+				"vertices": 5088
+			},
+			"file": "training_dummy.glb"
+		},
+		{
+			"counts": {
+				"materials": 1,
+				"meshes": 1,
+				"surfaces": 1,
+				"vertices": 1320
+			},
+			"file": "training_weapon_rack.glb"
+		},
+		{
+			"counts": {
+				"materials": 7,
+				"meshes": 7,
+				"surfaces": 7,
+				"vertices": 74347
+			},
+			"file": "watermill.glb"
+		}
+	],
+	"engine": "4.7.1-stable (official)",
+	"failures": []
+}

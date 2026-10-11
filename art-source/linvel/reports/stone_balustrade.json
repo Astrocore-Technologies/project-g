@@ -1,0 +1,41 @@
+{
+  "key": "stone_balustrade",
+  "label_ru": "Каменный модуль — balustrade",
+  "category": "modular",
+  "bounds_blender_m": [
+    [
+      -2.049999952316284,
+      2.049999952316284
+    ],
+    [
+      -0.25,
+      0.25
+    ],
+    [
+      0.0,
+      1.2300000190734863
+    ]
+  ],
+  "dimensions_m": [
+    4.099999904632568,
+    0.5,
+    1.2300000190734863
+  ],
+  "triangles": 2068,
+  "meshes": 1,
+  "parts": 11,
+  "checked_joints": [],
+  "part_ids": [
+    "Baluster0",
+    "Baluster1",
+    "Baluster2",
+    "Baluster3",
+    "Baluster4",
+    "Baluster5",
+    "Baluster6",
+    "Baluster7",
+    "Baluster8",
+    "BalustradeCap",
+    "BalustradeFoot"
+  ]
+}

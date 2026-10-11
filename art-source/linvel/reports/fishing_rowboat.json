@@ -1,0 +1,63 @@
+{
+  "key": "fishing_rowboat",
+  "label_ru": "Гребная рыбацкая лодка",
+  "category": "harbor",
+  "bounds_blender_m": [
+    [
+      -2.1123173236846924,
+      2.1123173236846924
+    ],
+    [
+      -2.3299999237060547,
+      2.0944149494171143
+    ],
+    [
+      -0.6399999856948853,
+      0.7398269176483154
+    ]
+  ],
+  "dimensions_m": [
+    4.224634647369385,
+    4.424414873123169,
+    1.3798269033432007
+  ],
+  "triangles": 7708,
+  "meshes": 3,
+  "parts": 33,
+  "checked_joints": [],
+  "part_ids": [
+    "ClinkerSeam-1_1",
+    "ClinkerSeam-1_2",
+    "ClinkerSeam-1_3",
+    "ClinkerSeam-1_4",
+    "ClinkerSeam1_1",
+    "ClinkerSeam1_2",
+    "ClinkerSeam1_3",
+    "ClinkerSeam1_4",
+    "Gunwale-1",
+    "Gunwale1",
+    "InnerHull",
+    "Keel",
+    "OarBlade-1",
+    "OarBlade1",
+    "OarShaft-1",
+    "OarShaft1",
+    "Oarlock-1",
+    "Oarlock1",
+    "OuterHull",
+    "Rib2",
+    "Rib3",
+    "Rib4",
+    "Rib5",
+    "Rib6",
+    "Rib7",
+    "Rib8",
+    "Rib9",
+    "Rudder",
+    "Thwart0",
+    "Thwart1",
+    "Thwart2",
+    "Thwart3",
+    "Tiller"
+  ]
+}

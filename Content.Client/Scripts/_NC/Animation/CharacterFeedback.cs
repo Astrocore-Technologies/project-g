@@ -55,11 +55,17 @@ public partial class CharacterFeedback : Node3D
     }
     public void Trail(Skeleton3D skeleton, float progress)
     {
+        var hand=skeleton.FindBone("hand.R"); if(hand<0)return;
+        var transform=skeleton.GlobalTransform*skeleton.GetBoneGlobalPose(hand)*skeleton.GetBoneGlobalRest(hand).AffineInverse();
+        Trail(transform*new Vector3(-.883f,1.38f,.083f), transform*new Vector3(-.883f,1.38f,.708f), progress);
+    }
+    // Rigid actors provide real blade anchors; the legacy skeleton adapter remains for its gallery.
+    public void Trail(Vector3 bladeBase, Vector3 bladeTip, float progress)
+    {
         _mesh.ClearSurfaces();
         if(progress<.24f || progress>.64f) { _history.Clear(); return; }
-        var hand=skeleton.FindBone("hand.R"); if(hand<0)return;
-        var transform=GlobalTransform.AffineInverse()*skeleton.GlobalTransform*skeleton.GetBoneGlobalPose(hand)*skeleton.GetBoneGlobalRest(hand).AffineInverse();
-        _history.Enqueue((transform*new Vector3(-.883f,1.38f,.083f), transform*new Vector3(-.883f,1.38f,.708f)));
+        var inverse=GlobalTransform.AffineInverse();
+        _history.Enqueue((inverse*bladeBase, inverse*bladeTip));
         while(_history.Count>5)_history.Dequeue();
         if(_history.Count<2)return;
         _mesh.SurfaceBegin(Mesh.PrimitiveType.Triangles);

@@ -1,0 +1,14 @@
+{
+  "engine": "Godot 4.7.1-stable mono",
+  "renderer": "Forward Mobile / Vulkan 1.4.329",
+  "device": "NVIDIA GeForce RTX 4060 Laptop GPU",
+  "camera_pitch_degrees": 45,
+  "shader": "godot/linvel_cel.gdshader",
+  "reviewed_assets": [
+    "adventurers_guild",
+    "blossoming_tree"
+  ],
+  "import_count": 50,
+  "shader_errors": [],
+  "performance_benchmark": false
+}

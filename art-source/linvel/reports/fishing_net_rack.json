@@ -1,0 +1,79 @@
+{
+  "key": "fishing_net_rack",
+  "label_ru": "Сушильная стойка с рыбацкой сетью",
+  "category": "harbor",
+  "bounds_blender_m": [
+    [
+      -1.225000023841858,
+      1.225000023841858
+    ],
+    [
+      -0.32499998807907104,
+      0.32499998807907104
+    ],
+    [
+      0.0,
+      2.0
+    ]
+  ],
+  "dimensions_m": [
+    2.450000047683716,
+    0.6499999761581421,
+    2.0
+  ],
+  "triangles": 6168,
+  "meshes": 2,
+  "parts": 49,
+  "checked_joints": [],
+  "part_ids": [
+    "Net-1_1",
+    "Net-1_10",
+    "Net-1_11",
+    "Net-1_12",
+    "Net-1_13",
+    "Net-1_14",
+    "Net-1_15",
+    "Net-1_16",
+    "Net-1_17",
+    "Net-1_2",
+    "Net-1_3",
+    "Net-1_4",
+    "Net-1_5",
+    "Net-1_6",
+    "Net-1_7",
+    "Net-1_8",
+    "Net-1_9",
+    "Net1_-1",
+    "Net1_-2",
+    "Net1_-3",
+    "Net1_-4",
+    "Net1_0",
+    "Net1_1",
+    "Net1_10",
+    "Net1_11",
+    "Net1_12",
+    "Net1_13",
+    "Net1_2",
+    "Net1_3",
+    "Net1_4",
+    "Net1_5",
+    "Net1_6",
+    "Net1_7",
+    "Net1_8",
+    "Net1_9",
+    "NetCrossbeam",
+    "NetFloat0",
+    "NetFloat1",
+    "NetFloat2",
+    "NetFloat3",
+    "NetFloat4",
+    "NetFloat5",
+    "NetFloat6",
+    "NetFloat7",
+    "NetFloat8",
+    "NetFoot-1.1",
+    "NetFoot1.1",
+    "NetPost-1.1",
+    "NetPost1.1"
+  ]
+}

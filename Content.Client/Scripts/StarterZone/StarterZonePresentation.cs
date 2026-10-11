@@ -127,7 +127,7 @@ public partial class StarterZonePresentation : Node3D
         }
         }
         var guide=new Node3D { Position=new(_zone.GuidePosition.X,0,_zone.GuidePosition.Y) }; AddChild(guide);
-        guide.AddChild(new MeshInstance3D { Position=new(0,0.8f,0),Mesh=new CapsuleMesh { Radius=0.3f,Height=1.6f },MaterialOverride=Material(new(0.25f,0.5f,0.85f)) });
+        guide.AddChild(ProjectG.Actors.ActorScenes.Load("GuideFigure").Instantiate<Node3D>());
         guide.AddChild(new Label3D { Position=new(0,2.1f,0),Text=_zone.GuideName+" • F1",Billboard=BaseMaterial3D.BillboardModeEnum.Enabled });
         AddChild(new Label3D { Position=new(_zone.TownPosition.X,2.8f,_zone.TownPosition.Y-4),Text=_zone.TownName,Billboard=BaseMaterial3D.BillboardModeEnum.Enabled });
         if (!legacy) return;

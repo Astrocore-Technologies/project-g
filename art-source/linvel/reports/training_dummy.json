@@ -1,0 +1,74 @@
+{
+  "key": "training_dummy",
+  "label_ru": "Тренировочный манекен Дорна",
+  "category": "training",
+  "bounds_blender_m": [
+    [
+      -0.6700000166893005,
+      0.6700000166893005
+    ],
+    [
+      -0.36000001430511475,
+      0.36000001430511475
+    ],
+    [
+      0.0,
+      2.09
+    ]
+  ],
+  "dimensions_m": [
+    1.340000033378601,
+    0.7200000286102295,
+    2.09
+  ],
+  "triangles": 2652,
+  "meshes": 4,
+  "parts": 37,
+  "checked_joints": [
+    {
+      "a": "DummyBase",
+      "b": "DummyPost",
+      "axis": 2,
+      "overlap_m": 0.08
+    }
+  ],
+  "part_ids": [
+    "DummyArms",
+    "DummyBase",
+    "DummyPost",
+    "StrawBinding1.0",
+    "StrawBinding1.16",
+    "StrawBinding1.45",
+    "StrawBinding1.55",
+    "StrawHead",
+    "StrawStem0",
+    "StrawStem1",
+    "StrawStem10",
+    "StrawStem11",
+    "StrawStem12",
+    "StrawStem13",
+    "StrawStem14",
+    "StrawStem15",
+    "StrawStem16",
+    "StrawStem17",
+    "StrawStem18",
+    "StrawStem19",
+    "StrawStem2",
+    "StrawStem20",
+    "StrawStem21",
+    "StrawStem22",
+    "StrawStem23",
+    "StrawStem24",
+    "StrawStem25",
+    "StrawStem26",
+    "StrawStem27",
+    "StrawStem3",
+    "StrawStem4",
+    "StrawStem5",
+    "StrawStem6",
+    "StrawStem7",
+    "StrawStem8",
+    "StrawStem9",
+    "StrawTorso"
+  ]
+}

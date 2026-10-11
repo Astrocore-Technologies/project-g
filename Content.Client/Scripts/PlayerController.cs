@@ -13,7 +13,7 @@ public partial class PlayerController : CharacterBody3D
 	[Export] public PackedScene AppearanceScene { get; set; } = null!;
 	private Node3D _appearance = null!;
 	// NC: the visual rig is separate from the movement/collision authority.
-	public ProjectG.Animation.CharacterAnimator Animator => (ProjectG.Animation.CharacterAnimator)_appearance;
+	public ProjectG.Actors.ActorVisual Animator => (ProjectG.Actors.ActorVisual)_appearance;
 	private const double RemoteInterpolationDelaySeconds = 0.1;
 	private const int MaxPredictionHistory = 128;
 	private const int MaxRemoteSnapshots = 20;
@@ -28,14 +28,14 @@ public partial class PlayerController : CharacterBody3D
 	private NumericsVector2 _predictedPosition;
 	private NumericsVector2 _target;
 	private float _predictedHeight, _targetHeight, _airOffset;
-    private Node3D _visual = null!;
-    private Vector3 _visualRestPosition;
-    public CombatControlPhase Control { get; private set; }
-    public float AirOffset => _airOffset;
-    private double _controlUntil, _recoveryUntil;
-    public double ControlRemaining => Math.Max(0,_controlUntil-NowSeconds());
-    public double RecoveryRemaining => Math.Max(0,_recoveryUntil-NowSeconds());
-    public void SetRecoveryRemaining(double seconds) => _recoveryUntil=NowSeconds()+seconds;
+	private Node3D _visual = null!;
+	private Vector3 _visualRestPosition;
+	public CombatControlPhase Control { get; private set; }
+	public float AirOffset => _airOffset;
+	private double _controlUntil, _recoveryUntil;
+	public double ControlRemaining => Math.Max(0,_controlUntil-NowSeconds());
+	public double RecoveryRemaining => Math.Max(0,_recoveryUntil-NowSeconds());
+	public void SetRecoveryRemaining(double seconds) => _recoveryUntil=NowSeconds()+seconds;
 	public System.Numerics.Vector3 PredictedFoot => new(_predictedPosition.X, _predictedHeight + _airOffset, _predictedPosition.Y);
 	internal NavigationGrid Navigation => _navigation;
 	private double _tickAccumulator;
@@ -79,7 +79,7 @@ public partial class PlayerController : CharacterBody3D
 		_appearance.Name = "Appearance";
 		_appearance.Position = new Vector3(0, -1, 0);
 		_visual=GetNode<Node3D>("Visual"); _visual.AddChild(_appearance);
-        _visualRestPosition=_visual.Position;
+		_visualRestPosition=_visual.Position;
 		SwordAnimation.Bind(Animator);
 	}
 	public void SetAlive(bool alive)
@@ -87,7 +87,7 @@ public partial class PlayerController : CharacterBody3D
 		IsAlive = alive;
 		Animator.SetAlive(alive);
 		if (alive) return;
-        Control=CombatControlPhase.None; _airOffset=0;
+		Control=CombatControlPhase.None; _airOffset=0;
 		SwordAnimation.Stop();
 		_dash = null; _predictionHistory.Clear();
 		_rightHeld=false; DefenseHeld=false;
@@ -166,10 +166,8 @@ public partial class PlayerController : CharacterBody3D
 	{
 		if (!_isLocal)
             UpdateRemote();
-        // Rotate only the visible body: collision and the navigation anchor remain upright.
-        _visual.Rotation = Control == CombatControlPhase.KnockedDown ? new(1.35f,0,0)
-            : Control == CombatControlPhase.Recovering ? new((float)(ControlRemaining*6*Math.PI),0,0) : Vector3.Zero;
-        _visual.Position=_visualRestPosition+(Control==CombatControlPhase.KnockedDown ? Vector3.Down*.65f : Vector3.Zero);
+        // NC: snapshot control affects rigid joints, never the collision or camera root.
+        Animator.SetControl(Control, ControlRemaining, IsDashing);
 	}
 
 	public void ApplySnapshot(EntitySnapshot snapshot, uint serverTick)

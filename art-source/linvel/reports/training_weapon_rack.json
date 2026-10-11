@@ -1,0 +1,54 @@
+{
+  "key": "training_weapon_rack",
+  "label_ru": "Стойка тренировочного оружия",
+  "category": "training",
+  "bounds_blender_m": [
+    [
+      -1.1899999380111694,
+      1.1899999380111694
+    ],
+    [
+      -0.4000000059604645,
+      0.4000000059604645
+    ],
+    [
+      0.0,
+      1.7000000476837158
+    ]
+  ],
+  "dimensions_m": [
+    2.379999876022339,
+    0.800000011920929,
+    1.7000000476837158
+  ],
+  "triangles": 752,
+  "meshes": 1,
+  "parts": 24,
+  "checked_joints": [],
+  "part_ids": [
+    "RackCrossbar0.35",
+    "RackCrossbar1.4",
+    "RackFoot-1.02",
+    "RackFoot1.02",
+    "RackPost-1.02",
+    "RackPost1.02",
+    "SwordGrip0",
+    "SwordGrip1",
+    "SwordGrip2",
+    "SwordGrip3",
+    "SwordGrip4",
+    "SwordGrip5",
+    "SwordGuard0",
+    "SwordGuard1",
+    "SwordGuard2",
+    "SwordGuard3",
+    "SwordGuard4",
+    "SwordGuard5",
+    "WoodenSwordBlade0",
+    "WoodenSwordBlade1",
+    "WoodenSwordBlade2",
+    "WoodenSwordBlade3",
+    "WoodenSwordBlade4",
+    "WoodenSwordBlade5"
+  ]
+}

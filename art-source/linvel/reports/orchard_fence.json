@@ -1,0 +1,40 @@
+{
+  "key": "orchard_fence",
+  "label_ru": "Ограда садов и пастбищ",
+  "category": "modular",
+  "bounds_blender_m": [
+    [
+      -2.12,
+      2.12
+    ],
+    [
+      -0.12,
+      0.12
+    ],
+    [
+      0.0,
+      1.3499999999999999
+    ]
+  ],
+  "dimensions_m": [
+    4.24,
+    0.24,
+    1.3499999999999999
+  ],
+  "triangles": 328,
+  "meshes": 1,
+  "parts": 10,
+  "checked_joints": [],
+  "part_ids": [
+    "FenceDiagonal-1",
+    "FenceDiagonal1",
+    "FencePost-2",
+    "FencePost0",
+    "FencePost2",
+    "FenceRail0.43",
+    "FenceRail0.94",
+    "PostCap-2",
+    "PostCap0",
+    "PostCap2"
+  ]
+}

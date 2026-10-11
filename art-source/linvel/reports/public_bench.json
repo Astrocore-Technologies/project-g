@@ -1,0 +1,41 @@
+{
+  "key": "public_bench",
+  "label_ru": "Деревянная городская скамья",
+  "category": "props",
+  "bounds_blender_m": [
+    [
+      -1.0,
+      1.0
+    ],
+    [
+      -0.2750000059604645,
+      0.3447386920452118
+    ],
+    [
+      0.0,
+      1.105354905128479
+    ]
+  ],
+  "dimensions_m": [
+    2.0,
+    0.6197386980056763,
+    1.105354905128479
+  ],
+  "triangles": 452,
+  "meshes": 2,
+  "parts": 11,
+  "checked_joints": [],
+  "part_ids": [
+    "BackPost-0.8",
+    "BackPost0.8",
+    "BackSlat0",
+    "BackSlat1",
+    "BackSlat2",
+    "BenchFoot-0.8",
+    "BenchFoot0.8",
+    "SeatSlat0",
+    "SeatSlat1",
+    "SeatSlat2",
+    "SeatSlat3"
+  ]
+}

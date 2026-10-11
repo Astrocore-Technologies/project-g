@@ -1,0 +1,157 @@
+{
+  "key": "dock_straight",
+  "label_ru": "Причал — straight",
+  "category": "harbor",
+  "bounds_blender_m": [
+    [
+      -1.3300000429153442,
+      1.3300000429153442
+    ],
+    [
+      -3.0,
+      3.064593553543091
+    ],
+    [
+      -1.7,
+      1.6500000000000001
+    ]
+  ],
+  "dimensions_m": [
+    2.6600000858306885,
+    6.064593553543091,
+    3.35
+  ],
+  "triangles": 6552,
+  "meshes": 3,
+  "parts": 54,
+  "checked_joints": [
+    {
+      "a": "Pile-1.03-2.8",
+      "b": "CrossBearer-1.03-2.8",
+      "axis": 2,
+      "overlap_m": 0.24
+    },
+    {
+      "a": "CrossBearer-1.03-2.8",
+      "b": "DockPlank0",
+      "axis": 2,
+      "overlap_m": 0.06
+    },
+    {
+      "a": "Pile-1.030",
+      "b": "CrossBearer-1.030",
+      "axis": 2,
+      "overlap_m": 0.24
+    },
+    {
+      "a": "CrossBearer-1.030",
+      "b": "DockPlank12",
+      "axis": 2,
+      "overlap_m": 0.06
+    },
+    {
+      "a": "Pile-1.032.8",
+      "b": "CrossBearer-1.032.8",
+      "axis": 2,
+      "overlap_m": 0.24
+    },
+    {
+      "a": "CrossBearer-1.032.8",
+      "b": "DockPlank23",
+      "axis": 2,
+      "overlap_m": 0.06
+    },
+    {
+      "a": "Pile1.03-2.8",
+      "b": "CrossBearer1.03-2.8",
+      "axis": 2,
+      "overlap_m": 0.24
+    },
+    {
+      "a": "CrossBearer1.03-2.8",
+      "b": "DockPlank0",
+      "axis": 2,
+      "overlap_m": 0.06
+    },
+    {
+      "a": "Pile1.030",
+      "b": "CrossBearer1.030",
+      "axis": 2,
+      "overlap_m": 0.24
+    },
+    {
+      "a": "CrossBearer1.030",
+      "b": "DockPlank12",
+      "axis": 2,
+      "overlap_m": 0.06
+    },
+    {
+      "a": "Pile1.032.8",
+      "b": "CrossBearer1.032.8",
+      "axis": 2,
+      "overlap_m": 0.24
+    },
+    {
+      "a": "CrossBearer1.032.8",
+      "b": "DockPlank23",
+      "axis": 2,
+      "overlap_m": 0.06
+    }
+  ],
+  "part_ids": [
+    "CrossBearer-1.03-2.8",
+    "CrossBearer-1.030",
+    "CrossBearer-1.032.8",
+    "CrossBearer1.03-2.8",
+    "CrossBearer1.030",
+    "CrossBearer1.032.8",
+    "Diagonal-1.03-2.8",
+    "Diagonal-1.030",
+    "Diagonal-1.032.8",
+    "Diagonal1.03-2.8",
+    "Diagonal1.030",
+    "Diagonal1.032.8",
+    "DockPlank0",
+    "DockPlank1",
+    "DockPlank10",
+    "DockPlank11",
+    "DockPlank12",
+    "DockPlank13",
+    "DockPlank14",
+    "DockPlank15",
+    "DockPlank16",
+    "DockPlank17",
+    "DockPlank18",
+    "DockPlank19",
+    "DockPlank2",
+    "DockPlank20",
+    "DockPlank21",
+    "DockPlank22",
+    "DockPlank23",
+    "DockPlank3",
+    "DockPlank4",
+    "DockPlank5",
+    "DockPlank6",
+    "DockPlank7",
+    "DockPlank8",
+    "DockPlank9",
+    "Pile-1.03-2.8",
+    "Pile-1.030",
+    "Pile-1.032.8",
+    "Pile1.03-2.8",
+    "Pile1.030",
+    "Pile1.032.8",
+    "PileBinding-1.03-2.81.36",
+    "PileBinding-1.03-2.81.45",
+    "PileBinding-1.0301.36",
+    "PileBinding-1.0301.45",
+    "PileBinding-1.032.81.36",
+    "PileBinding-1.032.81.45",
+    "PileBinding1.03-2.81.36",
+    "PileBinding1.03-2.81.45",
+    "PileBinding1.0301.36",
+    "PileBinding1.0301.45",
+    "PileBinding1.032.81.36",
+    "PileBinding1.032.81.45"
+  ]
+}

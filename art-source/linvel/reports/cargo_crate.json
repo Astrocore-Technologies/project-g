@@ -1,0 +1,62 @@
+{
+  "key": "cargo_crate",
+  "label_ru": "Транспортный ящик",
+  "category": "props",
+  "bounds_blender_m": [
+    [
+      -0.5149999856948853,
+      0.5149999856948853
+    ],
+    [
+      -0.45499998331069946,
+      0.45499998331069946
+    ],
+    [
+      -0.025000005960464478,
+      0.7850000262260437
+    ]
+  ],
+  "dimensions_m": [
+    1.0299999713897705,
+    0.9099999666213989,
+    0.8100000321865082
+  ],
+  "triangles": 1376,
+  "meshes": 1,
+  "parts": 32,
+  "checked_joints": [],
+  "part_ids": [
+    "Crate_Brace-1",
+    "Crate_Brace1",
+    "Crate_Corner-0.45_-0.35",
+    "Crate_Corner-0.45_0.35",
+    "Crate_Corner0.45_-0.35",
+    "Crate_Corner0.45_0.35",
+    "Crate_Front-1_0",
+    "Crate_Front-1_1",
+    "Crate_Front-1_2",
+    "Crate_Front-1_3",
+    "Crate_Front-1_4",
+    "Crate_Front1_0",
+    "Crate_Front1_1",
+    "Crate_Front1_2",
+    "Crate_Front1_3",
+    "Crate_Front1_4",
+    "Crate_Lid0",
+    "Crate_Lid1",
+    "Crate_Lid2",
+    "Crate_Lid3",
+    "Crate_Lid4",
+    "Crate_Lid5",
+    "Crate_Side-1_0",
+    "Crate_Side-1_1",
+    "Crate_Side-1_2",
+    "Crate_Side-1_3",
+    "Crate_Side-1_4",
+    "Crate_Side1_0",
+    "Crate_Side1_1",
+    "Crate_Side1_2",
+    "Crate_Side1_3",
+    "Crate_Side1_4"
+  ]
+}

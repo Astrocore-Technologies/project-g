@@ -1,0 +1,58 @@
+{
+  "key": "cargo_barrel",
+  "label_ru": "Деревянная бочка",
+  "category": "props",
+  "bounds_blender_m": [
+    [
+      -0.4399892775103737,
+      0.4399892775103737
+    ],
+    [
+      -0.43383825631102213,
+      0.43383825631102213
+    ],
+    [
+      0,
+      1.0579999685287476
+    ]
+  ],
+  "dimensions_m": [
+    0.8799785550207474,
+    0.8676765126220443,
+    1.0579999685287476
+  ],
+  "triangles": 1560,
+  "meshes": 2,
+  "parts": 28,
+  "checked_joints": [],
+  "part_ids": [
+    "Barrel_Hoop0.1",
+    "Barrel_Hoop0.26",
+    "Barrel_Hoop0.78",
+    "Barrel_Hoop0.95",
+    "Barrel_Lid",
+    "Barrel_LidSeam-1",
+    "Barrel_LidSeam-2",
+    "Barrel_LidSeam0",
+    "Barrel_LidSeam1",
+    "Barrel_LidSeam2",
+    "Barrel_Stave0",
+    "Barrel_Stave1",
+    "Barrel_Stave10",
+    "Barrel_Stave11",
+    "Barrel_Stave12",
+    "Barrel_Stave13",
+    "Barrel_Stave14",
+    "Barrel_Stave15",
+    "Barrel_Stave16",
+    "Barrel_Stave17",
+    "Barrel_Stave2",
+    "Barrel_Stave3",
+    "Barrel_Stave4",
+    "Barrel_Stave5",
+    "Barrel_Stave6",
+    "Barrel_Stave7",
+    "Barrel_Stave8",
+    "Barrel_Stave9"
+  ]
+}

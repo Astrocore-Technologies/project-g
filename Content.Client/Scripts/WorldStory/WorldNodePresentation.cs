@@ -36,7 +36,7 @@ public partial class WorldNodePresentation : Node3D
         _result=new Label { CustomMinimumSize=new(425,0),AutowrapMode=TextServer.AutowrapMode.WordSmart }; list.AddChild(_result);
         var close=new Button { Text="Закрыть" }; close.Pressed+=()=>_panel.Close(); list.AddChild(close);
         var actor=new Node3D(); AddChild(actor);
-        actor.AddChild(new MeshInstance3D { Position=new(0,0.8f,0),Mesh=new CapsuleMesh { Radius=0.35f,Height=1.6f },MaterialOverride=new StandardMaterial3D { AlbedoColor=new(0.1f,0.65f,0.75f) } });
+        actor.AddChild(ProjectG.Actors.ActorScenes.Load("KeeperFigure").Instantiate<Node3D>());
         actor.AddChild(new MeshInstance3D { Position=new(0,0.05f,0),Mesh=new CylinderMesh { TopRadius=1.1f,BottomRadius=1.1f,Height=0.06f },MaterialOverride=new StandardMaterial3D { AlbedoColor=new(0.15f,0.45f,0.7f) } });
         _keeper=new Label3D { Position=new(0,2.7f,0),Billboard=BaseMaterial3D.BillboardModeEnum.Enabled,FontSize=24,Width=480,AutowrapMode=TextServer.AutowrapMode.WordSmart }; actor.AddChild(_keeper);
         if(network.LatestWorldNode is { } state) Apply(state);
