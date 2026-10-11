@@ -8,6 +8,7 @@ public sealed class SurfaceVisibility
     private const float TileSize = 4;
     private readonly Dictionary<(int X, int Z), List<int>> _tiles = [];
     private readonly (Vector3 Center, Vector3 HalfSize, Quaternion Inverse)[] _boxes;
+    private readonly (Vector3 A, Vector3 B, Vector3 C)[] _ground;
     private readonly int[] _seen;
     private int _generation;
 
@@ -15,7 +16,14 @@ public sealed class SurfaceVisibility
     {
         map.Validate();
         _boxes = new (Vector3, Vector3, Quaternion)[map.Occluders.Length];
-        _seen = new int[_boxes.Length];
+        // A baked outdoor surface must also stop rays through hills. Reuse the public
+        // polygons with a bounded spatial index; never scan the entire region in combat.
+        var ground = new List<(Vector3, Vector3, Vector3)>();
+        foreach (var polygon in map.WalkableFacesOcclude ? map.Polygons : [])
+            for (var j = 1; j + 1 < polygon.Length; j++)
+                ground.Add((map.Vertices[polygon[0]].Vector, map.Vertices[polygon[j]].Vector, map.Vertices[polygon[j + 1]].Vector));
+        _ground = ground.ToArray();
+        _seen = new int[_boxes.Length + _ground.Length];
         long references = 0;
         for (var i = 0; i < _boxes.Length; i++)
         {
@@ -38,6 +46,19 @@ public sealed class SurfaceVisibility
                 list.Add(i);
             }
         }
+        for (var i = 0; i < _ground.Length; i++)
+        {
+            var triangle = _ground[i];
+            var min = Vector3.Min(triangle.A, Vector3.Min(triangle.B, triangle.C));
+            var max = Vector3.Max(triangle.A, Vector3.Max(triangle.B, triangle.C));
+            for (var z = Tile(min.Z); z <= Tile(max.Z); z++)
+            for (var x = Tile(min.X); x <= Tile(max.X); x++)
+            {
+                if (++references > 1_000_000) throw new InvalidDataException("Visibility index exceeds budget.");
+                if (!_tiles.TryGetValue((x, z), out var list)) _tiles[(x, z)] = list = [];
+                list.Add(_boxes.Length + i);
+            }
+        }
     }
 
     public bool Clear(Vector3 start, Vector3 end)
@@ -54,6 +75,12 @@ public sealed class SurfaceVisibility
             {
                 if (_seen[id] == _generation) continue;
                 _seen[id] = _generation;
+                if (id >= _boxes.Length)
+                {
+                    var triangle = _ground[id - _boxes.Length];
+                    if (IntersectsTriangle(start, end - start, triangle.A, triangle.B, triangle.C)) return false;
+                    continue;
+                }
                 var box = _boxes[id];
                 var a = Vector3.Transform(start - box.Center, box.Inverse);
                 var b = Vector3.Transform(end - box.Center, box.Inverse);
@@ -61,6 +88,25 @@ public sealed class SurfaceVisibility
             }
         }
         return true;
+    }
+
+    private static bool IntersectsTriangle(Vector3 start, Vector3 direction, Vector3 a, Vector3 b, Vector3 c)
+    {
+        // Two-sided segment/triangle test, including the underside of bridges.
+        // Endpoint epsilon avoids treating a ray starting on a surface as an obstruction.
+        var edge1 = b - a; var edge2 = c - a;
+        var cross = Vector3.Cross(direction, edge2);
+        var determinant = Vector3.Dot(edge1, cross);
+        if (MathF.Abs(determinant) < .000001f) return false;
+        var inverse = 1 / determinant;
+        var offset = start - a;
+        var u = Vector3.Dot(offset, cross) * inverse;
+        if (u < -.00001f || u > 1.00001f) return false;
+        var q = Vector3.Cross(offset, edge1);
+        var v = Vector3.Dot(direction, q) * inverse;
+        if (v < -.00001f || u + v > 1.00001f) return false;
+        var t = Vector3.Dot(edge2, q) * inverse;
+        return t > .0001f && t < .9999f;
     }
 
     private static bool Intersects(Vector3 start, Vector3 direction, Vector3 half)

@@ -104,7 +104,7 @@ public partial class StarterZonePresentation : Node3D
         foreach(var place in state.Places)
         {
             if(!_places.Add(place.Id)) continue;
-            var marker=new Node3D { Position=new(place.Position.X,0,place.Position.Y) }; AddChild(marker);
+            var marker=new Node3D { Position=ProjectG.Regions.PublicSurfaceAnchors.Position(_network,place.Position) }; AddChild(marker);
             marker.AddChild(new MeshInstance3D { Position=new(0,0.08f,0),Mesh=new CylinderMesh { TopRadius=1.2f,BottomRadius=1.2f,Height=0.05f },MaterialOverride=Material(new(0.16f,0.6f,0.45f)) });
             marker.AddChild(new Label3D { Position=new(0,1.6f,0),Text=place.Name,Billboard=BaseMaterial3D.BillboardModeEnum.Enabled });
         }
@@ -126,10 +126,10 @@ public partial class StarterZonePresentation : Node3D
             Box(new(-17,3.15f,z),new(3.4f,0.4f,4.4f),new(0.29f,0.18f,0.13f));
         }
         }
-        var guide=new Node3D { Position=new(_zone.GuidePosition.X,0,_zone.GuidePosition.Y) }; AddChild(guide);
+        var guide=new Node3D { Position=ProjectG.Regions.PublicSurfaceAnchors.Position(_network,_zone.GuidePosition) }; AddChild(guide);
         guide.AddChild(ProjectG.Actors.ActorScenes.Load("GuideFigure").Instantiate<Node3D>());
         guide.AddChild(new Label3D { Position=new(0,2.1f,0),Text=_zone.GuideName+" • F1",Billboard=BaseMaterial3D.BillboardModeEnum.Enabled });
-        AddChild(new Label3D { Position=new(_zone.TownPosition.X,2.8f,_zone.TownPosition.Y-4),Text=_zone.TownName,Billboard=BaseMaterial3D.BillboardModeEnum.Enabled });
+        AddChild(new Label3D { Position=ProjectG.Regions.PublicSurfaceAnchors.Position(_network,_zone.TownPosition,2.8f)+new Vector3(0,0,-4),Text=_zone.TownName,Billboard=BaseMaterial3D.BillboardModeEnum.Enabled });
         if (!legacy) return;
         _bridge=new Node3D { Visible=false }; AddChild(_bridge);
         _bridge.AddChild(new MeshInstance3D { Position=new(0,0.045f,-0.5f),Mesh=new BoxMesh { Size=new(3,0.08f,2.8f) },MaterialOverride=Material(new(0.56f,0.38f,0.19f)) });

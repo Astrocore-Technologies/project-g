@@ -90,7 +90,11 @@ public sealed class NavigationGrid
         (int) MathF.Floor((position.Y - Origin.Y) / CellSize) * Width +
         (int) MathF.Floor((position.X - Origin.X) / CellSize);
 
-    public bool IsWalkable(Vector2 position) => CanTraverse(position, position);
+    // Two-dimensional content anchors only ask whether ground exists here.
+    // Movement still requires an explicit XYZ surface and connected floor.
+    public bool IsWalkable(Vector2 position) => Surface is { } mesh
+        ? InsideBounds(position) && mesh.HasWalkableColumn(position.X, position.Y)
+        : CanTraverse(position, position);
 
     public bool CanTraverse(Vector2 from, Vector2 to)
     {

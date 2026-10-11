@@ -1,0 +1,26 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://dvnfgq54ir57b"]
+
+[ext_resource type="Texture2D" uid="uid://cg72hwsnjw4bl" path="res://Assets/World/Linvel/Beech/beech_mature_a_beech_painted_atlas.png" id="1_vf4de"]
+
+[sub_resource type="Shader" id="Shader_nfrpj"]
+code = "shader_type spatial;
+render_mode specular_disabled;
+uniform sampler2D painted_atlas : source_color, filter_linear_mipmap;
+uniform vec3 focus_world = vec3(-10000.0);
+varying vec3 world_position;
+void vertex() { world_position = (MODEL_MATRIX * vec4(VERTEX,1.0)).xyz; }
+void fragment() {
+    vec3 ray = focus_world-CAMERA_POSITION_WORLD;
+    float t = dot(world_position-CAMERA_POSITION_WORLD,ray)/max(dot(ray,ray),1.0);
+    float distance_to_ray = length(world_position-(CAMERA_POSITION_WORLD+ray*t));
+    if (t > 0.12 && t < 0.95 && distance_to_ray < 1.8 && mod(floor(FRAGCOORD.x)+floor(FRAGCOORD.y)*2.0,4.0)>0.5) discard;
+    ALBEDO = texture(painted_atlas, UV).rgb; ROUGHNESS = 1.0;
+}
+void light() { float n = dot(NORMAL, LIGHT); float band = mix(0.48, 1.0, smoothstep(0.1, 0.5, n)); DIFFUSE_LIGHT += ALBEDO * LIGHT_COLOR * ATTENUATION * band / PI; }
+"
+
+[resource]
+render_priority = 0
+shader = SubResource("Shader_nfrpj")
+shader_parameter/painted_atlas = ExtResource("1_vf4de")
+shader_parameter/focus_world = Vector3(-10000, -10000, -10000)

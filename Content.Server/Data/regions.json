@@ -4,7 +4,8 @@
     "ExitX": 37, "ExitZ": -10, "ArrivalX": -12, "ArrivalZ": 10, "Radius": 0.65,
     "AdditionalRoutes": [
       { "Destination": "river_city", "ExitX": -12, "ExitZ": 30, "ArrivalX": 0, "ArrivalZ": 0, "Radius": 1.5, "ArrivalAnchor": "SouthArrival" },
-      {"Destination": "terrain_test", "ExitX": -20, "ExitZ": 18, "ArrivalX": -17, "ArrivalZ": 14, "Radius": 1}
+      {"Destination": "terrain_test", "ExitX": -20, "ExitZ": 18, "ArrivalX": -17, "ArrivalZ": 14, "Radius": 1},
+      {"Destination": "linvel_beech", "ExitX": -24, "ExitZ": 18, "ArrivalX": -425, "ArrivalZ": 330, "ArrivalHeight": 7.1, "Radius": 1}
     ],
     "Movement": { "MinX": -40, "MaxX": 40, "MinZ": -32, "MaxZ": 32, "SpawnX": -12, "SpawnZ": 18, "WorldLayoutVersion": 1 },
     "Navigation": { "GeometryFile": "Data/Regions/river-landing.json" },
@@ -147,6 +148,28 @@
         "Radius": 1
       }
     ]
+  },
+  {
+    "Id": "linvel_beech",
+    "Destination": "prototype",
+    "ExitX": -445, "ExitZ": 330, "ExitHeight": 7.1,
+    "ArrivalX": -24, "ArrivalZ": 21, "Radius": 2.5,
+    "Movement": { "MinX": -480, "MaxX": 480, "MinZ": -400, "MaxZ": 400, "SpawnX": -425, "SpawnZ": 330, "SpawnHeight": 7.05, "WorldLayoutVersion": 1 },
+    "Navigation": { "CellSize": 16, "SurfaceFile": "Data/Regions/surface-package.json", "SurfaceRegion": "linvel_beech" },
+    "Combat": { "TargetX": -414, "TargetZ": 321, "TargetHeight": 7.1 },
+    "Npc": { "Enabled": true, "SpawnId": "beech-test-creature", "RespawnSeconds": 30, "DefinitionId": "test_creature", "X": 248, "Z": 50, "Height": 15.1 },
+    "Boss": { "Actor": { "Enabled": false } },
+    "Crafting": { "Enabled": false },
+    "Pvp": { "SafeMinX": -437, "SafeMaxX": -413, "SafeMinZ": 318, "SafeMaxZ": 342, "RespawnX": -425, "RespawnZ": 330 },
+    "WorldNode": { "Key": "linvel-beech", "Interactive": false, "OpeningCells": [], "X": -425, "Z": 330 },
+    "StarterZone": {
+      "RegionName": "Буковая долина", "TownName": "Обжитая опушка", "GuideName": "Лесной проводник",
+      "TownX": -425, "TownZ": 330, "GuideX": -420, "GuideZ": 336, "RevealRadiusCells": 2,
+      "Landmarks": [
+        { "Id": 1, "Name": "Двор лесозаготовителей", "X": -305, "Z": 220 },
+        { "Id": 2, "Name": "Буковый мост", "X": 80, "Z": 80 }
+      ]
+    }
   },
   {
     "Id": "dungeon_test",

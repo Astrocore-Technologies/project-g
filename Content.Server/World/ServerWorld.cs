@@ -35,6 +35,7 @@ public sealed partial class ServerWorld
     public string RegionId { get; }
     public ulong GeometryHash { get; }
     private readonly Vector2 _spawn;
+    private readonly float _spawnHeight;
     private readonly int _worldLayoutVersion;
     private readonly HashSet<int> _persistenceDirty = new();
     internal IReadOnlyCollection<int> PersistenceDirty => _persistenceDirty;
@@ -54,6 +55,8 @@ public sealed partial class ServerWorld
         _entityIds = entityIds ?? new RuntimeEntityAllocator();
         _movement = options.Value.ToSettings();
         _spawn = new(options.Value.SpawnX, options.Value.SpawnZ);
+        _spawnHeight = options.Value.SpawnHeight;
+        if (!float.IsFinite(_spawnHeight)) throw new ArgumentException("Spawn height must be finite.");
         _worldLayoutVersion = options.Value.WorldLayoutVersion;
         _pvpDefinition = pvpDefinition ?? catalog?.Pvp;
         _pvpDefinition?.Validate();
@@ -153,7 +156,7 @@ public sealed partial class ServerWorld
         var entityId = AllocateEntityId();
         var spawnIndex = (int) ((entityId.Value - 1) % 10);
         var spawn = MovementSimulation.ClampTarget(_spawn + new Vector2(spawnIndex * 2f, 0f), _movement);
-        if (!Navigation.TryFindSpawn(spawn, out spawn))
+        if (!TryResolveSpawn(spawn, out spawn, out var spawnHeight))
             throw new InvalidOperationException("Region has no walkable spawn.");
         if (saved is not null)
         {
@@ -165,7 +168,7 @@ public sealed partial class ServerWorld
             spawn = new(saved.X, saved.Z);
         }
         var player = new ServerPlayer(connectionId, playerId, entityId,
-            new NavigationMover(Navigation, _movement, _pathfinder, spawn, saved?.Surface?.Height ?? 0));
+            new NavigationMover(Navigation, _movement, _pathfinder, spawn, saved?.Surface?.Height ?? spawnHeight));
         player.BaseStats = saved?.Stats ?? _playerDefinition?.Stats ?? default;
         _playersByConnection.Add(connectionId, player);
         _playersByEntity.Add(entityId, player);
@@ -203,7 +206,7 @@ public sealed partial class ServerWorld
         if (_developmentBalanceCharacter is { } fixture)
             return fixture with { Inventory = fixture.Inventory! with { Items = fixture.Inventory.Items.Select(i => i with { InstanceId = Guid.NewGuid() }).ToArray() } };
         var definition = _playerDefinition ?? throw new InvalidOperationException("Persistence requires player content.");
-        if (!Navigation.TryFindSpawn(_spawn, out var spawn))
+        if (!TryResolveSpawn(_spawn, out var spawn, out var spawnHeight))
             throw new InvalidOperationException("Region has no spawn.");
         var stats = Combat!.InitialPlayerStats;
         return new CharacterState
@@ -213,7 +216,7 @@ public sealed partial class ServerWorld
             // Companions require acquisition; login and legacy saves must never grant one.
             Echoes = SavedEchoes.Empty,
             Progression = SavedProgression.Starter(definition,_progressionCatalog!),
-            X = spawn.X, Z = spawn.Y, Surface = Navigation.SurfaceHash == 0 ? null : new(1, LocateHeight(spawn), Navigation.SurfaceHash), Health = stats.MaxHealth, Mana = Math.Max(0, stats.MaxMana),
+            X = spawn.X, Z = spawn.Y, Surface = Navigation.SurfaceHash == 0 ? null : new(1, spawnHeight, Navigation.SurfaceHash), Health = stats.MaxHealth, Mana = Math.Max(0, stats.MaxMana),
             AttackCooldownSeconds = 0, Cooldowns = definition.AbilityIds.Select(id => new SavedCooldown(id, 0)).ToArray(),
             SavedAtUnixMilliseconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
         };

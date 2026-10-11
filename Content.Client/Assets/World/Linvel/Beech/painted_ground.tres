@@ -1,0 +1,16 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://biofxhavubkp"]
+
+[ext_resource type="Texture2D" uid="uid://cpf556dgec0w6" path="res://Assets/World/Linvel/Beech/beech_terrain_ground_brush.png" id="1_dhkut"]
+
+[sub_resource type="Shader" id="Shader_0xbsn"]
+code = "shader_type spatial;
+render_mode specular_disabled;
+uniform sampler2D brush_texture : source_color, repeat_enable, filter_linear_mipmap;
+void fragment() { ALBEDO = texture(brush_texture, vec2(UV.x, 1.0-UV.y)).rgb; ROUGHNESS = 1.0; }
+void light() { float n = dot(NORMAL, LIGHT); float band = mix(0.55, 1.0, smoothstep(0.1, 0.6, n)); DIFFUSE_LIGHT += ALBEDO * LIGHT_COLOR * ATTENUATION * band / PI; }
+"
+
+[resource]
+render_priority = 0
+shader = SubResource("Shader_0xbsn")
+shader_parameter/brush_texture = ExtResource("1_dhkut")

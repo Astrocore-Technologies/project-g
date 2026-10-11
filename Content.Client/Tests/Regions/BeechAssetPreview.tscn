@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://dj6tct663k73b"]
+
+[ext_resource type="PackedScene" uid="uid://de2yvwngljvge" path="res://Assets/World/Linvel/Beech/beech_mature_a.glb" id="1_g8ijm"]
+
+[node name="BeechAssetPreview" type="Node3D" unique_id=404944272]
+
+[node name="BeechTree" type="Node3D" parent="." unique_id=546719436 instance=ExtResource("1_g8ijm")]
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=119752656]
+transform = Transform3D(1, 0, 0, 0, 0.9612617, 0.27563736, 0, -0.27563736, 0.9612617, 0, 12, 22)
+current = true
+fov = 50.0
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=383071097]
+transform = Transform3D(0.8660254, 0.38302222, -0.32139382, 0, 0.64278764, 0.76604444, 0.5, -0.66341394, 0.5566704, 0, 0, 0)

@@ -15,7 +15,7 @@ namespace Content.Server.Regions;
 /// <summary>Validated server-only region composition; persistence is opened by the host.</summary>
 public sealed class RegionalWorlds
 {
-    public const int MaxRegions = 5;
+    public const int MaxRegions = 6;
     public IReadOnlyList<ServerWorld> Worlds { get; }
     public IReadOnlyList<RegionBoundary> Routes { get; }
     public ServerWorld Primary => Worlds[0];
@@ -115,7 +115,7 @@ public sealed class RegionalWorlds
             var combat = definition.Combat;
             var starter = definition.StarterZone;
             var node = definition.WorldNode;
-            Content.Server.Pvp.PvpDefinition? pvp = null;
+            Content.Server.Pvp.PvpDefinition? pvp = definition.Pvp;
             if (definition.PlacementsFile is not null)
             {
                 var geometry = definition.Navigation!.LoadGeometry()!.CreateGrid();
@@ -182,6 +182,7 @@ public sealed class RegionalWorlds
         public BossOptions? Boss { get; init; }
         public CombatOptions? Combat { get; init; }
         public CraftingOptions? Crafting { get; init; }
+        public Content.Server.Pvp.PvpDefinition? Pvp { get; init; }
         public WorldNodeDefinition? WorldNode { get; init; }
         public StarterZoneDefinition? StarterZone { get; init; }
     }

@@ -44,7 +44,7 @@ public partial class WorldNodePresentation : Node3D
     public void Apply(WorldNodeState state)
     {
         if(_state is { } old && state.Revision<=old.Revision) return;
-        _state=state; Position=new(state.Position.X,0,state.Position.Y);
+        _state=state; Position=ProjectG.Regions.PublicSurfaceAnchors.Position(_network,state.Position);
         _keeper.Text=state.KeeperName+"\n"+state.KeeperLine;
         _line.Text=state.KeeperLine; _rumor.Text="Слух: "+state.Rumor+"  •  H — хранитель";
     }

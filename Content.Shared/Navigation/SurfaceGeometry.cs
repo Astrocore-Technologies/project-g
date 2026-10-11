@@ -25,6 +25,10 @@ public sealed class SurfaceGeometry
     public string SourceHash { get; set; } = "";
     public float AgentRadius { get; set; } = .45f;
     public float AgentHeight { get; set; } = 1.8f;
+    // V1 describes walkability only. V2 can explicitly treat authored terrain
+    // faces as solid LOS geometry; floating test floors keep their old meaning.
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool WalkableFacesOcclude { get; set; }
     public SurfaceVertex[] Vertices { get; set; } = [];
     public int[][] Polygons { get; set; } = [];
     public SurfaceBox[] Occluders { get; set; } = [];
@@ -33,7 +37,7 @@ public sealed class SurfaceGeometry
 
     public void Validate()
     {
-        if (Version != 1 || Revision is not { Length: 16 } || !ulong.TryParse(Revision, System.Globalization.NumberStyles.HexNumber, null, out var hash) || hash == 0 ||
+        if (Version is not (1 or 2) || Version == 1 && WalkableFacesOcclude || Revision is not { Length: 16 } || !ulong.TryParse(Revision, System.Globalization.NumberStyles.HexNumber, null, out var hash) || hash == 0 ||
             ScenePath is null || !ScenePath.StartsWith("res://Scenes/Regions/", StringComparison.Ordinal) || !ScenePath.EndsWith(".tscn", StringComparison.Ordinal) || ScenePath.Contains("..") || ScenePath.Length > 128 ||
             SourceHash is not { Length: 64 } || SourceHash.Any(c => !Uri.IsHexDigit(c)) ||
             !float.IsFinite(AgentRadius) || AgentRadius is < .1f or > 2 || !float.IsFinite(AgentHeight) || AgentHeight is < .5f or > 4 ||
@@ -59,7 +63,8 @@ public sealed class SurfaceGeometry
     private string CalculateRevision()
     {
         var copy = new SurfaceGeometry { Revision = "0000000000000001", Version = Version, ScenePath = ScenePath, SourceHash = SourceHash,
-            AgentRadius = AgentRadius, AgentHeight = AgentHeight, Vertices = Vertices, Polygons = Polygons, Occluders = Occluders };
+            AgentRadius = AgentRadius, AgentHeight = AgentHeight, WalkableFacesOcclude = WalkableFacesOcclude,
+            Vertices = Vertices, Polygons = Polygons, Occluders = Occluders };
         return Fingerprint(JsonSerializer.Serialize(copy, Json))[..16];
     }
     public void Seal() => Revision = CalculateRevision();

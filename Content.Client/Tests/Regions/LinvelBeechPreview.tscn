@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://bcsh2kh7kqc6p"]
+
+[ext_resource type="Script" uid="uid://ixwg0dmm08ny" path="res://Tests/Regions/LinvelBeechPreview.gd" id="1_sh4tp"]
+[ext_resource type="PackedScene" uid="uid://8n8b564jei2k" path="res://Scenes/Regions/Linvel/BeechValley.tscn" id="1_uxysy"]
+[ext_resource type="PackedScene" uid="uid://cw826teiol84h" path="res://Scenes/Actors/Primitives/PlayerFigure.tscn" id="3_t3ri0"]
+[ext_resource type="Script" uid="uid://h2scsig7wel4" path="res://Scripts/_NC/Actors/CapsuleActorVisual.cs" id="4_7ethw"]
+
+[node name="LinvelBeechPreview" type="Node3D" unique_id=1552257111]
+script = ExtResource("1_sh4tp")
+
+[node name="BeechValley" parent="." unique_id=98194164 instance=ExtResource("1_uxysy")]
+metadata/surface_cell_height = 0.2
+
+[node name="PreviewCamera" type="Camera3D" parent="." unique_id=991898838]
+transform = Transform3D(1, 0, 0, 0, 0.7431448, 0.6691306, 0, -0.6691306, 0.7431448, -305, 45, 265)
+current = true
+fov = 55.0
+
+[node name="PlayerFigure" type="Node3D" parent="." unique_id=1675102066 instance=ExtResource("3_t3ri0")]
+script = ExtResource("4_7ethw")

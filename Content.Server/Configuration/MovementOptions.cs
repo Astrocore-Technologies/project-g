@@ -14,6 +14,7 @@ public sealed class MovementOptions
     public float MaxZ { get; init; } = 15f;
     public float SpawnX { get; init; } = -9;
     public float SpawnZ { get; init; }
+    public float SpawnHeight { get; init; }
     public int WorldLayoutVersion { get; init; }
 
     public MovementSettings ToSettings() =>

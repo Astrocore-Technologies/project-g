@@ -117,7 +117,7 @@ public sealed partial class ServerWorld
     }
     private void RespawnPvp(ServerPlayer p)
     {
-        var id=p.EntityId;var spawn=Rules.Respawn;GroundItems!.CancelChannel(id,Tick);p.Motion.Reset(spawn,spawn,0,0);_movingPlayers.Remove(p.ConnectionId);_spatial.Move(id,spawn);Combat!.Move(id,spawn,p.Height);Combat.Respawn(id);Abilities!.Respawn(id);Echoes?.Respawn(id);
+        var id=p.EntityId;var spawn=Rules.Respawn;var height=LocateHeight(spawn);GroundItems!.CancelChannel(id,Tick);p.Motion.Reset(spawn,spawn,height,height);_movingPlayers.Remove(p.ConnectionId);_spatial.Move(id,spawn);Combat!.Move(id,spawn,p.Height);Combat.Respawn(id);Abilities!.Respawn(id);Echoes?.Respawn(id);
         _pvp[id]=_pvp[id] with {Dead=false,CombatUntil=0,ProtectionUntil=PvpClock()+Rules.ProtectionSeconds*1000L};DirtyPvp(id);
         Audit(_persistentActors.GetValueOrDefault(p.ConnectionId,"runtime"),"Respawn",_pvp[id].DeathId.ToString());
     }

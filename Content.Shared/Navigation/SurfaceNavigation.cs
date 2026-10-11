@@ -99,6 +99,14 @@ public sealed class SurfaceNavigation
         return best != float.PositiveInfinity;
     }
 
+    public bool HasWalkableColumn(float x, float z)
+    {
+        if (!float.IsFinite(x) || !float.IsFinite(z) || !_buckets.TryGetValue((Bucket(x), Bucket(z)), out var candidates)) return false;
+        foreach (var id in candidates)
+            if (!Blocked[id] && Triangles[id].Sample(x, z, out _)) return true;
+        return false;
+    }
+
     public void SampleColumn(float x, float z, List<SurfaceLocation> output)
     {
         output.Clear();
@@ -143,7 +151,11 @@ public sealed class SurfaceNavigation
                 var u = Cross(a - origin, direction) / denominator;
                 if (t <= parameter + .00001f || t > 1.0001f || u < -.0001f || u > 1.0001f || t >= exit) continue;
                 // A vertex hit can have two incident edges. Select the triangle beyond the crossing.
-                var probe = origin + direction * MathF.Min(t + .0001f, 1);
+                // A parameter-only nudge rounds back onto the edge for short
+                // segments at large coordinates. Keep at least a millimetre
+                // of world-space progress, matching the exported edge keys.
+                var probeAdvance = MathF.Max(.0001f, .001f / direction.Length());
+                var probe = origin + direction * MathF.Min(t + probeAdvance, 1);
                 if (!Triangles[edge.To].Sample(probe.X, probe.Y, out _, .0000001f)) continue;
                 next = edge.To; exit = t;
             }
