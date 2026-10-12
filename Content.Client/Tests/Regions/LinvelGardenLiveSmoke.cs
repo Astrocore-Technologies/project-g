@@ -29,6 +29,7 @@ public partial class LinvelGardenLiveSmoke : Node
             var terrain=_world.GetNode<Node3D>("GardenValleys/Geometry/Terrain");
             if(!terrain.IsPhysicsProcessing() || terrain.Call("get_camera").AsGodotObject()!=_player.GetNode<Camera3D>("CameraRig/Camera3D"))
                 throw new InvalidOperationException("Terrain3D did not bind the production local camera.");
+            await ValidateObjectPhysics();
             ValidateGardenPicking();
             var initial = _confirmed.Position;
             var goal = initial+new V2(7,-5);
@@ -81,6 +82,40 @@ public partial class LinvelGardenLiveSmoke : Node
             GD.Print($"LINVEL_GARDEN_PICK_OK: {points.Length} physical garden picks.");
         }
         finally { camera.GlobalTransform=original; }
+    }
+
+    private async Task ValidateObjectPhysics()
+    {
+        var region = _world.GetNode<Node3D>("GardenValleys");
+        if (region.GetNode<Node3D>("Geometry").GetChildren().OfType<StaticBody3D>().Any())
+            throw new InvalidOperationException("Object collision remains detached under Geometry.");
+        var actor = region.GetNode<Node3D>("Places/SunnyOrchard/GardenHouse");
+        var bodies = actor.GetChildren().OfType<StaticBody3D>().ToArray();
+        if (bodies.Length != 3 || bodies.Any(b => !b.IsInGroup("surface_geometry")))
+            throw new InvalidOperationException("The house must own its three baked collision bodies.");
+        var original = actor.Transform;
+        try
+        {
+            // Check real Jolt queries after editing the common placement root:
+            // inherited translation, yaw and uniform scale must move the shapes.
+            actor.Position += new Vector3(37,20,17);
+            actor.RotateY(.5f);
+            actor.Scale *= 1.25f;
+            await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
+            await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
+            var center = bodies[0].GetNode<CollisionShape3D>("Collision").GlobalPosition;
+            var query = PhysicsRayQueryParameters3D.Create(center+Vector3.Up*12,center-Vector3.Up*12,4);
+            var hit = region.GetWorld3D().DirectSpaceState.IntersectRay(query);
+            if (hit.Count == 0 || !bodies.Any(b => b == hit["collider"].AsGodotObject()))
+                throw new InvalidOperationException("The physical house did not follow its placement root.");
+        }
+        finally
+        {
+            actor.Transform = original;
+            await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
+            await ToSignal(GetTree(),SceneTree.SignalName.PhysicsFrame);
+        }
+        GD.Print("LINVEL_GARDEN_OBJECT_PHYSICS_OK: nested colliders follow placement, yaw and uniform scale.");
     }
 
     private async Task Wait(Func<bool> done)

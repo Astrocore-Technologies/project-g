@@ -134,27 +134,33 @@ void fragment(){float w=sin(p.z*1.15+TIME*1.1)*sin(p.x*.8-TIME*.75);ALBEDO=mix(v
 		source.free()
 
 func asset(parent: Node,id: String,p: Vector3,yaw: float = 0.0,size: float = 1.0,label: String = "") -> MeshInstance3D:
+	var placement := Node3D.new()
+	add(parent,placement,label if not label.is_empty() else id)
+	placement.position = p
+	placement.rotation.y = yaw
+	placement.set_meta("garden_asset_root",true)
+	placement.set_meta("asset_id",id)
 	var mi := MeshInstance3D.new()
-	add(parent,mi,label if not label.is_empty() else id)
+	add(placement,mi,"Visual")
 	mi.mesh = meshes[id]
 	mi.set_meta("asset_id",id)
-	mi.position = p
-	mi.rotation.y = yaw
 	mi.scale = Vector3.ONE*size
 	mi.material_override = materials.painted
 	mi.visibility_range_end = 230 if id in ["farm_cottage","stream_watermill","raised_granary"] else 145
 	mi.visibility_range_end_margin = 20
 	return mi
 
-func box_for(visual: MeshInstance3D,local_offset: Vector3,dimensions: Vector3,part: String) -> void:
+func box_for(visual: MeshInstance3D,local_offset: Vector3,dimensions: Vector3,part: String) -> StaticBody3D:
 	var body := StaticBody3D.new()
-	add(root.get_node("Geometry"),body,str(visual.name)+"_"+part+"_Solid")
+	add(visual.get_parent(),body,part.capitalize()+"Body")
+	body.add_to_group("surface_geometry",true)
 	body.position = visual.transform*local_offset
 	body.basis = visual.basis.orthonormalized()
 	body.collision_layer = 4
 	body.add_to_group("surface_occluder",true)
 	body.set_meta("surface_nonwalkable_top",true)
-	body.set_meta("collision_visual",root.get_path_to(visual))
+	body.set_meta("collision_visual",body.get_path_to(visual))
+	body.set_meta("collision_reference_version",2)
 	body.set_meta("collision_local_offset",local_offset)
 	body.set_meta("collision_local_size",dimensions)
 	body.set_meta("collision_part",part)
@@ -164,6 +170,7 @@ func box_for(visual: MeshInstance3D,local_offset: Vector3,dimensions: Vector3,pa
 	shape.shape = box
 	add(body,shape,"Collision")
 	counts.colliders += 1
+	return body
 
 func building(parent: Node,id: String,x: float,z: float,yaw: float = 0,label: String = "") -> MeshInstance3D:
 	var visual := asset(parent,id,Vector3(x,ground_height(x,z),z),yaw,1,label)
@@ -224,6 +231,14 @@ func terrain() -> void:
 	collision.shape = box
 	add(deck,collision,"Collision")
 	var bridge := asset(root,"farm_bridge",Vector3(river_x(60),7.85,60))
+	deck.reparent(bridge.get_parent(),true)
+	deck.owner = root
+	deck.set_meta("collision_visual",deck.get_path_to(bridge))
+	deck.set_meta("collision_reference_version",2)
+	deck.set_meta("collision_local_offset",Vector3(0,.04,0))
+	deck.set_meta("collision_local_size",box.size)
+	deck.set_meta("collision_part","deck")
+	deck.add_to_group("surface_geometry",true)
 	for side in [-1,1]:
 		box_for(bridge,Vector3(0,.78,side*1.6),Vector3(28,1.5,.2),"rail")
 
@@ -424,18 +439,18 @@ func finish_collisions() -> Dictionary:
 	if not root.has_meta("garden_wall_collision_version"):
 		for wall in root.get_node("FieldsAndOrchards").find_children("*","MeshInstance3D",true,false):
 			if wall.get_meta("asset_id","") == "fieldstone_wall":
-				box_for(wall,Vector3(0,.55,0),Vector3(4.08,1.08,.6),"wall")
-				var body: Node = root.get_node("Geometry").get_child(-1)
+				var body: StaticBody3D = box_for(wall,Vector3(0,.55,0),Vector3(4.08,1.08,.6),"wall")
 				body.remove_from_group("surface_occluder")
 		root.set_meta("garden_wall_collision_version",1)
 	var aligned := 0
-	for body in root.get_node("Geometry").get_children():
+	for body in root.find_children("*","StaticBody3D",true,false):
 		if body.has_meta("collision_visual"):
-			var visual: MeshInstance3D = root.get_node(body.get_meta("collision_visual"))
+			var visual: MeshInstance3D = body.get_node(body.get_meta("collision_visual")) if body.get_meta("collision_reference_version",1)==2 else root.get_node(body.get_meta("collision_visual"))
 			if not body.has_meta("collision_local_size"):
 				body.set_meta("collision_local_size",body.get_node("Collision").shape.size/visual.scale)
-			body.transform = Transform3D(visual.basis.orthonormalized(),visual.transform*body.get_meta("collision_local_offset"))
-			body.get_node("Collision").shape.size = body.get_meta("collision_local_size")*visual.scale
+			var relative: Transform3D = (body.get_parent() as Node3D).global_transform.affine_inverse()*visual.global_transform
+			body.transform = Transform3D(relative.basis.orthonormalized(),relative*body.get_meta("collision_local_offset"))
+			body.get_node("Collision").shape.size = body.get_meta("collision_local_size")*relative.basis.get_scale().abs()
 			aligned += 1
 	return {"aligned":aligned}
 
@@ -522,11 +537,12 @@ func final_detail_pass() -> Dictionary:
 		mesh.take_over_path(path)
 		meshes[id] = mesh
 		source.free()
-	var mill: MeshInstance3D = root.get_node("Places/MillHamlet/Watermill")
+	var mill_root: Node3D = root.get_node("Places/MillHamlet/Watermill")
+	var mill: MeshInstance3D = mill_root as MeshInstance3D if mill_root is MeshInstance3D else mill_root.get_node("Visual") as MeshInstance3D
 	mill.mesh = meshes.stream_watermill
-	mill.position.x = river_x(82)-13.5
-	mill.position.y = 7.85
-	root.get_node("Places/MillHamlet/Center").position = Vector3(mill.position.x-3,7.85,98)
+	mill_root.position.x = river_x(82)-13.5
+	mill_root.position.y = 7.85
+	root.get_node("Places/MillHamlet/Center").position = Vector3(mill_root.position.x-3,7.85,98)
 	if not root.has_meta("garden_drainage_version"):
 		var group := Node3D.new()
 		add(root,group,"DrainageAndKitchenGardens")
@@ -592,7 +608,10 @@ func refresh_models_and_heights() -> Dictionary:
 				node.mesh = meshes[id]
 			if id not in ["garden_terrain","garden_stream","farm_bridge","stream_watermill"]:
 				var embed := -.22 if id=="fieldstone_wall" else -.12 if id=="irrigation_trough" else 0.0
-				node.position.y = ground_height(node.position.x,node.position.z)+embed
+				var placement: Node3D = node.get_parent() if node.get_parent().get_meta("garden_asset_root",false) else node
+				var world := placement.global_position
+				world.y = ground_height(world.x,world.z)+embed
+				placement.global_position = world
 		updated += 1
 	if root.has_node("Geometry/Ground/Collision"):
 		root.get_node("Geometry/Ground/Collision").shape = meshes.garden_terrain.create_trimesh_shape()

@@ -39,7 +39,9 @@ public partial class ExportSurfaces : Node
                 var polygons = new int[mesh.GetPolygonCount()][];
                 for (var i = 0; i < polygons.Length; i++) polygons[i] = mesh.GetPolygon(i);
                 var boxes = new List<SurfaceBox>();
-                foreach (var node in scene.GetNode<Node3D>("Geometry").GetChildren())
+                foreach (var node in scene.HasMeta("region_id")
+                    ? SceneNodes(scene).Where(n => n.IsInGroup("surface_occluder"))
+                    : scene.GetNode<Node3D>("Geometry").GetChildren())
                 {
                     // Terrain LOS comes from the exported walkable surface; a giant box would hide the valley.
                     // Decorative/non-opaque blockers still participate in the navigation bake.
@@ -48,9 +50,14 @@ public partial class ExportSurfaces : Node
                     else if (node is StaticBody3D body)
                     {
                         var collider = body.GetNode<CollisionShape3D>("Collision");
-                        if (collider.Shape is not BoxShape3D box || !collider.GlobalBasis.Scale.IsEqualApprox(Vector3.One))
-                            throw new InvalidDataException("Surface exporter requires unscaled box collision geometry.");
-                        boxes.Add(new(V(collider.GlobalPosition), V(box.Size), V(collider.GlobalRotation)));
+                        if (collider.Shape is not BoxShape3D box)
+                            throw new InvalidDataException("Surface exporter requires box collision geometry.");
+                        // An editable asset root moves, rotates and uniformly scales both model and collider.
+                        var scale = collider.GlobalBasis.Scale.Abs();
+                        if (scale.X <= 0 || !Mathf.IsEqualApprox(scale.X, scale.Y) || !Mathf.IsEqualApprox(scale.X, scale.Z) || collider.GlobalBasis.Determinant() <= 0)
+                            throw new InvalidDataException("Collider asset roots require positive uniform scale.");
+                        var rotation = scale.IsEqualApprox(Vector3.One) ? collider.GlobalRotation : collider.GlobalBasis.Orthonormalized().GetEuler();
+                        boxes.Add(new(V(collider.GlobalPosition), V(box.Size * scale), V(rotation)));
                     }
                     else throw new InvalidDataException("Unsupported surface collider.");
                 }
@@ -101,6 +108,16 @@ public partial class ExportSurfaces : Node
             body.AddChild(new CollisionShape3D {Name="Collision",Shape=new ConcavePolygonShape3D {Data=faces}});
         }
     }
+    // Region blockers can live inside editable object roots anywhere in the scene.
+    // The traversal is offline only; legacy flat scenes retain their export order.
+    private static IEnumerable<Node> SceneNodes(Node parent)
+    {
+        foreach (var child in parent.GetChildren())
+        {
+            yield return child;
+            foreach (var descendant in SceneNodes(child)) yield return descendant;
+        }
+    }
     private static SurfaceVertex V(Vector3 v) => new(v.X, v.Y, v.Z);
     // Same millimetre precision as terrain vertices; avoid unbounded float tails.
     private static SurfaceVertex Round(SurfaceVertex v,int digits) => new((float)Math.Round(v.X,digits),(float)Math.Round(v.Y,digits),(float)Math.Round(v.Z,digits));
@@ -108,7 +125,7 @@ public partial class ExportSurfaces : Node
     private static int[][] RemoveBlockerTops(Node3D scene,SurfaceVertex[] vertices,int[][] polygons,float cellSize,float cellHeight)
     {
         var caps = new List<(Transform3D Inverse,Vector3 Half)>();
-        foreach (var node in scene.GetNode<Node3D>("Geometry").GetChildren())
+        foreach (var node in SceneNodes(scene))
         {
             if (node is not StaticBody3D body) continue;
             var upright = body.HasMeta("collision_part") && body.GetMeta("collision_part").AsString() is "trunk" or "post";
