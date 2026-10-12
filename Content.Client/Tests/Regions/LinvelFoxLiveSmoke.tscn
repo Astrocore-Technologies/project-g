@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://btw6uwmod07tg"]
+
+[ext_resource type="Script" uid="uid://cvikr6lf34j7y" path="res://Tests/Regions/LinvelFoxLiveSmoke.cs" id="1_munho"]
+
+[node name="LinvelFoxLiveSmoke" type="Node" unique_id=545465483]
+script = ExtResource("1_munho")

@@ -155,7 +155,8 @@
     "ExitX": -445, "ExitZ": 330, "ExitHeight": 7.1,
     "ArrivalX": -24, "ArrivalZ": 21, "Radius": 2.5,
     "AdditionalRoutes": [
-      { "Destination": "linvel_gardens", "ExitX": -435, "ExitZ": 330, "ExitHeight": 7.1, "ArrivalX": 428, "ArrivalZ": -220, "ArrivalHeight": 25.1, "Radius": 2.5 }
+      { "Destination": "linvel_gardens", "ExitX": -435, "ExitZ": 330, "ExitHeight": 7.1, "ArrivalX": 428, "ArrivalZ": -220, "ArrivalHeight": 25.1, "Radius": 2.5 },
+      { "Destination": "linvel_fox_hills", "ExitX": 220, "ExitZ": 100, "ExitHeight": 14.13, "ArrivalX": 430, "ArrivalZ": 150, "ArrivalHeight": 28.40, "Radius": 2.5 }
     ],
     "Movement": { "MinX": -480, "MaxX": 480, "MinZ": -400, "MaxZ": 400, "SpawnX": -425, "SpawnZ": 330, "SpawnHeight": 7.05, "WorldLayoutVersion": 1 },
     "Navigation": { "CellSize": 16, "SurfaceFile": "Data/Regions/surface-package.json", "SurfaceRegion": "linvel_beech" },
@@ -252,6 +253,9 @@
     "Id": "linvel_gardens", "Destination": "linvel_beech",
     "ExitX": 445, "ExitZ": -225, "ExitHeight": 25.1,
     "ArrivalX": -425, "ArrivalZ": 330, "ArrivalHeight": 7.1, "Radius": 2.5,
+    "AdditionalRoutes": [
+      { "Destination": "linvel_fox_hills", "ExitX": 265, "ExitZ": 220, "ExitHeight": 41.11, "ArrivalX": -350, "ArrivalZ": 420, "ArrivalHeight": 21.37, "Radius": 2.5 }
+    ],
     "Movement": { "MinX": -480, "MaxX": 480, "MinZ": -400, "MaxZ": 400, "SpawnX": -420, "SpawnZ": 230, "SpawnHeight": 14.1, "WorldLayoutVersion": 1 },
     "Navigation": { "CellSize": 16, "SurfaceFile": "Data/Regions/surface-package.json", "SurfaceRegion": "linvel_gardens" },
     "Combat": { "TargetX": -413, "TargetZ": 226, "TargetHeight": 14.1 },
@@ -266,6 +270,30 @@
       "Landmarks": [
         { "Id": 1, "Name": "Мельничная низина", "X": -57, "Z": 82 },
         { "Id": 2, "Name": "Солнечные сады", "X": 212, "Z": -65 }
+      ]
+    }
+  },
+  {
+    "Id": "linvel_fox_hills", "Destination": "linvel_gardens",
+    "ExitX": -350, "ExitZ": 430, "ExitHeight": 21.27,
+    "ArrivalX": 265, "ArrivalZ": 230, "ArrivalHeight": 41.1, "Radius": 2.5,
+    "AdditionalRoutes": [
+      { "Destination": "linvel_beech", "ExitX": 440, "ExitZ": 150, "ExitHeight": 28.36, "ArrivalX": 225, "ArrivalZ": 108, "ArrivalHeight": 13.95, "Radius": 2.5 }
+    ],
+    "Movement": { "MinX": -480, "MaxX": 480, "MinZ": -480, "MaxZ": 480, "SpawnX": -350, "SpawnZ": 420, "SpawnHeight": 21.37, "WorldLayoutVersion": 1 },
+    "Navigation": { "CellSize": 16, "SurfaceFile": "Data/Regions/surface-package.json", "SurfaceRegion": "linvel_fox_hills" },
+    "Combat": { "TargetX": -343, "TargetZ": 415, "TargetHeight": 21.45 },
+    "Npc": { "Enabled": false },
+    "Boss": { "Actor": { "Enabled": false } },
+    "Crafting": { "Enabled": false },
+    "Pvp": { "SafeMinX": -362, "SafeMaxX": -338, "SafeMinZ": 408, "SafeMaxZ": 432, "RespawnX": -350, "RespawnZ": 420 },
+    "WorldNode": { "Key": "linvel-fox-hills", "Interactive": false, "OpeningCells": [], "X": -350, "Z": 420 },
+    "StarterZone": {
+      "RegionName": "Лисьи холмы", "TownName": "Нижние пастбища", "GuideName": "Проводник холмов",
+      "TownX": -350, "TownZ": 420, "GuideX": -346, "GuideZ": 419, "RevealRadiusCells": 2,
+      "Landmarks": [
+        { "Id": 1, "Name": "Заброшенное хозяйство", "X": -230, "Z": 105 },
+        { "Id": 2, "Name": "Сторожевой холм", "X": 40, "Z": -40 }
       ]
     }
   }

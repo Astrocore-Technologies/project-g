@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://t5jlst30nm47"]
+
+[ext_resource type="Script" uid="uid://do8dbh7sbsbkc" path="res://Tests/Regions/LinvelFoxPreview.gd" id="1_t0bsl"]
+[ext_resource type="PackedScene" uid="uid://edfx4itk0o4j" path="res://Scenes/Regions/Linvel/FoxHills.tscn" id="2_hde1x"]
+
+[node name="LinvelFoxPreview" type="Node3D" unique_id=1610700416]
+script = ExtResource("1_t0bsl")
+
+[node name="FoxHills" parent="." unique_id=903626205 instance=ExtResource("2_hde1x")]
+metadata/surface_source_directory = "res://Assets/World/Linvel/FoxHills/Terrain/Data"
+metadata/surface_detail_distance = 20.0
+metadata/surface_detail_error = 6.0
+
+[node name="PreviewCamera" type="Camera3D" parent="." unique_id=1104336983]
+current = true

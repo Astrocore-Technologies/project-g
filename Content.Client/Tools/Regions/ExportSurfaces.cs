@@ -18,7 +18,8 @@ public partial class ExportSurfaces : Node
             foreach (var (id, path) in new[] { ("terrain_test", "res://Scenes/Regions/TerrainTest/TerrainTest.tscn"),
                 ("dungeon_test", "res://Scenes/Regions/DungeonTest/DungeonTest.tscn"),
                 ("linvel_beech", "res://Scenes/Regions/Linvel/BeechValley.tscn"),
-                ("linvel_gardens", "res://Scenes/Regions/Linvel/GardenValleys.tscn") })
+                ("linvel_gardens", "res://Scenes/Regions/Linvel/GardenValleys.tscn"),
+                ("linvel_fox_hills", "res://Scenes/Regions/Linvel/FoxHills.tscn") })
             {
                 var scene = GD.Load<PackedScene>(path).Instantiate<Node3D>(); AddChild(scene);
                 await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
@@ -26,7 +27,7 @@ public partial class ExportSurfaces : Node
                 // Large outdoor scenes expose their bake resolution in editable scene metadata.
                 var cellSize = scene.HasMeta("surface_cell_size") ? (float)scene.GetMeta("surface_cell_size") : .15f;
                 var cellHeight = scene.HasMeta("surface_cell_height") ? (float)scene.GetMeta("surface_cell_height") : .05f;
-                var mesh = new NavigationMesh { AgentRadius = .45f, AgentHeight = 1.8f, AgentMaxClimb = .25f,
+                var mesh = new NavigationMesh { AgentRadius = .45f, AgentHeight = 1.8f, AgentMaxClimb = scene.HasMeta("surface_max_climb") ? (float)scene.GetMeta("surface_max_climb") : .25f,
                     AgentMaxSlope = 45, CellSize = cellSize, CellHeight = cellHeight, RegionMinSize = 0, RegionMergeSize = 0,
                     DetailSampleDistance = scene.HasMeta("surface_detail_distance") ? (float)scene.GetMeta("surface_detail_distance") : 6,
                     DetailSampleMaxError = scene.HasMeta("surface_detail_error") ? (float)scene.GetMeta("surface_detail_error") : 1,
@@ -61,6 +62,11 @@ public partial class ExportSurfaces : Node
                     }
                     else throw new InvalidDataException("Unsupported surface collider.");
                 }
+                // Steep faces are removed from the walkable bake. Native solid volumes
+                // retain their LOS while staying separate from movement and Jolt collision.
+                if (scene.HasMeta("surface_solid_terrain_los") && scene.GetMeta("surface_solid_terrain_los").AsBool())
+                    foreach (var terrain in scene.GetNode<Node3D>("Geometry").GetChildren().Where(n=>n.GetClass()=="Terrain3D"))
+                        boxes.AddRange(TerrainVisibilityExport.Bake(terrain,256-boxes.Count));
                 // New outdoor regions pack pairs without changing the original triangulation.
                 // Millimetre coordinate precision avoids long float tails in the bounded JSON.
                 var vertices = mesh.GetVertices().Select(V).ToArray();
@@ -98,7 +104,10 @@ public partial class ExportSurfaces : Node
         {
             if(terrain is not Node3D spatial || !spatial.GlobalTransform.IsEqualApprox(Transform3D.Identity))
                 throw new InvalidDataException("Terrain3D must use an identity world transform.");
-            var mesh=terrain.Call("bake_mesh",1,0).AsGodotObject() as Mesh
+            // Curved ramps need the authored heightfield resolution. Other
+            // regions retain their existing coarse offline bake by default.
+            var terrainLod = scene.HasMeta("surface_terrain_lod") ? (int)scene.GetMeta("surface_terrain_lod") : 1;
+            var mesh=terrain.Call("bake_mesh",terrainLod,0).AsGodotObject() as Mesh
                 ?? throw new InvalidDataException("Terrain3D returned no authored terrain mesh.");
             var faces=mesh.GetFaces();
             if(faces.Length==0) throw new InvalidDataException("Terrain3D has no walkable authored data.");

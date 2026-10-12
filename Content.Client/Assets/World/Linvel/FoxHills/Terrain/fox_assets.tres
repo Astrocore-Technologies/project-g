@@ -1,0 +1,67 @@
+[gd_resource type="Terrain3DAssets" format=3 uid="uid://ddqsstmvnpc5u"]
+
+[ext_resource type="Texture2D" uid="uid://dca0y72dnlvqm" path="res://Assets/World/Linvel/FoxHills/Terrain/Textures/HillMeadow_albedo.res" id="1_s0lxv"]
+[ext_resource type="Texture2D" uid="uid://dlfemlbuoejr1" path="res://Assets/World/Linvel/FoxHills/Terrain/Textures/HillMeadow_normal.res" id="2_qtwxh"]
+[ext_resource type="Texture2D" uid="uid://b38pnsuup7txr" path="res://Assets/World/Linvel/FoxHills/Terrain/Textures/CartRoad_albedo.res" id="3_x0crs"]
+[ext_resource type="Texture2D" uid="uid://dlvee4ie4s2w" path="res://Assets/World/Linvel/FoxHills/Terrain/Textures/CartRoad_normal.res" id="4_fbc7x"]
+[ext_resource type="Texture2D" uid="uid://b7mh5tq2diypr" path="res://Assets/World/Linvel/FoxHills/Terrain/Textures/CliffStone_albedo.res" id="5_2et7k"]
+[ext_resource type="Texture2D" uid="uid://cjgb5l4oqh67d" path="res://Assets/World/Linvel/FoxHills/Terrain/Textures/CliffStone_normal.res" id="6_20jmk"]
+[ext_resource type="Texture2D" uid="uid://huk6nrescaqx" path="res://Assets/World/Linvel/FoxHills/Terrain/Textures/DryGrass_albedo.res" id="7_oivxj"]
+[ext_resource type="Texture2D" uid="uid://dhmwhesd3pybt" path="res://Assets/World/Linvel/FoxHills/Terrain/Textures/DryGrass_normal.res" id="8_2i4a0"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qi6rg"]
+transparency = 4
+cull_mode = 2
+vertex_color_use_as_albedo = true
+backlight_enabled = true
+backlight = Color(0.5, 0.5, 0.5, 1)
+distance_fade_mode = 1
+distance_fade_min_distance = 128.0
+distance_fade_max_distance = 96.0
+
+[sub_resource type="Terrain3DMeshAsset" id="Terrain3DMeshAsset_6ugmb"]
+generated_type = 1
+height_offset = 0.5
+material_override = SubResource("StandardMaterial3D_qi6rg")
+last_lod = 0
+last_shadow_lod = 0
+lod0_range = 128.0
+
+[sub_resource type="Terrain3DTextureAsset" id="Terrain3DTextureAsset_s0lxv"]
+name = "HillMeadow"
+albedo_texture = ExtResource("1_s0lxv")
+normal_texture = ExtResource("2_qtwxh")
+normal_depth = 0.0
+ao_strength = 0.0
+uv_scale = 0.12
+
+[sub_resource type="Terrain3DTextureAsset" id="Terrain3DTextureAsset_qtwxh"]
+name = "CartRoad"
+id = 1
+albedo_texture = ExtResource("3_x0crs")
+normal_texture = ExtResource("4_fbc7x")
+normal_depth = 0.0
+ao_strength = 0.0
+uv_scale = 0.12
+
+[sub_resource type="Terrain3DTextureAsset" id="Terrain3DTextureAsset_x0crs"]
+name = "CliffStone"
+id = 2
+albedo_texture = ExtResource("5_2et7k")
+normal_texture = ExtResource("6_20jmk")
+normal_depth = 0.0
+ao_strength = 0.0
+uv_scale = 0.12
+
+[sub_resource type="Terrain3DTextureAsset" id="Terrain3DTextureAsset_fbc7x"]
+name = "DryGrass"
+id = 3
+albedo_texture = ExtResource("7_oivxj")
+normal_texture = ExtResource("8_2i4a0")
+normal_depth = 0.0
+ao_strength = 0.0
+uv_scale = 0.12
+
+[resource]
+mesh_list = Array[Terrain3DMeshAsset]([SubResource("Terrain3DMeshAsset_6ugmb")])
+texture_list = Array[Terrain3DTextureAsset]([SubResource("Terrain3DTextureAsset_s0lxv"), SubResource("Terrain3DTextureAsset_qtwxh"), SubResource("Terrain3DTextureAsset_x0crs"), SubResource("Terrain3DTextureAsset_fbc7x")])

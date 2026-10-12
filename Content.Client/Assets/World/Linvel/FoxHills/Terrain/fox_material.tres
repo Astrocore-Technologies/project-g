@@ -1,0 +1,27 @@
+[gd_resource type="Terrain3DMaterial" format=3 uid="uid://pbmwd55av546"]
+
+[ext_resource type="Shader" uid="uid://bfttkg18payy6" path="res://Assets/World/Linvel/Gardens/Terrain/painted_terrain.gdshader" id="1_0c22v"]
+[ext_resource type="Texture2D" uid="uid://ren02w6gr4vt" path="res://Assets/World/Linvel/FoxHills/Terrain/Textures/HillMacro.tres" id="1_nkpwm"]
+
+[resource]
+_shader_parameters = {
+&"auto_base_texture": null,
+&"auto_height_reduction": null,
+&"auto_overlay_texture": null,
+&"auto_slope": null,
+&"blend_sharpness": null,
+&"enable_macro_variation": true,
+&"enable_texturing": null,
+&"flat_terrain_normals": null,
+&"macro_variation1": Color(0.78, 0.91, 0.72, 1),
+&"macro_variation2": Color(0.91, 0.9, 0.83, 1),
+&"macro_variation_slope": null,
+&"noise1_angle": null,
+&"noise1_offset": null,
+&"noise1_scale": 0.43,
+&"noise2_scale": 0.87,
+&"noise_texture": ExtResource("1_nkpwm")
+}
+world_background = 0
+shader_override_enabled = true
+shader_override = ExtResource("1_0c22v")

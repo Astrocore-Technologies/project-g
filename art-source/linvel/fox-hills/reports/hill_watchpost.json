@@ -1,0 +1,55 @@
+{
+  "id": "hill_watchpost",
+  "label": "Сторожевой пост с каменным основанием",
+  "triangles": 23832,
+  "bounds": [
+    [
+      -3.319999933242798,
+      3.319999933242798
+    ],
+    [
+      -3.580000162124634,
+      2.9549999237060547
+    ],
+    [
+      0.0,
+      8.755000114440918
+    ]
+  ],
+  "parts": 734,
+  "joints": [
+    {
+      "a": "Footing",
+      "b": "Plaster",
+      "axis": 2,
+      "overlap_m": 0.4
+    },
+    {
+      "a": "Corner-2.77-2.42",
+      "b": "Plaster",
+      "axis": 0,
+      "overlap_m": 0.165
+    },
+    {
+      "a": "Corner-2.772.42",
+      "b": "Plaster",
+      "axis": 0,
+      "overlap_m": 0.165
+    },
+    {
+      "a": "Corner2.77-2.42",
+      "b": "Plaster",
+      "axis": 0,
+      "overlap_m": 0.165
+    },
+    {
+      "a": "Corner2.772.42",
+      "b": "Plaster",
+      "axis": 0,
+      "overlap_m": 0.165
+    }
+  ],
+  "origin": "ground",
+  "materials": 1,
+  "uv": "PaintedUV"
+}

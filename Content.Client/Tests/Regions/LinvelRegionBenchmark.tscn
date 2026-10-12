@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://cfaqgf2e2cvyy"]
+
+[ext_resource type="Script" uid="uid://b35mqxsne40he" path="res://Tests/Regions/LinvelRegionBenchmark.gd" id="1_m8svi"]
+
+[node name="LinvelRegionBenchmark" type="Node3D" unique_id=2030821579]
+script = ExtResource("1_m8svi")

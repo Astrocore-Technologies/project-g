@@ -15,9 +15,9 @@ namespace Content.Server.Regions;
 /// <summary>Validated server-only region composition; persistence is opened by the host.</summary>
 public sealed class RegionalWorlds
 {
-    // Seven authored regions fit the current alpha graph, including Garden Valleys.
+    // Eight authored regions fit the current alpha graph, including Fox Hills.
     // This remains a bounded server/content archive limit; wire layouts are unchanged.
-    public const int MaxRegions = 7;
+    public const int MaxRegions = 8;
     public IReadOnlyList<ServerWorld> Worlds { get; }
     public IReadOnlyList<RegionBoundary> Routes { get; }
     public ServerWorld Primary => Worlds[0];
