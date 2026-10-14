@@ -26,9 +26,7 @@ public sealed class RiverCityTests
         }
         finally { foreach(var lease in leases) await lease.DisposeAsync(); }
     }
-    private static RegionalWorlds Worlds() => RegionalWorlds.Load(Path.Combine(AppContext.BaseDirectory,"Data/regions.json"),
-        new ConfigurationBuilder().AddJsonFile(Path.Combine(AppContext.BaseDirectory,"appsettings.json"))
-            .AddInMemoryCollection(new Dictionary<string,string?> { ["Server:StartingRegion"]="river_city" }).Build(),ContentCatalogTests.Load());
+    private static RegionalWorlds Worlds() => LegacyRegionFixtures.Load("river_city");
 
     [Fact]
     public void ScenePlacementsAreReachableAndTownIsSafeWithoutARepairEvent()

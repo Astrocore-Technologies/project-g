@@ -71,7 +71,8 @@ public sealed record BalanceTestBuild
         var derived = CalculateStats(catalog, initial.ProfileId);
         return initial with
         {
-            Stats = Stats, X = 15, Z = -9, Health = derived.MaxHealth, Mana = Math.Max(0, derived.MaxMana),
+            // Keep the selected region's validated spawn and height; retired city coordinates are unsafe.
+            Stats = Stats, Health = derived.MaxHealth, Mana = Math.Max(0, derived.MaxMana),
             CombatControl = InitialKnockdownSeconds > 0 ? new(1,InitialKnockdownSeconds,0,0,0,0) : null,
             Inventory = new SavedInventory { Items = [new(Guid.NewGuid(), WeaponItemId, EquipmentSlot.Weapon)] },
             Cooldowns = skills.Select(s => new SavedCooldown(s.DefinitionId, 0)).ToArray(),

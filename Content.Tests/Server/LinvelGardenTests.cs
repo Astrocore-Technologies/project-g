@@ -11,7 +11,7 @@ public sealed class LinvelGardenTests
     [Fact]
     public void TheAuthoredRoadCrossesHillsAndTheBridgeWithoutDisconnectedLegs()
     {
-        var worlds = TerrainIntegrationTests.Worlds();
+        var worlds = TerrainIntegrationTests.CurrentWorlds();
         var garden = worlds.Worlds.Single(w => w.RegionId == "linvel_gardens");
         var surface = garden.Navigation.Surface!;
         var path = Path.Combine(FindRepository(),"Content.Client/Assets/World/Linvel/Gardens/layout.json");
@@ -46,7 +46,7 @@ public sealed class LinvelGardenTests
     [Fact]
     public void EveryGardenPortalSupportsFixedTickMovementInBothDirections()
     {
-        var garden = TerrainIntegrationTests.Worlds().Worlds.Single(w=>w.RegionId=="linvel_gardens");
+        var garden = TerrainIntegrationTests.CurrentWorlds().Worlds.Single(w=>w.RegionId=="linvel_gardens");
         var surface = garden.Navigation.Surface!;
         var start = surface.Triangles[0].Center;
         var mover = new NavigationMover(garden.Navigation,new MovementSettings(3.5f,.1f,-480,480,-400,400),
@@ -70,7 +70,7 @@ public sealed class LinvelGardenTests
     [Fact]
     public void GardenSpawnsAndSavesKeepTheAuthoritativeHeightAndGeometry()
     {
-        var garden=TerrainIntegrationTests.Worlds().Worlds.Single(w=>w.RegionId=="linvel_gardens");
+        var garden=TerrainIntegrationTests.CurrentWorlds().Worlds.Single(w=>w.RegionId=="linvel_gardens");
         var initial=garden.CreateInitialCharacter();
         Assert.InRange(initial.Surface!.Height,13.9f,14.3f);
         var player=garden.AddPlayer(71,new(71),initial);

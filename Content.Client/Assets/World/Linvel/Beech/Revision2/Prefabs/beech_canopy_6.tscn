@@ -1,0 +1,26 @@
+[gd_scene format=3 uid="uid://1mm8b0v4qlit"]
+
+[ext_resource type="Material" uid="uid://dgvmc08fs8nvy" path="res://Assets/World/Linvel/Beech/Revision2/painted_forest.tres" id="1_q0srf"]
+[ext_resource type="ArrayMesh" uid="uid://ke7jov8ida54" path="res://Assets/World/Linvel/Beech/Revision2/Meshes/beech_canopy_6.res" id="2_aldv8"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_rn6yf"]
+size = Vector3(1.155, 9.348, 1.1235)
+
+[node name="beech_canopy_6" type="Node3D" unique_id=378273040]
+metadata/asset_id = "beech_canopy_6"
+metadata/beech_asset_root = true
+
+[node name="Visual" type="MeshInstance3D" parent="." unique_id=1765041121]
+material_override = ExtResource("1_q0srf")
+visibility_range_end = 240.0
+visibility_range_end_margin = 24.0
+mesh = ExtResource("2_aldv8")
+
+[node name="Body00" type="StaticBody3D" parent="." unique_id=112281244 groups=["surface_exact_occluder", "surface_geometry", "surface_occluder"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.674, 0)
+collision_layer = 4
+metadata/surface_nonwalkable_top = true
+metadata/collision_part = "trunk"
+
+[node name="Collision" type="CollisionShape3D" parent="Body00" unique_id=1714901914]
+shape = SubResource("BoxShape3D_rn6yf")

@@ -21,7 +21,8 @@ public static class DevelopmentRegionExport
 
         var published = Path.Combine(repository, "Content.Server", PackagePath);
         var needsExport = false;
-        try { _ = new RegionExportCatalog(published, repository); if (File.Exists(Path.Combine(repository,"Content.Client/Scenes/Regions/TerrainTest/TerrainTest.tscn"))) _ = SurfaceCatalog.Load(Path.Combine(repository,"Content.Server",SurfaceCatalog.PackagePath),repository); }
+        var publishedSurfaces=Path.Combine(repository,"Content.Server",SurfaceCatalog.PackagePath);
+        try { _ = new RegionExportCatalog(published, repository); if (File.Exists(publishedSurfaces)) _ = SurfaceCatalog.Load(publishedSurfaces,repository); }
         catch (Exception error) when (error is InvalidDataException or JsonException or FileNotFoundException)
         {
             needsExport = true;
@@ -31,7 +32,7 @@ public static class DevelopmentRegionExport
             await log.WriteLineAsync("Region data changed; exporting maps automatically.");
             await export(repository);
             // A successful process exit alone does not establish that the newly published data is current.
-            _ = new RegionExportCatalog(published, repository); if (File.Exists(Path.Combine(repository,"Content.Client/Scenes/Regions/TerrainTest/TerrainTest.tscn"))) _ = SurfaceCatalog.Load(Path.Combine(repository,"Content.Server",SurfaceCatalog.PackagePath),repository);
+            _ = new RegionExportCatalog(published, repository); if (File.Exists(publishedSurfaces)) _ = SurfaceCatalog.Load(publishedSurfaces,repository);
             await log.WriteLineAsync("Region export ready. Continuing server startup.");
         }
 

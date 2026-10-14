@@ -152,9 +152,7 @@ public sealed class BalanceEditorWorkflowTests
     public void QuickTestSkillSwapsIntoSlotOneWithoutLosingBarOrSource(string skill)
     {
         var catalog = ContentCatalogTests.Load();
-        var configuration = new ConfigurationBuilder().AddJsonFile(Path.Combine(AppContext.BaseDirectory, "appsettings.json"))
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["Server:StartingRegion"] = "river_city" }).Build();
-        var world = RegionalWorlds.Load(Path.Combine(AppContext.BaseDirectory, "Data", "regions.json"), configuration, catalog).StartingWorld;
+        var world = TerrainIntegrationTests.CurrentWorlds(catalog).StartingWorld;
         world.ConfigureBalanceSandbox(new() { ProfessionId = 2, SelectedAbilityId = skill });
         var player = world.AddPlayer(1, new PlayerId(1), world.CreateInitialCharacter());
         var skills = world.ProgressionState(player.EntityId, 0).Skills;

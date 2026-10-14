@@ -1,0 +1,941 @@
+[
+  {
+    "id": "beech_canopy_0",
+    "bounds": [
+      [
+        -6.075356483459473,
+        6.703871726989746
+      ],
+      [
+        -6.737043380737305,
+        6.797463893890381
+      ],
+      [
+        -0.15945757925510406,
+        15.072382926940918
+      ]
+    ],
+    "vertices": 3852,
+    "triangles": 6900,
+    "collision_boxes": [
+      {
+        "center": [
+          0,
+          3.8,
+          0
+        ],
+        "size": [
+          1.05,
+          7.6,
+          1.05
+        ],
+        "part": "trunk"
+      }
+    ],
+    "license": "project-owned original geometry",
+    "origin": "ground-centred; Blender Z up / glTF Y up",
+    "paint": "metre-scaled UV, typed opaque vertex paint, shared painted atlas shader"
+  },
+  {
+    "id": "beech_canopy_1",
+    "bounds": [
+      [
+        -7.702986240386963,
+        7.148458957672119
+      ],
+      [
+        -6.290753364562988,
+        5.929055690765381
+      ],
+      [
+        -0.15945757925510406,
+        15.672383308410645
+      ]
+    ],
+    "vertices": 3852,
+    "triangles": 6900,
+    "collision_boxes": [
+      {
+        "center": [
+          0,
+          3.8,
+          0
+        ],
+        "size": [
+          1.05,
+          7.6,
+          1.05
+        ],
+        "part": "trunk"
+      }
+    ],
+    "license": "project-owned original geometry",
+    "origin": "ground-centred; Blender Z up / glTF Y up",
+    "paint": "metre-scaled UV, typed opaque vertex paint, shared painted atlas shader"
+  },
+  {
+    "id": "beech_canopy_2",
+    "bounds": [
+      [
+        -6.937874794006348,
+        6.928123950958252
+      ],
+      [
+        -6.699970245361328,
+        6.568737506866455
+      ],
+      [
+        -0.15945757925510406,
+        16.272382736206055
+      ]
+    ],
+    "vertices": 3852,
+    "triangles": 6900,
+    "collision_boxes": [
+      {
+        "center": [
+          0,
+          3.8,
+          0
+        ],
+        "size": [
+          1.05,
+          7.6,
+          1.05
+        ],
+        "part": "trunk"
+      }
+    ],
+    "license": "project-owned original geometry",
+    "origin": "ground-centred; Blender Z up / glTF Y up",
+    "paint": "metre-scaled UV, typed opaque vertex paint, shared painted atlas shader"
+  },
+  {
+    "id": "repaired_beech_bridge",
+    "bounds": [
+      [
+        -18.1200008392334,
+        18.1200008392334
+      ],
+      [
+        -2.5,
+        2.5
+      ],
+      [
+        -2.9714274406433105,
+        1.4500000476837158
+      ]
+    ],
+    "vertices": 5776,
+    "triangles": 11016,
+    "collision_boxes": [
+      {
+        "center": [
+          0,
+          0,
+          0
+        ],
+        "size": [
+          36,
+          0.2,
+          5.0
+        ],
+        "walkable": true
+      },
+      {
+        "center": [
+          0,
+          0.78,
+          -2.36
+        ],
+        "size": [
+          36,
+          1.45,
+          0.2
+        ],
+        "part": "rail"
+      },
+      {
+        "center": [
+          0,
+          0.78,
+          2.36
+        ],
+        "size": [
+          36,
+          1.45,
+          0.2
+        ],
+        "part": "rail"
+      }
+    ],
+    "license": "project-owned original geometry",
+    "origin": "ground-centred; Blender Z up / glTF Y up",
+    "paint": "metre-scaled UV, typed opaque vertex paint, shared painted atlas shader"
+  },
+  {
+    "id": "working_forest_shelter",
+    "bounds": [
+      [
+        -5.199999809265137,
+        5.28000020980835
+      ],
+      [
+        -3.1063666343688965,
+        3.1063666343688965
+      ],
+      [
+        -0.05999999865889549,
+        5.450000286102295
+      ]
+    ],
+    "vertices": 1352,
+    "triangles": 908,
+    "collision_boxes": [
+      {
+        "center": [
+          -4.8,
+          1.78,
+          -2.75
+        ],
+        "size": [
+          0.3,
+          3.65,
+          0.34
+        ],
+        "part": "post"
+      },
+      {
+        "center": [
+          -4.8,
+          1.78,
+          2.75
+        ],
+        "size": [
+          0.3,
+          3.65,
+          0.34
+        ],
+        "part": "post"
+      },
+      {
+        "center": [
+          0,
+          1.78,
+          -2.75
+        ],
+        "size": [
+          0.3,
+          3.65,
+          0.34
+        ],
+        "part": "post"
+      },
+      {
+        "center": [
+          0,
+          1.78,
+          2.75
+        ],
+        "size": [
+          0.3,
+          3.65,
+          0.34
+        ],
+        "part": "post"
+      },
+      {
+        "center": [
+          4.8,
+          1.78,
+          -2.75
+        ],
+        "size": [
+          0.3,
+          3.65,
+          0.34
+        ],
+        "part": "post"
+      },
+      {
+        "center": [
+          4.8,
+          1.78,
+          2.75
+        ],
+        "size": [
+          0.3,
+          3.65,
+          0.34
+        ],
+        "part": "post"
+      }
+    ],
+    "license": "project-owned original geometry",
+    "origin": "ground-centred; Blender Z up / glTF Y up",
+    "paint": "metre-scaled UV, typed opaque vertex paint, shared painted atlas shader"
+  },
+  {
+    "id": "covered_charcoal_kiln",
+    "bounds": [
+      [
+        -2.2706823348999023,
+        2.296325445175171
+      ],
+      [
+        -2.2569947242736816,
+        2.2179956436157227
+      ],
+      [
+        -0.34243524074554443,
+        2.5424351692199707
+      ]
+    ],
+    "vertices": 872,
+    "triangles": 1584,
+    "collision_boxes": [
+      {
+        "center": [
+          0,
+          1,
+          0
+        ],
+        "size": [
+          3.6,
+          2,
+          3.6
+        ],
+        "part": "structure"
+      }
+    ],
+    "license": "project-owned original geometry",
+    "origin": "ground-centred; Blender Z up / glTF Y up",
+    "paint": "metre-scaled UV, typed opaque vertex paint, shared painted atlas shader"
+  },
+  {
+    "id": "seasoned_timber",
+    "bounds": [
+      [
+        -2.5,
+        2.5
+      ],
+      [
+        -2.4000000953674316,
+        2.4000000953674316
+      ],
+      [
+        -0.04000000283122063,
+        1.4850000143051147
+      ]
+    ],
+    "vertices": 304,
+    "triangles": 552,
+    "collision_boxes": [
+      {
+        "center": [
+          0,
+          0.7,
+          0
+        ],
+        "size": [
+          2.6,
+          1.4,
+          4.7
+        ],
+        "part": "structure"
+      }
+    ],
+    "license": "project-owned original geometry",
+    "origin": "ground-centred; Blender Z up / glTF Y up",
+    "paint": "metre-scaled UV, typed opaque vertex paint, shared painted atlas shader"
+  },
+  {
+    "id": "kager_reused_shelter",
+    "bounds": [
+      [
+        -2.9000000953674316,
+        2.9000000953674316
+      ],
+      [
+        -2.3796756267547607,
+        2.3796756267547607
+      ],
+      [
+        -0.10000000149011612,
+        4.299999713897705
+      ]
+    ],
+    "vertices": 318,
+    "triangles": 516,
+    "collision_boxes": [
+      {
+        "center": [
+          -2.5,
+          1.6,
+          -2
+        ],
+        "size": [
+          0.23,
+          3.3,
+          0.23
+        ],
+        "part": "post"
+      },
+      {
+        "center": [
+          -2.5,
+          1.6,
+          2
+        ],
+        "size": [
+          0.23,
+          3.3,
+          0.23
+        ],
+        "part": "post"
+      },
+      {
+        "center": [
+          2.5,
+          1.6,
+          -2
+        ],
+        "size": [
+          0.23,
+          3.3,
+          0.23
+        ],
+        "part": "post"
+      },
+      {
+        "center": [
+          2.5,
+          1.6,
+          2
+        ],
+        "size": [
+          0.23,
+          3.3,
+          0.23
+        ],
+        "part": "post"
+      }
+    ],
+    "license": "project-owned original geometry",
+    "origin": "ground-centred; Blender Z up / glTF Y up",
+    "paint": "metre-scaled UV, typed opaque vertex paint, shared painted atlas shader"
+  },
+  {
+    "id": "mossy_outcrop",
+    "bounds": [
+      [
+        -2.3645901679992676,
+        2.757359266281128
+      ],
+      [
+        -1.6232367753982544,
+        1.6767631769180298
+      ],
+      [
+        -0.4112499952316284,
+        3.211250066757202
+      ]
+    ],
+    "vertices": 302,
+    "triangles": 544,
+    "collision_boxes": [
+      {
+        "center": [
+          0,
+          1.35,
+          0
+        ],
+        "size": [
+          3.4,
+          2.6,
+          2.4
+        ],
+        "part": "rock"
+      }
+    ],
+    "license": "project-owned original geometry",
+    "origin": "ground-centred; Blender Z up / glTF Y up",
+    "paint": "metre-scaled UV, typed opaque vertex paint, shared painted atlas shader"
+  },
+  {
+    "id": "forest_workbench",
+    "bounds": [
+      [
+        -1.5350000858306885,
+        1.5350000858306885
+      ],
+      [
+        -0.675000011920929,
+        0.675000011920929
+      ],
+      [
+        -0.029999999329447746,
+        1.0899999141693115
+      ]
+    ],
+    "vertices": 496,
+    "triangles": 936,
+    "collision_boxes": [
+      {
+        "center": [
+          0,
+          0.5,
+          0
+        ],
+        "size": [
+          2.7,
+          1,
+          1.2
+        ],
+        "part": "structure"
+      }
+    ],
+    "license": "project-owned original geometry",
+    "origin": "ground-centred; Blender Z up / glTF Y up",
+    "paint": "metre-scaled UV, typed opaque vertex paint, shared painted atlas shader"
+  },
+  {
+    "id": "herb_drying_frame",
+    "bounds": [
+      [
+        -1.899999976158142,
+        1.899999976158142
+      ],
+      [
+        -0.04500000178813934,
+        0.10324999690055847
+      ],
+      [
+        -0.029999999329447746,
+        1.934999942779541
+      ]
+    ],
+    "vertices": 1120,
+    "triangles": 1788,
+    "collision_boxes": [
+      {
+        "center": [
+          -1.8,
+          0.9,
+          0
+        ],
+        "size": [
+          0.12,
+          1.85,
+          0.12
+        ],
+        "part": "post"
+      },
+      {
+        "center": [
+          1.8,
+          0.9,
+          0
+        ],
+        "size": [
+          0.12,
+          1.85,
+          0.12
+        ],
+        "part": "post"
+      }
+    ],
+    "license": "project-owned original geometry",
+    "origin": "ground-centred; Blender Z up / glTF Y up",
+    "paint": "metre-scaled UV, typed opaque vertex paint, shared painted atlas shader"
+  },
+  {
+    "id": "forest_firepit",
+    "bounds": [
+      [
+        -1.2915269136428833,
+        1.3444000482559204
+      ],
+      [
+        -1.2766131162643433,
+        1.2739821672439575
+      ],
+      [
+        -0.025658786296844482,
+        0.32565879821777344
+      ]
+    ],
+    "vertices": 1256,
+    "triangles": 2156,
+    "collision_boxes": [],
+    "license": "project-owned original geometry",
+    "origin": "ground-centred; Blender Z up / glTF Y up",
+    "paint": "metre-scaled UV, typed opaque vertex paint, shared painted atlas shader"
+  },
+  {
+    "id": "worn_supply_bundle",
+    "bounds": [
+      [
+        -0.9120000004768372,
+        0.8572089076042175
+      ],
+      [
+        -0.2788422405719757,
+        0.28235283493995667
+      ],
+      [
+        -0.03364899009466171,
+        0.7936490178108215
+      ]
+    ],
+    "vertices": 426,
+    "triangles": 756,
+    "collision_boxes": [
+      {
+        "center": [
+          0,
+          0.38,
+          0
+        ],
+        "size": [
+          1.7,
+          0.75,
+          0.6
+        ],
+        "part": "structure"
+      }
+    ],
+    "license": "project-owned original geometry",
+    "origin": "ground-centred; Blender Z up / glTF Y up",
+    "paint": "metre-scaled UV, typed opaque vertex paint, shared painted atlas shader"
+  },
+  {
+    "id": "sunlit_herb",
+    "bounds": [
+      [
+        -0.39034444093704224,
+        0.36515870690345764
+      ],
+      [
+        -0.35344240069389343,
+        0.281289279460907
+      ],
+      [
+        -0.010464985854923725,
+        0.2330000102519989
+      ]
+    ],
+    "vertices": 225,
+    "triangles": 300,
+    "collision_boxes": [],
+    "license": "project-owned original geometry",
+    "origin": "ground-centred; Blender Z up / glTF Y up",
+    "paint": "metre-scaled UV, typed opaque vertex paint, shared painted atlas shader"
+  },
+  {
+    "id": "split_board_deck",
+    "bounds": [
+      [
+        -4.0,
+        4.0
+      ],
+      [
+        -2.4000000953674316,
+        2.4000000953674316
+      ],
+      [
+        -0.19999998807907104,
+        0.18000000715255737
+      ]
+    ],
+    "vertices": 920,
+    "triangles": 1764,
+    "collision_boxes": [
+      {
+        "center": [
+          0,
+          0.09,
+          0
+        ],
+        "size": [
+          8,
+          0.18,
+          4.8
+        ],
+        "walkable": true
+      }
+    ],
+    "license": "project-owned original geometry",
+    "origin": "ground-centred; Blender Z up / glTF Y up",
+    "paint": "metre-scaled UV, typed opaque vertex paint, shared painted atlas shader"
+  },
+  {
+    "id": "woodland_fern",
+    "bounds": [
+      [
+        -0.6988891959190369,
+        1.0871913433074951
+      ],
+      [
+        -1.0000308752059937,
+        0.7486987709999084
+      ],
+      [
+        0.007782100699841976,
+        0.6161060929298401
+      ]
+    ],
+    "vertices": 840,
+    "triangles": 1008,
+    "collision_boxes": [],
+    "license": "project-owned original geometry",
+    "origin": "ground-centred; Blender Z up / glTF Y up",
+    "paint": "metre-scaled UV, typed opaque vertex paint, shared painted atlas shader"
+  },
+  {
+    "id": "beech_copse_0",
+    "bounds": [
+      [
+        -10.515107154846191,
+        10.618027687072754
+      ],
+      [
+        -9.090298652648926,
+        8.086271286010742
+      ],
+      [
+        -0.07499998807907104,
+        15.222382545471191
+      ]
+    ],
+    "vertices": 24782,
+    "triangles": 44184,
+    "collision_boxes": [
+      {
+        "center": [
+          0,
+          1.15,
+          0
+        ],
+        "size": [
+          8.5,
+          2.3,
+          7.0
+        ],
+        "part": "rock"
+      }
+    ],
+    "license": "project-owned original geometry",
+    "origin": "ground-centred; Blender Z up / glTF Y up",
+    "paint": "metre-scaled UV, typed opaque vertex paint, shared painted atlas shader"
+  },
+  {
+    "id": "beech_copse_1",
+    "bounds": [
+      [
+        -10.574661254882812,
+        9.932760238647461
+      ],
+      [
+        -8.905333518981934,
+        9.239862442016602
+      ],
+      [
+        -0.07499998807907104,
+        15.222382545471191
+      ]
+    ],
+    "vertices": 24782,
+    "triangles": 44184,
+    "collision_boxes": [
+      {
+        "center": [
+          0,
+          1.15,
+          0
+        ],
+        "size": [
+          8.5,
+          2.3,
+          7.0
+        ],
+        "part": "rock"
+      }
+    ],
+    "license": "project-owned original geometry",
+    "origin": "ground-centred; Blender Z up / glTF Y up",
+    "paint": "metre-scaled UV, typed opaque vertex paint, shared painted atlas shader"
+  },
+  {
+    "id": "beech_canopy_3",
+    "collision_boxes": [
+      {
+        "center": [
+          0,
+          3.42,
+          0
+        ],
+        "size": [
+          1.281,
+          6.84,
+          1.1025
+        ],
+        "part": "trunk"
+      }
+    ],
+    "license": "project-owned original geometry",
+    "origin": "ground-centred; glTF Y up",
+    "bounds": [
+      [
+        -7.387741565704346,
+        8.21292495727539
+      ],
+      [
+        -7.073895454406738,
+        7.1373372077941895
+      ],
+      [
+        -0.1435118168592453,
+        13.565144538879395
+      ]
+    ],
+    "vertices": 3852,
+    "triangles": 6900,
+    "paint": "metre-scaled UV, typed opaque vertex paint, shared painted atlas shader"
+  },
+  {
+    "id": "beech_canopy_4",
+    "collision_boxes": [
+      {
+        "center": [
+          0,
+          2.508,
+          0
+        ],
+        "size": [
+          0.6930000000000001,
+          5.016,
+          0.798
+        ],
+        "part": "trunk"
+      }
+    ],
+    "license": "project-owned original geometry",
+    "origin": "ground-centred; glTF Y up",
+    "bounds": [
+      [
+        -4.041993141174316,
+        4.378953456878662
+      ],
+      [
+        -5.120152950286865,
+        5.166072368621826
+      ],
+      [
+        -0.10524199903011322,
+        9.947772979736328
+      ]
+    ],
+    "vertices": 3852,
+    "triangles": 6900,
+    "paint": "metre-scaled UV, typed opaque vertex paint, shared painted atlas shader"
+  },
+  {
+    "id": "beech_canopy_5",
+    "collision_boxes": [
+      {
+        "center": [
+          0,
+          3.762,
+          0
+        ],
+        "size": [
+          1.05,
+          7.524,
+          0.903
+        ],
+        "part": "trunk"
+      }
+    ],
+    "license": "project-owned original geometry",
+    "origin": "ground-centred; glTF Y up",
+    "bounds": [
+      [
+        -5.712453842163086,
+        7.216894149780273
+      ],
+      [
+        -5.793857097625732,
+        5.845818996429443
+      ],
+      [
+        -0.15786300599575043,
+        14.921659469604492
+      ]
+    ],
+    "vertices": 3852,
+    "triangles": 6900,
+    "paint": "metre-scaled UV, typed opaque vertex paint, shared painted atlas shader"
+  },
+  {
+    "id": "beech_canopy_6",
+    "collision_boxes": [
+      {
+        "center": [
+          0,
+          4.6739999999999995,
+          0
+        ],
+        "size": [
+          1.1550000000000002,
+          9.347999999999999,
+          1.1235000000000002
+        ],
+        "part": "trunk"
+      }
+    ],
+    "license": "project-owned original geometry",
+    "origin": "ground-centred; glTF Y up",
+    "bounds": [
+      [
+        -6.755472660064697,
+        7.2716546058654785
+      ],
+      [
+        -7.208636283874512,
+        7.27328634262085
+      ],
+      [
+        -0.1961328238248825,
+        18.539030075073242
+      ]
+    ],
+    "vertices": 3852,
+    "triangles": 6900,
+    "paint": "metre-scaled UV, typed opaque vertex paint, shared painted atlas shader"
+  },
+  {
+    "id": "beech_understory_bush",
+    "collision_boxes": [],
+    "license": "project-owned original geometry",
+    "origin": "ground-centred; Blender Z up / glTF Y up",
+    "purpose": "low flexible undergrowth, curved solid leaves, no movement collider",
+    "bounds": [
+      [
+        -0.956646203994751,
+        1.107649803161621
+      ],
+      [
+        -1.1231969594955444,
+        0.8838989734649658
+      ],
+      [
+        -0.0024230051785707474,
+        1.0735152959823608
+      ]
+    ],
+    "vertices": 1792,
+    "triangles": 2940,
+    "paint": "metre-scaled UV, typed opaque vertex paint, shared painted atlas shader"
+  }
+]

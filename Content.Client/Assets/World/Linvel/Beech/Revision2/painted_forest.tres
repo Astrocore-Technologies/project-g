@@ -1,0 +1,19 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://dgvmc08fs8nvy"]
+
+[ext_resource type="Shader" uid="uid://bcyf0gyqfu535" path="res://Assets/World/Linvel/Beech/Revision2/painted_vertex.gdshader" id="1_re1bo"]
+[ext_resource type="Texture2D" uid="uid://d3k6xg3dbslt5" path="res://Assets/World/Linvel/Beech/Revision2/StylePass/SilverBark.res" id="2_15vqc"]
+[ext_resource type="Texture2D" uid="uid://va3pbcdkdvv4" path="res://Assets/World/Linvel/Beech/Revision2/cloth_paint.res" id="3_15vqc"]
+[ext_resource type="Texture2D" uid="uid://bnbdcuhmg1el5" path="res://Assets/World/Linvel/Beech/Revision2/StylePass/LeafClusters.res" id="4_ye3uo"]
+[ext_resource type="Texture2D" uid="uid://bdmi8jgtu8edd" path="res://Assets/World/Linvel/Beech/Revision2/StylePass/GroundRock.res" id="5_4s6oe"]
+[ext_resource type="Texture2D" uid="uid://c1eo35ckxl5up" path="res://Assets/World/Linvel/Beech/Revision2/wood_paint.res" id="5_8378d"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_re1bo")
+shader_parameter/focus_world = Vector3(-10000, -10000, -10000)
+shader_parameter/crown_clearance = 5.0
+shader_parameter/leaf_paint = ExtResource("4_ye3uo")
+shader_parameter/bark_paint = ExtResource("2_15vqc")
+shader_parameter/wood_paint = ExtResource("5_8378d")
+shader_parameter/stone_paint = ExtResource("5_4s6oe")
+shader_parameter/cloth_paint = ExtResource("3_15vqc")

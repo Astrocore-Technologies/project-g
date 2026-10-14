@@ -1,0 +1,140 @@
+{
+  "RegionExports": {
+    "PackagePath": "Data/Regions/region-package.json"
+  },
+  "Server": {
+    "Port": 9050,
+    "TickRate": 20,
+    "NetworkPollIntervalMilliseconds": 10,
+    "ConnectionKey": "project-g-dev"
+  },
+  "Movement": {
+    "Speed": 3.5,
+    "StopDistance": 0.1,
+    "MinX": -15.0,
+    "MaxX": 15.0,
+    "MinZ": -15.0,
+    "MaxZ": 15.0
+  },
+  "Navigation": {
+    "CellSize": 1.0,
+    "AgentRadius": 0.45,
+    "BlockedAreas": [
+      {
+        "X": 14,
+        "Z": 10,
+        "Width": 2,
+        "Height": 10
+      }
+    ]
+  },
+  "Interest": {
+    "CellSize": 8.0,
+    "Radius": 12.0,
+    "ExitRadius": 14.0
+  },
+  "Combat": {
+    "PlayerDefinitionId": "test_adventurer",
+    "TargetDefinitionId": "test_creature",
+    "TargetX": -7.0,
+    "TargetZ": 3.0,
+    "HalfAngleDegrees": 45.0,
+    "CriticalMultiplier": 1.5,
+    "MaxAbilityEffects": 128,
+    "MaxCompensationMilliseconds": 100,
+    "MaxAbilityLifetimeSeconds": 10,
+    "ImpactSeconds": 0.15
+  },
+  "Npc": {
+    "Enabled": true,
+    "SpawnId": "npc",
+    "RespawnSeconds": 30,
+    "DefinitionId": "test_creature",
+    "X": 7.0,
+    "Z": 3.0,
+    "Speed": 3.0,
+    "AggroRadius": 6.0,
+    "LeashRadius": 10.0,
+    "DecisionSeconds": 0.2,
+    "WindupSeconds": 1.0
+  },
+  "Boss": {
+    "Actor": {
+      "Enabled": true,
+      "SpawnId": "boss",
+      "RespawnSeconds": 120,
+      "DefinitionId": "test_boss",
+      "X": 7.0,
+      "Z": -8.0,
+      "Speed": 2.5,
+      "AggroRadius": 5.0,
+      "LeashRadius": 8.0,
+      "DecisionSeconds": 0.2,
+      "WindupSeconds": 1.2
+    },
+    "AreaAbilityId": "boss_ground_area",
+    "ImpactSeconds": 0.2
+  },
+  "Persistence": {
+    "MaxSessions": 32
+  },
+  "Inventory": {
+    "Enabled": true
+  },
+  "GroundItems": {
+    "Enabled": true,
+    "PickupRange": 2.0,
+    "Seeds": [
+      {
+        "Id": "prototype_ground_sword_1",
+        "DefinitionId": "test_sword_item",
+        "X": -5.0,
+        "Z": 1.0
+      },
+      {
+        "Id": "prototype_ground_armor_1",
+        "DefinitionId": "test_armor_item",
+        "X": -5.0,
+        "Z": 4.0
+      }
+    ]
+  },
+  "Echoes": {
+    "Enabled": false,
+    "DefinitionId": "test_guardian_echo",
+    "Name": "Мира",
+    "Speed": 5.5,
+    "FollowDistance": 1.5,
+    "DecisionSeconds": 0.2,
+    "AssistSeconds": 4.0,
+    "LeashRadius": 7.0,
+    "AttackRange": 2.0,
+    "AttackPower": 8.0,
+    "AttackIntervalSeconds": 1.2,
+    "SignatureRange": 6.0,
+    "SignatureRadius": 2.0,
+    "SignaturePower": 24.0,
+    "SignatureCooldownSeconds": 8.0
+  },
+  "WorldStory": {
+    "Enabled": true
+  },
+  "StarterZone": {
+    "Enabled": true
+  },
+  "LiveDm": {
+    "Enabled": false
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.Hosting.Lifetime": "Information"
+    }
+  },
+  "Crafting": {
+    "Enabled": true
+  },
+  "Quests": {
+    "Enabled": true
+  }
+}

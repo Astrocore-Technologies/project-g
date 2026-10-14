@@ -19,7 +19,8 @@ public partial class ForestOcclusion : Node
 			if (node is GeometryInstance3D geometry && geometry.MaterialOverride is ShaderMaterial material &&
 				(material.ResourcePath.EndsWith("/painted_forest.tres", StringComparison.Ordinal) ||
 				 material.ResourcePath.EndsWith("/painted_gardens.tres", StringComparison.Ordinal) ||
-				 material.ResourcePath.EndsWith("/painted_hills.tres", StringComparison.Ordinal))) materials.Add(material);
+				 material.ResourcePath.EndsWith("/painted_hills.tres", StringComparison.Ordinal) ||
+				 material.Shader?.ResourcePath == "res://Assets/World/Linvel/Beech/Revision2/painted_vertex.gdshader")) materials.Add(material);
 			foreach (var child in node.GetChildren()) Collect(child);
 		}
 	}

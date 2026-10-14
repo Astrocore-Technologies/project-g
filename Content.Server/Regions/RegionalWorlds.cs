@@ -60,8 +60,8 @@ public sealed class RegionalWorlds
         var definitions = JsonSerializer.Deserialize<Layout[]>(File.ReadAllText(path), new JsonSerializerOptions
         { PropertyNameCaseInsensitive = true, UnmappedMemberHandling = System.Text.Json.Serialization.JsonUnmappedMemberHandling.Disallow })
             ?? throw new InvalidDataException("Missing regional content.");
-        if (definitions.Length is < 2 or > MaxRegions || definitions[0].Id != "prototype")
-            throw new InvalidDataException("Expected the existing primary and bounded adjoining regions.");
+        if (definitions.Length is < 2 or > MaxRegions)
+            throw new InvalidDataException("Expected a bounded graph of adjoining regions.");
         // Read all authored geometry/placements from one atomically published snapshot.
         RegionExportCatalog? exports = null;
         if (configuration["RegionExports:PackagePath"] is { } packagePath)
@@ -110,7 +110,7 @@ public sealed class RegionalWorlds
         var worlds = new List<ServerWorld>(definitions.Length);
         foreach (var definition in definitions)
         {
-            var primary = definition.Id == "prototype";
+            var primary = ReferenceEquals(definition, definitions[0]);
             if (!primary && (definition.WorldNode is null || definition.StarterZone is null || definition.Navigation is null))
                 throw new InvalidDataException("Adjoining region needs its own geometry and public places.");
             var movement = definition.Movement;
@@ -137,7 +137,9 @@ public sealed class RegionalWorlds
                 definition.Navigation is { } nav ? Options.Create(nav) : Settings<NavigationOptions>("Navigation"), catalog,
                 combat is not null ? Options.Create(combat) : Settings<CombatOptions>("Combat"), Settings<ServerOptions>("Server"),
                 definition.Npc is { } npc ? Options.Create(npc) : Settings<NpcOptions>("Npc"), definition.Boss is { } boss ? Options.Create(boss) : Settings<BossOptions>("Boss"),
-                Settings<InventoryOptions>("Inventory"), primary ? Settings<GroundItemOptions>("GroundItems") :
+                // Legacy ground seeds belong to the retired prototype, not to the
+                // first region of a reordered production graph.
+                Settings<InventoryOptions>("Inventory"), primary && definition.Id == "prototype" ? Settings<GroundItemOptions>("GroundItems") :
                     Options.Create(new GroundItemOptions { Enabled = true, PickupRange = Settings<GroundItemOptions>("GroundItems").Value.PickupRange }),
                 Settings<EchoOptions>("Echoes"), Settings<WorldStoryOptions>("WorldStory"), Settings<StarterZoneOptions>("StarterZone"),
                 definition.Crafting is { } crafting ? Options.Create(crafting) : Settings<CraftingOptions>("Crafting"), definition.Id, ids, node, starter,Settings<QuestOptions>("Quests"),pvp,placements.GetValueOrDefault(definition.Id)));

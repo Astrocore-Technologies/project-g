@@ -16,9 +16,11 @@ public sealed record SurfaceBox(SurfaceVertex Center, SurfaceVertex Size, Surfac
 /// <summary>Public, bounded offline geometry; no NPC definitions, secrets or mutable world rules.</summary>
 public sealed class SurfaceGeometry
 {
-    public const int MaxVertices = 4096;
-    public const int MaxPolygons = 4096;
-    public const int MaxBytes = 256 * 1024;
+    // Approved static-region budget. Transfers still use bounded 900-byte chunks;
+    // this does not enlarge movement packets or the snapshot datagram budget.
+    public const int MaxVertices = 16_384;
+    public const int MaxPolygons = 16_384;
+    public const int MaxBytes = 1024 * 1024;
     public int Version { get; set; } = 1;
     public string Revision { get; set; } = "";
     public string ScenePath { get; set; } = "";
@@ -32,17 +34,21 @@ public sealed class SurfaceGeometry
     public SurfaceVertex[] Vertices { get; set; } = [];
     public int[][] Polygons { get; set; } = [];
     public SurfaceBox[] Occluders { get; set; } = [];
+    // V3 adds exact nonwalkable cliff faces; they share the existing static budget
+    // and never become movement polygons or reveal server-only content.
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int[][]? OcclusionFaces { get; set; }
     [JsonIgnore] public ulong Hash => Convert.ToUInt64(Revision, 16);
     public static readonly JsonSerializerOptions Json = new() { UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow, MaxDepth = 8 };
 
     public void Validate()
     {
-        if (Version is not (1 or 2) || Version == 1 && WalkableFacesOcclude || Revision is not { Length: 16 } || !ulong.TryParse(Revision, System.Globalization.NumberStyles.HexNumber, null, out var hash) || hash == 0 ||
+        if (Version is not (1 or 2 or 3) || Version == 1 && WalkableFacesOcclude || Version < 3 && OcclusionFaces is not null || Revision is not { Length: 16 } || !ulong.TryParse(Revision, System.Globalization.NumberStyles.HexNumber, null, out var hash) || hash == 0 ||
             ScenePath is null || !ScenePath.StartsWith("res://Scenes/Regions/", StringComparison.Ordinal) || !ScenePath.EndsWith(".tscn", StringComparison.Ordinal) || ScenePath.Contains("..") || ScenePath.Length > 128 ||
             SourceHash is not { Length: 64 } || SourceHash.Any(c => !Uri.IsHexDigit(c)) ||
             !float.IsFinite(AgentRadius) || AgentRadius is < .1f or > 2 || !float.IsFinite(AgentHeight) || AgentHeight is < .5f or > 4 ||
             Vertices is null || Vertices.Length is < 3 or > MaxVertices || Polygons is null || Polygons.Length is < 1 or > MaxPolygons ||
-            Occluders is null || Occluders.Length > 256)
+            Occluders is null || Occluders.Length > 256 || (long)Polygons.Length+(OcclusionFaces?.Length ?? 0)>MaxPolygons)
             throw new InvalidDataException("Invalid bounded surface geometry header.");
         foreach (var p in Vertices) ValidatePoint(p);
         foreach (var polygon in Polygons)
@@ -58,13 +64,22 @@ public sealed class SurfaceGeometry
             ValidatePoint(box.Center); ValidatePoint(box.Size); ValidatePoint(box.Rotation);
             if (box.Size.X <= 0 || box.Size.Y <= 0 || box.Size.Z <= 0) throw new InvalidDataException("Invalid occluder size.");
         }
+        foreach (var face in OcclusionFaces ?? [])
+        {
+            if (face is null || face.Length!=3 || face.Distinct().Count()!=3 ||
+                face.Any(i=>(uint)i >= (uint)Vertices.Length))
+                throw new InvalidDataException("Invalid bounded occlusion triangle.");
+            if (Vector3.Cross(Vertices[face[1]].Vector-Vertices[face[0]].Vector,
+                Vertices[face[2]].Vector-Vertices[face[0]].Vector).LengthSquared()<1e-12f)
+                throw new InvalidDataException("Degenerate occlusion triangle.");
+        }
     }
 
     private string CalculateRevision()
     {
         var copy = new SurfaceGeometry { Revision = "0000000000000001", Version = Version, ScenePath = ScenePath, SourceHash = SourceHash,
             AgentRadius = AgentRadius, AgentHeight = AgentHeight, WalkableFacesOcclude = WalkableFacesOcclude,
-            Vertices = Vertices, Polygons = Polygons, Occluders = Occluders };
+            Vertices = Vertices, Polygons = Polygons, Occluders = Occluders, OcclusionFaces = OcclusionFaces };
         return Fingerprint(JsonSerializer.Serialize(copy, Json))[..16];
     }
     public void Seal() => Revision = CalculateRevision();

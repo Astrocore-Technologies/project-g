@@ -6,6 +6,7 @@ using Xunit;
 
 namespace Content.Tests.Server.Persistence;
 
+[Collection("Server processes")]
 public sealed class SqliteServerProcessTests
 {
     [Fact]
@@ -70,6 +71,12 @@ public sealed class SqliteServerProcessTests
         start.Environment["DOTNET_ENVIRONMENT"] = "Development";
         start.Environment["Persistence__Provider"] = "Sqlite";
         start.Environment["Persistence__SqlitePath"] = database;
+        // The small movement/crash fixture stays independent of production region cleanup.
+        start.ArgumentList.Add("--Balance:RegionsPath="+Path.Combine(AppContext.BaseDirectory,"Fixtures/retired-authored-regions.json"));
+        start.ArgumentList.Add("--RegionExports:PackagePath="+Path.Combine(AppContext.BaseDirectory,"Fixtures/legacy-flat-package.json"));
+        start.ArgumentList.Add("--RegionExports:SurfacePackagePath="+Path.Combine(AppContext.BaseDirectory,"Fixtures/legacy-surface-package.json"));
+        start.ArgumentList.Add("--RegionExports:VerifySources=false");
+        start.ArgumentList.Add("--Server:StartingRegion=prototype");
         var process = Process.Start(start) ?? throw new InvalidOperationException("Test server process could not start.");
         return new(process, process.StandardOutput.ReadToEndAsync(), process.StandardError.ReadToEndAsync());
     }

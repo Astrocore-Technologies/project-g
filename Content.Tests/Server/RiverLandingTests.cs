@@ -20,8 +20,7 @@ namespace Content.Tests.Server;
 
 public sealed class RiverLandingTests
 {
-    internal static RegionalWorlds Worlds() => RegionalWorlds.Load(Path.Combine(AppContext.BaseDirectory, "Data/regions.json"),
-        new ConfigurationBuilder().AddJsonFile(Path.Combine(AppContext.BaseDirectory, "appsettings.json")).Build(), ContentCatalogTests.Load());
+    internal static RegionalWorlds Worlds() => LegacyRegionFixtures.Load();
 
     [Fact]
     public void RoadsAndRepairedBridgeAreReachableButRiverAndBuildingsAreNot()

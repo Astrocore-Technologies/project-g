@@ -22,9 +22,10 @@ namespace Content.Tests.Server;
 
 public sealed class TerrainIntegrationTests
 {
-    internal static RegionalWorlds Worlds() => RegionalWorlds.Load(Path.Combine(AppContext.BaseDirectory,"Data/regions.json"),
+    internal static RegionalWorlds Worlds() => LegacyRegionFixtures.Load();
+    internal static RegionalWorlds CurrentWorlds(ContentCatalog? catalog = null) => RegionalWorlds.Load(Path.Combine(AppContext.BaseDirectory,"Data/regions.json"),
         new ConfigurationBuilder().AddJsonFile(Path.Combine(AppContext.BaseDirectory,"appsettings.json"))
-            .AddInMemoryCollection(new Dictionary<string,string?> { ["RegionExports:VerifySources"]="false" }).Build(), ContentCatalogTests.Load());
+            .AddInMemoryCollection(new Dictionary<string,string?> { ["RegionExports:VerifySources"]="false" }).Build(), catalog ?? ContentCatalogTests.Load());
 
     private static Vector2 Xz(Vector3 p) => new(p.X,p.Z);
     private static Vector3 Located(NavigationGrid grid, Vector3 point)

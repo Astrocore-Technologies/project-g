@@ -78,7 +78,7 @@ public sealed class SurfaceNavigation
                 // Full XYZ keys are essential: a bridge and its underpass cannot share edges by X/Z alone.
                 var ka = VertexKey.From(a); var kb = VertexKey.From(b);
                 var key = ka.CompareTo(kb) < 0 ? (ka, kb) : (kb, ka);
-                if (usedEdges.Contains(key)) throw new InvalidDataException("Non-manifold navigation edge.");
+                if (usedEdges.Contains(key)) throw new InvalidDataException($"Non-manifold navigation edge {a} -> {b} at triangle {i}.");
                 if (owners.Remove(key, out var owner))
                 {
                     Edges[owner.Triangle].Add(new(i, a, b));
@@ -176,8 +176,17 @@ public sealed class SurfaceNavigation
                 // Keep the probe in double precision. Casting it back to world
                 // floats loses small progress, while a 1 mm nudge skips thin faces.
                 var probe = Math.Min(t + 1e-7 / length,1);
-                if (!Triangles[edge.To].Sample(origin.X+dx*probe,origin.Y+dz*probe,out _,0)) continue;
-                next = edge.To; exit = t;
+                var target = edge.To;
+                if (!Triangles[target].Sample(origin.X+dx*probe,origin.Y+dz*probe,out _,0))
+                {
+                    // A line through a shared vertex can enter a face that is
+                    // two portals away. Follow only the connected fan around
+                    // that exact vertex; never step across a gap or another floor.
+                    var vertex = Math.Abs(u) < 1e-8 ? edge.A : Math.Abs(u-1) < 1e-8 ? edge.B : (Vector3?)null;
+                    if (vertex is not { } pivot || !TryVertexFan(current, pivot,
+                        origin.X+dx*probe, origin.Y+dz*probe, out target)) continue;
+                }
+                next = target; exit = t;
             }
             if (next < 0) return false;
             var crossedPoint = new Vector2((float)(origin.X+dx*exit),(float)(origin.Y+dz*exit));
@@ -185,6 +194,29 @@ public sealed class SurfaceNavigation
             crossings?.Add(new(crossedPoint.X, height, crossedPoint.Y));
             current = next; parameter = exit;
         }
+        return false;
+    }
+
+    private bool TryVertexFan(int start, Vector3 vertex, double x, double z, out int target)
+    {
+        // Ordinary manifold vertices have few incident faces. A bounded stack
+        // keeps shared movement/prediction allocation-free and rejects pathological fans.
+        Span<int> visited = stackalloc int[64];
+        visited[0] = start;
+        var count = 1;
+        for (var cursor = 0; cursor < count; cursor++)
+        {
+            var triangle = visited[cursor];
+            if (triangle != start && Triangles[triangle].Sample(x, z, out _, 0))
+            { target = triangle; return true; }
+            foreach (var edge in Edges[triangle])
+            {
+                if (Blocked[edge.To] || edge.A != vertex && edge.B != vertex || visited[..count].Contains(edge.To)) continue;
+                if (count == visited.Length) { target = -1; return false; }
+                visited[count++] = edge.To;
+            }
+        }
+        target = -1;
         return false;
     }
 

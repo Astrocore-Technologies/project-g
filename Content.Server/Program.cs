@@ -90,7 +90,7 @@ if (!validateContentOnly)
             builder.Services.AddSingleton<ICharacterDatabase>(_ =>
             {
                 var database = new DevelopmentSqliteCharacterStore(path);
-                database.CreateBackup(path + ".before-river-landing-" + Guid.NewGuid().ToString("N") + ".bak");
+                database.CreateBackup(path + ".before-start-" + Guid.NewGuid().ToString("N") + ".bak");
                 return database;
             });
             break;
@@ -123,7 +123,8 @@ if (balanceBuild is not null)
     regionalWorlds.StartingWorld.ConfigureBalanceSandbox(preset);
 }
 builder.Services.AddSingleton(regionalWorlds);
-builder.Services.AddSingleton(services =>
+// Historical migration is specific to River Landing, never apply it to a different primary.
+if (regionalWorlds.Primary.RegionId == "prototype") builder.Services.AddSingleton(services =>
 {
     var world = services.GetRequiredService<ServerWorld>();
     var initial = world.CreateInitialCharacter();

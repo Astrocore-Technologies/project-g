@@ -15,14 +15,15 @@ public partial class BalanceSandboxSmoke : Node
             var world = GD.Load<PackedScene>("res://Scenes/World.tscn").Instantiate<WorldController>(); world.AutoConnect = false; AddChild(world);
             var network = world.GetNode<NetworkClient>("NetworkClient");
             ProgressionState? progression = null; ProfessionState? profession = null; AbilityLoadout? loadout = null;
-            var damage = 0d; var monsters = 0;
+            var damage = 0d; var monsters = 0; CombatState? trainingTarget = null;
             network.ProgressionReceived += value => progression = value;
             network.ProfessionReceived += value => profession = value;
             network.AbilityLoadoutReceived += value => loadout = value;
             network.AbilityHitReceived += hit => damage += hit.Damage;
-            network.CombatStateReceived += value => { if (value.Kind == CombatEntityKind.Monster) monsters++; };
+            network.CombatStateReceived += value => { if (value.Kind == CombatEntityKind.Monster) monsters++;
+                if (value.Kind == CombatEntityKind.TrainingTarget) trainingTarget=value; };
             network.ConnectToServer();
-            await Wait(() => progression is not null && profession is not null && loadout is not null && monsters > 0, "sandbox baseline");
+            await Wait(() => progression is not null && profession is not null && loadout is not null && monsters > 0 && trainingTarget is not null, "sandbox baseline");
             if (progression!.Value.Level != 15 || progression.Value.Stats[0] != 25 || profession!.Value.ActiveId != 2)
                 throw new Exception("Sandbox build was not restored from the fixture.");
             var thrust = loadout!.Value.Abilities.Single(a => a.Id == 20);
@@ -32,9 +33,10 @@ public partial class BalanceSandboxSmoke : Node
             if (learnedThrust.Level != 2 || learnedThrust.NextPractice != 11 || learnedThrust.Practice != 0 || learnedThrust.Slot != 1)
                 throw new Exception("Individual skill curve, test skill level or Q slot was not received.");
             var player = world.GetChildren().OfType<PlayerController>().Single(p => p.GetNode<Camera3D>("CameraRig/Camera3D").Current);
-            if (System.Numerics.Vector2.Distance(player.PredictedPosition, new(15, -9)) > .3) throw new Exception("Unexpected arena spawn.");
-            if (!player.MoveTo(new(15, -12))) throw new Exception("Arena route unavailable.");
-            await Wait(() => System.Numerics.Vector2.Distance(player.PredictedPosition, new(15, -12)) < .3, "approach dummy");
+            var approach = trainingTarget!.Value.Position+new System.Numerics.Vector2(0,3);
+            var foot = ProjectG.Regions.PublicSurfaceAnchors.Position(network,approach);
+            if (!player.MoveTo(approach,foot.Y)) throw new Exception("Arena route unavailable.");
+            await Wait(() => System.Numerics.Vector2.Distance(player.PredictedPosition, approach) < .3, "approach dummy");
             network.SendAbility(new(1, network.LatestServerTick, 20, new(0, -1)));
             await Wait(() => damage > 0, "authoritative edited thrust hit");
             if (damage < 70) throw new Exception("Edited thrust damage did not apply.");

@@ -19,7 +19,8 @@ public static class RegionPackageExporter
         AddSource("Content.Server/Data/region-authoring.json");
         var manifest = JsonSerializer.Deserialize<Manifest>(File.ReadAllBytes(Path.Combine(root, "Content.Server/Data/region-authoring.json")), RegionExportPackage.Json)
             ?? throw new InvalidDataException("Missing region authoring manifest.");
-        if (manifest.Version != 1 || manifest.Regions is null || manifest.Regions.Length is < 1 or > 16)
+        // Terrain regions use the separate surface export; the flat-scene set may be empty.
+        if (manifest.Version != 1 || manifest.Regions is null || manifest.Regions.Length > 16)
             throw new InvalidDataException("Invalid region authoring manifest.");
         var regions = new List<RegionExportEntry>();
         foreach (var definition in manifest.Regions.OrderBy(r => r.Id, StringComparer.Ordinal))

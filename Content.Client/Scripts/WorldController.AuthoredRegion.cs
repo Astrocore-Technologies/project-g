@@ -14,39 +14,8 @@ public partial class WorldController
 
     private void LoadAuthoredRegion(string regionId, ulong expectedHash)
     {
-        _contentReady = false;
-        RegionRoot? scene = null;
-        try
-        {
-            var scenePath = regionId switch
-            {
-                "prototype" => "res://Scenes/Regions/RiverLanding/RiverLandingBlockout.tscn",
-                "river_city" => "res://Scenes/Regions/RiverCity/RiverCity.tscn",
-                _ => throw new InvalidDataException("Неизвестная клиентская сцена региона.")
-            };
-            scene = GD.Load<PackedScene>(scenePath).Instantiate<RegionRoot>();
-            var geometry = FlatGeometryBake.Bake(scene);
-            if (geometry.Hash != expectedHash) throw new InvalidDataException("Клиентская сцена и серверная карта различаются. Пересобери экспорт и перезапусти сервер.");
-            _authoredBase = geometry.CreateGrid();
-            _authoredOpening = geometry.OpeningCells;
-            // Inspector owns a camera/input/UI: remove it BEFORE entering the live tree.
-            foreach (var path in new[] { "Preview", "AuthoringAnchors", "Decorations/ScaleReferences" })
-            {
-                var node = scene.GetNodeOrNull(path);
-                if (node is not null) { node.GetParent().RemoveChild(node); node.Free(); }
-            }
-            _authoredRegion = scene;
-            AddChild(scene);
-            GetNode<Node3D>("Ground").Hide();
-            GetNode<CollisionShape3D>("Ground/CollisionShape3D").Disabled = true;
-            GetNode<DirectionalLight3D>("DirectionalLight3D").Hide();
-            _contentReady = true;
-        }
-        catch (Exception error)
-        {
-            if (scene is not null && scene.GetParent() is null) scene.Free();
-            RejectRegion(error.Message);
-        }
+        // Removed flat test maps must fail visibly instead of loading a missing scene.
+        RejectRegion($"Регион {regionId} отсутствует в текущем клиенте. Обновите экспорт и перезапустите сервер.");
     }
 
     private void RejectRegion(string message)
@@ -83,6 +52,9 @@ public partial class WorldController
 
     private void UnloadAuthoredRegion()
     {
+        // Stop native camera polling before the owning player/camera leaves.
+        if (_surfaceTerrain is not null)
+            _surfaceTerrain.ProcessMode = ProcessModeEnum.Disabled;
         _surfaceTerrain = null;
         DetachPresentation(_surfaceRegion); _surfaceRegion = null;
         DetachPresentation(_authoredRegion); _authoredRegion = null; _authoredBase = null;

@@ -14,9 +14,16 @@ public partial class RegionExportSmoke : Node
             var first = RegionPackageExporter.Build();
             var second = RegionPackageExporter.Build();
             Require(first.Encode().SequenceEqual(second.Encode()), "Repeated export changed bytes.");
-            var entry = first.Regions.Single(r => r.Id == "river_city");
-            var definition = new RegionPackageExporter.Definition(entry.Id, entry.ScenePath, entry.GeometryFile, entry.PlacementsFile, entry.Bindings);
-            var root = GD.Load<PackedScene>(entry.ScenePath).Instantiate<RegionRoot>();
+            // Exercise authoring invariants in a transient fixture. Retired maps
+            // are deliberately absent from the production scene/export graph.
+            var root = Fixture();
+            var definition = new RegionPackageExporter.Definition("export_fixture", "res://Scenes/Regions/Fixture.tscn",
+                "Data/Regions/fixture.json", "Data/Regions/fixture-points.json", new(StringComparer.Ordinal)
+                {
+                    ["Spawn"] = Guid.Parse(root.GetNode<EntryMarker>("AuthoringAnchors/Spawn").AuthoredObjectId),
+                    ["Gate"] = Guid.Parse(root.GetNode<GateMarker>("AuthoringAnchors/SouthGate").AuthoredObjectId)
+                });
+            var entry = RegionPackageExporter.ExportScene(root, definition);
             try
             {
                 var marker = root.GetNode<EntryMarker>("AuthoringAnchors/Spawn");
@@ -35,7 +42,7 @@ public partial class RegionExportSmoke : Node
                 var body = root.FindChildren("*", "StaticBody3D", true, false).Cast<StaticBody3D>()
                     .First(n => n.IsInGroup("region_movement_blocker"));
                 var bodyPosition = body.Position;
-                body.Position = new Vector3(0, body.Position.Y, 18);
+                body.Position = new Vector3(8, body.Position.Y, 12);
                 Require(FlatGeometryBake.Bake(root).Hash != entry.Geometry.Hash, "Moved blocker did not change navigation hash.");
                 body.Position = bodyPosition;
                 var collision = body.GetChildren().OfType<CollisionShape3D>().First();
@@ -49,6 +56,24 @@ public partial class RegionExportSmoke : Node
             GetTree().Quit();
         }
         catch (Exception error) { GD.PushError(error.ToString()); GetTree().Quit(1); }
+    }
+
+    private static RegionRoot Fixture()
+    {
+        var root = new RegionRoot { Name = "ExportFixture", RegionId = "export_fixture", MovementBounds = new(0,0,20,20) };
+        foreach (var name in new[] { "Environment", "Terrain", "Decorations", "PublicStateBindings", "AuthoringAnchors" })
+            root.AddChild(new Node3D { Name = name });
+        var floor = new StaticBody3D { Name = "Floor", Position = new(10,-.5f,10) };
+        floor.AddToGroup("region_walkable"); root.GetNode("Terrain").AddChild(floor);
+        floor.AddChild(new CollisionShape3D { Shape = new BoxShape3D { Size = new(20,1,20) } });
+        var blocker = new StaticBody3D { Name = "VisibleBlocker", Position = new(10,1,10) };
+        blocker.AddToGroup("region_movement_blocker"); root.GetNode("Decorations").AddChild(blocker);
+        blocker.AddChild(new CollisionShape3D { Shape = new BoxShape3D { Size = new(2,2,2) } });
+        root.GetNode("AuthoringAnchors").AddChild(new EntryMarker { Name = "Spawn", Position = new(2,0,2),
+            AuthoredObjectId = "10000000-0000-4000-8000-000000000001" });
+        root.GetNode("AuthoringAnchors").AddChild(new GateMarker { Name = "SouthGate", Position = new(17,0,17), Radius = 1,
+            AuthoredObjectId = "10000000-0000-4000-8000-000000000002" });
+        return root;
     }
 
     private static void Reject(Action action)

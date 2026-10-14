@@ -39,6 +39,26 @@ public sealed class SurfaceNavigationPrecisionTests
         Assert.InRange(Vector3.Distance(mover.Foot,to),0,.002f);
     }
 
+    [Fact]
+    public void TraceCrossesAConnectedVertexFanButCannotCrossAMissingOrBlockedFace()
+    {
+        var vertices = new SurfaceVertex[] { new(272,63.467f,-451),new(271,63.444f,-448),
+            new(271,63.25f,-458),new(275,63.55f,-453),new(275,63.52f,-447) };
+        var mesh = Mesh(vertices, [[0,1,2],[0,2,3],[0,3,4],[0,4,1]]);
+        var from = new Vector3(271.90747f,63.46f,-450.95374f);
+        var to = new Vector3(273.68866f,63.49f,-451.84433f);
+        Assert.True(mesh.TryLocate(from,.35f,out var start));
+        Assert.True(mesh.TryLocate(to,.35f,out var goal));
+        Assert.True(mesh.Trace(start,goal));
+        Assert.True(mesh.Trace(goal,start));
+        mesh.ApplyPatch([goal.Triangle],true);
+        Assert.False(mesh.Trace(start,goal));
+        var gap = Mesh(vertices, [[0,1,2],[0,3,4]]);
+        Assert.True(gap.TryLocate(from,.35f,out start));
+        Assert.True(gap.TryLocate(to,.35f,out goal));
+        Assert.False(gap.Trace(start,goal));
+    }
+
     private static SurfaceNavigation Mesh(SurfaceVertex[] vertices,int[][] polygons)
     {
         var map = new SurfaceGeometry { ScenePath="res://Scenes/Regions/Precision.tscn",SourceHash=new('A',64),Vertices=vertices,Polygons=polygons };

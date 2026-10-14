@@ -22,6 +22,8 @@ public sealed class SurfaceVisibility
         foreach (var polygon in map.WalkableFacesOcclude ? map.Polygons : [])
             for (var j = 1; j + 1 < polygon.Length; j++)
                 ground.Add((map.Vertices[polygon[0]].Vector, map.Vertices[polygon[j]].Vector, map.Vertices[polygon[j + 1]].Vector));
+        foreach (var face in map.OcclusionFaces ?? [])
+            ground.Add((map.Vertices[face[0]].Vector,map.Vertices[face[1]].Vector,map.Vertices[face[2]].Vector));
         _ground = ground.ToArray();
         _seen = new int[_boxes.Length + _ground.Length];
         long references = 0;

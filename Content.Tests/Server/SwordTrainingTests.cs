@@ -12,8 +12,7 @@ namespace Content.Tests.Server;
 
 public sealed class SwordTrainingTests
 {
-    internal static ServerWorld City() => RegionalWorlds.Load(Path.Combine(AppContext.BaseDirectory,"Data/regions.json"),
-        new ConfigurationBuilder().AddJsonFile(Path.Combine(AppContext.BaseDirectory,"appsettings.json")).Build(), ContentCatalogTests.Load()).Worlds.Single(w=>w.RegionId=="river_city");
+    internal static ServerWorld City() => LegacyRegionFixtures.Load().Worlds.Single(w=>w.RegionId=="river_city");
     internal static void Step(ServerWorld w, int count=1) { for(var i=0;i<count;i++) w.Simulate(.05f); }
     private static void Move(ServerWorld w,Vector2 target,uint sequence)
     {

@@ -22,6 +22,14 @@ public sealed class RegionExportTests
     }
 
     [Fact]
+    public void AllTerrainGraphAllowsAnEmptyFlatSetButStillRequiresFingerprints()
+    {
+        var package = Sample() with { Regions = [] };
+        Assert.Empty(RegionExportPackage.Parse(package.Encode()).Regions);
+        Assert.Throws<InvalidDataException>(() => (package with { Sources = new() }).Validate());
+    }
+
+    [Fact]
     public void RoundTripAndCanonicalOrderPreserveIdentity()
     {
         var package = Sample();

@@ -17,10 +17,11 @@ using Client = Content.Tests.Server.Networking.NetworkMovementIntegrationTests.T
 
 namespace Content.Tests.Server;
 
+[Collection("Server processes")]
 public sealed class RegionalNetworkTests
 {
     internal static RegionalWorlds Worlds() => RegionalWorlds.Load(Path.Combine(AppContext.BaseDirectory, "Fixtures", "legacy-regions.json"),
-        new ConfigurationBuilder().AddJsonFile(Path.Combine(AppContext.BaseDirectory, "appsettings.json"))
+        new ConfigurationBuilder().AddConfiguration(LegacyRegionFixtures.Configuration())
             // Legacy travel fixtures use their own 30x30 geometry, without the authored-map package.
             .AddInMemoryCollection(new Dictionary<string,string?>
             {
@@ -202,6 +203,12 @@ public sealed class RegionalNetworkTests
             start.ArgumentList.Add("--Persistence:Provider=Sqlite");
             start.ArgumentList.Add($"--Persistence:SqlitePath={store.DatabasePath}");
             start.ArgumentList.Add("--LiveDm:Enabled=false"); start.Environment["DOTNET_ENVIRONMENT"] = "Development";
+            // Crash/restart coverage deliberately uses retired fixture geometry, not live maps.
+            start.ArgumentList.Add("--Balance:RegionsPath="+Path.Combine(AppContext.BaseDirectory,"Fixtures/retired-authored-regions.json"));
+            start.ArgumentList.Add("--RegionExports:PackagePath="+Path.Combine(AppContext.BaseDirectory,"Fixtures/legacy-flat-package.json"));
+            start.ArgumentList.Add("--RegionExports:SurfacePackagePath="+Path.Combine(AppContext.BaseDirectory,"Fixtures/legacy-surface-package.json"));
+            start.ArgumentList.Add("--RegionExports:VerifySources=false");
+            start.ArgumentList.Add("--Server:StartingRegion=prototype");
             var process = Process.Start(start)!;
             process.BeginOutputReadLine(); process.BeginErrorReadLine(); return process;
         }

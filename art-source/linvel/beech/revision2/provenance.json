@@ -1,0 +1,76 @@
+{
+  "author": "Project G asset production through Blender MCP",
+  "source": "Original project geometry through Blender MCP and original generated hand-painted textures; source parts retained.",
+  "third_party_assets": false,
+  "bounds_checks": 1375,
+  "connection_overlap_min_m": 0.01,
+  "units": "metres",
+  "refinements": [
+    {
+      "source": "refine_asymmetric_fern.py",
+      "verified_parts": 127
+    },
+    {
+      "source": "refine_copse_regrowth.py",
+      "verified_parts": 162
+    },
+    {
+      "source": "polish_beech_assets.py",
+      "date": "2026-10-14",
+      "new_tree_variants": [
+        "beech_canopy_3",
+        "beech_canopy_4",
+        "beech_canopy_5",
+        "beech_canopy_6"
+      ],
+      "verified_variant_parts": 244,
+      "uv_paint_conversion": "All 23 models: measured metre-scaled UV and opaque material-family code in vertex colour alpha; shared material.",
+      "export": "Data API combines measured positions/UV/colours in a temporary mesh; source parts remain separate and editable."
+    },
+    {
+      "source": "add_understory_bush.py",
+      "date": "2026-10-14",
+      "asset": "beech_understory_bush",
+      "verified_parts": 161,
+      "leaves": 70,
+      "height_metres": 1.0735153,
+      "collision_boxes": 0,
+      "description": "Curved closed 3D leaf blades joined to measured petioles and stems."
+    }
+  ],
+  "ground_textures": {
+    "generated": "2026-10-13",
+    "purpose": "Four original generated neutral painted material tiles, cropped and mipmapped through Godot MCP",
+    "source": "imagegen",
+    "atlas": "Content.Client/Assets/World/Linvel/Beech/Revision2/Terrain/Textures/painted_ground_atlas.png"
+  },
+  "latest_visual_pass": {
+    "date": "2026-10-14",
+    "direction": "Stylized Hand-Painted Anime 3D, following the user's supplied concept section.",
+    "model_count": 23,
+    "individual_beech_variants": 7,
+    "source": "art-source/linvel/beech/revision2/beech_revision2_assets.blend",
+    "material_atlases": [
+      "Content.Client/Assets/World/Linvel/Beech/Revision2/StylePass/ground_atlas.png",
+      "Content.Client/Assets/World/Linvel/Beech/Revision2/StylePass/tree_water_atlas.png"
+    ],
+    "atlas_origin": "Original imagegen outputs; ground atlas edited to remove painted grass tufts.",
+    "textures": [
+      "GroundGrass",
+      "GroundPath",
+      "GroundRock",
+      "DampSoil",
+      "LeafClusters",
+      "SilverBark",
+      "WaterColour",
+      "WaterFoam"
+    ],
+    "tile_resolution": 512,
+    "mipmaps": true,
+    "ground_format": "RGBA8, neutral Terrain3D blend-height alpha 0.5",
+    "ground_grass_tufts_painted": false,
+    "crown_projection": "Soft triplanar, whole obstructing crown dither; physical trunk unchanged.",
+    "ground_sampling": "Mirrored albedo repeat and bilinear authored material blending.",
+    "water": "Godot-authored saved ArrayMesh, 488 triangles; moving colour and foam paint, no added collider."
+  }
+}

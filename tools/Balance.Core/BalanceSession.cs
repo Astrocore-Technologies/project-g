@@ -46,18 +46,23 @@ public sealed class BalanceSession : IDisposable
             var buildPath = Path.Combine(DirectoryPath, "build.json");
             BalanceDocument.WriteAtomic(buildPath, JsonSerializer.SerializeToUtf8Bytes(build));
             var regions = JsonNode.Parse(File.ReadAllText(Path.Combine(output, "Data", "regions.json")))!.AsArray();
-            var city = regions.Single(n => n!["Id"]!.GetValue<string>() == "river_city")!;
-            city["Npc"] = JsonSerializer.SerializeToNode(new
+            // Use the current primary region and its authored training target rather than a retired map.
+            var arena = regions[0]!;
+            var arenaId = arena["Id"]!.GetValue<string>();
+            var targetX = arena["Combat"]!["TargetX"]!.GetValue<float>();
+            var targetZ = arena["Combat"]!["TargetZ"]!.GetValue<float>();
+            arena["Combat"]!["TargetDefinitionId"] = "arena_dummy";
+            arena["Npc"] = JsonSerializer.SerializeToNode(new
             {
                 Enabled = build.MovingEnemy, DefinitionId = build.TargetId, SpawnId = "balance_enemy",
-                X = 9, Z = -14, RespawnSeconds = 5, AggroRadius = 6, LeashRadius = 12
+                X = targetX-6, Z = targetZ, RespawnSeconds = 5, AggroRadius = 6, LeashRadius = 12
             });
             var regionsPath = Path.Combine(DirectoryPath, "regions.json");
             BalanceDocument.WriteAtomic(regionsPath, Encoding.UTF8.GetBytes(regions.ToJsonString()));
             using (var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp))
             { socket.Bind(new IPEndPoint(IPAddress.Loopback, 0)); Port = ((IPEndPoint)socket.LocalEndPoint!).Port; }
             var serverDll = Path.Combine(output, "Content.Server.dll");
-            string[] settings = ["--environment", "Development", "--Server:StartingRegion=river_city", $"--Server:Port={Port}",
+            string[] settings = ["--environment", "Development", $"--Server:StartingRegion={arenaId}", $"--Server:Port={Port}",
                 $"--Persistence:SqlitePath={Path.Combine(DirectoryPath, "sandbox.db")}",
                 $"--Balance:ContentPath={contentPath}", $"--Balance:BuildPath={buildPath}", $"--Balance:RegionsPath={regionsPath}",
                 "--Logging:LogLevel:Default=Warning", "--Logging:LogLevel:Microsoft.Hosting.Lifetime=Information"];

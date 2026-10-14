@@ -160,9 +160,8 @@ public sealed class SkillBalanceTests
         var document = new BalanceDocument(ContentCatalogTests.DataPath);
         document.SetSkillCurve("abilities/6", new() { Levels = [new(40, 1), new(0, 2)] });
         var catalog = document.Catalog;
-        var configuration = new ConfigurationBuilder().AddJsonFile(Path.Combine(AppContext.BaseDirectory, "appsettings.json"))
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["Server:StartingRegion"] = "river_city" }).Build();
-        var world = RegionalWorlds.Load(Path.Combine(AppContext.BaseDirectory, "Data", "regions.json"), configuration, catalog).StartingWorld;
+        // Damage formula coverage uses the fixed, unarmoured legacy training dummy.
+        var world = LegacyRegionFixtures.Load("river_city",catalog).StartingWorld;
         var build = new BalanceTestBuild { ProfessionId = 2, SkillLevel = 7 };
         world.ConfigureBalanceSandbox(build);
         var initial = world.CreateInitialCharacter() with { X = 15, Z = -12 };

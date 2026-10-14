@@ -59,9 +59,8 @@ public sealed class BalanceToolsTests
     public void SandboxBuildLoadsInRealWorldAndMatchesServerStats(int profession)
     {
         var catalog = ContentCatalogTests.Load();
-        var configuration = new ConfigurationBuilder().AddJsonFile(Path.Combine(AppContext.BaseDirectory, "appsettings.json"))
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["Server:StartingRegion"] = "river_city" }).Build();
-        var world = RegionalWorlds.Load(Path.Combine(AppContext.BaseDirectory, "Data", "regions.json"), configuration, catalog).StartingWorld;
+        var world = TerrainIntegrationTests.CurrentWorlds(catalog).StartingWorld;
+        var authoredSpawn = world.CreateInitialCharacter();
         var build = new BalanceTestBuild { Level = 15, Stats = new(40, 10, 20, 1, 5, 5), ProfessionId = (ushort)profession };
         world.ConfigureBalanceSandbox(build);
         var initial = world.CreateInitialCharacter();
@@ -74,7 +73,8 @@ public sealed class BalanceToolsTests
         Assert.Equal(preview.Interval, actor.AttackInterval, 8);
         Assert.Equal(profession, world.ProfessionState(player.EntityId, 0).ActiveId);
         Assert.Equal(15, world.ProgressionState(player.EntityId, 0).Level);
-        Assert.Equal(new Vector2(15, -9), player.Position);
+        Assert.Equal(new Vector2(authoredSpawn.X, authoredSpawn.Z), player.Position);
+        Assert.Equal(authoredSpawn.Surface!.Height, player.Height);
         Assert.Equal(initial.Stats, world.CaptureCharacter(1).Stats);
         if (profession == 2)
         {

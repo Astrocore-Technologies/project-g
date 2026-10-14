@@ -1,0 +1,300 @@
+[
+  {
+    "Id": "prototype", "Destination": "outskirts",
+    "ExitX": 37, "ExitZ": -10, "ArrivalX": -12, "ArrivalZ": 10, "Radius": 0.65,
+    "AdditionalRoutes": [
+      { "Destination": "river_city", "ExitX": -12, "ExitZ": 30, "ArrivalX": 0, "ArrivalZ": 0, "Radius": 1.5, "ArrivalAnchor": "SouthArrival" },
+      {"Destination": "terrain_test", "ExitX": -20, "ExitZ": 18, "ArrivalX": -17, "ArrivalZ": 14, "Radius": 1},
+      {"Destination": "linvel_beech", "ExitX": -24, "ExitZ": 18, "ArrivalX": -425, "ArrivalZ": 330, "ArrivalHeight": 7.1, "Radius": 1}
+    ],
+    "Movement": { "MinX": -40, "MaxX": 40, "MinZ": -32, "MaxZ": 32, "SpawnX": -12, "SpawnZ": 18, "WorldLayoutVersion": 1 },
+    "Navigation": { "GeometryFile": "Data/Regions/river-landing.json" },
+    "Npc": { "Enabled": true, "SpawnId": "npc", "RespawnSeconds": 30, "DefinitionId": "test_creature", "X": -23, "Z": -22 },
+    "WorldNode": { "X": 15, "Z": -10 },
+    "StarterZone": {
+      "RegionName": "Окраина Речной пристани", "TownName": "Речная пристань", "GuideName": "Проводник",
+      "TownX": -12, "TownZ": 18, "GuideX": -15, "GuideZ": 19, "RevealRadiusCells": 3,
+      "Landmarks": [
+        { "Id": 1, "Name": "Роща", "X": -24, "Z": -10 },
+        { "Id": 2, "Name": "Старый мост", "X": 14, "Z": -10 }
+      ]
+    }
+  },
+  {
+    "Id": "outskirts", "Destination": "prototype",
+    "ExitX": -14, "ExitZ": 10, "ArrivalX": 34, "ArrivalZ": -10, "Radius": 0.65,
+    "AdditionalRoutes": [
+      { "Destination": "river_city", "ExitX": -10, "ExitZ": 13, "ArrivalX": 0, "ArrivalZ": 0, "Radius": 1.0, "ArrivalAnchor": "RiverArrival" }
+    ],
+    "Movement": { "WorldLayoutVersion": 1 },
+    "Navigation": {
+      "CellSize": 1, "AgentRadius": 0.45,
+      "BlockedAreas": [
+        { "X": 14, "Z": 10, "Width": 2, "Height": 10 },
+        { "X": 3, "Z": 3, "Width": 4, "Height": 2 }
+      ]
+    },
+    "Npc": { "Enabled": true, "SpawnId": "npc", "RespawnSeconds": 30, "DefinitionId": "test_creature", "X": 9, "Z": 2 },
+    "WorldNode": { "Key": "outskirts-crossing", "KeeperName": "Смотритель окраины" },
+    "StarterZone": {
+      "RegionName": "Восточная окраина", "TownName": "Дорожный лагерь", "GuideName": "Разведчик окраины",
+      "TownX": -10, "TownZ": 0, "GuideX": -11, "GuideZ": -1, "RevealRadiusCells": 2,
+      "Landmarks": [
+        { "Id": 1, "Name": "Старые камни", "X": -7, "Z": -6 },
+        { "Id": 2, "Name": "Восточный дозор", "X": 10, "Z": 7 }
+      ]
+    }
+  },
+  {
+    "Id": "river_city", "Destination": "prototype",
+    "ExitX": 0, "ExitZ": 0, "ArrivalX": -12, "ArrivalZ": 26, "Radius": 2.8, "ExitAnchor": "SouthGate",
+    "AdditionalRoutes": [
+      { "Destination": "outskirts", "ExitX": 0, "ExitZ": 0, "ArrivalX": -10, "ArrivalZ": 8, "Radius": 2.8, "ExitAnchor": "RiverGate" }
+    ],
+    "PlacementsFile": "Data/Regions/river-city-placements.json",
+    "Navigation": { "GeometryFile": "Data/Regions/river-city.json" },
+    "SafeSettlement": true,
+    "Npc": { "Enabled": false },
+    "Boss": { "Actor": { "Enabled": false } },
+    "Crafting": { "Enabled": false },
+    "WorldNode": { "Key": "river-city", "Interactive": false, "OpeningCells": [] },
+    "StarterZone": {
+      "RegionName": "Речная пристань", "TownName": "Рыночная площадь", "GuideName": "Городской проводник",
+      "TownX": 0, "TownZ": 0, "GuideX": 0, "GuideZ": 0, "RevealRadiusCells": 4,
+      "Landmarks": []
+    }
+  },
+  {
+    "Id": "terrain_test",
+    "Destination": "prototype",
+    "ExitX": -19,
+    "ExitZ": 14,
+    "ArrivalX": -17,
+    "ArrivalZ": 18,
+    "Radius": 0.65,
+    "Movement": {
+      "MinX": -20,
+      "MaxX": 20,
+      "MinZ": -16,
+      "MaxZ": 16,
+      "SpawnX": -17,
+      "SpawnZ": 14,
+      "WorldLayoutVersion": 1
+    },
+    "Navigation": {
+      "SurfaceFile": "Data/Regions/surface-package.json",
+      "SurfaceRegion": "terrain_test"
+    },
+    "Combat": {
+      "TargetX": 6,
+      "TargetZ": -6,
+      "TargetHeight": 4
+    },
+    "Npc": {
+      "Enabled": true,
+      "SpawnId": "npc",
+      "RespawnSeconds": 30,
+      "DefinitionId": "test_creature",
+      "X": -10,
+      "Z": -11,
+      "Height": 4
+    },
+    "Boss": {
+      "Actor": {
+        "Enabled": false
+      }
+    },
+    "Crafting": {
+      "Enabled": false
+    },
+    "WorldNode": {
+      "Key": "terrain_test",
+      "Interactive": false,
+      "OpeningCells": [],
+      "X": -17,
+      "Z": 14
+    },
+    "StarterZone": {
+      "RegionName": "Рельеф — тест",
+      "TownName": "Вход",
+      "GuideName": "Тестовый проводник",
+      "TownX": -17,
+      "TownZ": 14,
+      "GuideX": -15,
+      "GuideZ": 14,
+      "RevealRadiusCells": 2,
+      "Landmarks": [
+        {
+          "Id": 1,
+          "Name": "Западный проход",
+          "X": -10,
+          "Z": 2
+        },
+        {
+          "Id": 2,
+          "Name": "Восточная площадка",
+          "X": 17,
+          "Z": 12
+        }
+      ]
+    },
+    "AdditionalRoutes": [
+      {
+        "Destination": "dungeon_test",
+        "ExitX": 16,
+        "ExitZ": 14,
+        "ArrivalX": -15,
+        "ArrivalZ": 14,
+        "Radius": 1
+      }
+    ]
+  },
+  {
+    "Id": "linvel_beech",
+    "Destination": "prototype",
+    "ExitX": -445, "ExitZ": 330, "ExitHeight": 7.1,
+    "ArrivalX": -24, "ArrivalZ": 21, "Radius": 2.5,
+    "AdditionalRoutes": [
+      { "Destination": "linvel_gardens", "ExitX": -435, "ExitZ": 330, "ExitHeight": 7.1, "ArrivalX": 428, "ArrivalZ": -220, "ArrivalHeight": 25.1, "Radius": 2.5 },
+      { "Destination": "linvel_fox_hills", "ExitX": 220, "ExitZ": 100, "ExitHeight": 14.13, "ArrivalX": 430, "ArrivalZ": 150, "ArrivalHeight": 28.40, "Radius": 2.5 }
+    ],
+    "Movement": { "MinX": -480, "MaxX": 480, "MinZ": -400, "MaxZ": 400, "SpawnX": -425, "SpawnZ": 330, "SpawnHeight": 7.05, "WorldLayoutVersion": 1 },
+    "Navigation": { "CellSize": 16, "SurfaceFile": "Data/Regions/surface-package.json", "SurfaceRegion": "linvel_beech" },
+    "Combat": { "TargetX": -414, "TargetZ": 321, "TargetHeight": 7.1 },
+    "Npc": { "Enabled": true, "SpawnId": "beech-test-creature", "RespawnSeconds": 30, "DefinitionId": "test_creature", "X": 248, "Z": 50, "Height": 15.1 },
+    "Boss": { "Actor": { "Enabled": false } },
+    "Crafting": { "Enabled": false },
+    "Pvp": { "SafeMinX": -437, "SafeMaxX": -413, "SafeMinZ": 318, "SafeMaxZ": 342, "RespawnX": -425, "RespawnZ": 330 },
+    "WorldNode": { "Key": "linvel-beech", "Interactive": false, "OpeningCells": [], "X": -425, "Z": 330 },
+    "StarterZone": {
+      "RegionName": "Буковая долина", "TownName": "Обжитая опушка", "GuideName": "Лесной проводник",
+      "TownX": -425, "TownZ": 330, "GuideX": -420, "GuideZ": 336, "RevealRadiusCells": 2,
+      "Landmarks": [
+        { "Id": 1, "Name": "Двор лесозаготовителей", "X": -305, "Z": 220 },
+        { "Id": 2, "Name": "Буковый мост", "X": 80, "Z": 80 }
+      ]
+    }
+  },
+  {
+    "Id": "dungeon_test",
+    "Destination": "terrain_test",
+    "ExitX": -17,
+    "ExitZ": 14,
+    "ArrivalX": 13,
+    "ArrivalZ": 14,
+    "Radius": 0.65,
+    "Movement": {
+      "MinX": -20,
+      "MaxX": 20,
+      "MinZ": -16,
+      "MaxZ": 16,
+      "SpawnX": -15,
+      "SpawnZ": 14,
+      "WorldLayoutVersion": 1
+    },
+    "Navigation": {
+      "SurfaceFile": "Data/Regions/surface-package.json",
+      "SurfaceRegion": "dungeon_test"
+    },
+    "Combat": {
+      "TargetX": -10,
+      "TargetZ": 10
+    },
+    "Npc": {
+      "Enabled": true,
+      "SpawnId": "npc",
+      "RespawnSeconds": 30,
+      "DefinitionId": "test_creature",
+      "X": 7,
+      "Z": -6,
+      "Height": 4
+    },
+    "Boss": {
+      "Actor": {
+        "Enabled": false
+      }
+    },
+    "Crafting": {
+      "Enabled": false
+    },
+    "WorldNode": {
+      "Key": "dungeon_test",
+      "Interactive": false,
+      "OpeningCells": [],
+      "X": -17,
+      "Z": 14
+    },
+    "StarterZone": {
+      "RegionName": "Общее подземелье — тест",
+      "TownName": "Вход",
+      "GuideName": "Тестовый проводник",
+      "TownX": -15,
+      "TownZ": 14,
+      "GuideX": -13,
+      "GuideZ": 14,
+      "RevealRadiusCells": 2,
+      "Landmarks": [
+        {
+          "Id": 1,
+          "Name": "Западный проход",
+          "X": -10,
+          "Z": 2
+        },
+        {
+          "Id": 2,
+          "Name": "Восточная площадка",
+          "X": 17,
+          "Z": 12
+        }
+      ]
+    }
+  },
+  {
+    "Id": "linvel_gardens", "Destination": "linvel_beech",
+    "ExitX": 445, "ExitZ": -225, "ExitHeight": 25.1,
+    "ArrivalX": -425, "ArrivalZ": 330, "ArrivalHeight": 7.1, "Radius": 2.5,
+    "AdditionalRoutes": [
+      { "Destination": "linvel_fox_hills", "ExitX": 265, "ExitZ": 220, "ExitHeight": 41.11, "ArrivalX": -350, "ArrivalZ": 420, "ArrivalHeight": 21.37, "Radius": 2.5 }
+    ],
+    "Movement": { "MinX": -480, "MaxX": 480, "MinZ": -400, "MaxZ": 400, "SpawnX": -420, "SpawnZ": 230, "SpawnHeight": 14.1, "WorldLayoutVersion": 1 },
+    "Navigation": { "CellSize": 16, "SurfaceFile": "Data/Regions/surface-package.json", "SurfaceRegion": "linvel_gardens" },
+    "Combat": { "TargetX": -413, "TargetZ": 226, "TargetHeight": 14.1 },
+    "Npc": { "Enabled": false },
+    "Boss": { "Actor": { "Enabled": false } },
+    "Crafting": { "Enabled": false },
+    "Pvp": { "SafeMinX": -432, "SafeMaxX": -408, "SafeMinZ": 218, "SafeMaxZ": 242, "RespawnX": -420, "RespawnZ": 230 },
+    "WorldNode": { "Key": "linvel-gardens", "Interactive": false, "OpeningCells": [], "X": -420, "Z": 230 },
+    "StarterZone": {
+      "RegionName": "Садовые долины", "TownName": "Ближние хозяйства", "GuideName": "Садовый проводник",
+      "TownX": -420, "TownZ": 230, "GuideX": -425, "GuideZ": 234, "RevealRadiusCells": 2,
+      "Landmarks": [
+        { "Id": 1, "Name": "Мельничная низина", "X": -57, "Z": 82 },
+        { "Id": 2, "Name": "Солнечные сады", "X": 212, "Z": -65 }
+      ]
+    }
+  },
+  {
+    "Id": "linvel_fox_hills", "Destination": "linvel_gardens",
+    "ExitX": -350, "ExitZ": 430, "ExitHeight": 21.27,
+    "ArrivalX": 265, "ArrivalZ": 230, "ArrivalHeight": 41.1, "Radius": 2.5,
+    "AdditionalRoutes": [
+      { "Destination": "linvel_beech", "ExitX": 440, "ExitZ": 150, "ExitHeight": 28.36, "ArrivalX": 225, "ArrivalZ": 108, "ArrivalHeight": 13.95, "Radius": 2.5 }
+    ],
+    "Movement": { "MinX": -480, "MaxX": 480, "MinZ": -480, "MaxZ": 480, "SpawnX": -350, "SpawnZ": 420, "SpawnHeight": 21.37, "WorldLayoutVersion": 1 },
+    "Navigation": { "CellSize": 16, "SurfaceFile": "Data/Regions/surface-package.json", "SurfaceRegion": "linvel_fox_hills" },
+    "Combat": { "TargetX": -343, "TargetZ": 415, "TargetHeight": 21.45 },
+    "Npc": { "Enabled": false },
+    "Boss": { "Actor": { "Enabled": false } },
+    "Crafting": { "Enabled": false },
+    "Pvp": { "SafeMinX": -362, "SafeMaxX": -338, "SafeMinZ": 408, "SafeMaxZ": 432, "RespawnX": -350, "RespawnZ": 420 },
+    "WorldNode": { "Key": "linvel-fox-hills", "Interactive": false, "OpeningCells": [], "X": -350, "Z": 420 },
+    "StarterZone": {
+      "RegionName": "Лисьи холмы", "TownName": "Нижние пастбища", "GuideName": "Проводник холмов",
+      "TownX": -350, "TownZ": 420, "GuideX": -346, "GuideZ": 419, "RevealRadiusCells": 2,
+      "Landmarks": [
+        { "Id": 1, "Name": "Заброшенное хозяйство", "X": -230, "Z": 105 },
+        { "Id": 2, "Name": "Сторожевой холм", "X": 40, "Z": -40 }
+      ]
+    }
+  }
+]

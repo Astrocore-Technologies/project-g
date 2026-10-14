@@ -26,7 +26,7 @@ public sealed class SurfaceProtocolTests
     [Fact]
     public void OrderedSurfaceChunksAreBoundedAndContentRevisionIsVerified()
     {
-        var geometry=SurfaceCatalog.Load(Path.Combine(AppContext.BaseDirectory,SurfaceCatalog.PackagePath),null)["terrain_test"];var bytes=geometry.Encode();var assembly=new SurfaceAssembly();SurfaceGeometry? assembled=null;
+        var geometry=SurfaceCatalog.Load(Path.Combine(AppContext.BaseDirectory,SurfaceCatalog.PackagePath),null)["linvel_beech"];var bytes=geometry.Encode();var assembly=new SurfaceAssembly();SurfaceGeometry? assembled=null;
         for(var offset=0;offset<bytes.Length;offset+=NetworkProtocol.SurfaceChunkBytes)
         {
             var chunk=new SurfaceChunk(geometry.Hash,bytes.Length,offset,bytes.AsSpan(offset,Math.Min(NetworkProtocol.SurfaceChunkBytes,bytes.Length-offset)).ToArray());var wire=NetworkProtocol.Write(chunk);Assert.InRange(wire.Length,2,1200);
@@ -36,6 +36,31 @@ public sealed class SurfaceProtocolTests
         var first=new SurfaceChunk(geometry.Hash,bytes.Length,0,bytes[..NetworkProtocol.SurfaceChunkBytes]);var duplicate=new SurfaceAssembly();duplicate.Add(first);Assert.Throws<InvalidDataException>(()=>duplicate.Add(first));
         Assert.Throws<InvalidDataException>(()=>new SurfaceAssembly().Add(first with {TotalBytes=int.MaxValue}));
         geometry.Vertices[0]=geometry.Vertices[0] with {Y=geometry.Vertices[0].Y+1};Assert.Throws<InvalidDataException>(()=>SurfaceGeometry.Decode(geometry.Encode()));
+    }
+    [Fact]
+    public void LargeStaticSurfaceChunksRejectOversizeTruncationAndTrailingData()
+    {
+        var chunk = new SurfaceChunk(123, SurfaceGeometry.MaxBytes, 0,
+            new byte[NetworkProtocol.SurfaceChunkBytes]);
+        var packet = NetworkProtocol.Write(chunk);
+        Assert.InRange(packet.Length, 1, 1200);
+        Assert.True(NetworkProtocol.TryReadSurfaceChunk(Reader(packet), out var decoded));
+        Assert.Equal(chunk.TotalBytes, decoded.TotalBytes);
+        Assert.Equal(chunk.Data, decoded.Data);
+        Assert.Null(new SurfaceAssembly().Add(decoded));
+        var oversize = chunk with { TotalBytes = SurfaceGeometry.MaxBytes + 1 };
+        Assert.Throws<ArgumentException>(() => NetworkProtocol.Write(oversize));
+        Assert.Throws<InvalidDataException>(() => new SurfaceAssembly().Add(oversize));
+        var bytes = packet.CopyData();
+        for (var length = 0; length < bytes.Length; length++)
+        {
+            var reader = new NetDataReader(bytes[..length]);
+            if (NetworkProtocol.TryReadMessageType(reader, out _))
+                Assert.False(NetworkProtocol.TryReadSurfaceChunk(reader, out _));
+        }
+        var trailing = new NetDataReader(bytes.Concat(new byte[] { 0 }).ToArray());
+        Assert.True(NetworkProtocol.TryReadMessageType(trailing, out _));
+        Assert.False(NetworkProtocol.TryReadSurfaceChunk(trailing, out _));
     }
     [Fact]
     public void ReadinessAndElevatedGatesRoundTrip()

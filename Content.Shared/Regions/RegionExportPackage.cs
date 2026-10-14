@@ -45,7 +45,8 @@ public sealed record RegionExportPackage(int Version, RegionExportEntry[] Region
 
     public void Validate()
     {
-        if (Version != CurrentVersion || Regions is null || Regions.Length is < 1 or > 16 ||
+        // An all-terrain graph has no flat entries; fingerprints still validate its compiler inputs.
+        if (Version != CurrentVersion || Regions is null || Regions.Length > 16 ||
             Sources is null || Sources.Count is < 1 or > 2048)
             throw new InvalidDataException("Unsupported or unbounded region package.");
         var ids = new HashSet<string>(StringComparer.Ordinal);

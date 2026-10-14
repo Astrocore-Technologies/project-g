@@ -17,7 +17,7 @@ namespace Content.Tests.Server;
 public sealed class LinvelFoxHillsTests
 {
     private static Content.Server.World.ServerWorld World() =>
-        TerrainIntegrationTests.Worlds().Worlds.Single(w => w.RegionId == "linvel_fox_hills");
+        TerrainIntegrationTests.CurrentWorlds().Worlds.Single(w => w.RegionId == "linvel_fox_hills");
 
     [Fact]
     public void MainRoadAndForestPathAreConnectedAndWithinTheTransferBudget()
@@ -145,7 +145,7 @@ public sealed class LinvelFoxHillsTests
     [Fact]
     public void BothNeighbouringRegionsHaveSafeReturnArrivalsAndHeightPersists()
     {
-        var worlds=TerrainIntegrationTests.Worlds(); var world=worlds.Worlds.Single(w=>w.RegionId=="linvel_fox_hills");
+        var worlds=TerrainIntegrationTests.CurrentWorlds(); var world=worlds.Worlds.Single(w=>w.RegionId=="linvel_fox_hills");
         foreach(var other in new[] { "linvel_gardens", "linvel_beech" })
         {
             Assert.Contains(worlds.Routes,r=>r.Source==world.RegionId && r.Destination==other);
@@ -166,7 +166,7 @@ public sealed class LinvelFoxHillsTests
     [Fact]
     public async Task TwoNetworkClientsClimbTheRampAndAgreeOnEachOthersHeight()
     {
-        var worlds = TerrainIntegrationTests.Worlds();
+        var worlds = TerrainIntegrationTests.CurrentWorlds();
         var hills = worlds.Worlds.Single(w => w.RegionId == "linvel_fox_hills");
         var surface = hills.Navigation.Surface!;
         using var profile = Profile();
