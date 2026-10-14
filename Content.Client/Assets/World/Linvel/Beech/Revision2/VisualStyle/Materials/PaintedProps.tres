@@ -1,0 +1,19 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://pnujsvxuaech"]
+
+[ext_resource type="Shader" uid="uid://bn4p0yeohfr0" path="res://Assets/ArtDirection/ForestReference/Shaders/painted_props.gdshader" id="1_s8efx"]
+[ext_resource type="Texture2D" uid="uid://d3k6xg3dbslt5" path="res://Assets/World/Linvel/Beech/Revision2/StylePass/SilverBark.res" id="2_y4ciw"]
+[ext_resource type="Texture2D" uid="uid://va3pbcdkdvv4" path="res://Assets/World/Linvel/Beech/Revision2/cloth_paint.res" id="3_cb4lf"]
+[ext_resource type="Texture2D" uid="uid://bdmi8jgtu8edd" path="res://Assets/World/Linvel/Beech/Revision2/StylePass/GroundRock.res" id="4_dehk0"]
+[ext_resource type="Texture2D" uid="uid://c1eo35ckxl5up" path="res://Assets/World/Linvel/Beech/Revision2/wood_paint.res" id="5_dma3k"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_s8efx")
+shader_parameter/shadow_tint = Color(0.62, 0.72, 0.78, 1)
+shader_parameter/shade_floor = 0.32
+shader_parameter/light_softness = 0.42
+shader_parameter/wrap_light = 0.15
+shader_parameter/bark_paint = ExtResource("2_y4ciw")
+shader_parameter/wood_paint = ExtResource("5_dma3k")
+shader_parameter/stone_paint = ExtResource("4_dehk0")
+shader_parameter/cloth_paint = ExtResource("3_cb4lf")

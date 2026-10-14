@@ -1,0 +1,28 @@
+[gd_scene format=3 uid="uid://dv4lk1lw0lafv"]
+
+[ext_resource type="Material" uid="uid://ctjw313jsaena" path="res://Assets/ArtDirection/ForestReference/Materials/SilverBark.tres" id="1_sykqs"]
+[ext_resource type="ArrayMesh" uid="uid://cx0m1prnjhhia" path="res://Assets/ArtDirection/ForestReference/Meshes/beech_reference_b_Bark.res" id="2_2j3id"]
+[ext_resource type="Material" uid="uid://be34tvy4xe08k" path="res://Assets/ArtDirection/ForestReference/Materials/BeechLeaves.tres" id="3_n22qb"]
+[ext_resource type="ArrayMesh" uid="uid://c8ola5ja46drf" path="res://Assets/ArtDirection/ForestReference/Meshes/beech_reference_b_Leaves.res" id="4_okmfk"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_btvlm"]
+height = 4.5
+radius = 0.52
+
+[node name="BeechReferenceB" type="Node3D" unique_id=2079651900]
+metadata/asset_id = "beech_reference_b"
+
+[node name="beech_reference_b_Bark" type="MeshInstance3D" parent="." unique_id=1418160795]
+material_override = ExtResource("1_sykqs")
+mesh = ExtResource("2_2j3id")
+
+[node name="beech_reference_b_Leaves" type="MeshInstance3D" parent="." unique_id=671582538]
+material_override = ExtResource("3_n22qb")
+mesh = ExtResource("4_okmfk")
+
+[node name="TrunkCollision" type="StaticBody3D" parent="." unique_id=401746430]
+collision_layer = 4
+
+[node name="Shape" type="CollisionShape3D" parent="TrunkCollision" unique_id=601759319]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, 0)
+shape = SubResource("CylinderShape3D_btvlm")

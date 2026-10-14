@@ -1,0 +1,15 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://d15vhpxjrvswi"]
+
+[ext_resource type="Shader" uid="uid://q8vm5qnipwot" path="res://Assets/World/Linvel/Beech/Revision2/VisualStyle/Shaders/painted_bark.gdshader" id="1_ye87q"]
+[ext_resource type="Texture2D" uid="uid://d3k6xg3dbslt5" path="res://Assets/World/Linvel/Beech/Revision2/StylePass/SilverBark.res" id="2_p0hra"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_ye87q")
+shader_parameter/shadow_tint = Color(0.62, 0.72, 0.78, 1)
+shader_parameter/shade_floor = 0.32
+shader_parameter/light_softness = 0.42
+shader_parameter/wrap_light = 0.15
+shader_parameter/surface_paint = ExtResource("2_p0hra")
+shader_parameter/surface_tint = Color(0.73, 0.76, 0.68, 1)
+shader_parameter/paint_strength = 0.65

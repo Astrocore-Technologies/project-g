@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ForestLightingPreset" format=3 uid="uid://bwvhfbe7gsk6m"]
+
+[ext_resource type="Script" uid="uid://0p431xxiepj" path="res://Assets/ArtDirection/ForestReference/ForestLightingPreset.gd" id="1_3rlyx"]
+
+[resource]
+script = ExtResource("1_3rlyx")
+display_name = "Рассеянный свет"
+sun_rotation_degrees = Vector3(-62, -32, 0)
+sun_colour = Color(0.82, 0.89, 0.95, 1)
+sun_energy = 0.75
+ambient_colour = Color(0.61, 0.73, 0.79, 1)
+ambient_energy = 0.58
+fog_colour = Color(0.62, 0.73, 0.73, 1)

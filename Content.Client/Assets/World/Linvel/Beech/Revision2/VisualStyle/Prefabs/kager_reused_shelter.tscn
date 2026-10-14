@@ -1,0 +1,62 @@
+[gd_scene format=3 uid="uid://b7ool2y0l0y6d"]
+
+[ext_resource type="Material" uid="uid://pnujsvxuaech" path="res://Assets/World/Linvel/Beech/Revision2/VisualStyle/Materials/PaintedProps.tres" id="1_atna8"]
+[ext_resource type="ArrayMesh" uid="uid://qotihdtoiuq3" path="res://Assets/World/Linvel/Beech/Revision2/Meshes/kager_reused_shelter.res" id="2_7jiqi"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_vyvqy"]
+size = Vector3(0.23, 3.3, 0.23)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_h8bgl"]
+size = Vector3(0.23, 3.3, 0.23)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_c76vj"]
+size = Vector3(0.23, 3.3, 0.23)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_iof4u"]
+size = Vector3(0.23, 3.3, 0.23)
+
+[node name="HerbalistRainCover" type="Node3D" unique_id=1594145727]
+metadata/asset_id = "kager_reused_shelter"
+metadata/beech_asset_root = true
+
+[node name="Visual" type="MeshInstance3D" parent="." unique_id=1516658574]
+material_override = ExtResource("1_atna8")
+visibility_range_end = 180.0
+visibility_range_end_margin = 24.0
+mesh = ExtResource("2_7jiqi")
+
+[node name="Body00" type="StaticBody3D" parent="." unique_id=1678650476 groups=["surface_geometry", "surface_occluder"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.5, 1.6, -2)
+collision_layer = 4
+metadata/surface_nonwalkable_top = true
+metadata/collision_part = "post"
+
+[node name="Collision" type="CollisionShape3D" parent="Body00" unique_id=1772979052]
+shape = SubResource("BoxShape3D_vyvqy")
+
+[node name="Body01" type="StaticBody3D" parent="." unique_id=499700581 groups=["surface_geometry", "surface_occluder"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.5, 1.6, 2)
+collision_layer = 4
+metadata/surface_nonwalkable_top = true
+metadata/collision_part = "post"
+
+[node name="Collision" type="CollisionShape3D" parent="Body01" unique_id=1569773845]
+shape = SubResource("BoxShape3D_h8bgl")
+
+[node name="Body02" type="StaticBody3D" parent="." unique_id=1607418303 groups=["surface_geometry", "surface_occluder"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 1.6, -2)
+collision_layer = 4
+metadata/surface_nonwalkable_top = true
+metadata/collision_part = "post"
+
+[node name="Collision" type="CollisionShape3D" parent="Body02" unique_id=288724294]
+shape = SubResource("BoxShape3D_c76vj")
+
+[node name="Body03" type="StaticBody3D" parent="." unique_id=1740552529 groups=["surface_geometry", "surface_occluder"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 1.6, 2)
+collision_layer = 4
+metadata/surface_nonwalkable_top = true
+metadata/collision_part = "post"
+
+[node name="Collision" type="CollisionShape3D" parent="Body03" unique_id=1004806406]
+shape = SubResource("BoxShape3D_iof4u")

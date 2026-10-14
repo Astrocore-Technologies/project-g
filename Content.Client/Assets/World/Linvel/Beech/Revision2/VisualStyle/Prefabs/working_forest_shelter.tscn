@@ -1,0 +1,86 @@
+[gd_scene format=3 uid="uid://dk7mfakmfav4d"]
+
+[ext_resource type="Material" uid="uid://pnujsvxuaech" path="res://Assets/World/Linvel/Beech/Revision2/VisualStyle/Materials/PaintedProps.tres" id="1_7qtke"]
+[ext_resource type="ArrayMesh" uid="uid://cayq7jbdhet47" path="res://Assets/World/Linvel/Beech/Revision2/Meshes/working_forest_shelter.res" id="2_26j1l"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_yjirn"]
+size = Vector3(0.3, 3.65, 0.34)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_7iw2f"]
+size = Vector3(0.3, 3.65, 0.34)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_j5lb6"]
+size = Vector3(0.3, 3.65, 0.34)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_inhk4"]
+size = Vector3(0.3, 3.65, 0.34)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_58o1q"]
+size = Vector3(0.3, 3.65, 0.34)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ciwhj"]
+size = Vector3(0.3, 3.65, 0.34)
+
+[node name="TimberWorkingBay" type="Node3D" unique_id=158599674]
+metadata/asset_id = "working_forest_shelter"
+metadata/beech_asset_root = true
+
+[node name="Visual" type="MeshInstance3D" parent="." unique_id=298066587]
+material_override = ExtResource("1_7qtke")
+visibility_range_end = 180.0
+visibility_range_end_margin = 24.0
+mesh = ExtResource("2_26j1l")
+
+[node name="Body00" type="StaticBody3D" parent="." unique_id=704139330 groups=["surface_geometry", "surface_occluder"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.8, 1.78, -2.75)
+collision_layer = 4
+metadata/surface_nonwalkable_top = true
+metadata/collision_part = "post"
+
+[node name="Collision" type="CollisionShape3D" parent="Body00" unique_id=238691194]
+shape = SubResource("BoxShape3D_yjirn")
+
+[node name="Body01" type="StaticBody3D" parent="." unique_id=2025903081 groups=["surface_geometry", "surface_occluder"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.8, 1.78, 2.75)
+collision_layer = 4
+metadata/surface_nonwalkable_top = true
+metadata/collision_part = "post"
+
+[node name="Collision" type="CollisionShape3D" parent="Body01" unique_id=12852149]
+shape = SubResource("BoxShape3D_7iw2f")
+
+[node name="Body02" type="StaticBody3D" parent="." unique_id=864072081 groups=["surface_geometry", "surface_occluder"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.78, -2.75)
+collision_layer = 4
+metadata/surface_nonwalkable_top = true
+metadata/collision_part = "post"
+
+[node name="Collision" type="CollisionShape3D" parent="Body02" unique_id=1044049611]
+shape = SubResource("BoxShape3D_j5lb6")
+
+[node name="Body03" type="StaticBody3D" parent="." unique_id=485479026 groups=["surface_geometry", "surface_occluder"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.78, 2.75)
+collision_layer = 4
+metadata/surface_nonwalkable_top = true
+metadata/collision_part = "post"
+
+[node name="Collision" type="CollisionShape3D" parent="Body03" unique_id=129175093]
+shape = SubResource("BoxShape3D_inhk4")
+
+[node name="Body04" type="StaticBody3D" parent="." unique_id=1751409908 groups=["surface_geometry", "surface_occluder"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.8, 1.78, -2.75)
+collision_layer = 4
+metadata/surface_nonwalkable_top = true
+metadata/collision_part = "post"
+
+[node name="Collision" type="CollisionShape3D" parent="Body04" unique_id=1297425800]
+shape = SubResource("BoxShape3D_58o1q")
+
+[node name="Body05" type="StaticBody3D" parent="." unique_id=464736418 groups=["surface_geometry", "surface_occluder"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.8, 1.78, 2.75)
+collision_layer = 4
+metadata/surface_nonwalkable_top = true
+metadata/collision_part = "post"
+
+[node name="Collision" type="CollisionShape3D" parent="Body05" unique_id=232500219]
+shape = SubResource("BoxShape3D_ciwhj")

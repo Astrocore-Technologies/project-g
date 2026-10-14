@@ -1,0 +1,26 @@
+[gd_scene format=3 uid="uid://dg02dv4ccg5wm"]
+
+[ext_resource type="Material" uid="uid://pnujsvxuaech" path="res://Assets/World/Linvel/Beech/Revision2/VisualStyle/Materials/PaintedProps.tres" id="1_1nuev"]
+[ext_resource type="ArrayMesh" uid="uid://cxv6cbp2k5qrv" path="res://Assets/World/Linvel/Beech/Revision2/Meshes/mossy_outcrop.res" id="2_f7mlc"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ml0jg"]
+size = Vector3(3.4, 2.6, 2.4)
+
+[node name="SunlitStoneShoulder" type="Node3D" unique_id=1442187200]
+metadata/asset_id = "mossy_outcrop"
+metadata/beech_asset_root = true
+
+[node name="Visual" type="MeshInstance3D" parent="." unique_id=973417749]
+material_override = ExtResource("1_1nuev")
+visibility_range_end = 180.0
+visibility_range_end_margin = 24.0
+mesh = ExtResource("2_f7mlc")
+
+[node name="Body00" type="StaticBody3D" parent="." unique_id=138686154 groups=["surface_geometry", "surface_occluder"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.35, 0)
+collision_layer = 4
+metadata/surface_nonwalkable_top = true
+metadata/collision_part = "rock"
+
+[node name="Collision" type="CollisionShape3D" parent="Body00" unique_id=576924149]
+shape = SubResource("BoxShape3D_ml0jg")

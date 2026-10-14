@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://b88at2usrqaym"]
+
+[ext_resource type="Material" uid="uid://dvnfgq54ir57b" path="res://Assets/World/Linvel/Beech/painted_forest.tres" id="1_ot023"]
+[ext_resource type="ArrayMesh" uid="uid://bwpeqvxbjwnns" path="res://Assets/World/Linvel/Beech/Meshes/fallen_beech.res" id="2_3csq1"]
+
+[node name="DiscardedCutLog" type="Node3D" unique_id=1750504519]
+metadata/asset_id = "old_fallen_beech"
+metadata/beech_asset_root = true
+
+[node name="Visual" type="MeshInstance3D" parent="." unique_id=389163240]
+material_override = ExtResource("1_ot023")
+visibility_range_end = 180.0
+visibility_range_end_margin = 24.0
+mesh = ExtResource("2_3csq1")

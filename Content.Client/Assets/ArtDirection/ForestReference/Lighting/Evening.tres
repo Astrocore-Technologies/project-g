@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ForestLightingPreset" format=3 uid="uid://df3dl10qxp8a2"]
+
+[ext_resource type="Script" uid="uid://0p431xxiepj" path="res://Assets/ArtDirection/ForestReference/ForestLightingPreset.gd" id="1_d8odr"]
+
+[resource]
+script = ExtResource("1_d8odr")
+display_name = "Тёплый вечер"
+sun_rotation_degrees = Vector3(-23, -68, 0)
+sun_colour = Color(1, 0.73, 0.44, 1)
+sun_energy = 0.85
+ambient_colour = Color(0.52, 0.61, 0.77, 1)
+ambient_energy = 0.43
+fog_colour = Color(0.7, 0.68, 0.65, 1)

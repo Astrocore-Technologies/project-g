@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://c0ku3q6aeuvjb"]
+
+[ext_resource type="Material" uid="uid://pnujsvxuaech" path="res://Assets/World/Linvel/Beech/Revision2/VisualStyle/Materials/PaintedProps.tres" id="1_b7e6b"]
+[ext_resource type="ArrayMesh" uid="uid://dnxmnfwdn8p5s" path="res://Assets/World/Linvel/Beech/Revision2/Meshes/split_board_deck.res" id="2_wvlfa"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_pfgys"]
+size = Vector3(8, 0.18, 4.8)
+
+[node name="NewRaisedWorkDeck" type="Node3D" unique_id=1347123374]
+metadata/asset_id = "split_board_deck"
+metadata/beech_asset_root = true
+
+[node name="Visual" type="MeshInstance3D" parent="." unique_id=1760571352]
+material_override = ExtResource("1_b7e6b")
+visibility_range_end = 180.0
+visibility_range_end_margin = 24.0
+mesh = ExtResource("2_wvlfa")
+
+[node name="Body00" type="StaticBody3D" parent="." unique_id=1360970082 groups=["surface_geometry"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.09, 0)
+
+[node name="Collision" type="CollisionShape3D" parent="Body00" unique_id=1572717542]
+shape = SubResource("BoxShape3D_pfgys")

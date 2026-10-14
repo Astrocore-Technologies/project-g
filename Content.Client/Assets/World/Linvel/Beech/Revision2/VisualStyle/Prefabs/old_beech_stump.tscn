@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://e523r2q0p6kd"]
+
+[ext_resource type="Material" uid="uid://dvnfgq54ir57b" path="res://Assets/World/Linvel/Beech/painted_forest.tres" id="1_1mc00"]
+[ext_resource type="ArrayMesh" uid="uid://b0dlrn5wpja0s" path="res://Assets/World/Linvel/Beech/Meshes/beech_stump.res" id="2_rgmol"]
+
+[node name="FreshCutStump" type="Node3D" unique_id=1590092883]
+metadata/asset_id = "old_beech_stump"
+metadata/beech_asset_root = true
+
+[node name="Visual" type="MeshInstance3D" parent="." unique_id=659488117]
+material_override = ExtResource("1_1mc00")
+visibility_range_end = 180.0
+visibility_range_end_margin = 24.0
+mesh = ExtResource("2_rgmol")

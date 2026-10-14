@@ -1,0 +1,40 @@
+{
+  "created": "2026-10-14",
+  "purpose": "Eliara art reference for visual review; not an approved world-wide style",
+  "geometry_source": "Original geometry built and polished in Blender via MCP",
+  "source": "forest_reference_assets.blend",
+  "scripts": [
+    "build_reference_assets.py",
+    "polish_reference_canopies.py"
+  ],
+  "textures": "Existing Project G Beech Revision2 StylePass and wood/cloth paint resources; no third-party textures added",
+  "terrain": "Native Godot Terrain3D data; no terrain generated in Blender",
+  "exports": [
+    {
+      "file": "Content.Client\\Assets\\ArtDirection\\ForestReference\\Models\\beech_reference_a.glb",
+      "bytes": 660944,
+      "sha256": "217a317752eee82c28c59f7e4b3056bcb847535c542406d4d7070981c4728315",
+      "nodes": [
+        "beech_reference_a_Bark",
+        "beech_reference_a_Leaves"
+      ]
+    },
+    {
+      "file": "Content.Client\\Assets\\ArtDirection\\ForestReference\\Models\\beech_reference_b.glb",
+      "bytes": 665168,
+      "sha256": "1e18c62c8114b2ee1a4c8298bd41ec21a1da3a686e13c01e8bc7c615d6a41211",
+      "nodes": [
+        "beech_reference_b_Bark",
+        "beech_reference_b_Leaves"
+      ]
+    },
+    {
+      "file": "Content.Client\\Assets\\ArtDirection\\ForestReference\\Models\\grass_reference.glb",
+      "bytes": 4640,
+      "sha256": "7a3de56dede84e238954c6803b283b55dcf3d7f35f119dd40f121edd8a37130f",
+      "nodes": [
+        "grass_reference"
+      ]
+    }
+  ]
+}

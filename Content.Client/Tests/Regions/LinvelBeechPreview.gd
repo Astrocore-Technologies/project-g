@@ -14,11 +14,15 @@ var selected := 1
 var draw_ranges: Dictionary = {}
 var focus_materials: Array[ShaderMaterial] = []
 var terrain: Terrain3D
+var canopy_readability: Node
 var route_text := ""
 
 func overview_visibility(enabled: bool) -> void:
 	$BeechValley/ForestAtmosphere.environment.fog_enabled = not enabled
 	for node in $BeechValley.find_children("*", "GeometryInstance3D", true, false):
+		if node.is_in_group("forest_grass"):
+			node.visible = not enabled
+			continue
 		if not draw_ranges.has(node):
 			draw_ranges[node] = node.visibility_range_end
 		node.visibility_range_end = 0.0 if enabled else draw_ranges[node]
@@ -38,6 +42,9 @@ func _ready() -> void:
 	var seconds: int=roundi(profile.walking_seconds)
 	route_text="%.3f км / %d:%02d"%[profile.route_metres/1000.0,seconds/60,seconds%60]
 	figure = get_node_or_null(figure_path)
+	canopy_readability = load("res://Scripts/Regions/CanopyReadability.gd").new()
+	add_child(canopy_readability)
+	canopy_readability.initialize(figure,$BeechValley)
 	for p in $BeechValley/Places.get_children():
 		if p.has_node("Center"):
 			places.append(p)
@@ -114,6 +121,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				show_overview()
 
 func _process(delta: float) -> void:
+	canopy_readability.set_enabled(not overview)
 	if measuring:
 		performance_samples.append({"frame_ms":delta*1000.0,"cpu_ms":RenderingServer.viewport_get_measured_render_time_cpu(get_viewport().get_viewport_rid()),"gpu_ms":RenderingServer.viewport_get_measured_render_time_gpu(get_viewport().get_viewport_rid()),"memory_mib":Performance.get_monitor(Performance.MEMORY_STATIC)/1048576.0,"video_mib":Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED)/1048576.0,"draw_calls":Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME),"primitives":Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME)})
 	if figure != null:

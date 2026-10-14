@@ -1,0 +1,26 @@
+[gd_scene format=3 uid="uid://hqw2at0tm8g8"]
+
+[ext_resource type="Material" uid="uid://pnujsvxuaech" path="res://Assets/World/Linvel/Beech/Revision2/VisualStyle/Materials/PaintedProps.tres" id="1_lpgid"]
+[ext_resource type="ArrayMesh" uid="uid://c01cugqap8gte" path="res://Assets/World/Linvel/Beech/Revision2/Meshes/covered_charcoal_kiln.res" id="2_ohfnf"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1jfk5"]
+size = Vector3(3.6, 2, 3.6)
+
+[node name="WorkingKiln" type="Node3D" unique_id=459014535]
+metadata/asset_id = "covered_charcoal_kiln"
+metadata/beech_asset_root = true
+
+[node name="Visual" type="MeshInstance3D" parent="." unique_id=233588443]
+material_override = ExtResource("1_lpgid")
+visibility_range_end = 180.0
+visibility_range_end_margin = 24.0
+mesh = ExtResource("2_ohfnf")
+
+[node name="Body00" type="StaticBody3D" parent="." unique_id=1597906041 groups=["surface_geometry", "surface_occluder"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+collision_layer = 4
+metadata/surface_nonwalkable_top = true
+metadata/collision_part = "structure"
+
+[node name="Collision" type="CollisionShape3D" parent="Body00" unique_id=1584004063]
+shape = SubResource("BoxShape3D_1jfk5")

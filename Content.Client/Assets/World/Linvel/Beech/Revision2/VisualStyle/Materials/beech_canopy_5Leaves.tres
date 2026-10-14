@@ -1,0 +1,23 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://hch8b014kk6m"]
+
+[ext_resource type="Shader" uid="uid://dracfv66tshbd" path="res://Assets/World/Linvel/Beech/Revision2/VisualStyle/Shaders/beech_foliage.gdshader" id="1_1b1s8"]
+[ext_resource type="Texture2D" uid="uid://bnbdcuhmg1el5" path="res://Assets/World/Linvel/Beech/Revision2/StylePass/LeafClusters.res" id="2_hcv2w"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_1b1s8")
+shader_parameter/shadow_tint = Color(0.62, 0.72, 0.78, 1)
+shader_parameter/shade_floor = 0.32
+shader_parameter/light_softness = 0.42
+shader_parameter/wrap_light = 0.15
+shader_parameter/leaf_paint = ExtResource("2_hcv2w")
+shader_parameter/leaf_tint = Color(0.46, 0.65, 0.29, 1)
+shader_parameter/base_tint = Color(0.18, 0.32, 0.095, 1)
+shader_parameter/paint_strength = 0.55
+shader_parameter/crown_height = 14.921659
+shader_parameter/crown_floor = 7.215078
+shader_parameter/crown_centre = Vector3(0.93996096, 11.068369, -0.03828144)
+shader_parameter/volume_normals = 0.58
+shader_parameter/wind_direction = Vector2(0.8, 0.35)
+shader_parameter/wind_strength = 0.1
+shader_parameter/translucency = 0.1

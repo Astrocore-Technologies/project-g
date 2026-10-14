@@ -14,6 +14,12 @@ public partial class ForestOcclusion : Node
 		var materials = new HashSet<ShaderMaterial>();
 		Collect(region);
 		_materials = materials.ToArray();
+		// The art reference uses separate opaque crowns. A spatially indexed
+		// presentation helper hides only obstructing foliage and keeps its shadows.
+		var crowns = new Node();
+		crowns.SetScript(GD.Load<GDScript>("res://Scripts/Regions/CanopyReadability.gd"));
+		AddChild(crowns);
+		crowns.Call("initialize", focus, region);
 		void Collect(Node node)
 		{
 			if (node is GeometryInstance3D geometry && geometry.MaterialOverride is ShaderMaterial material &&

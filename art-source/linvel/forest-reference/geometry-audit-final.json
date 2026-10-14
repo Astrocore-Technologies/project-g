@@ -1,0 +1,133 @@
+{
+  "unit": "metres",
+  "meshes": [
+    {
+      "name": "beech_reference_a_Bark",
+      "vertices": 597,
+      "triangles": 1032,
+      "bounds": [
+        [
+          -2.036147356033325,
+          2.56508469581604
+        ],
+        [
+          -2.0579071044921875,
+          2.4808995723724365
+        ],
+        [
+          -0.06962018460035324,
+          9.323302268981934
+        ]
+      ],
+      "transform_applied": true
+    },
+    {
+      "name": "beech_reference_a_Leaves",
+      "vertices": 16081,
+      "triangles": 18958,
+      "bounds": [
+        [
+          -4.6943817138671875,
+          5.337956428527832
+        ],
+        [
+          -4.423563003540039,
+          4.930825233459473
+        ],
+        [
+          5.187294006347656,
+          12.427488327026367
+        ]
+      ],
+      "transform_applied": true
+    },
+    {
+      "name": "beech_reference_b_Bark",
+      "vertices": 597,
+      "triangles": 1032,
+      "bounds": [
+        [
+          -2.0456008911132812,
+          2.120901584625244
+        ],
+        [
+          -2.0522348880767822,
+          2.5607516765594482
+        ],
+        [
+          -0.06962018460035324,
+          9.955151557922363
+        ]
+      ],
+      "transform_applied": true
+    },
+    {
+      "name": "beech_reference_b_Leaves",
+      "vertices": 16177,
+      "triangles": 19150,
+      "bounds": [
+        [
+          -4.538778781890869,
+          4.942364692687988
+        ],
+        [
+          -4.359174728393555,
+          4.909573554992676
+        ],
+        [
+          5.69808292388916,
+          13.283041000366211
+        ]
+      ],
+      "transform_applied": true
+    },
+    {
+      "name": "grass_reference",
+      "vertices": 72,
+      "triangles": 54,
+      "bounds": [
+        [
+          -0.30507028102874756,
+          0.2833999991416931
+        ],
+        [
+          -0.2712060213088989,
+          0.28329694271087646
+        ],
+        [
+          -0.03500000014901161,
+          0.4708097279071808
+        ]
+      ],
+      "transform_applied": true
+    }
+  ],
+  "exports": [
+    {
+      "file": "Content.Client\\Assets\\ArtDirection\\ForestReference\\Models\\beech_reference_a.glb",
+      "bytes": 660944,
+      "sha256": "217a317752eee82c28c59f7e4b3056bcb847535c542406d4d7070981c4728315",
+      "nodes": [
+        "beech_reference_a_Bark",
+        "beech_reference_a_Leaves"
+      ]
+    },
+    {
+      "file": "Content.Client\\Assets\\ArtDirection\\ForestReference\\Models\\beech_reference_b.glb",
+      "bytes": 665168,
+      "sha256": "1e18c62c8114b2ee1a4c8298bd41ec21a1da3a686e13c01e8bc7c615d6a41211",
+      "nodes": [
+        "beech_reference_b_Bark",
+        "beech_reference_b_Leaves"
+      ]
+    },
+    {
+      "file": "Content.Client\\Assets\\ArtDirection\\ForestReference\\Models\\grass_reference.glb",
+      "bytes": 4640,
+      "sha256": "7a3de56dede84e238954c6803b283b55dcf3d7f35f119dd40f121edd8a37130f",
+      "nodes": [
+        "grass_reference"
+      ]
+    }
+  ]
+}

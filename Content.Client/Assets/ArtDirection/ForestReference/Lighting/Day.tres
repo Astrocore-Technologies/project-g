@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="ForestLightingPreset" format=3 uid="uid://bx1jyao3bqkn3"]
+
+[ext_resource type="Script" uid="uid://0p431xxiepj" path="res://Assets/ArtDirection/ForestReference/ForestLightingPreset.gd" id="1_j8tcu"]
+
+[resource]
+script = ExtResource("1_j8tcu")
+display_name = "Солнечный день"

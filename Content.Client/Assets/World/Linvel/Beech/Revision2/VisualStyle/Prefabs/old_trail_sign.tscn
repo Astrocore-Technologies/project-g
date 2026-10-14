@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://smodyb7jy6u8"]
+
+[ext_resource type="Material" uid="uid://dvnfgq54ir57b" path="res://Assets/World/Linvel/Beech/painted_forest.tres" id="1_5nbu4"]
+[ext_resource type="ArrayMesh" uid="uid://dmahlnslsq4q3" path="res://Assets/World/Linvel/Beech/Meshes/trail_sign.res" id="2_p4ien"]
+
+[node name="PromissoryWaySign" type="Node3D" unique_id=1466993257]
+metadata/asset_id = "old_trail_sign"
+metadata/beech_asset_root = true
+
+[node name="Visual" type="MeshInstance3D" parent="." unique_id=618756681]
+material_override = ExtResource("1_5nbu4")
+visibility_range_end = 180.0
+visibility_range_end_margin = 24.0
+mesh = ExtResource("2_p4ien")

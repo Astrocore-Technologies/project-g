@@ -1,0 +1,16 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://cl7qo5h744m4q"]
+
+[ext_resource type="Shader" uid="uid://biw3roh5worol" path="res://Assets/ArtDirection/ForestReference/Shaders/forest_grass.gdshader" id="1_7nayu"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_7nayu")
+shader_parameter/shadow_tint = Color(0.62, 0.72, 0.78, 1)
+shader_parameter/shade_floor = 0.32
+shader_parameter/light_softness = 0.42
+shader_parameter/wrap_light = 0.15
+shader_parameter/root_colour = Color(0.24, 0.36, 0.12, 1)
+shader_parameter/tip_colour = Color(0.47, 0.61, 0.22, 1)
+shader_parameter/wind_direction = Vector2(0.8, 0.35)
+shader_parameter/wind_strength = 0.1
+shader_parameter/focus_world = Vector3(-10000, -10000, -10000)

@@ -1,0 +1,26 @@
+[gd_scene format=3 uid="uid://bj8gtwm8eams8"]
+
+[ext_resource type="Material" uid="uid://pnujsvxuaech" path="res://Assets/World/Linvel/Beech/Revision2/VisualStyle/Materials/PaintedProps.tres" id="1_bm24q"]
+[ext_resource type="ArrayMesh" uid="uid://d1blnerwvgb7y" path="res://Assets/World/Linvel/Beech/Revision2/Meshes/forest_workbench.res" id="2_ux51j"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_q51sj"]
+size = Vector3(2.7, 1, 1.2)
+
+[node name="UsedWorkbench" type="Node3D" unique_id=1948426377]
+metadata/asset_id = "forest_workbench"
+metadata/beech_asset_root = true
+
+[node name="Visual" type="MeshInstance3D" parent="." unique_id=1160887841]
+material_override = ExtResource("1_bm24q")
+visibility_range_end = 180.0
+visibility_range_end_margin = 24.0
+mesh = ExtResource("2_ux51j")
+
+[node name="Body00" type="StaticBody3D" parent="." unique_id=1676899156 groups=["surface_geometry", "surface_occluder"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+collision_layer = 4
+metadata/surface_nonwalkable_top = true
+metadata/collision_part = "structure"
+
+[node name="Collision" type="CollisionShape3D" parent="Body00" unique_id=1708397753]
+shape = SubResource("BoxShape3D_q51sj")

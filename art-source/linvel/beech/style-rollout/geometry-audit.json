@@ -1,0 +1,125 @@
+{
+  "assets": [
+    {
+      "id": "beech_canopy_0",
+      "crown_min": [
+        -6.413773536682129,
+        -6.744171142578125,
+        7.287957191467285
+      ],
+      "crown_max": [
+        6.430342674255371,
+        6.702190399169922,
+        15.072382926940918
+      ],
+      "crown_branch_overlap": 5.224823951721191,
+      "bark_triangles": 1284,
+      "leaf_triangles": 18958,
+      "pivot": "original ground-centred; Godot Y up"
+    },
+    {
+      "id": "beech_canopy_1",
+      "crown_min": [
+        -7.962719917297363,
+        -6.223706245422363,
+        7.287957191467285
+      ],
+      "crown_max": [
+        6.957850456237793,
+        5.925605773925781,
+        15.672383308410645
+      ],
+      "crown_branch_overlap": 5.818840026855469,
+      "bark_triangles": 1284,
+      "leaf_triangles": 19150,
+      "pivot": "original ground-centred; Godot Y up"
+    },
+    {
+      "id": "beech_canopy_2",
+      "crown_min": [
+        -7.060274124145508,
+        -6.705239295959473,
+        7.287957668304443
+      ],
+      "crown_max": [
+        6.829194068908691,
+        6.653882026672363,
+        16.272382736206055
+      ],
+      "crown_branch_overlap": 6.412786960601807,
+      "bark_triangles": 1284,
+      "leaf_triangles": 18958,
+      "pivot": "original ground-centred; Godot Y up"
+    },
+    {
+      "id": "beech_canopy_3",
+      "crown_min": [
+        -7.3877410888671875,
+        -7.1385602951049805,
+        6.559161186218262
+      ],
+      "crown_max": [
+        8.21292495727539,
+        7.150002479553223,
+        13.565144538879395
+      ],
+      "crown_branch_overlap": 4.7023420333862305,
+      "bark_triangles": 1284,
+      "leaf_triangles": 19150,
+      "pivot": "original ground-centred; Godot Y up"
+    },
+    {
+      "id": "beech_canopy_4",
+      "crown_min": [
+        -3.967658758163452,
+        -5.133738040924072,
+        4.810051918029785
+      ],
+      "crown_max": [
+        4.439034461975098,
+        5.225677490234375,
+        9.947772979736328
+      ],
+      "crown_branch_overlap": 3.448383331298828,
+      "bark_triangles": 1284,
+      "leaf_triangles": 18958,
+      "pivot": "original ground-centred; Godot Y up"
+    },
+    {
+      "id": "beech_canopy_5",
+      "crown_min": [
+        -5.5029120445251465,
+        -5.751795768737793,
+        7.215077877044678
+      ],
+      "crown_max": [
+        7.382833957672119,
+        5.8283586502075195,
+        14.921659469604492
+      ],
+      "crown_branch_overlap": 5.1725754737854,
+      "bark_triangles": 1284,
+      "leaf_triangles": 19150,
+      "pivot": "original ground-centred; Godot Y up"
+    },
+    {
+      "id": "beech_canopy_6",
+      "crown_min": [
+        -6.384008884429932,
+        -7.1761322021484375,
+        8.964187622070312
+      ],
+      "crown_max": [
+        7.571893215179443,
+        7.198381423950195,
+        18.539030075073242
+      ],
+      "crown_branch_overlap": 6.426532745361328,
+      "bark_triangles": 1284,
+      "leaf_triangles": 18958,
+      "pivot": "original ground-centred; Godot Y up"
+    }
+  ],
+  "license": "Original project geometry, created and adapted through Blender MCP",
+  "preserved": "Original trunk, roots and branches; no physics data in GLBs"
+}

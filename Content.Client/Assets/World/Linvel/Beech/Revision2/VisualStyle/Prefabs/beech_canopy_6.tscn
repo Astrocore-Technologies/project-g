@@ -1,0 +1,42 @@
+[gd_scene format=3 uid="uid://crvcnax50pu1m"]
+
+[ext_resource type="Material" uid="uid://d15vhpxjrvswi" path="res://Assets/World/Linvel/Beech/Revision2/VisualStyle/Materials/SilverBark.tres" id="1_ejnky"]
+[ext_resource type="ArrayMesh" uid="uid://dfr8pbekpesgq" path="res://Assets/World/Linvel/Beech/Revision2/VisualStyle/Meshes/beech_canopy_6_Bark.res" id="2_luksj"]
+[ext_resource type="Material" uid="uid://rwokemre75fo" path="res://Assets/World/Linvel/Beech/Revision2/VisualStyle/Materials/beech_canopy_6Leaves.tres" id="3_6gxiy"]
+[ext_resource type="ArrayMesh" uid="uid://b06tmd6vqsny4" path="res://Assets/World/Linvel/Beech/Revision2/VisualStyle/Meshes/beech_canopy_6_Leaves.res" id="4_ytkcx"]
+[ext_resource type="ArrayMesh" uid="uid://damqsmqsltu3c" path="res://Assets/World/Linvel/Beech/Revision2/VisualStyle/Meshes/beech_canopy_6_UpperBranches.res" id="5_tc3yh"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_rn6yf"]
+size = Vector3(1.155, 9.348, 1.1235)
+
+[node name="Beech034" type="Node3D" unique_id=1197630298]
+metadata/asset_id = "beech_canopy_6"
+metadata/beech_asset_root = true
+
+[node name="Visual" type="MeshInstance3D" parent="." unique_id=1696122922]
+material_override = ExtResource("1_ejnky")
+visibility_range_end = 240.0
+visibility_range_end_margin = 24.0
+mesh = ExtResource("2_luksj")
+
+[node name="Body00" type="StaticBody3D" parent="." unique_id=129187141 groups=["surface_exact_occluder", "surface_geometry", "surface_occluder"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.674, 0)
+collision_layer = 4
+metadata/surface_nonwalkable_top = true
+metadata/collision_part = "trunk"
+
+[node name="Collision" type="CollisionShape3D" parent="Body00" unique_id=907595993]
+shape = SubResource("BoxShape3D_rn6yf")
+
+[node name="Foliage" type="MeshInstance3D" parent="." unique_id=720591462 groups=["forest_crown"]]
+material_override = ExtResource("3_6gxiy")
+extra_cull_margin = 0.25
+visibility_range_end = 240.0
+visibility_range_end_margin = 24.0
+mesh = ExtResource("4_ytkcx")
+
+[node name="UpperBranches" type="MeshInstance3D" parent="." unique_id=1209512575 groups=["forest_upper_branches"]]
+material_override = ExtResource("1_ejnky")
+visibility_range_end = 240.0
+visibility_range_end_margin = 24.0
+mesh = ExtResource("5_tc3yh")

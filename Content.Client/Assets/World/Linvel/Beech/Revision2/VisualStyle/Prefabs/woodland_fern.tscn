@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://yg4v6sotax0p"]
+
+[ext_resource type="Material" uid="uid://pnujsvxuaech" path="res://Assets/World/Linvel/Beech/Revision2/VisualStyle/Materials/PaintedProps.tres" id="1_227dm"]
+[ext_resource type="ArrayMesh" uid="uid://1ad00rk1v4gi" path="res://Assets/World/Linvel/Beech/Revision2/Meshes/woodland_fern.res" id="2_pyayq"]
+
+[node name="RoadsidePlant" type="Node3D" unique_id=186825733]
+metadata/asset_id = "woodland_fern"
+metadata/beech_asset_root = true
+
+[node name="Visual" type="MeshInstance3D" parent="." unique_id=918579137]
+material_override = ExtResource("1_227dm")
+visibility_range_end = 180.0
+visibility_range_end_margin = 24.0
+mesh = ExtResource("2_pyayq")

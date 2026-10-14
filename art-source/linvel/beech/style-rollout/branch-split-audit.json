@@ -1,0 +1,56 @@
+[
+  {
+    "id": "beech_canopy_0",
+    "joint_gap_metres": 0,
+    "lower_trunk_height": 4,
+    "physics": "unchanged"
+  },
+  {
+    "id": "beech_canopy_1",
+    "joint_gap_metres": 0,
+    "lower_trunk_height": 4,
+    "physics": "unchanged"
+  },
+  {
+    "id": "beech_canopy_2",
+    "joint_gap_metres": 0,
+    "lower_trunk_height": 4,
+    "physics": "unchanged"
+  },
+  {
+    "id": "beech_canopy_3",
+    "joint_gap_metres": 0,
+    "lower_trunk_height": 4,
+    "physics": "unchanged"
+  },
+  {
+    "id": "beech_canopy_4",
+    "joint_gap_metres": 0,
+    "lower_trunk_height": 4,
+    "physics": "unchanged"
+  },
+  {
+    "id": "beech_canopy_5",
+    "joint_gap_metres": 0,
+    "lower_trunk_height": 4,
+    "physics": "unchanged"
+  },
+  {
+    "id": "beech_canopy_6",
+    "joint_gap_metres": 0,
+    "lower_trunk_height": 4,
+    "physics": "unchanged"
+  },
+  {
+    "id": "beech_copse_0",
+    "joint_gap_metres": 0,
+    "lower_trunk_height": 4,
+    "physics": "unchanged"
+  },
+  {
+    "id": "beech_copse_1",
+    "joint_gap_metres": 0,
+    "lower_trunk_height": 4,
+    "physics": "unchanged"
+  }
+]

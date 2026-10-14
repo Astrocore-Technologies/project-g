@@ -1,0 +1,67 @@
+[gd_resource type="Terrain3DAssets" format=3 uid="uid://bmumpugfrhs45"]
+
+[ext_resource type="Texture2D" uid="uid://oe0wn56nj50g" path="res://Assets/World/Linvel/Beech/Revision2/StylePass/GroundGrass.res" id="1_xd4sp"]
+[ext_resource type="Texture2D" uid="uid://cbtosoexnp4t2" path="res://Assets/World/Linvel/Beech/Revision2/Terrain/Textures/ForestFloor_normal.res" id="2_gk06u"]
+[ext_resource type="Texture2D" uid="uid://ckirpgauajipp" path="res://Assets/World/Linvel/Beech/Revision2/StylePass/GroundPath.res" id="3_1ufbt"]
+[ext_resource type="Texture2D" uid="uid://by4hcn2edtbjk" path="res://Assets/World/Linvel/Beech/Revision2/Terrain/Textures/WoodlandTrack_normal.res" id="4_8wf01"]
+[ext_resource type="Texture2D" uid="uid://bdmi8jgtu8edd" path="res://Assets/World/Linvel/Beech/Revision2/StylePass/GroundRock.res" id="5_x357f"]
+[ext_resource type="Texture2D" uid="uid://litfu606meq2" path="res://Assets/World/Linvel/Beech/Revision2/Terrain/Textures/ExposedStone_normal.res" id="6_g0tfc"]
+[ext_resource type="Texture2D" uid="uid://c0e8w1cmkkdwo" path="res://Assets/World/Linvel/Beech/Revision2/StylePass/DampSoil.res" id="7_j83jo"]
+[ext_resource type="Texture2D" uid="uid://cyg4k5fwoekwj" path="res://Assets/World/Linvel/Beech/Revision2/Terrain/Textures/WetLeafLitter_normal.res" id="8_1xyxy"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wtvce"]
+transparency = 4
+cull_mode = 2
+vertex_color_use_as_albedo = true
+backlight_enabled = true
+backlight = Color(0.5, 0.5, 0.5, 1)
+distance_fade_mode = 1
+distance_fade_min_distance = 128.0
+distance_fade_max_distance = 96.0
+
+[sub_resource type="Terrain3DMeshAsset" id="Terrain3DMeshAsset_o8nf7"]
+generated_type = 1
+height_offset = 0.5
+material_override = SubResource("StandardMaterial3D_wtvce")
+last_lod = 0
+last_shadow_lod = 0
+lod0_range = 128.0
+
+[sub_resource type="Terrain3DTextureAsset" id="Terrain3DTextureAsset_66dlk"]
+name = "ForestFloor"
+albedo_texture = ExtResource("1_xd4sp")
+normal_texture = ExtResource("2_gk06u")
+normal_depth = 0.0
+ao_strength = 0.0
+uv_scale = 0.16
+
+[sub_resource type="Terrain3DTextureAsset" id="Terrain3DTextureAsset_4xsvv"]
+name = "WoodlandTrack"
+id = 1
+albedo_texture = ExtResource("3_1ufbt")
+normal_texture = ExtResource("4_8wf01")
+normal_depth = 0.0
+ao_strength = 0.0
+uv_scale = 0.2
+
+[sub_resource type="Terrain3DTextureAsset" id="Terrain3DTextureAsset_o1uaf"]
+name = "ExposedStone"
+id = 2
+albedo_texture = ExtResource("5_x357f")
+normal_texture = ExtResource("6_g0tfc")
+normal_depth = 0.0
+ao_strength = 0.0
+uv_scale = 0.2
+
+[sub_resource type="Terrain3DTextureAsset" id="Terrain3DTextureAsset_mcong"]
+name = "WetLeafLitter"
+id = 3
+albedo_texture = ExtResource("7_j83jo")
+normal_texture = ExtResource("8_1xyxy")
+normal_depth = 0.0
+ao_strength = 0.0
+uv_scale = 0.2
+
+[resource]
+mesh_list = Array[Terrain3DMeshAsset]([SubResource("Terrain3DMeshAsset_o8nf7")])
+texture_list = Array[Terrain3DTextureAsset]([SubResource("Terrain3DTextureAsset_66dlk"), SubResource("Terrain3DTextureAsset_4xsvv"), SubResource("Terrain3DTextureAsset_o1uaf"), SubResource("Terrain3DTextureAsset_mcong")])

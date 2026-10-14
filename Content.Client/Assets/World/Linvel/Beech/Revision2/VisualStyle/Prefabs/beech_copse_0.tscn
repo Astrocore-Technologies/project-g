@@ -1,0 +1,42 @@
+[gd_scene format=3 uid="uid://ddi442q58c6ve"]
+
+[ext_resource type="Material" uid="uid://pnujsvxuaech" path="res://Assets/World/Linvel/Beech/Revision2/VisualStyle/Materials/PaintedProps.tres" id="1_wpfhu"]
+[ext_resource type="ArrayMesh" uid="uid://d06p4alrkg6du" path="res://Assets/World/Linvel/Beech/Revision2/VisualStyle/Meshes/beech_copse_0_Bark.res" id="2_5hf5h"]
+[ext_resource type="Material" uid="uid://dbb4e8ixfeepq" path="res://Assets/World/Linvel/Beech/Revision2/VisualStyle/Materials/beech_copse_0Leaves.tres" id="3_12jbi"]
+[ext_resource type="ArrayMesh" uid="uid://bjql4mxwfh21h" path="res://Assets/World/Linvel/Beech/Revision2/VisualStyle/Meshes/beech_copse_0_Leaves.res" id="4_y534r"]
+[ext_resource type="ArrayMesh" uid="uid://dycccmiu3swdg" path="res://Assets/World/Linvel/Beech/Revision2/VisualStyle/Meshes/beech_copse_0_UpperBranches.res" id="5_qx3j0"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_fybxg"]
+size = Vector3(8.5, 2.3, 7)
+
+[node name="WoodedOutcrop00" type="Node3D" unique_id=1142328407]
+metadata/asset_id = "beech_copse_0"
+metadata/beech_asset_root = true
+
+[node name="Visual" type="MeshInstance3D" parent="." unique_id=979212134]
+material_override = ExtResource("1_wpfhu")
+visibility_range_end = 240.0
+visibility_range_end_margin = 24.0
+mesh = ExtResource("2_5hf5h")
+
+[node name="Body00" type="StaticBody3D" parent="." unique_id=298449169 groups=["surface_geometry", "surface_occluder"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.15, 0)
+collision_layer = 4
+metadata/surface_nonwalkable_top = true
+metadata/collision_part = "rock"
+
+[node name="Collision" type="CollisionShape3D" parent="Body00" unique_id=208588779]
+shape = SubResource("BoxShape3D_fybxg")
+
+[node name="Foliage" type="MeshInstance3D" parent="." unique_id=630565384 groups=["forest_crown"]]
+material_override = ExtResource("3_12jbi")
+extra_cull_margin = 0.25
+visibility_range_end = 240.0
+visibility_range_end_margin = 24.0
+mesh = ExtResource("4_y534r")
+
+[node name="UpperBranches" type="MeshInstance3D" parent="." unique_id=292602258 groups=["forest_upper_branches"]]
+material_override = ExtResource("1_wpfhu")
+visibility_range_end = 240.0
+visibility_range_end_margin = 24.0
+mesh = ExtResource("5_qx3j0")

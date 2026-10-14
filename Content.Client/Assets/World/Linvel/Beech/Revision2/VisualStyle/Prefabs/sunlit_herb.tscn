@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://cdieq5vkf17v2"]
+
+[ext_resource type="Material" uid="uid://pnujsvxuaech" path="res://Assets/World/Linvel/Beech/Revision2/VisualStyle/Materials/PaintedProps.tres" id="1_8q3bx"]
+[ext_resource type="ArrayMesh" uid="uid://dhjlutuew064n" path="res://Assets/World/Linvel/Beech/Revision2/Meshes/sunlit_herb.res" id="2_koe55"]
+
+[node name="SunlitPlant" type="Node3D" unique_id=1982160516]
+metadata/asset_id = "sunlit_herb"
+metadata/beech_asset_root = true
+
+[node name="Visual" type="MeshInstance3D" parent="." unique_id=763465591]
+material_override = ExtResource("1_8q3bx")
+visibility_range_end = 180.0
+visibility_range_end_margin = 24.0
+mesh = ExtResource("2_koe55")

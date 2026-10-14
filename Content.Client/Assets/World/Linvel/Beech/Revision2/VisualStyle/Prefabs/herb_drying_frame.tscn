@@ -1,0 +1,38 @@
+[gd_scene format=3 uid="uid://bvd2hur72j1nd"]
+
+[ext_resource type="Material" uid="uid://pnujsvxuaech" path="res://Assets/World/Linvel/Beech/Revision2/VisualStyle/Materials/PaintedProps.tres" id="1_58iju"]
+[ext_resource type="ArrayMesh" uid="uid://3xy8tkv0q2lh" path="res://Assets/World/Linvel/Beech/Revision2/Meshes/herb_drying_frame.res" id="2_3rd7j"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_axwx7"]
+size = Vector3(0.12, 1.85, 0.12)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_i2vpk"]
+size = Vector3(0.12, 1.85, 0.12)
+
+[node name="HerbDryingRack" type="Node3D" unique_id=1730143758]
+metadata/asset_id = "herb_drying_frame"
+metadata/beech_asset_root = true
+
+[node name="Visual" type="MeshInstance3D" parent="." unique_id=1745623733]
+material_override = ExtResource("1_58iju")
+visibility_range_end = 180.0
+visibility_range_end_margin = 24.0
+mesh = ExtResource("2_3rd7j")
+
+[node name="Body00" type="StaticBody3D" parent="." unique_id=2019649964 groups=["surface_geometry", "surface_occluder"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8, 0.9, 0)
+collision_layer = 4
+metadata/surface_nonwalkable_top = true
+metadata/collision_part = "post"
+
+[node name="Collision" type="CollisionShape3D" parent="Body00" unique_id=921327616]
+shape = SubResource("BoxShape3D_axwx7")
+
+[node name="Body01" type="StaticBody3D" parent="." unique_id=1011939306 groups=["surface_geometry", "surface_occluder"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 0.9, 0)
+collision_layer = 4
+metadata/surface_nonwalkable_top = true
+metadata/collision_part = "post"
+
+[node name="Collision" type="CollisionShape3D" parent="Body01" unique_id=447357984]
+shape = SubResource("BoxShape3D_i2vpk")

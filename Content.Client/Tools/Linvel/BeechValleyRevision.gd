@@ -602,7 +602,7 @@ func publish_revision() -> Dictionary:
  # also duplicates internal MultiMeshes and tries to set their format after
  # their instance count, producing engine errors unrelated to authored data.
  var removed: Array=[]
- for label in ["Authoring","HerbScatterAuthoring"]:
+ for label in ["Authoring","HerbScatterAuthoring","GrassScatterAuthoring"]:
   if not root.has_node(label): continue
   var node: Node=root.get_node(label)
   removed.append([node,node.get_index()])

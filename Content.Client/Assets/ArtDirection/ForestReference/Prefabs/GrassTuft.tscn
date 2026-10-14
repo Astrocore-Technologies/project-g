@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://drsgxdlb3lwwy"]
+
+[ext_resource type="Material" uid="uid://cl7qo5h744m4q" path="res://Assets/ArtDirection/ForestReference/Materials/ForestGrass.tres" id="1_pdq0j"]
+[ext_resource type="ArrayMesh" uid="uid://bodhfhyntqqao" path="res://Assets/ArtDirection/ForestReference/Meshes/GrassTuft.res" id="2_ershl"]
+
+[node name="GrassTuft" type="MeshInstance3D" unique_id=665214132]
+material_override = ExtResource("1_pdq0j")
+mesh = ExtResource("2_ershl")

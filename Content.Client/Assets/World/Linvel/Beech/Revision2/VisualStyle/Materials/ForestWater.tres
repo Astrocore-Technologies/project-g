@@ -1,0 +1,20 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://b5qfpul2symw8"]
+
+[ext_resource type="Shader" uid="uid://b11bu3rgb5p57" path="res://Assets/World/Linvel/Beech/Revision2/VisualStyle/Shaders/forest_water.gdshader" id="1_p6ctt"]
+[ext_resource type="Texture2D" uid="uid://c7x6cbmmcjby7" path="res://Assets/World/Linvel/Beech/Revision2/StylePass/WaterFoam.res" id="2_bo4px"]
+[ext_resource type="Texture2D" uid="uid://dsppfhtjrhpx2" path="res://Assets/World/Linvel/Beech/Revision2/StylePass/WaterColour.res" id="3_ir7xa"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_p6ctt")
+shader_parameter/water_paint = ExtResource("3_ir7xa")
+shader_parameter/foam_paint = ExtResource("2_bo4px")
+shader_parameter/shallow_colour = Color(0.27, 0.66, 0.61, 1)
+shader_parameter/deep_colour = Color(0.055, 0.3, 0.37, 1)
+shader_parameter/foam_colour = Color(0.76, 0.87, 0.78, 1)
+shader_parameter/flow_speed = 0.65
+shader_parameter/shore_width = 0.1
+shader_parameter/depth_colour_distance = 0.65
+shader_parameter/minimum_opacity = 0.62
+shader_parameter/opacity_depth = 0.18
+shader_parameter/shore_fade_distance = 0.8
