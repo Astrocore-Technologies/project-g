@@ -94,9 +94,14 @@ func paths_distance(p: Vector2) -> float:
  return best
 
 func native_add(parent: Node,node: Node,label: String) -> Node:
+ # Scatter presets become local editable nodes before their children are saved.
+ if node is ProtonScatter: node.scene_file_path=""
  node.name=label
  parent.add_child(node,true)
  node.owner=root
+ if node is ProtonScatter:
+  for child in node.get_children():
+   if child is ProtonScatterItem or child is ProtonScatterShape: child.owner=root
  return node
 
 func native_tile(id: int,label: String) -> Terrain3DTextureAsset:

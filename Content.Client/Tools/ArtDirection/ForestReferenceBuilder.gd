@@ -13,9 +13,15 @@ var materials: Dictionary = {}
 @export_tool_button("Обновить высоту травы по Terrain3D") var grass_height_button := reproject_saved_grass
 
 func add(parent: Node, node: Node, label: String) -> Node:
+	# Editable scatter children are saved locally, rather than on top of the
+	# preset's inherited children (which creates name clashes on the next load).
+	if node is ProtonScatter: node.scene_file_path = ""
 	node.name = label
 	parent.add_child(node)
 	node.owner = root
+	if node is ProtonScatter:
+		for child in node.get_children():
+			if child is ProtonScatterItem or child is ProtonScatterShape: child.owner = root
 	return node
 
 func save_resource(resource: Resource, path: String) -> void:
@@ -357,28 +363,118 @@ func bake_grass() -> Dictionary:
 	root.set_meta("grass_tuft_count",count)
 	return {"success":true,"tufts":count,"draw_groups":group.get_child_count(),"collisions":0}
 
-func save_reference() -> Dictionary:
+func prepare_grass_authoring_for_save() -> Dictionary:
 	root = get_parent()
-	var packed := PackedScene.new()
+	var group := root.get_node_or_null("GrassAuthoring")
+	if group==null: return {"areas":0,"removed_inherited_duplicates":0}
+	var removed := 0
+	for scatter: ProtonScatter in group.get_children():
+		var legacy := scatter.scene_file_path=="res://addons/proton_scatter/presets/scatter_default.tscn"
+		var was_ready: bool = scatter.is_ready
+		scatter.is_ready = false
+		# Suppress the plugin's deferred rebuild while removing only the preset's
+		# inherited duplicates. Authored shape/resources and baked grass stay intact.
+		var callback := Callable(scatter,"_on_child_exiting_tree")
+		var connected := scatter.child_exiting_tree.is_connected(callback)
+		if connected: scatter.child_exiting_tree.disconnect(callback)
+		if legacy:
+			for label in ["ScatterItem","ScatterShape"]:
+				var inherited := scatter.get_node_or_null(label)
+				if inherited==null or inherited.owner!=scatter: continue
+				for child in scatter.get_children():
+					if child==inherited or child.owner!=root or child.get_script()!=inherited.get_script(): continue
+					# Keep the explicitly saved node (including its edited radius),
+					# replacing the duplicate supplied by the nested preset instance.
+					if not str(child.name).begins_with(label) or not str(child.name).trim_prefix(label).is_valid_int(): continue
+					scatter.remove_child(inherited)
+					inherited.free()
+					child.name = label
+					removed += 1
+					break
+			scatter.scene_file_path = ""
+			var item: ProtonScatterItem = scatter.get_node("ScatterItem")
+			# The bad inherited save also restored the preset's demo brick. Recover
+			# the source used by this grass-only reference, without rebuilding it.
+			if item.path=="res://addons/proton_scatter/demos/assets/brick.tscn":
+				item.path = A+"Prefabs/GrassTuft.tscn"
+				item.override_material = load(A+"Materials/ForestGrass.tres")
+				item.override_cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		for child in scatter.get_children():
+			if str(child.name)=="ScatterOutput" or (child.get_script()!=null and child.get_script().resource_path.ends_with("/physics_helper.gd")):
+				child.owner = null
+				for generated in child.find_children("*","Node",true,false): generated.owner = null
+			else:
+				child.owner = root
+				for authored in child.find_children("*","Node",true,false): authored.owner = root
+		scatter._perform_sanity_check()
+		scatter._discover_items()
+		if connected: scatter.child_exiting_tree.connect(callback)
+		scatter.is_ready = was_ready
+	return {"areas":group.get_child_count(),"removed_inherited_duplicates":removed,"rebuilt":false}
+
+func save_reference(publish_preview: bool=true) -> Dictionary:
+	root = get_parent()
+	prepare_grass_authoring_for_save()
+	var packed: PackedScene = ResourceLoader.load(AUTHORING,"PackedScene",ResourceLoader.CACHE_MODE_IGNORE)
+	if packed==null: packed = PackedScene.new()
 	var error := packed.pack(root)
 	if error==OK: error = ResourceSaver.save(packed,AUTHORING)
 	if error!=OK: return {"success":false,"error":error}
+	if not publish_preview: return {"success":true,"path":AUTHORING,"error":error}
 	# Same private-authoring / pure-published pattern as the region tools.
 	# Keep the exact editor nodes alive, including manual scatter mask edits.
-	var detached: Array[Node] = []
+	var detached: Array = []
 	for label in ["Authoring","GrassAuthoring"]:
 		var node := root.get_node_or_null(label)
 		if node!=null:
+			var ownership: Array = [[node,node.owner]]
+			for child in node.find_children("*","Node",true,false): ownership.append([child,child.owner])
+			detached.append([node,node.get_index(),ownership])
 			root.remove_child(node)
-			detached.append(node)
-	packed = PackedScene.new()
+	packed = ResourceLoader.load(SCENE,"PackedScene",ResourceLoader.CACHE_MODE_IGNORE)
+	if packed==null: packed = PackedScene.new()
 	error = packed.pack(root)
 	if error==OK: error = ResourceSaver.save(packed,SCENE)
-	for node in detached:
+	for entry in detached:
+		var node: Node = entry[0]
 		root.add_child(node)
-		node.owner = root
-		for child in node.find_children("*","Node",true,false): child.owner = root
+		root.move_child(node,mini(entry[1],root.get_child_count()-1))
+		# Restore exactly the previous ownership, including unowned plugin output.
+		# Flattening everything here is what corrupted the nested scatter scenes.
+		for pair in entry[2]: pair[0].owner = pair[1]
 	return {"success":error==OK,"path":SCENE,"authoring":AUTHORING,"error":error}
+
+func inspect_saved_grass_authoring() -> Dictionary:
+	# Read fresh serialized node state without instantiating a second live
+	# Terrain3D inside the editor. Full scene loading is checked in a separate process.
+	var packed: PackedScene = ResourceLoader.load(AUTHORING,"PackedScene",ResourceLoader.CACHE_MODE_IGNORE)
+	var state := packed.get_state()
+	var areas: Dictionary = {}
+	var chunks := 0
+	var tufts := 0
+	for i in range(state.get_node_count()):
+		var parent := str(state.get_node_path(i,true)).trim_prefix(str(state.get_node_name(0))+"/").trim_prefix("./")
+		var label := str(state.get_node_name(i))
+		var properties: Dictionary = {}
+		for j in range(state.get_node_property_count(i)):
+			properties[str(state.get_node_property_name(i,j))] = state.get_node_property_value(i,j)
+		if parent=="GrassAuthoring":
+			assert(state.get_node_instance(i)==null,"Scatter still inherits a preset")
+			areas["GrassAuthoring/"+label] = {"name":label,"items":0,"shapes":0,"seed":properties.get("global_seed",0),"amount":properties.modifier_stack.stack[0].amount}
+		elif areas.has(parent):
+			assert(not label.begins_with("PhysicsHelper") and label!="ScatterOutput","Generated output serialized")
+			if label=="ScatterItem":
+				areas[parent].items += 1
+				areas[parent].item = properties.path
+			if label=="ScatterShape":
+				areas[parent].shapes += 1
+				areas[parent].radius = properties.shape.radius
+		elif parent=="Grass" and properties.has("multimesh"):
+			chunks += 1
+			tufts += properties.multimesh.instance_count
+	assert(not areas.is_empty() and chunks>0,"Saved grass authoring missing")
+	for area in areas.values(): assert(area.items==1 and area.shapes==1,"Duplicate saved source nodes")
+	return {"success":true,"areas":areas.values(),"baked_chunks":chunks,"baked_tufts":tufts}
 
 func repair_grass_resource_paths() -> Dictionary:
 	root = get_parent()
@@ -521,13 +617,3 @@ func save_lighting_presets() -> Dictionary:
 		preset.set("fog_colour",spec[7])
 		save_resource(preset,path)
 	return {"success":true,"presets":3}
-
-
-
-
-
-
-
-
-
-

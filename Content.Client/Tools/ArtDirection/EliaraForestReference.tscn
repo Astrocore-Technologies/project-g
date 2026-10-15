@@ -20,7 +20,6 @@
 [ext_resource type="ArrayMesh" uid="uid://cshp7ovnfgrk5" path="res://Assets/World/Linvel/Beech/Revision2/Meshes/worn_supply_bundle.res" id="16_p7f1m"]
 [ext_resource type="Material" uid="uid://olpxekyiyrwc" path="res://Assets/ArtDirection/ForestReference/Materials/MossStone.tres" id="17_6mb5v"]
 [ext_resource type="ArrayMesh" uid="uid://cxv6cbp2k5qrv" path="res://Assets/World/Linvel/Beech/Revision2/Meshes/mossy_outcrop.res" id="18_xs1hi"]
-[ext_resource type="PackedScene" uid="uid://yxn1ih6qrc01" path="res://addons/proton_scatter/presets/scatter_default.tscn" id="19_400fd"]
 [ext_resource type="Script" uid="uid://ba8jou0xje0c7" path="res://addons/proton_scatter/src/stack/modifier_stack.gd" id="21_0g164"]
 [ext_resource type="Script" uid="uid://b5s7ggmsi8g5u" path="res://addons/proton_scatter/src/modifiers/base_modifier.gd" id="22_yk8qw"]
 [ext_resource type="Script" uid="uid://gjjh4mw1wn51" path="res://addons/proton_scatter/src/modifiers/create_inside_random.gd" id="23_ubb3x"]
@@ -70,6 +69,7 @@
 [ext_resource type="MultiMesh" uid="uid://drbklapjjh8as" path="res://Assets/ArtDirection/ForestReference/Grass/Chunk39.res" id="67_fxgrs"]
 [ext_resource type="MultiMesh" uid="uid://dnp5k1u5al7qn" path="res://Assets/ArtDirection/ForestReference/Grass/Chunk40.res" id="68_aya4q"]
 [ext_resource type="MultiMesh" uid="uid://c30t5ojvyfeq3" path="res://Assets/ArtDirection/ForestReference/Grass/Chunk41.res" id="69_csyyr"]
+[ext_resource type="Script" uid="uid://dgqq1tf8prx5s" path="res://addons/proton_scatter/src/scatter.gd" id="70_4586x"]
 [ext_resource type="MultiMesh" uid="uid://bwsx1cybh0osl" path="res://Assets/ArtDirection/ForestReference/Grass/Chunk42.res" id="70_oyi73"]
 [ext_resource type="MultiMesh" uid="uid://c88cyjvquc7uy" path="res://Assets/ArtDirection/ForestReference/Grass/Chunk43.res" id="71_t1o38"]
 [ext_resource type="MultiMesh" uid="uid://bqllgvqxy2e67" path="res://Assets/ArtDirection/ForestReference/Grass/Chunk44.res" id="72_3e3e7"]
@@ -79,7 +79,6 @@
 [ext_resource type="MultiMesh" uid="uid://bgbtpvisais2" path="res://Assets/ArtDirection/ForestReference/Grass/Chunk47.res" id="75_t8xjt"]
 [ext_resource type="Script" uid="uid://dx7e7heldjwmg" path="res://addons/proton_scatter/src/scatter_shape.gd" id="76_4586x"]
 [ext_resource type="Script" uid="uid://ba7ljvtfgk4cp" path="res://addons/proton_scatter/src/shapes/sphere_shape.gd" id="77_n48og"]
-[ext_resource type="Script" uid="uid://xlnyxibvnuqb" path="res://addons/proton_scatter/src/common/physics_helper.gd" id="78_0u460"]
 
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_k6rl8"]
 height = 4.5
@@ -1389,14 +1388,12 @@ material_override = ExtResource("27_vo1wm")
 cast_shadow = 0
 multimesh = ExtResource("75_t8xjt")
 
-[node name="Authoring" type="Node" parent="." unique_id=335079002]
-script = ExtResource("2_n3cce")
-
 [node name="GrassAuthoring" type="Node3D" parent="." unique_id=537951369]
 
-[node name="GrassArea0" parent="GrassAuthoring" unique_id=1843603437 instance=ExtResource("19_400fd")]
+[node name="GrassArea0" type="Node3D" parent="GrassAuthoring" unique_id=1843603437]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25, 0, -23)
 visible = false
+script = ExtResource("70_4586x")
 global_seed = 684140
 force_rebuild_on_load = false
 dbg_disable_thread = true
@@ -1406,19 +1403,19 @@ Performance/chunk_dimensions = Vector3(15, 15, 15)
 
 [node name="ScatterItem" type="Node3D" parent="GrassAuthoring/GrassArea0" unique_id=1145435254]
 script = ExtResource("75_k3qeu")
-path = "res://addons/proton_scatter/demos/assets/brick.tscn"
+override_material = ExtResource("27_vo1wm")
+override_cast_shadow = 0
+path = "res://Assets/ArtDirection/ForestReference/Prefabs/GrassTuft.tscn"
 
 [node name="ScatterShape" type="Node3D" parent="GrassAuthoring/GrassArea0" unique_id=1509848184]
 transform = Transform3D(1, 0, -2.98023e-08, 0, 1, 0, 2.98023e-08, 0, 1, 0, 0, 0)
 script = ExtResource("76_4586x")
 shape = SubResource("Resource_g8bsm")
 
-[node name="PhysicsHelper" type="Node" parent="GrassAuthoring/GrassArea0" unique_id=1362365513]
-script = ExtResource("78_0u460")
-
-[node name="GrassArea1" parent="GrassAuthoring" unique_id=621994857 instance=ExtResource("19_400fd")]
+[node name="GrassArea1" type="Node3D" parent="GrassAuthoring" unique_id=621994857]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, -22)
 visible = false
+script = ExtResource("70_4586x")
 global_seed = 684141
 force_rebuild_on_load = false
 dbg_disable_thread = true
@@ -1428,19 +1425,19 @@ Performance/chunk_dimensions = Vector3(15, 15, 15)
 
 [node name="ScatterItem" type="Node3D" parent="GrassAuthoring/GrassArea1" unique_id=1206243170]
 script = ExtResource("75_k3qeu")
-path = "res://addons/proton_scatter/demos/assets/brick.tscn"
+override_material = ExtResource("27_vo1wm")
+override_cast_shadow = 0
+path = "res://Assets/ArtDirection/ForestReference/Prefabs/GrassTuft.tscn"
 
 [node name="ScatterShape" type="Node3D" parent="GrassAuthoring/GrassArea1" unique_id=1183601467]
 transform = Transform3D(1, 0, -2.98023e-08, 0, 1, 0, 2.98023e-08, 0, 1, 0, 0, 0)
 script = ExtResource("76_4586x")
 shape = SubResource("Resource_g8bsm")
 
-[node name="PhysicsHelper" type="Node" parent="GrassAuthoring/GrassArea1" unique_id=150559222]
-script = ExtResource("78_0u460")
-
-[node name="GrassArea2" parent="GrassAuthoring" unique_id=429071822 instance=ExtResource("19_400fd")]
+[node name="GrassArea2" type="Node3D" parent="GrassAuthoring" unique_id=429071822]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28, 0, -15)
 visible = false
+script = ExtResource("70_4586x")
 global_seed = 684142
 force_rebuild_on_load = false
 dbg_disable_thread = true
@@ -1450,19 +1447,19 @@ Performance/chunk_dimensions = Vector3(15, 15, 15)
 
 [node name="ScatterItem" type="Node3D" parent="GrassAuthoring/GrassArea2" unique_id=1865443812]
 script = ExtResource("75_k3qeu")
-path = "res://addons/proton_scatter/demos/assets/brick.tscn"
+override_material = ExtResource("27_vo1wm")
+override_cast_shadow = 0
+path = "res://Assets/ArtDirection/ForestReference/Prefabs/GrassTuft.tscn"
 
 [node name="ScatterShape" type="Node3D" parent="GrassAuthoring/GrassArea2" unique_id=553836790]
 transform = Transform3D(1, 0, -2.98023e-08, 0, 1, 0, 2.98023e-08, 0, 1, 0, 0, 0)
 script = ExtResource("76_4586x")
 shape = SubResource("Resource_g8bsm")
 
-[node name="PhysicsHelper" type="Node" parent="GrassAuthoring/GrassArea2" unique_id=1737818730]
-script = ExtResource("78_0u460")
-
-[node name="GrassArea3" parent="GrassAuthoring" unique_id=932003324 instance=ExtResource("19_400fd")]
+[node name="GrassArea3" type="Node3D" parent="GrassAuthoring" unique_id=932003324]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27, 0, 24)
 visible = false
+script = ExtResource("70_4586x")
 global_seed = 684143
 force_rebuild_on_load = false
 dbg_disable_thread = true
@@ -1472,19 +1469,19 @@ Performance/chunk_dimensions = Vector3(15, 15, 15)
 
 [node name="ScatterItem" type="Node3D" parent="GrassAuthoring/GrassArea3" unique_id=1090075108]
 script = ExtResource("75_k3qeu")
-path = "res://addons/proton_scatter/demos/assets/brick.tscn"
+override_material = ExtResource("27_vo1wm")
+override_cast_shadow = 0
+path = "res://Assets/ArtDirection/ForestReference/Prefabs/GrassTuft.tscn"
 
 [node name="ScatterShape" type="Node3D" parent="GrassAuthoring/GrassArea3" unique_id=1659869872]
 transform = Transform3D(1, 0, -2.98023e-08, 0, 1, 0, 2.98023e-08, 0, 1, 0, 0, 0)
 script = ExtResource("76_4586x")
 shape = SubResource("Resource_g8bsm")
 
-[node name="PhysicsHelper" type="Node" parent="GrassAuthoring/GrassArea3" unique_id=1237839294]
-script = ExtResource("78_0u460")
-
-[node name="GrassArea4" parent="GrassAuthoring" unique_id=1521241227 instance=ExtResource("19_400fd")]
+[node name="GrassArea4" type="Node3D" parent="GrassAuthoring" unique_id=1521241227]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, 25)
 visible = false
+script = ExtResource("70_4586x")
 global_seed = 684144
 force_rebuild_on_load = false
 dbg_disable_thread = true
@@ -1494,19 +1491,19 @@ Performance/chunk_dimensions = Vector3(15, 15, 15)
 
 [node name="ScatterItem" type="Node3D" parent="GrassAuthoring/GrassArea4" unique_id=234344421]
 script = ExtResource("75_k3qeu")
-path = "res://addons/proton_scatter/demos/assets/brick.tscn"
+override_material = ExtResource("27_vo1wm")
+override_cast_shadow = 0
+path = "res://Assets/ArtDirection/ForestReference/Prefabs/GrassTuft.tscn"
 
 [node name="ScatterShape" type="Node3D" parent="GrassAuthoring/GrassArea4" unique_id=2102452861]
 transform = Transform3D(1, 0, -2.98023e-08, 0, 1, 0, 2.98023e-08, 0, 1, 0, 0, 0)
 script = ExtResource("76_4586x")
 shape = SubResource("Resource_g8bsm")
 
-[node name="PhysicsHelper" type="Node" parent="GrassAuthoring/GrassArea4" unique_id=2034727564]
-script = ExtResource("78_0u460")
-
-[node name="GrassArea5" parent="GrassAuthoring" unique_id=319220566 instance=ExtResource("19_400fd")]
+[node name="GrassArea5" type="Node3D" parent="GrassAuthoring" unique_id=319220566]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 29, 0, 26)
 visible = false
+script = ExtResource("70_4586x")
 global_seed = 684145
 force_rebuild_on_load = false
 dbg_disable_thread = true
@@ -1516,12 +1513,14 @@ Performance/chunk_dimensions = Vector3(15, 15, 15)
 
 [node name="ScatterItem" type="Node3D" parent="GrassAuthoring/GrassArea5" unique_id=1677243981]
 script = ExtResource("75_k3qeu")
-path = "res://addons/proton_scatter/demos/assets/brick.tscn"
+override_material = ExtResource("27_vo1wm")
+override_cast_shadow = 0
+path = "res://Assets/ArtDirection/ForestReference/Prefabs/GrassTuft.tscn"
 
 [node name="ScatterShape" type="Node3D" parent="GrassAuthoring/GrassArea5" unique_id=1363415837]
 transform = Transform3D(1, 0, -2.98023e-08, 0, 1, 0, 2.98023e-08, 0, 1, 0, 0, 0)
 script = ExtResource("76_4586x")
 shape = SubResource("Resource_g8bsm")
 
-[node name="PhysicsHelper" type="Node" parent="GrassAuthoring/GrassArea5" unique_id=2005242997]
-script = ExtResource("78_0u460")
+[node name="Authoring" type="Node" parent="." unique_id=335079002]
+script = ExtResource("2_n3cce")
