@@ -18,7 +18,7 @@ public sealed class GroundItemTests
         catalog: ContentCatalogTests.Load(),
         inventory: Options.Create(new InventoryOptions { Enabled = true }),
         groundItems: Options.Create(new GroundItemOptions { Enabled = true, PickupRange = range,
-            Seeds = [new() { Id = "test-ground-sword", DefinitionId = "test_sword_item", X = x, Z = z }] }));
+            Seeds = [new() { Id = "test-ground-sword", DefinitionId = "test_sword_item", X = x, Z = z }] }), hitRoll: () => 0, criticalRoll: () => 1);
     private static void RestoreSeeds(ServerWorld world) => world.GroundItems!.Restore(world.GroundItems.Seeds);
     private static ulong Handle(ServerWorld world, Vector2 position)
     {

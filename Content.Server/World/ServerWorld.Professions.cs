@@ -80,7 +80,7 @@ public sealed partial class ServerWorld
         foreach (var (id,command) in _professionPending)
         {
             var value=_progression[id]; var profession=value.Profession; var actor=Combat!.Get(id); uint token=0;
-            var outcome=actor.Health <= 0 ? ProfessionOutcome.InvalidState : actor.IsCasting || Abilities!.HasActiveEffects(id) ? ProfessionOutcome.Busy : ProfessionOutcome.Accepted;
+            var outcome=actor.Health <= 0 ? ProfessionOutcome.InvalidState : Combat.InCombat(id) || actor.IsCasting || Abilities!.HasActiveEffects(id) ? ProfessionOutcome.Busy : ProfessionOutcome.Accepted;
             if (command.Action == ProfessionAction.Cancel)
             { _professionConfirmations.Remove(id); outcome=ProfessionOutcome.Cancelled; }
             else if (outcome == ProfessionOutcome.Accepted)

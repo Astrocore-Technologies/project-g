@@ -68,7 +68,7 @@ public sealed class NpcSimulation
     }
     public NetworkEntityId Id { get; private set; }
     internal NpcOptions Options => _options;
-    public Vector2 Home { get; }
+    public Vector2 Home { get; private set; }
     public float HomeHeight { get; private set; }
     public NavigationMover Motion { get; }
     public NetworkEntityId TargetId { get; private set; }
@@ -77,6 +77,10 @@ public sealed class NpcSimulation
     public NpcWindup? Telegraph { get; private set; }
     public NpcArea? Area { get; private set; }
     public uint AreaVersion { get; private set; }
+    internal Content.Shared.Combat.ActionCapability CurrentCapabilities=>Behavior!=NpcBehavior.Windup ? Content.Shared.Combat.ActionCapability.None :
+        _castingArea ? _area!.Action.Capabilities : Content.Shared.Combat.ActionCapability.Weapon;
+    private NetworkEntityId _beforeTaunt;
+    private bool _tauntForced;
 
     public void Move(float delta, uint tick)
     {
@@ -85,6 +89,8 @@ public sealed class NpcSimulation
         if (_combat.Get(Id).Health <= 0) { Defeat(tick); return; }
         if (Motion.IsDashing)
         { Motion.Step(delta); _spatial.Move(Id,Motion.Position); _combat.Move(Id,Motion.Position,Motion.Height); return; }
+        if(_combat.IsFleeing(Id))
+        { Motion.Step(delta*_combat.FearMovement(Id)); _spatial.Move(Id,Motion.Position); _combat.Move(Id,Motion.Position,Motion.Height); return; }
         if (_combat.IsActionLocked(Id)) return;
         if (Behavior == NpcBehavior.Windup) return;
         _decisionRemaining -= delta;
@@ -135,6 +141,13 @@ public sealed class NpcSimulation
 
     private void Decide(uint tick)
     {
+        var forced=_combat.Get(Id).Controls.Latest(Content.Shared.Combat.CrowdControlKind.Taunt);
+        if(forced is not null && _combat.CanTarget(Id,_combat.ResolveSource(forced.Key.Source)))
+        {
+            if(!_tauntForced) _beforeTaunt=TargetId;
+            _tauntForced=true; TargetId=_combat.ResolveSource(forced.Key.Source);
+        }
+        else if(_tauntForced) { TargetId=_beforeTaunt; _beforeTaunt=default; _tauntForced=false; }
         if (Behavior == NpcBehavior.Returning)
         {
             if (Vector2.DistanceSquared(Motion.Position, Home) < 0.001f) Behavior = NpcBehavior.Idle;
@@ -195,7 +208,6 @@ public sealed class NpcSimulation
         if (target != Id || Behavior != NpcBehavior.Windup) return;
         if (_castingArea ? _area?.Interruptible != true : _combat.Get(Id).Kind == CombatEntityKind.Boss) return;
         EndTelegraph(tick); EndArea(tick); _castingArea = false; Behavior = NpcBehavior.Chasing;
-        Motion.Reset(Motion.Position, Motion.Position);
     }
 
     private bool ValidTarget(out Combatant target) => _combat.TryGet(TargetId, out target!) && target.Health > 0 && target.Active &&
@@ -227,10 +239,25 @@ public sealed class NpcSimulation
         _direction = default;
         _sequence = 0;
         _nextArea = _castingArea = false;
+        _beforeTaunt=default; _tauntForced=false;
         Telegraph = null;
         Area = null;
         WindupVersion++;
         AreaVersion++;
+    }
+
+    internal void ResumeAfterResurrection()
+    {
+        TargetId=default;Behavior=NpcBehavior.Idle;_decisionRemaining=_windupRemaining=0;_direction=default;
+        _castingArea=false;_beforeTaunt=default;_tauntForced=false;
+        Motion.Reset(Motion.Position,Motion.Position,Motion.Height,Motion.Height);
+    }
+
+    internal NpcSimulation ForkExistingLife(NetworkEntityId id,MovementSettings movement,float cellSize,StatCalculator calculator)
+    {
+        var actor=new NpcSimulation(id,_combat,_spatial,_grid,movement,_options,cellSize,_area,_boss,calculator)
+        {Home=Home,HomeHeight=HomeHeight,_storyAggroRadius=_storyAggroRadius,_time=_combat.Time,_sequence=_combat.Get(id).LastSequence};
+        return actor;
     }
 
     private void EndTelegraph(uint tick)

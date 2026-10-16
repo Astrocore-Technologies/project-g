@@ -12,6 +12,31 @@ namespace Content.Tests.Server;
 
 public sealed class NpcRespawnTests
 {
+    [Fact]public void FormerSpawnLifeResurrectsWithIndependentAiControlAndNormalCorpseCleanup()
+    {
+        var f=new Encounter(seconds:1);var world=f.World;var old=f.Npc.Id;
+        var player=world.AddPlayer(42,new(1),world.CreateInitialCharacter() with {X=5,Z=0});
+        f.Kill();f.Now+=1001;world.Simulate(.05f);var replacement=f.Npc.Id;
+        Assert.NotEqual(old,replacement);Assert.True(world.Combat!.CanResurrect(old,1));
+        Assert.True(world.Combat.Resurrect(default,old,1,20));world.Simulate(.05f);
+        Assert.True(world.TryGetNpcActor(old,out var revived));Assert.NotSame(f.Npc,revived);
+        Assert.Equal(old,revived.Id);Assert.Equal(replacement,f.Npc.Id);
+        for(var i=0;i<25&&revived.Telegraph is null;i++)world.Simulate(.05f);
+        Assert.Equal(player.EntityId,revived.TargetId);Assert.NotNull(revived.Telegraph);
+        Assert.True(world.Combat.Knockback(old,Vector2.UnitY,1,4));var before=revived.Motion.Position;
+        for(var i=0;i<6;i++)world.Simulate(.05f);Assert.True(Vector2.Distance(before,revived.Motion.Position)>.8f);
+        var view=new InterestView();world.UpdateInterest(42,view);Assert.Contains(view.Snapshots,s=>s.EntityId==old);
+        Assert.True(world.Combat.PayHealth(old,world.Combat.Get(old).Health,true));Assert.Empty(world.CaptureWorldNode().NpcRespawns!);
+        f.Now+=60001;world.Simulate(.05f);Assert.False(world.Combat.TryGet(old,out _));Assert.False(world.TryGetNpcActor(old,out _));
+        Assert.Equal(replacement,f.Npc.Id);Assert.True(world.Combat.Get(replacement).Health>0);
+    }
+    [Fact]public void ResurrectionBeforeSpawnReplacementCancelsThePendingReplacement()
+    {
+        var f=new Encounter(seconds:30);var id=f.Npc.Id;f.Kill();
+        Assert.True(f.World.Combat!.Resurrect(default,id,1,20));Assert.Equal(NpcBehavior.Idle,f.Npc.Behavior);
+        Assert.Empty(f.World.CaptureWorldNode().NpcRespawns!);f.Now+=30001;f.World.Simulate(.05f);
+        Assert.Equal(id,f.Npc.Id);Assert.Equal(20,f.World.Combat.Get(id).Health);
+    }
     internal sealed class Encounter
     {
         public long Now = 100000;
@@ -24,8 +49,9 @@ public sealed class NpcRespawnTests
             World = new(Options.Create(new MovementOptions { SpawnX = 0 }), Options.Create(new InterestOptions()), catalog: ContentCatalogTests.Load(),
                 npc: boss ? null : Options.Create(actor), boss: boss ? Options.Create(new BossOptions { Actor = actor }) : null,
                 worldStory: Options.Create(new WorldStoryOptions { Enabled = true }),
-                worldNodeDefinition: new WorldNodeDefinition { Key = "respawn-test", Interactive = false, OpeningCells = [] });
+                worldNodeDefinition: new WorldNodeDefinition { Key = "respawn-test", Interactive = false, OpeningCells = [] }, hitRoll: () => 0, criticalRoll: () => 1);
             World.NpcRespawnClock = () => Now;
+            World.PvpClock=()=>Now;
         }
         public void Kill() => Assert.True(World.Combat!.ApplyAbilityDamage(Npc.Id, 1_000_000) > 0);
     }
@@ -56,7 +82,7 @@ public sealed class NpcRespawnTests
         f.Now++;
         world.Simulate(.05f);
         Assert.NotEqual(oldId, f.Npc.Id);
-        Assert.False(world.Combat.TryGet(oldId, out _));
+        Assert.Equal(seconds<60,world.Combat.TryGet(oldId,out _));
         var next = world.Combat.Get(f.Npc.Id);
         Assert.Equal(next.Stats.MaxHealth, next.Health);
         Assert.Equal(f.Npc.Home, next.Position);
@@ -66,11 +92,16 @@ public sealed class NpcRespawnTests
         Assert.Equal(0, next.StunnedUntil);
         Assert.Empty(world.CaptureWorldNode().NpcRespawns!);
         world.UpdateInterest(42, view);
-        Assert.Contains(oldId, view.Left); Assert.Contains(f.Npc.Id, view.Entered);
-        // A held autoattack may still send the previous target ID; it must not hit the new life.
+        if(seconds>=60)Assert.Contains(oldId,view.Left);else Assert.Contains(oldId,view.Entities);
+        Assert.Contains(f.Npc.Id, view.Entered);
+        if(seconds<60)
+        {
+            f.Now+=(60-seconds)*1000;world.Simulate(.05f);world.UpdateInterest(42,view);
+            Assert.False(world.Combat.TryGet(oldId,out _));Assert.Contains(oldId,view.Left);
+        }
+        // A replacement life does not create an attack input or select a target.
         world.TryApplyMove(42, new(1, world.Tick, f.Npc.Home));
         for (var i = 0; i < 40; i++) world.Simulate(.05f);
-        Assert.True(world.TryQueueAttack(42, new(1, world.Tick, Vector2.UnitX, oldId)));
         world.Simulate(.05f);
         Assert.Equal(next.Stats.MaxHealth, next.Health);
         f.Kill();

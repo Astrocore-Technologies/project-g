@@ -48,7 +48,13 @@ public partial class NetworkClient : Node
     public event Action<AbilityLoadout>? AbilityLoadoutReceived;
     public event Action<AbilityResult>? AbilityResultReceived;
     public event Action<AbilityEffectState>? AbilityEffectReceived;
+    private readonly AbilityEffectStream _sustainedEffects=new();
     public event Action<AbilityHit>? AbilityHitReceived;
+    public event Action<CombatFeedback>? CombatFeedbackReceived;
+    public event Action<CombatJournalIndex>? CombatJournalIndexReceived;
+    public event Action<CombatJournalChunk>? CombatJournalChunkReceived;
+    public event Action<CombatJournalResult>? CombatJournalResultReceived;
+    public CombatJournalIndex? LatestCombatJournalIndex {get;private set;}
     public event Action<NpcWindup>? NpcWindupReceived;
     public event Action<NpcArea>? NpcAreaReceived;
     public event Action<InventoryState>? InventoryReceived;
@@ -57,6 +63,22 @@ public partial class NetworkClient : Node
     public event Action<GroundItemDespawn>? GroundItemDespawned;
     public event Action<PickupResult>? PickupResultReceived;
     public event Action? Disconnected;
+    public event Action<LogoutResult>? LogoutReceived;
+    public event Action<ActorLifeState>? LifeReceived;
+    public event Action<RespawnResult>? RespawnReceived;
+    public Dictionary<NetworkEntityId,ActorLifeState> KnownLife {get;}=new();
+    public void SendRespawn(RespawnCommand command)
+    {if(_handshakeComplete)SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);}
+    public bool LoggedOut {get;private set;}
+    public bool LogoutPending {get;private set;}
+    private uint _logoutSequence;
+    public bool RequestLogout()
+    {
+        if(!_handshakeComplete || LogoutPending || !RegionActive && CurrentRegion is not null)return false;
+        LogoutPending=true;
+        SendGame(NetworkProtocol.Write(new LogoutCommand(++_logoutSequence)),DeliveryMethod.ReliableOrdered);
+        return true;
+    }
     // NC: player-facing errors never display credentials or raw server diagnostics.
     public string LastConnectionError { get; private set; } = "";
     public event Action<string>? ConnectionFailed;
@@ -228,6 +250,16 @@ public partial class NetworkClient : Node
         if (_handshakeComplete && _serverPeer is not null)
             SendGame(NetworkProtocol.Write(command), DeliveryMethod.ReliableOrdered);
     }
+    public void SendActionCancel(ActionCancelCommand command)
+    {
+        if(_handshakeComplete && _serverPeer is not null)
+            SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
+    }
+    public void SendAbilityControl(AbilityControlCommand command)
+    {
+        if(_handshakeComplete && _serverPeer is not null)SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
+    }
+    public void SendCombatJournalRequest(CombatJournalRequest command)=>SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
     public void SendDevelopmentRevive(DevelopmentReviveCommand command)
     {
         if (_handshakeComplete && CanDevelopmentRevive)
@@ -258,6 +290,7 @@ public partial class NetworkClient : Node
 
     private void OnPeerConnected(NetPeer peer)
     {
+        LoggedOut=false;LogoutPending=false;_logoutSequence=0;
         _serverPeer = peer;
         var buildVersion =
             Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown";
@@ -269,11 +302,24 @@ public partial class NetworkClient : Node
 
     private void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
     {
+        var extra=disconnectInfo.AdditionalData;
+        if(extra.AvailableBytes is >0 and <=NetworkConstants.MaxHandshakePacketBytes)
+        {
+            var start=extra.Position;
+            var logoutReader=new NetDataReader(extra.GetRemainingBytes());
+            if(NetworkProtocol.TryReadMessageType(logoutReader,out var extraType) && extraType==NetworkMessageType.LogoutResult &&
+                NetworkProtocol.TryReadLogoutResult(logoutReader,out var logout) && logout.Sequence==_logoutSequence && logout.Outcome==LogoutOutcome.Accepted)
+            {LoggedOut=true;LogoutPending=false;LogoutReceived?.Invoke(logout);}
+            extra.SetPosition(start);
+        }
         _serverPeer = null;
         _handshakeComplete = false;
         LocalPlayerId = PlayerId.Invalid;
         CurrentRegion = null;
         KnownPlayers.Clear();
+        KnownLife.Clear();
+        _sustainedEffects.Clear();
+        LatestCombatJournalIndex=null;
         CanDevelopmentRevive = false;
         Navigation = null; LatestWorldNode=null; LatestStarterZone=null; LatestPvpZone=null; LatestDefense=null; CraftRecipes.Clear(); ResourceNodes.Clear(); QuestNpcs.Clear(); LatestQuestJournal=null;
         LatestServerTick = 0;
@@ -282,7 +328,7 @@ public partial class NetworkClient : Node
             ReportConnectionFailure(RejectionMessage(rejection.Code)); // NC
             GD.PushError($"Server rejected connection ({rejection.Code}): {rejection.Reason}");
         }
-        else if (LastConnectionError.Length == 0)
+        else if (!LoggedOut && LastConnectionError.Length == 0)
             ReportConnectionFailure("Соединение с сервером потеряно или сервер недоступен. Попробуй войти снова.");
         Disconnected?.Invoke();
         GD.Print($"Disconnected from server: {disconnectInfo.Reason}");
@@ -324,6 +370,25 @@ public partial class NetworkClient : Node
 
             switch (messageType)
             {
+                case NetworkMessageType.ActorLifeState:
+                    if(_handshakeComplete && deliveryMethod==DeliveryMethod.ReliableOrdered && NetworkProtocol.TryReadActorLifeState(reader,out var life))
+                    {
+                        if(!KnownLife.TryGetValue(life.EntityId,out var previousLife) || life.ServerTick==previousLife.ServerTick ||
+                            Content.Shared.Movement.MovementSimulation.IsSequenceNewer(life.ServerTick,previousLife.ServerTick))
+                        {KnownLife[life.EntityId]=life;LifeReceived?.Invoke(life);}
+                    }
+                    else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.RespawnResult:
+                    if(_handshakeComplete && deliveryMethod==DeliveryMethod.ReliableOrdered && NetworkProtocol.TryReadRespawnResult(reader,out var respawn))RespawnReceived?.Invoke(respawn);
+                    else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.LogoutResult:
+                    if(_handshakeComplete && deliveryMethod==DeliveryMethod.ReliableOrdered && NetworkProtocol.TryReadLogoutResult(reader,out var logout) &&
+                        logout.Sequence==_logoutSequence && logout.Outcome==LogoutOutcome.InCombat)
+                    {LogoutPending=false;LogoutReceived?.Invoke(logout);}
+                    else DisconnectMalformed(peer);
+                    break;
                 case NetworkMessageType.SurfaceChunk:
                     if (deliveryMethod != DeliveryMethod.ReliableOrdered || Navigation is null || CurrentRegion is not { HasSurface: true } surfaceRegion || !NetworkProtocol.TryReadSurfaceChunk(reader, out var chunk)) { DisconnectMalformed(peer); break; }
                     try { if (_surfaceAssembly.Add(chunk) is { } geometry) { if (geometry.Hash != surfaceRegion.GeometryHash) throw new InvalidDataException("Wrong region surface."); Navigation.AttachSurface(geometry); NavigationReceived?.Invoke(Navigation); } }
@@ -507,6 +572,7 @@ public partial class NetworkClient : Node
                     {
                         QuestNpcs.Remove(despawn.EntityId);
                         KnownPlayers.Remove(despawn.EntityId);
+                        KnownLife.Remove(despawn.EntityId);
                         PlayerDespawned?.Invoke(despawn);
                     }
                     else
@@ -553,7 +619,7 @@ public partial class NetworkClient : Node
                     break;
                 case NetworkMessageType.AbilityEffectState:
                     if (_handshakeComplete && NetworkProtocol.TryReadAbilityEffectState(reader, out var effect))
-                        AbilityEffectReceived?.Invoke(effect);
+                    {if(_sustainedEffects.Accept(effect,deliveryMethod==DeliveryMethod.ReliableOrdered))AbilityEffectReceived?.Invoke(effect);}
                     else DisconnectMalformed(peer);
                     break;
                 case NetworkMessageType.AbilityHit:
@@ -564,6 +630,26 @@ public partial class NetworkClient : Node
                 case NetworkMessageType.NpcWindup:
                     if (_handshakeComplete && NetworkProtocol.TryReadNpcWindup(reader, out var windup))
                         NpcWindupReceived?.Invoke(windup);
+                    else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.CombatFeedback:
+                    if(_handshakeComplete && NetworkProtocol.TryReadCombatFeedback(reader,out var feedback))CombatFeedbackReceived?.Invoke(feedback);
+                    else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.CombatJournalIndex:
+                    if(_handshakeComplete && NetworkProtocol.TryReadCombatJournalIndex(reader,out var journalIndex) &&
+                        KnownPlayers.TryGetValue(journalIndex.OwnerId,out var journalOwner) && journalOwner.PlayerId==LocalPlayerId)
+                    {LatestCombatJournalIndex=journalIndex;CombatJournalIndexReceived?.Invoke(journalIndex);}
+                    else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.CombatJournalChunk:
+                    if(_handshakeComplete && NetworkProtocol.TryReadCombatJournalChunk(reader,out var journalChunk) &&
+                        KnownPlayers.TryGetValue(journalChunk.OwnerId,out var chunkOwner) && chunkOwner.PlayerId==LocalPlayerId)
+                        CombatJournalChunkReceived?.Invoke(journalChunk);
+                    else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.CombatJournalResult:
+                    if(_handshakeComplete && NetworkProtocol.TryReadCombatJournalResult(reader,out var journalResult))CombatJournalResultReceived?.Invoke(journalResult);
                     else DisconnectMalformed(peer);
                     break;
                 case NetworkMessageType.NpcArea:

@@ -8,6 +8,7 @@ public sealed record CreatureDefinition
 {
     public bool CanBleed { get; init; } = true;
     public bool CanBeStunned { get; init; } = true;
+    public ControlResistance ControlResistance { get; init; } = new();
     public required string Id { get; init; }
     public required BaseStats Stats { get; init; }
     public DerivedStatModifiers Modifiers { get; init; } = new();

@@ -26,7 +26,7 @@ public sealed class SwordsmanSimulationTests
         public Fight(bool sword=true, bool profession=true, ushort selected=20)
         {
             var catalog=ContentCatalogTests.Load(); var grid=new NavigationOptions().CreateGrid(new MovementOptions().ToSettings());
-            Combat=new(catalog,Spatial,grid,new CombatOptions(),20,8,()=>1);
+            Combat=new(catalog,Spatial,grid,new CombatOptions(),20,8,()=>1, hitRoll: () => 0);
             Combat.Add(Player,Vector2.Zero,CombatEntityKind.Player); Spatial.Add(Player,Vector2.Zero);
             AddTarget(Target,new(0,1.5f));
             Abilities=new(catalog,Combat,Spatial,grid,new CombatOptions(),8,(_,_,_)=>true);
@@ -79,6 +79,14 @@ public sealed class SwordsmanSimulationTests
         Assert.Equal(AbilityOutcome.Accepted,f.Cast((ushort)id)); Assert.Equal(100-stamina,f.Stamina,6);
         f.Step(16); Assert.Equal(power*factor,f.Damage,6); Assert.Single(f.Hits);
         Assert.Equal(AbilityOutcome.Cooldown,f.Cast((ushort)id)); Assert.Equal(power*factor,f.Damage,6);
+    }
+
+    [Fact]
+    public void UnarmedParryStopsAMeleeHitWithoutGrantingSwordSpecificWindows()
+    {
+        var f=new Fight(sword:false);
+        Assert.False(f.Combat.HasSword(f.Player));f.ParryActualHit();
+        Assert.Equal(90,f.Stamina);Assert.False(f.Combat.HasRiposte(f.Player));Assert.Equal(1,f.Combat.ConsumeFocus(f.Player));
     }
 
     [Fact]
@@ -148,8 +156,8 @@ public sealed class SwordsmanSimulationTests
     }
 
     [Theory]
-    [InlineData(100,1.7/1.7)] [InlineData(-50,1.7*1.5)]
-    public void BreakerIgnoresOnlyPositiveArmor(double armor,double expectedFactor)
+    [InlineData(100,1.7/2)] [InlineData(-50,1.7*1.5)]
+    public void BreakerUsesNormalDefenseWithoutArmorPenetration(double armor,double expectedFactor)
     {
         var f=new Fight(selected:23); var target=f.Combat.Get(f.Target); target.Stats=target.Stats with {PhysicalDefense=armor};
         f.Cast(23); f.Step(20); Assert.Equal(f.Combat.SwordPower(f.Player)*expectedFactor,f.Damage,5);
@@ -197,7 +205,7 @@ public sealed class SwordsmanSimulationTests
             case "attack": f.Combat.Queue(f.Player,new(++f.AttackSequence,0,Vector2.UnitY),f.Tick); break;
             case "defense": f.Combat.QueueDefense(f.Player,new(++f.DefenseSequence,DefenseAction.Block,Vector2.UnitY),f.Tick); break;
         }
-        f.Step(17); Assert.InRange(f.Stamina,30,35); Assert.False(f.Combat.Get(f.Player).IsCasting);
+        f.Step(17); Assert.InRange(f.Stamina,cancellation=="defense" ? 27 : 30,35); Assert.False(f.Combat.Get(f.Player).IsCasting);
         Assert.Equal(AbilityOutcome.Cooldown,f.Cast(28));
     }
 
@@ -229,14 +237,14 @@ public sealed class SwordsmanSimulationTests
     }
 
     [Fact]
-    public void StrongGripReducesRemainderNotAbsorptionAndRegenPausesInBlock()
+    public void StrongGripAddsAbsorptionAndHoldingBlockSpendsWithoutRegenerating()
     {
         var plain=new Fight(profession:false); plain.Guard(DefenseAction.Block); plain.Combat.ExecuteNpcAttack(plain.Target,1,-Vector2.UnitY,plain.Tick); var baseline=plain.Combat.Events[^1].Damage;
         var sword=new Fight(); sword.Guard(DefenseAction.Block); sword.Combat.ExecuteNpcAttack(sword.Target,1,-Vector2.UnitY,sword.Tick);
-        Assert.Equal(baseline*.85,sword.Combat.Events[^1].Damage,6);
+        Assert.Equal(baseline/.7*.55,sword.Combat.Events[^1].Damage,6);
         sword.Combat.RestoreDefense(sword.Player,new(1,50,0,0));
         for(var i=0;i<40;i++) { sword.Guard(DefenseAction.Block); }
-        Assert.Equal(50,sword.Stamina); sword.Guard(DefenseAction.Release); sword.Step(20); Assert.InRange(sword.Stamina,58,59);
+        Assert.Equal(40,sword.Stamina,5); sword.Guard(DefenseAction.Release); var released=sword.Stamina; sword.Step(40); Assert.InRange(sword.Stamina,released+7.9,released+8.5);
     }
 
     [Fact]

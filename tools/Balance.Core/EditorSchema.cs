@@ -33,6 +33,13 @@ public static class EditorSchema
         foreach (var (key, title) in new[] { ("stamina", "Выносливость"), ("block", "Блок"), ("parry", "Парирование") })
             pages.Add(new("combat/" + key, title, ["Бой и защита"], "defense", key));
         pages.Add(new("combat/control", "Контроль, буфер и Quick Recover", ["Бой и защита"], "defense", "control"));
+        if(document.Root["control"] is JsonObject) pages.Add(new("combat/acr","Категории контроля и ACR",["Бой и защита"],"control"));
+        if(document.Root["lifecycle"] is JsonObject) pages.Add(new("combat/lifecycle","Бой, disconnect и тело",["Бой и защита"],"lifecycle"));
+        foreach(var entry in entries.Where(e=>e.Name.StartsWith("effects / ",StringComparison.Ordinal)))
+        {
+            var effect=document.Read(entry.Path)!;var id=effect["id"]!.GetValue<string>();
+            pages.Add(new("effect/"+id,EditorLabels.Name(id),["Бой и защита","Эффекты"],entry.Path));
+        }
         foreach (var profession in document.ProfessionEntries())
         {
             var entry = entries.Single(e => e.Name == "professions / " + profession.Id);
@@ -123,9 +130,9 @@ public static class EditorSchema
         if (page.RootPath == "defense") return page.Section switch
         {
             "stamina" => key is "maxStamina" or "recoveryPerSecond" or "recoveryDelay" or "dodgeCost",
-            "block" => key is "blockCost" or "blockMovementMultiplier" or "guardLeaseSeconds",
+            "block" => key is "blockCost" or "blockMovementMultiplier" or "guardLeaseSeconds" or "blockHoldPerSecond" or "guardBreakSeconds" or "frontalAngleDegrees",
             "parry" => key.StartsWith("parry"),
-            "control" => key.StartsWith("quickRecover") || key is "inputBufferSeconds" or "controlResetSeconds" or "repeatedControlFactor", _ => true
+            "control" => key.StartsWith("quickRecover") || key=="inputBufferSeconds", _ => true
         };
         if (page.RootPath == "progression") return (key is "practicePerLevel" or "skillLevelCap" or "powerPerSkillLevel") == (page.Section == "skills");
         if (page.Section == "rules") return path.Count(c => c == '/') == 1;
@@ -134,7 +141,7 @@ public static class EditorSchema
         if (page.RootPath.StartsWith("abilities/"))
         {
             var node = document.Read(page.RootPath)!; var kind = node["kind"]!.GetValue<string>();
-            if (kind is "Melee" or "Recovery" && key is "power" or "magicAttackScale" or "speed" or "range") return false;
+            if (kind is "Melee" or "Recovery" && path==page.RootPath+"/"+key && key is "power" or "magicAttackScale" or "speed" or "range") return false;
             if (kind == "Recovery" && key is "damageFactor" or "rangeFactor" or "radius") return false;
             if (kind == "Dash" && key is "power" or "magicAttackScale") return false;
         }
@@ -155,16 +162,48 @@ public static class EditorSchema
         if (page.RootPath.StartsWith("abilities/"))
         {
             group = key is "range" or "radius" or "speed" or "rangeFactor" or "arcDegrees" ? "Попадание" :
-                key is "armorIgnore" or "bleedFactor" or "bleedSeconds" or "stunSeconds" or "slowFraction" or "slowSeconds" or "executeThreshold" or "executeFactor" or "restoreStamina" || key.StartsWith("knock") ? "Эффекты" :
+                key is "stunSeconds" or "slowFraction" or "slowSeconds" or "executeThreshold" or "executeFactor" or "restoreStamina" || key.StartsWith("knock") ? "Эффекты" :
                 key.Contains("Recovery") || key is "hitCancelAfterSeconds" or "minimumWindupSeconds" ? "Фазы и продолжения" : "Основное";
             min = 0;
+            if(path.Contains("/passive/"))
+            {
+                group="Пассивный навык";help="Работает после изучения без ячейки. Условия проверяются сервером при изменении состояния.";
+                if(path.Contains("/modifiers/")){group="Пассивный навык / Бонусы";min=null;}
+            }
+            if(path.Contains("/effects/") && path.Contains("/control/"))
+            {
+                group="Эффекты / Контроль";
+                title=key=="strength" ? "Сила контроля" : key=="height" ? "Высота полёта · м" : title;
+                help="Параметр отдельного контроля. Иммунитет, сопротивления и ACR применяются общим серверным исполнителем.";
+            }
+            if(path.Contains("/action/"))
+            {
+                var phase=path.Contains("/preparation/") ? "Подготовка" : path.Contains("/active/") ? "Активная фаза" : "Восстановление";
+                group="Фазы действия / "+phase;
+                title=key=="seconds" ? "Длительность · с" : key=="movementMultiplier" ? "Множитель движения" : title;
+                help=key=="seconds" ? "Базовая длительность фазы. Выбранный в данных источник AttackSpeed/CastSpeed масштабирует время." :
+                    key=="movementMultiplier" ? "Множитель скорости передвижения именно в этой фазе; 0 запрещает движение." : help;
+            }
+            if(path.Contains("/channel/"))
+            {
+                group="Поддержание навыка";
+                help=key is "manaPerSecond" or "staminaPerSecond" ? "Дробный расход за фактически обеспеченное время поддержания, без округления до целых." :
+                    key=="intervalSeconds" ? "Базовый интервал воздействий; intervalSpeed в данных явно задаёт влияние скорости." :
+                    "Числовой предел поддержания. Явный null в данных разрешает поддержание до прекращения.";
+            }
+            if(path.Contains("/charge/"))
+            {
+                group="Зарядка навыка";
+                help=key=="fullSeconds" ? "До полного заряда; speed явно выбирает None, AttackSpeed или CastSpeed." :
+                    "Множитель силы на соответствующем конце линейной кривой зарядки. atFull явно задаёт Release или Hold.";
+            }
         }
         if (page.RootPath == "swordsman")
         {
             group = key switch
             {
                 "basicDamageBonus" => "Владение мечом", "rhythmHits" or "rhythmWindow" or "rhythmStamina" => "Боевой ритм",
-                "blockRemainderReduction" => "Крепкий хват", "footworkBonus" or "footworkSeconds" => "Работа ног",
+                "blockAbsorptionBonus" => "Крепкий хват", "footworkBonus" or "footworkSeconds" => "Работа ног",
                 "focusBonus" or "parryWindow" => "Собранность", _ => page.Title
             };
             min = 0;
@@ -174,29 +213,31 @@ public static class EditorSchema
         if (key is "initialStatPoints" or "statPointsPerLevel") { integer = true; min = key == "initialStatPoints" ? 0 : 1; max = 100; }
         if (key is "experiencePerLevel" or "discoveryExperience" or "practicePerLevel") { integer = true; min = 1; max = 1000000; }
         if (key is "rhythmHits" or "successfulUses" or "discoveryMask") { integer = true; min = 0; }
-        if (key is "armorIgnore" or "executeThreshold" or "slowFraction" or "powerPerSkillLevel" or "basicDamageBonus" or "blockRemainderReduction" or "focusBonus" or "footworkBonus" or "blockMovementMultiplier") max = 1;
+        if (key is "executeThreshold" or "slowFraction" or "powerPerSkillLevel" or "basicDamageBonus" or "blockAbsorptionBonus" or "focusBonus" or "footworkBonus" or "blockMovementMultiplier") max = 1;
         if (key == "dashRange") max = 20;
         if (key == "arcDegrees") max = 360;
+        if(key=="maxCharges") { integer=true; min=1; max=255; }
         if (key is "hitRecoverySeconds" or "missRecoverySeconds" or "minimumWindupSeconds" or "knockupSeconds" or "knockdownSeconds") max=2;
         if (key is "knockbackDistance" or "knockupHeight" or "quickRecoverRange") max=3;
         if (key is "knockbackSpeed" or "quickRecoverSpeed") max=20;
         if (key == "inputBufferSeconds") max=.3;
-        if (key == "controlResetSeconds") max=10;
-        if (key == "repeatedControlFactor") max=1;
         help = key switch
         {
             "rhythmHits" => "Сколько успешных обычных попаданий нужно для восстановления выносливости.",
             "rhythmWindow" => "Пауза между попаданиями, после которой серия сбрасывается.",
             "rhythmStamina" => "Сколько выносливости восстановится при завершении серии.",
             "basicDamageBonus" => "Усиливает обычную атаку мечом. Не увеличивает базу урона приёмов.",
-            "blockRemainderReduction" => "Уменьшает остаток физического урона после обычного блока.",
+            "blockAbsorptionBonus" => "Прибавляется к поглощению блока; не меняет его прочность.",
             "footworkBonus" => "Прибавка к скорости обычного бега после прямого попадания.",
             "footworkSeconds" => "Время действия ускорения после попадания.",
             "focusBonus" => "Усиление следующей попытки удара после успешного парирования.",
             "parryWindow" when page.RootPath == "swordsman" => "Сколько времени после успешного парирования доступно усиление.",
             "damageFactor" => "Урон от базового удара оружия: 120,0% означает ×1,2. Дополнительно действует сила уровня навыка.",
             "rangeFactor" => "Дальность приёма относительно дальности оружия.",
-            "bleedFactor" => "Суммарный урон кровотечения от базового удара за всё время эффекта.",
+            "weaponScale" => "Доля базового удара оружия за один тик. Для Рассечения четыре тика по 15% дают суммарно 60%.",
+            "inCombatSeconds" => "Время боевого статуса после подтверждённого враждебного контакта или поддержки участника боя.",
+            "disconnectBodySeconds" => "При обрыве связи тело продолжает обычную серверную симуляцию до истечения этого срока.",
+            "corpseSeconds" => "Срок тела после смерти по GDD 01; отдельный runtime смерти ещё находится в реализации.",
             "executeThreshold" => "Доля оставшегося HP цели, при которой применяется урон добивания.",
             "executeFactor" => "Урон от базового удара по цели ниже порога добивания.",
             "guardLeaseSeconds" => "Технический срок удержания блока без нового подтверждения от клиента.",

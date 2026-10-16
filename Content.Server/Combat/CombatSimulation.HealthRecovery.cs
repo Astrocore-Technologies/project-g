@@ -14,7 +14,7 @@ public sealed partial class CombatSimulation
     internal void RefreshHealthRecovery(NetworkEntityId id)
     {
         if (!_actors.TryGetValue(id, out var actor)) return;
-        if (actor.Kind == CombatEntityKind.Player && _defense.TryGetValue(id, out var defense) && defense.Connected &&
+        if (actor.Kind == CombatEntityKind.Player && actor.Active &&
             actor.Health > 0 && actor.Health < actor.Stats.MaxHealth && actor.Stats.HealthRecovery > 0)
             _recoveringHealth.Add(id);
         else
@@ -31,7 +31,7 @@ public sealed partial class CombatSimulation
         foreach (var id in _recoveringHealth)
         {
             var actor = _actors[id];
-            if (actor.Health <= 0 || actor.Health >= actor.Stats.MaxHealth || actor.Stats.HealthRecovery <= 0 || !_defense[id].Connected)
+            if (actor.Health <= 0 || actor.Health >= actor.Stats.MaxHealth || actor.Stats.HealthRecovery <= 0 || !actor.Active)
             {
                 actor.HealthRecoveryElapsed = 0;
                 _healthRecoveryFinished.Add(id);

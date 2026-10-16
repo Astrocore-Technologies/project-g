@@ -37,10 +37,16 @@ public sealed class PvpIntegrationTests
     }
     [Fact]public async Task CombatDisconnectReattachesSameActorAndResetsOnlySessionSequences()
     {
-        var store=new SqliteCharacterStore();await store.InitializeAsync(CancellationToken.None);var w=PvpTests.World();var ai=PvpTests.Initial(w) with {Health=100};var seed=await store.OpenAsync("",ai,CancellationToken.None);var token=seed.IssuedToken;await seed.DisposeAsync();var port=CharacterPersistenceTests.FreePort();using var server=Server(port,w,store);await server.StartAsync(CancellationToken.None);using var a=new NetworkMovementIntegrationTests.TestClient(port,token);using var observer=new NetworkMovementIntegrationTests.TestClient(port);
+        var store=new SqliteCharacterStore();await store.InitializeAsync(CancellationToken.None);var w=PvpTests.World();var ai=PvpTests.Initial(w) with {Health=100};var seed=await store.OpenAsync("",ai,CancellationToken.None);var token=seed.IssuedToken;await seed.DisposeAsync();
+        seed=await store.OpenAsync("",PvpTests.Initial(w,-4.5f) with {Health=100},CancellationToken.None);var observerToken=seed.IssuedToken;await seed.DisposeAsync();
+        var port=CharacterPersistenceTests.FreePort();using var server=Server(port,w,store);await server.StartAsync(CancellationToken.None);using var a=new NetworkMovementIntegrationTests.TestClient(port,token);using var observer=new NetworkMovementIntegrationTests.TestClient(port,observerToken);
         try
         {
-            await Poll(a,observer,()=>a.PvpStates.Count==1&&observer.PvpStates.Count==1);var entity=a.LocalSpawn.EntityId;a.Pvp(new(1,PvpAction.Mode,PvpMode.Voluntary,false,0));await Poll(a,observer,()=>a.PvpResults.Count==1);a.Attack(90,-Vector2.UnitX);await Poll(a,observer,()=>a.Results.Any(r=>r.Sequence==90));a.Disconnect();await Poll(observer,observer,()=>server.DetachedCombatantCount==1);Assert.Contains(entity,observer.Spawns.Keys);
+            await Poll(a,observer,()=>a.PvpStates.Count==1&&observer.PvpStates.Count==1);var entity=a.LocalSpawn.EntityId;
+            a.Pvp(new(1,PvpAction.Mode,PvpMode.Voluntary,false,0));observer.Pvp(new(1,PvpAction.Mode,PvpMode.Voluntary,false,0));
+            await Poll(a,observer,()=>a.PvpResults.Count==1&&observer.PvpResults.Count==1);
+            a.Attack(90,Vector2.UnitX);await Poll(a,observer,()=>a.Results.Any(r=>r.Sequence==90&&r.Outcome==AttackOutcome.Accepted)&&a.Attacks.Count>0);
+            a.Disconnect();await Poll(observer,observer,()=>server.DetachedCombatantCount==1);Assert.Contains(entity,observer.Spawns.Keys);
             using var restored=new NetworkMovementIntegrationTests.TestClient(port,token);await Poll(restored,observer,()=>restored.PvpStates.Count==1);Assert.Null(restored.Rejection);Assert.Equal(entity,restored.LocalSpawn.EntityId);Assert.Equal(0,server.DetachedCombatantCount);Assert.Equal(1UL,restored.PvpStates.Values.Single().LastSequence);Assert.Equal(PvpMode.Voluntary,restored.PvpStates.Values.Single().Mode);
             await Task.Delay(1000);restored.Attack(1,-Vector2.UnitX);await Poll(restored,observer,()=>restored.Results.Any(r=>r.Sequence==1));Assert.Equal(AttackOutcome.Accepted,restored.Results.Last(r=>r.Sequence==1).Outcome);
             restored.Disconnect();await Poll(observer,observer,()=>server.DetachedCombatantCount==1);

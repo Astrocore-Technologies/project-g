@@ -6,11 +6,12 @@ namespace Content.Server.Persistence;
 public sealed record SavedNpcRespawn(
     [property: JsonRequired] int Version,
     [property: JsonRequired] string SpawnId,
-    [property: JsonRequired] long RespawnAtUnixMilliseconds)
+    [property: JsonRequired] long RespawnAtUnixMilliseconds,
+    long CorpseUntilUnixMilliseconds=0)
 {
     public void Validate()
     {
-        if (Version != 1 || !ValidId(SpawnId) || RespawnAtUnixMilliseconds is < 0 or > 253402300799000L)
+        if (Version != 1 || !ValidId(SpawnId) || RespawnAtUnixMilliseconds is < 0 or > 253402300799000L || CorpseUntilUnixMilliseconds is <0 or >253402300799000L)
             throw new InvalidDataException("Invalid NPC respawn state.");
     }
 

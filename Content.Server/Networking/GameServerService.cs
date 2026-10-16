@@ -3,6 +3,7 @@ using Content.Server.Configuration;
 using Content.Server.World;
 using Content.Server.Persistence;
 using Content.Shared.Network;
+using Content.Shared.Movement;
 using LiteNetLib;
 using LiteNetLib.Utils;
 using Microsoft.Extensions.Hosting;
@@ -99,6 +100,7 @@ public sealed partial class GameServerService : BackgroundService
                     CompleteLogins();
                     CompleteClosings();
                     CloseDepartedPlayers();
+                    if(_departed.Count!=0)BeginCheckpoint();
                 }
 
                 // Limit catch-up work so a temporary stall cannot spiral indefinitely.
@@ -108,7 +110,10 @@ public sealed partial class GameServerService : BackgroundService
                     if(_liveDm?.TryTake(out var dm)==true) _world.ApplyLiveDm(dm);
                     if (_regions is null) _world.Simulate(fixedDelta);
                     else _regions.Simulate(fixedDelta);
-                    if (!BeginTravel() && !BeginCheckpoint()) BroadcastSnapshot();
+                    CollectLogoutResults();
+                    CloseDepartedPlayers();
+                    if(_departed.Count!=0)BeginCheckpoint();
+                    else if (!BeginTravel() && !BeginCheckpoint()) BroadcastSnapshot();
                     nextTick += tickDuration;
                 }
 
@@ -211,6 +216,28 @@ public sealed partial class GameServerService : BackgroundService
             if (messageType is NetworkMessageType.RegionReady or NetworkMessageType.RegionApplied)
             { HandleRegionLoad(peer, reader, messageType, deliveryMethod); return; }
             if (!world.GetPlayer(peer.Id).Loaded) return;
+            if(_departed.Contains(peer.Id))return;
+            if(messageType==NetworkMessageType.CombatJournalRequest && deliveryMethod==DeliveryMethod.ReliableOrdered &&
+                NetworkProtocol.TryReadCombatJournalRequest(reader,out var journal))
+            {
+                if(_characters is null)world.TryQueueJournalRequest(peer.Id,journal);
+                else BufferIntentions(peer.Id).Journal??=journal;
+                return;
+            }
+            if(messageType==NetworkMessageType.RespawnCommand && deliveryMethod==DeliveryMethod.ReliableOrdered &&
+                NetworkProtocol.TryReadRespawnCommand(reader,out var respawn))
+            {
+                if(_characters is null)world.TryQueueRespawn(peer.Id,respawn);
+                else BufferIntentions(peer.Id).Respawn ??= respawn;
+                return;
+            }
+            if(messageType==NetworkMessageType.LogoutCommand && deliveryMethod==DeliveryMethod.ReliableOrdered &&
+                NetworkProtocol.TryReadLogoutCommand(reader,out var logout))
+            {
+                if(_characters is null)world.TryQueueLogout(peer.Id,logout);
+                else BufferIntentions(peer.Id).Logout ??= logout;
+                return;
+            }
 
             // NC: ownership comes from the connection; the packet cannot choose another avatar.
             if (messageType == NetworkMessageType.EmoteCommand && deliveryMethod == DeliveryMethod.ReliableOrdered &&
@@ -253,14 +280,37 @@ public sealed partial class GameServerService : BackgroundService
                 NetworkProtocol.TryReadAttackCommand(reader, out var attack))
             {
                 if (_characters is null) world.TryQueueAttack(peer.Id, attack);
-                else BufferIntentions(peer.Id).Attack ??= attack;
+                else BufferIntentions(peer.Id).BasicAttack.Add(attack);
             }
             if (messageType == NetworkMessageType.AbilityCommand &&
                 deliveryMethod == DeliveryMethod.ReliableOrdered &&
                 NetworkProtocol.TryReadAbilityCommand(reader, out var ability))
             {
                 if (_characters is null) world.TryQueueAbility(peer.Id, ability, peer.Ping);
-                else BufferIntentions(peer.Id).Ability ??= ability;
+                else
+                {
+                    var intentions=BufferIntentions(peer.Id);
+                    if(intentions.Ability is {} previous && previous.AbilityId==ability.AbilityId && world.IsToggleAbility(peer.Id,ability.AbilityId) &&
+                        MovementSimulation.IsSequenceNewer(ability.Sequence,previous.Sequence))intentions.Ability=ability;
+                    else intentions.Ability ??= ability;
+                }
+            }
+            if(messageType==NetworkMessageType.AbilityControlCommand && deliveryMethod==DeliveryMethod.ReliableOrdered &&
+                NetworkProtocol.TryReadAbilityControlCommand(reader,out var abilityControl))
+            {
+                if(_characters is null)world.TryQueueAbilityControl(peer.Id,abilityControl);
+                else BufferIntentions(peer.Id).AbilityControl.Add(abilityControl);
+            }
+            if(messageType==NetworkMessageType.ActionCancelCommand && deliveryMethod==DeliveryMethod.ReliableOrdered &&
+                NetworkProtocol.TryReadActionCancelCommand(reader,out var cancelAction))
+            {
+                if(_characters is null) world.TryQueueActionCancel(peer.Id,cancelAction);
+                else
+                {
+                    var buffered=BufferIntentions(peer.Id);
+                    if(buffered.ActionCancel is not {} previous || MovementSimulation.IsSequenceNewer(cancelAction.Sequence,previous.Sequence))
+                        buffered.ActionCancel=cancelAction;
+                }
             }
             if (messageType == NetworkMessageType.InventoryCommand && deliveryMethod == DeliveryMethod.ReliableOrdered &&
                 NetworkProtocol.TryReadInventoryCommand(reader, out var inventory))
@@ -377,6 +427,7 @@ public sealed partial class GameServerService : BackgroundService
             try { world.BindWorldActor(peer.Id,session.CharacterId); world.BindSocial(peer.Id,session.CharacterId); }
             catch { if(!reattached)RemoveRegionalPlayer(peer.Id); throw; }
         }
+        if(_regions is null)world.SetLoaded(peer.Id,true);
         var welcome = new ServerWelcome(
             playerId,
             checked((ushort) _options.TickRate),
@@ -403,6 +454,8 @@ public sealed partial class GameServerService : BackgroundService
         foreach (var world in _worlds)
         {
             world.Combat?.ClearResults();
+            world.ClearLogoutResults();
+            world.ClearLifeResults();
             world.ClearQuestResults();
             world.Abilities?.ClearResults();
             world.Inventory?.ClearResults();
@@ -470,9 +523,14 @@ public sealed partial class GameServerService : BackgroundService
         }
 
         if (world.Combat is { } equipmentCombat)
-            foreach (var id in equipmentCombat.EquipmentDirty)
-                if (view.Entities.Contains(id) && !view.Entered.Contains(id))
-                    SendGame(peer, NetworkProtocol.Write(equipmentCombat.State(id, world.Tick)), DeliveryMethod.ReliableOrdered);
+        {
+            foreach(var id in view.Entered)
+                if(equipmentCombat.TryGet(id,out _))SendGame(peer,NetworkProtocol.Write(equipmentCombat.LifeState(id,world.Tick)),DeliveryMethod.ReliableOrdered);
+            foreach(var id in equipmentCombat.LifeDirty)
+                if(view.Entities.Contains(id) && !view.Entered.Contains(id))SendGame(peer,NetworkProtocol.Write(equipmentCombat.LifeState(id,world.Tick)),DeliveryMethod.ReliableOrdered);
+        }
+        if(world.TryGetOwnedEntity(peer.Id,out var lifeOwner) && world.RespawnResults.TryGetValue(lifeOwner,out var respawnResult))
+            SendGame(peer,NetworkProtocol.Write(respawnResult),DeliveryMethod.ReliableOrdered);
         if(world.HasPvp)
         {
             foreach(var id in view.Entities)if(world.IsPlayer(id))
@@ -569,6 +627,8 @@ public sealed partial class GameServerService : BackgroundService
             world.UpdateAbilityInterest(peer.Id, view, view.Abilities);
             foreach (var effect in view.Abilities.Changes)
                 SendGame(peer, NetworkProtocol.Write(effect), DeliveryMethod.ReliableOrdered);
+            foreach(var effect in view.Abilities.Sustained)
+                SendGame(peer,NetworkProtocol.Write(effect),DeliveryMethod.Unreliable);
             foreach (var hit in abilities.Hits)
             {
                 if (view.Entities.Contains(hit.ActorId) && view.Entities.Contains(hit.TargetId))
@@ -586,23 +646,16 @@ public sealed partial class GameServerService : BackgroundService
             }
         }
 
-        if (world.Npc is { Telegraph: { } telegraph } npc)
+        foreach(var id in view.Left)view.NpcFeedbackVersions.Remove(id);
+        foreach(var id in view.Entities)
         {
-            if (view.Entities.Contains(npc.Id) && (view.Entered.Contains(npc.Id) || view.NpcWindupVersion != npc.WindupVersion))
-                SendGame(peer, NetworkProtocol.Write(telegraph with { ServerTick = world.Tick }), DeliveryMethod.ReliableOrdered);
-            view.NpcWindupVersion = npc.WindupVersion;
-        }
-        if (world.Boss is { } boss)
-        {
-            if (view.Entities.Contains(boss.Id))
-            {
-                if (boss.Telegraph is { } cone && (view.Entered.Contains(boss.Id) || view.BossWindupVersion != boss.WindupVersion))
-                    SendGame(peer, NetworkProtocol.Write(cone with { ServerTick = world.Tick }), DeliveryMethod.ReliableOrdered);
-                if (boss.Area is { } area && (view.Entered.Contains(boss.Id) || view.BossAreaVersion != boss.AreaVersion))
-                    SendGame(peer, NetworkProtocol.Write(area with { ServerTick = world.Tick }), DeliveryMethod.ReliableOrdered);
-            }
-            view.BossWindupVersion = boss.WindupVersion;
-            view.BossAreaVersion = boss.AreaVersion;
+            if(!world.TryGetNpcActor(id,out var actor))continue;
+            var known=view.NpcFeedbackVersions.TryGetValue(id,out var previous);
+            if(actor.Telegraph is {} telegraph && (!known || previous.Windup!=actor.WindupVersion))
+                SendGame(peer,NetworkProtocol.Write(telegraph with {ServerTick=world.Tick}),DeliveryMethod.ReliableOrdered);
+            if(actor.Area is {} area && (!known || previous.Area!=actor.AreaVersion))
+                SendGame(peer,NetworkProtocol.Write(area with {ServerTick=world.Tick}),DeliveryMethod.ReliableOrdered);
+            view.NpcFeedbackVersions[id]=(actor.WindupVersion,actor.AreaVersion);
         }
         var chunkCapacity = NetworkProtocol.SnapshotCapacity(Math.Min(NetworkConstants.MaxGamePacketBytes, peer.GetMaxSinglePacketSize(DeliveryMethod.Unreliable)) - (_regions is null ? 0 : NetworkProtocol.RegionEnvelopeBytes));
         // NC: public pose snapshots repair packet loss, and are limited to this peer's AOI.
@@ -638,10 +691,23 @@ public sealed partial class GameServerService : BackgroundService
                 else if (action.TargetId.IsValid && view.Entities.Contains(action.TargetId))
                     SendGame(peer, NetworkProtocol.Write(simulation.State(action.TargetId, world.Tick)), DeliveryMethod.ReliableOrdered);
             }
-        // Only the owner receives command rejection/acknowledgement.
+        // Canonical end-of-tick resources follow every intermediate hit. A later heal/resurrection must
+        // not be overwritten by an earlier attack's TargetHealth from this same tick.
+        foreach(var id in simulation.EquipmentDirty)
+            if(view.Entities.Contains(id))SendGame(peer,NetworkProtocol.Write(simulation.State(id,world.Tick)),DeliveryMethod.ReliableOrdered);
+        foreach(var effect in simulation.EffectEvents)
+        {
+            if(effect.Amount<=0 || !view.Entities.Contains(effect.Target))continue;
+            var source=simulation.ResolveSource(effect.Source);
+            // A revealed target does not reveal an out-of-interest source or its persistent identity.
+            if(!view.Entities.Contains(source))source=default;
+            SendGame(peer,NetworkProtocol.Write(new CombatFeedback(effect.EventId,effect.Execution,source,effect.Target,world.Tick,
+                (CombatFeedbackKind)effect.Kind,effect.Amount,effect.Critical)),DeliveryMethod.ReliableOrdered);
+        }
         if (world.TryGetOwnedEntity(peer.Id, out var ownedId) &&
             simulation.Results.TryGetValue(ownedId, out var result))
             SendGame(peer, NetworkProtocol.Write(result), DeliveryMethod.ReliableOrdered);
+        SendCombatJournal(peer,view,world);
     }
 
     private void RejectMalformed(NetPeer peer, string reason) =>

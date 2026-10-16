@@ -19,6 +19,12 @@ public sealed record StatBalance
     public required StatWeights AttackSpeed { get; init; }
     public required StatWeights CastSpeed { get; init; }
     public required StatWeights CriticalOdds { get; init; }
+    public required StatWeights Accuracy { get; init; }
+    public required StatWeights Evasion { get; init; }
+    public required StatWeights CriticalDamage { get; init; }
+    public required double BaseCriticalDamage { get; init; }
+    public required StatWeights BlockStrength { get; init; }
+    public required double BaseBlockStrength { get; init; }
     public required double BaseCriticalChance { get; init; }
     public required double DefenseScale { get; init; }
     public double BaseBlockDamage { get; init; } = .3;
@@ -27,10 +33,11 @@ public sealed record StatBalance
     {
         StatWeights?[] rules = [MeleeAttack, RangedAttack, MagicAttack, MeleeWeapon,
             RangedWeapon, PhysicalDefense, MagicDefense, Health, Mana, HealthRecovery,
-            ManaRecovery, HealthItem, ManaItem, AttackSpeed, CastSpeed, CriticalOdds];
+            ManaRecovery, HealthItem, ManaItem, AttackSpeed, CastSpeed, CriticalOdds, Accuracy, Evasion, CriticalDamage, BlockStrength];
         if (rules.Any(rule => rule is null || !rule.IsValid()) ||
             !double.IsFinite(BaseCriticalChance) || BaseCriticalChance <= 0 || BaseCriticalChance >= 1 ||
-            !double.IsFinite(DefenseScale) || DefenseScale <= 0 || !double.IsFinite(BaseBlockDamage))
+            !double.IsFinite(DefenseScale) || DefenseScale <= 0 || !double.IsFinite(BaseBlockDamage) ||
+            !double.IsFinite(BaseCriticalDamage) || BaseCriticalDamage < 0 || !double.IsFinite(BaseBlockStrength) || BaseBlockStrength < 0)
             throw new ArgumentException("Invalid balance: coefficients must be finite/non-negative, " +
                 "critical chance in (0, 1), defense scale positive.");
     }

@@ -11,7 +11,7 @@ using Xunit;
 namespace Content.Tests.Server;
 public sealed class ProfessionTests
 {
-    internal static ServerWorld World(ContentCatalog? catalog=null) => new(Options.Create(new MovementOptions()),Options.Create(new InterestOptions()),catalog:catalog ?? ContentCatalogTests.Load());
+    internal static ServerWorld World(ContentCatalog? catalog=null) => new(Options.Create(new MovementOptions()),Options.Create(new InterestOptions()),catalog:catalog ?? ContentCatalogTests.Load(), hitRoll: () => 0, criticalRoll: () => 1);
     internal static void Step(ServerWorld w,int count=1) { for (var i=0;i<count;i++) w.Simulate(0.05f); }
     internal static CharacterState Eligible(ServerWorld w) { var initial=w.CreateInitialCharacter(); return initial with { Progression=initial.Progression! with { Discoveries=3,Profession=new SavedProfession { SuccessfulUses=3 } } }; }
     internal static ProfessionResult Command(ServerWorld w,ServerPlayer p,uint seq,ProfessionAction action,ushort id=1,uint token=0)
@@ -67,7 +67,7 @@ public sealed class ProfessionTests
         Assert.True(w.TryQueueProfession(42,new(2,ProfessionAction.Confirm,1,prepared.Confirmation)));
         for (uint i=3;i<200;i++) Assert.False(w.TryQueueProfession(42,new(i,ProfessionAction.Confirm,1,prepared.Confirmation)));
         Step(w); Assert.Equal(ProfessionOutcome.RateLimited,w.ProfessionResults[p.EntityId].Outcome); Assert.Equal((ushort)0,w.ProfessionState(p.EntityId,w.Tick).ActiveId);
-        var saved=w.CaptureCharacter(42) with { Health=0 }; w.RemovePlayer(42); p=w.AddPlayer(42,new(1),saved);
+        var saved=w.CaptureCharacter(42) with { Health=0,Life=null }; w.RemovePlayer(42); p=w.AddPlayer(42,new(1),saved);
         Assert.Equal(ProfessionOutcome.InvalidState,Command(w,p,1,ProfessionAction.Prepare).Outcome);
         Assert.False(w.TryQueueProfession(99,new(1,ProfessionAction.Prepare,1,0)));
     }

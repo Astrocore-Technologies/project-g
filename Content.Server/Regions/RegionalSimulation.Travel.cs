@@ -44,7 +44,7 @@ public sealed partial class RegionalSimulation
         {
             var changes = new List<CharacterSave>(sessions.Count);
             foreach (var (peer, session) in sessions)
-                changes.Add(new(session, peer == connection ? cargo.Restore() : World(peer).CaptureCharacter(peer), World(peer).PickupClaims(peer)));
+                changes.Add(new(session, peer == connection ? cargo.Restore() : World(peer).CaptureCharacter(peer,includeSessionJournal:false), World(peer).PickupClaims(peer)));
             source.AuditTravel(character, source.RegionId, target.RegionId, false);
             target.AuditTravel(character, source.RegionId, target.RegionId, true);
             var writes = orderedWorlds.Where(w => w.WorldNodeDirty).Select(w =>
@@ -79,7 +79,7 @@ public sealed partial class RegionalSimulation
             foreach (var world in orderedWorlds) world.GroundItems?.CommitClaims();
             ownership.ConfirmCommit(current.Transfer);
             var target = Region(current.Transfer.Destination.Region);
-            var player = target.AddPlayer(current.Connection, current.PlayerId, current.Destination.Restore());
+            var player = target.AddPlayer(current.Connection, current.PlayerId, current.Destination.Restore(),restoringFromLogout:false);
             target.BindWorldActor(current.Connection, current.Transfer.Character);
             target.BindSocial(current.Connection, current.Transfer.Character);
             ownership.Complete(current.Transfer);

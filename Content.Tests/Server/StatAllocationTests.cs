@@ -8,22 +8,22 @@ namespace Content.Tests.Server;
 
 public sealed class StatAllocationTests
 {
-    private static ServerWorld World() => new(Options.Create(new MovementOptions()),Options.Create(new InterestOptions()),catalog:ContentCatalogTests.Load(),inventory:Options.Create(new InventoryOptions { Enabled=true }));
+    private static ServerWorld World() => new(Options.Create(new MovementOptions()),Options.Create(new InterestOptions()),catalog:ContentCatalogTests.Load(),inventory:Options.Create(new InventoryOptions { Enabled=true }), hitRoll: () => 0, criticalRoll: () => 1);
     [Fact]
     public void PreviewDoesNotMutateAndBatchMatchesPreviewWithoutHealingOrCooldownReset()
     {
         var w=World(); var initial=w.CreateInitialCharacter() with { Health=12,Mana=7,AttackCooldownSeconds=20 };
         var player=w.AddPlayer(42,new(1),initial); var id=player.EntityId;
         w.ClearProgressionResults();
-        int[] draft=[1,0,1,2,1,0];
+        int[] draft=[1,0,1,2,1,0,0];
         Assert.True(w.TryQueueProgression(42,new(1,ProgressionAction.PreviewStats,0,0,0,draft))); w.Simulate(.05f);
         var preview=w.StatPreviews[id]; Assert.False(w.IsProgressionDirty(id));
-        Assert.Equal(5,w.ProgressionState(id,w.Tick).StatPoints); Assert.Equal(1,player.BaseStats.Intelligence);
+        Assert.Equal(18,w.ProgressionState(id,w.Tick).StatPoints); Assert.Equal(10,player.BaseStats.Intelligence);
         Assert.Equal(7,w.Abilities!.Loadout(id,w.Tick).Mana); Assert.Equal(12,w.Combat!.Get(id).Health);
         w.ClearProgressionResults();
         Assert.True(w.TryQueueProgression(42,new(2,ProgressionAction.AllocateStats,0,0,0,draft))); w.Simulate(.05f);
         Assert.Equal(ProgressionOutcome.Accepted,w.ProgressionResults[id].Outcome);
-        Assert.Equal(0,w.ProgressionState(id,w.Tick).StatPoints); Assert.Equal(3,player.BaseStats.Intelligence);
+        Assert.Equal(13,w.ProgressionState(id,w.Tick).StatPoints); Assert.Equal(12,player.BaseStats.Intelligence);
         var stats=w.Combat.Get(id).Stats;
         Assert.Equal(preview.Projected[(int)CharacterStat.MaxHealth],stats.MaxHealth);
         Assert.Equal(preview.Projected[(int)CharacterStat.MagicAttack],stats.MagicAttack);
@@ -32,19 +32,19 @@ public sealed class StatAllocationTests
         Assert.True(w.CaptureCharacter(42).AttackCooldownSeconds>19);
         Assert.False(w.TryQueueProgression(42,new(2,ProgressionAction.AllocateStats,0,0,0,draft)));
         var restored=World(); var again=restored.AddPlayer(43,new(2),w.CaptureCharacter(42));
-        Assert.Equal(player.BaseStats,again.BaseStats); Assert.Equal(0,restored.ProgressionState(again.EntityId,0).StatPoints);
+        Assert.Equal(player.BaseStats,again.BaseStats); Assert.Equal(13,restored.ProgressionState(again.EntityId,0).StatPoints);
     }
     [Fact]
     public void OverspendMalformedAndDeadBatchesCannotPartiallyAllocate()
     {
         var w=World(); var p=w.AddPlayer(42,new(1)); var before=p.BaseStats;
-        Assert.False(w.TryQueueProgression(99,new(1,ProgressionAction.AllocateStats,0,0,0,[1,0,0,0,0,0])));
-        Assert.False(w.TryQueueProgression(42,new(1,ProgressionAction.AllocateStats,0,0,0,[-1,0,0,0,0,0])));
-        Assert.True(w.TryQueueProgression(42,new(1,ProgressionAction.AllocateStats,0,0,0,[3,0,0,3,0,0]))); w.Simulate(.05f);
+        Assert.False(w.TryQueueProgression(99,new(1,ProgressionAction.AllocateStats,0,0,0,[1,0,0,0,0,0,0])));
+        Assert.False(w.TryQueueProgression(42,new(1,ProgressionAction.AllocateStats,0,0,0,[-1,0,0,0,0,0,0])));
+        Assert.True(w.TryQueueProgression(42,new(1,ProgressionAction.AllocateStats,0,0,0,[10,0,0,10,0,0,0]))); w.Simulate(.05f);
         Assert.Equal(ProgressionOutcome.NoPoints,w.ProgressionResults[p.EntityId].Outcome); Assert.Equal(before,p.BaseStats);
         w.Combat!.Get(p.EntityId).Health=0;
-        Assert.True(w.TryQueueProgression(42,new(2,ProgressionAction.AllocateStats,0,0,0,[1,0,0,0,0,0]))); w.Simulate(.05f);
+        Assert.True(w.TryQueueProgression(42,new(2,ProgressionAction.AllocateStats,0,0,0,[1,0,0,0,0,0,0]))); w.Simulate(.05f);
         Assert.Equal(ProgressionOutcome.InvalidState,w.ProgressionResults[p.EntityId].Outcome); Assert.Equal(before,p.BaseStats);
-        Assert.Equal(5,w.ProgressionState(p.EntityId,0).StatPoints);
+        Assert.Equal(18,w.ProgressionState(p.EntityId,0).StatPoints);
     }
 }

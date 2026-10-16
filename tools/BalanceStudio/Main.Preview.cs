@@ -19,10 +19,9 @@ public partial class Main
             var beforeCatalog = _comparisonBuild is null ? _document.BaselineCatalog : catalog;
             var beforeBuild = _comparisonBuild ?? _build;
             var settings = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(Path.Combine(_repository, "Content.Server", "appsettings.json")))!;
-            var critical = settings["Combat"]?["CriticalMultiplier"]?.GetValue<double>() ?? new CombatOptions().CriticalMultiplier;
             var ticks = settings["Server"]?["TickRate"]?.GetValue<int>() ?? 20;
-            var before = BalancePreview.Calculate(beforeCatalog, beforeBuild, critical, ticks);
-            var after = BalancePreview.Calculate(catalog, _build, critical, ticks);
+            var before = BalancePreview.Calculate(beforeCatalog, beforeBuild, ticks);
+            var after = BalancePreview.Calculate(catalog, _build, ticks);
             _buildValid = true;
             var profession = catalog.Professions.FirstOrDefault(p => p.Id == _build.ProfessionId)?.Name ?? "Без профессии";
             _context.Text = $"Тест: {profession} · ур. {_build.Level} · навыки {_build.SkillLevel} · {EditorLabels.Name(_build.TargetId)}";

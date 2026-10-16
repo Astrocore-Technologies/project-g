@@ -57,7 +57,7 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
         command.ExecuteNonQuery();
         command.CommandText = "SELECT COALESCE(max(version), 0) FROM schema_version";
         var version = (long)command.ExecuteScalar()!;
-        if (version is < 0 or > 8) throw new InvalidDataException("Unsupported SQLite schema version.");
+        if (version is < 0 or > 10) throw new InvalidDataException("Unsupported SQLite schema version.");
         if (version == 0)
         {
             using var resource = typeof(DevelopmentSqliteCharacterStore).Assembly.GetManifestResourceStream(
@@ -115,6 +115,19 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
             using var resource=typeof(DevelopmentSqliteCharacterStore).Assembly.GetManifestResourceStream("Content.Database.Migrations.0008_social.sqlite.sql") ?? throw new InvalidOperationException("Migration missing.");
             using var reader=new StreamReader(resource);
             command.CommandText=reader.ReadToEnd(); command.ExecuteNonQuery(); command.CommandText="INSERT INTO schema_version VALUES(8)"; command.ExecuteNonQuery();
+        }
+        if (version < 9)
+        {
+            using var resource = typeof(DevelopmentSqliteCharacterStore).Assembly.GetManifestResourceStream("Content.Database.Migrations.0009_effects.sqlite.sql") ?? throw new InvalidOperationException("Migration is missing.");
+            using var reader = new StreamReader(resource);
+            command.CommandText = reader.ReadToEnd(); command.ExecuteNonQuery();
+            command.CommandText = "INSERT INTO schema_version VALUES (9)"; command.ExecuteNonQuery();
+        }
+        if(version<10)
+        {
+            using var resource=typeof(DevelopmentSqliteCharacterStore).Assembly.GetManifestResourceStream("Content.Database.Migrations.0010_death_logs.sqlite.sql")??throw new InvalidOperationException("Migration is missing.");
+            using var reader=new StreamReader(resource);command.CommandText=reader.ReadToEnd();command.ExecuteNonQuery();
+            command.CommandText="INSERT INTO schema_version VALUES(10)";command.ExecuteNonQuery();
         }
         cancellationToken.ThrowIfCancellationRequested();
         transaction.Commit();
@@ -189,8 +202,10 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
             progressionState = progressionReader.GetString(1); StorageBounds.Document(progressionState);
             }
             if(inventoryCreated && initialInventoryItems is { } initialItems) { OwnershipValidation.Items(initialItems,8); foreach(var item in initialItems) EnsureItemOwner(connection,transaction,item,"c:"+id); }
+            var effects = ReadEffects(connection, transaction, id);
+            var deaths=ReadDeathLogs(connection,transaction,id);
             cancellationToken.ThrowIfCancellationRequested(); transaction.Commit();
-            return new Session(id, owner, revision, state, inventoryState, echoState, issued, held) { Progression = progressionState };
+            return new Session(id, owner, revision, state, inventoryState, echoState, issued, held) { Progression = progressionState, Effects = effects,DeathLogs=deaths };
         }
         catch { held.Dispose(); throw; }
     }, cancellationToken);
@@ -220,6 +235,8 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
             command.Parameters.AddWithValue("$owner", session.OwnerId.ToString());
             command.Parameters.AddWithValue("$revision", change.ExpectedRevision);
             if (command.ExecuteNonQuery() != 1) throw new InvalidOperationException("Ownership/revision conflict; SQLite checkpoint aborted.");
+            if (change.Effects is { } effects) WriteEffects(connection, transaction, session.CharacterId, effects, cancellationToken);
+            if(change.DeathLogs is {} deaths)WriteDeathLogs(connection,transaction,session.CharacterId,deaths,cancellationToken);
             if (change.Echoes is { } echoState)
             {
                 StorageBounds.Document(echoState);

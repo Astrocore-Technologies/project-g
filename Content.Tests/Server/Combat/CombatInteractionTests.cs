@@ -31,7 +31,7 @@ public sealed class CombatInteractionTests
         Assert.InRange(hit.Combat.RecoveryRemaining(hit.Player),.09,.16);
         Assert.Equal(AbilityOutcome.Accepted,hit.Cast(22));
         var miss=new Fight(); Equip(miss,20,22); miss.Cast(20,-Vector2.UnitY); miss.Step(2);
-        Assert.True(miss.Combat.RecoveryRemaining(miss.Player)>.3);
+        Assert.InRange(miss.Combat.RecoveryRemaining(miss.Player),.29,.31);
         Assert.Equal(AbilityOutcome.Busy,miss.Cast(22));
     }
     [Fact]
@@ -48,7 +48,7 @@ public sealed class CombatInteractionTests
     [Fact]
     public void SingleBufferedSkillRevalidatesAndNewIntentReplacesIt()
     {
-        var f=new Fight(selected:23); Equip(f,23,21,22); f.Cast(23); f.Step(19);
+        var f=new Fight(selected:23); Equip(f,23,21,22); f.Cast(23); f.Step(17);
         Assert.Equal(AbilityOutcome.Buffered,f.Cast(21));
         Assert.Equal(AbilityOutcome.Buffered,f.Cast(22)); f.Step(6);
         Assert.Contains(f.Abilities.ActiveStates,e=>e.AbilityId==22);
@@ -57,7 +57,7 @@ public sealed class CombatInteractionTests
     [Fact]
     public void BufferedSkillNeverExecutesAfterControlOrDeath()
     {
-        var f=new Fight(selected:23); Equip(f,23,21); f.Cast(23); f.Step(19); f.Cast(21);
+        var f=new Fight(selected:23); Equip(f,23,21); f.Cast(23); f.Step(17); f.Cast(21);
         var sequence=f.AbilitySequence; f.Combat.Stun(f.Player,.4); f.Step(10);
         Assert.Equal(AbilityOutcome.InvalidState,f.Abilities.Results[f.Player].Outcome);
         Assert.DoesNotContain(f.Abilities.ActiveStates,e=>e.Sequence==sequence);
@@ -100,12 +100,14 @@ public sealed class CombatInteractionTests
     [Fact]
     public void RepeatedHardControlUsesOneTargetBudgetAndEventuallyReturnsActions()
     {
-        var f=new Fight(); f.Combat.Stun(f.Player,.4); f.Step(9);
-        f.Combat.Stun(f.Player,.4); Assert.InRange(f.Combat.Get(f.Player).StunnedUntil-f.Combat.Time,.19,.21);
-        f.Step(5); var until=f.Combat.Get(f.Player).StunnedUntil;
-        f.Combat.Stun(f.Player,2); Assert.Equal(until,f.Combat.Get(f.Player).StunnedUntil);
-        Assert.False(f.Combat.IsActionLocked(f.Player)); f.Step(81);
-        f.Combat.Stun(f.Player,.4); Assert.InRange(f.Combat.Get(f.Player).StunnedUntil-f.Combat.Time,.39,.41);
+        var f=new Fight(); f.Combat.Stun(f.Player,3,f.Target); f.Step(61);
+        f.Combat.Stun(f.Player,3,f.Target); Assert.Equal(2,f.Combat.Get(f.Player).StunnedUntil-f.Combat.Time,8);
+        f.Step(41); f.Combat.Stun(f.Player,3,f.Target);
+        Assert.Equal(1,f.Combat.Get(f.Player).StunnedUntil-f.Combat.Time,8);
+        f.Step(21); var until=f.Combat.Get(f.Player).StunnedUntil;
+        f.Combat.Stun(f.Player,3,f.Target); Assert.Equal(until,f.Combat.Get(f.Player).StunnedUntil);
+        Assert.False(f.Combat.IsActionLocked(f.Player)); f.Step(240);
+        f.Combat.Stun(f.Player,3,f.Target); Assert.Equal(3,f.Combat.Get(f.Player).StunnedUntil-f.Combat.Time,8);
     }
     [Fact]
     public void QuickRecoverBuffersLandingCostsOnceAndHasIndependentCooldown()
@@ -153,7 +155,9 @@ public sealed class CombatInteractionTests
         var next=new Fight(); next.Combat.RestoreControl(next.Player,saved,0);
         next.Combat.RestoreDefense(next.Player,f.Combat.CaptureDefense(f.Player));
         Assert.Equal(CombatControlPhase.KnockedDown,next.Combat.Get(next.Player).Control);
-        Assert.Equal(0,next.Combat.Get(next.Player).AirOffset); Assert.Equal(2,next.Combat.Get(next.Player).ControlCount);
+        Assert.Equal(0,next.Combat.Get(next.Player).AirOffset);
+        Assert.Equal(saved.Acr!.Single(s=>s.Category==Content.Shared.Combat.ControlCategory.Hard).Used,
+            next.Combat.Get(next.Player).Controls.Ledger.Snapshot(Content.Shared.Combat.ControlCategory.Hard,0).Used);
         Assert.True(next.Combat.RecoveryRemaining(next.Player)>0); Assert.Equal(12,next.Combat.DefenseState(next.Player,0).QuickRecoverCooldown);
     }
     [Fact]
@@ -200,7 +204,9 @@ public sealed class CombatInteractionTests
     public void FinishedBreathNeverBorrowsTheRecoveryOfAFollowingThrust()
     {
         var f=new Fight(); Equip(f,28,20); f.Cast(28);
-        while(!f.Abilities.ActiveStates.Any(e=>e.AbilityId==28 && e.Phase==AbilityPhase.Impact)) f.Step();
+        Assert.Contains(f.Abilities.ActiveStates,e=>e.AbilityId==28 && e.Phase==AbilityPhase.Channeling);
+        for(var i=0;i<40 && f.Abilities.ActiveStates.Any(e=>e.AbilityId==28);i++)f.Step();
+        Assert.DoesNotContain(f.Abilities.ActiveStates,e=>e.AbilityId==28);
         f.Cast(20); f.Step(3);
         Assert.DoesNotContain(f.Abilities.ActiveStates,e=>e.AbilityId==28);
     }

@@ -23,7 +23,7 @@ public partial class StarterZonePresentation : Node3D
     private Node3D _bridge=null!;
     private double _refresh;
     private readonly HashSet<ushort> _places=new();
-    private static readonly string[] Steps=["ПКМ / удержание — движение", "ЛКМ по цели — подход и автоатака", "QWER / ASDF — умения; Space — рывок", "T / Y / U — способность Эхо; Tab — блок; Shift — парирование", "Исследовать окрестности", "H у хранителя — помочь переправе", "P — проверить доступные профессии"];
+    private static readonly string[] Steps=["ПКМ / удержание — движение", "ЛКМ — удар по направлению курсора; удержание — повтор", "QWER / ASDF — умения; Space — рывок", "T / Y / U — способность Эхо; Tab — блок; Shift — парирование", "Исследовать окрестности", "H у хранителя — помочь переправе", "P — проверить доступные профессии"];
     public void Initialize(NetworkClient network, PlayerController player, StarterZoneState zone, bool buildLegacyScenery = true)
     {
         _network=network; _player=player; _zone=zone;

@@ -9,9 +9,10 @@ public sealed record StatWeights
     public double Intelligence { get; init; }
     public double Dexterity { get; init; }
     public double Luck { get; init; }
+    public double Wisdom { get; init; }
 
     public bool IsValid() => Valid(Strength) && Valid(Agility) && Valid(Vitality) &&
-        Valid(Intelligence) && Valid(Dexterity) && Valid(Luck);
+        Valid(Intelligence) && Valid(Dexterity) && Valid(Luck) && Valid(Wisdom);
 
     public double Evaluate(BaseStats stats)
     {
@@ -19,6 +20,7 @@ public sealed record StatWeights
         value = StatMath.Add(value, StatMath.Multiply(Agility, stats.Agility));
         value = StatMath.Add(value, StatMath.Multiply(Vitality, stats.Vitality));
         value = StatMath.Add(value, StatMath.Multiply(Intelligence, stats.Intelligence));
+        value = StatMath.Add(value, StatMath.Multiply(Wisdom, stats.Wisdom));
         value = StatMath.Add(value, StatMath.Multiply(Dexterity, stats.Dexterity));
         return StatMath.Add(value, StatMath.Multiply(Luck, stats.Luck));
     }

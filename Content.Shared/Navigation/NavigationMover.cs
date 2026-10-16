@@ -23,6 +23,7 @@ public sealed class NavigationMover
     public bool IsDashing => (_surface?.DashSpeed ?? DashSpeed) > 0;
     public Vector2 DashDestination { get; private set; }
     public float DashSpeed { get; private set; }
+    public float WalkSpeed=>_settings.Speed;
 
     public NavigationMover(NavigationGrid grid, MovementSettings settings,
         NavigationPathfinder pathfinder, Vector2 spawn, float height = 0)

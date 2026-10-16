@@ -36,7 +36,7 @@ public sealed class StarterZoneIntegrationTests
                 var saved=first.Exploration.Values.Single(); first.Move(++sequence,new(100,100));
                 for(var i=0;i<20;i++) { first.Poll(); second.Poll(); await Task.Delay(25); }
                 Assert.Equal(saved.Cells,first.Exploration.Values.Single().Cells);
-                first.Disconnect(); await Poll(first,second,()=>world.Players.Count==1);
+                first.Logout(); await Poll(first,second,()=>world.Players.Count==1);
                 using var reconnected=new NetworkMovementIntegrationTests.TestClient(port,alice); await Poll(reconnected,second,()=>reconnected.Exploration.Count==1 && reconnected.Exploration.Values.Single().Places.Count==1);
                 Assert.Equal(saved.Cells,reconnected.Exploration.Values.Single().Cells); Assert.Equal(saved.Tutorial,reconnected.Exploration.Values.Single().Tutorial); Assert.Single(reconnected.EchoLoadouts);
             }

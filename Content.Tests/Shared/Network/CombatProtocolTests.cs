@@ -16,7 +16,7 @@ public sealed class CombatProtocolTests
         var result = new AttackResult(2, 20, AttackOutcome.Cooldown);
         Assert.True(NetworkProtocol.TryReadAttackResult(Body(NetworkProtocol.Write(result)), out var parsedResult));
         Assert.Equal(result, parsedResult);
-        var action = new AttackEvent(new(1), 3, 30, new(2, 3), Vector2.UnitY, 2, new(4), 12.5, 70, true);
+        var action = new AttackEvent(new(1), 3, 30, new(2, 3), Vector2.UnitY, 2, new(4), 12.5, 70, true, ExecutionId: 17);
         Assert.True(NetworkProtocol.TryReadAttackEvent(Body(NetworkProtocol.Write(action)), out var parsedAction));
         Assert.Equal(action, parsedAction);
         var state = new CombatState(new(1), 40, CombatEntityKind.TrainingTarget, new(2, 3), 70, 100, 0.8, 2, MathF.PI / 4);
@@ -30,25 +30,25 @@ public sealed class CombatProtocolTests
     {
         var bytes = Sample(type).CopyData();
         for (var length = 2; length < bytes.Length; length++)
-            Assert.False(Read(type, new NetDataReader(bytes, 2, length - 2)));
+            Assert.False(Read(type, new NetDataReader(bytes, 2, length)));
         var extra = new byte[bytes.Length + 1];
         bytes.CopyTo(extra, 0);
-        Assert.False(Read(type, new NetDataReader(extra, 2, extra.Length - 2)));
+        Assert.False(Read(type, new NetDataReader(extra, 2, extra.Length)));
     }
 
     [Fact]
-    public void CommandCanRequestTargetButCannotClaimOriginOrDamage()
+    public void CommandOnlyCarriesDirectionAndInputModeNeverTargetOriginOrDamage()
     {
         var command = Sample(15).CopyData();
-        Assert.Equal(26, command.Length);
+        Assert.Equal(19, command.Length);
         var forged = new byte[command.Length + 8];
         command.CopyTo(forged, 0);
-        Assert.False(NetworkProtocol.TryReadAttackCommand(new NetDataReader(forged, 2, forged.Length - 2), out _));
+        Assert.False(NetworkProtocol.TryReadAttackCommand(new NetDataReader(forged, 2, forged.Length), out _));
         Assert.Throws<ArgumentException>(() => NetworkProtocol.Write(new AttackCommand(0, 0, Vector2.UnitX)));
         Assert.Throws<ArgumentException>(() => NetworkProtocol.Write(new AttackCommand(1, 0, Vector2.Zero)));
         Assert.Throws<ArgumentException>(() => NetworkProtocol.Write(new AttackCommand(1, 0, new(float.NaN, 1))));
         BitConverter.GetBytes(float.PositiveInfinity).CopyTo(command, 10);
-        Assert.False(NetworkProtocol.TryReadAttackCommand(new NetDataReader(command, 2, command.Length - 2), out _));
+        Assert.False(NetworkProtocol.TryReadAttackCommand(new NetDataReader(command, 2, command.Length), out _));
     }
 
     [Fact]
@@ -56,13 +56,13 @@ public sealed class CombatProtocolTests
     {
         var result = Sample(16).CopyData();
         result[^1] = 255;
-        Assert.False(Read(16, new NetDataReader(result, 2, result.Length - 2)));
+        Assert.False(Read(16, new NetDataReader(result, 2, result.Length)));
         var state = Sample(18).CopyData();
         state[14] = 255;
-        Assert.False(Read(18, new NetDataReader(state, 2, state.Length - 2)));
+        Assert.False(Read(18, new NetDataReader(state, 2, state.Length)));
         var action = Sample(17).CopyData();
-        action[^2] = 2;
-        Assert.False(Read(17, new NetDataReader(action, 2, action.Length - 2)));
+        action[62] = 2;
+        Assert.False(Read(17, new NetDataReader(action, 2, action.Length)));
         var dead = new CombatState(new(1), 1, CombatEntityKind.TrainingTarget, Vector2.Zero, 0, 100, 1, 2, 0.5f);
         Assert.True(NetworkProtocol.TryReadCombatState(Body(NetworkProtocol.Write(dead)), out _));
         Assert.Throws<ArgumentException>(() => NetworkProtocol.Write(dead with { EntityId = default }));
@@ -71,6 +71,36 @@ public sealed class CombatProtocolTests
         Assert.Throws<ArgumentException>(() => NetworkProtocol.Write(dead with { AttackInterval = 0 }));
         Assert.Throws<ArgumentException>(() => NetworkProtocol.Write(new AttackEvent(new(1), 1, 1,
             Vector2.Zero, Vector2.UnitY, 2, default, 10, 0, false)));
+    }
+
+    [Theory]
+    [InlineData(BasicAttackMode.Manual)] [InlineData(BasicAttackMode.BeginContinuous)]
+    [InlineData(BasicAttackMode.UpdateContinuous)] [InlineData(BasicAttackMode.EndContinuous)]
+    public void EveryBasicInputModeRoundTripsAndForgedModeIsRejected(BasicAttackMode mode)
+    {
+        var value = new AttackCommand(4, uint.MaxValue, Vector2.UnitY, mode);
+        var bytes = NetworkProtocol.Write(value).CopyData();
+        Assert.Equal(19, bytes.Length);
+        Assert.True(NetworkProtocol.TryReadAttackCommand(new NetDataReader(bytes, 2, bytes.Length), out var parsed));
+        Assert.Equal(value, parsed);
+        bytes[^1] = 255;
+        Assert.False(NetworkProtocol.TryReadAttackCommand(new NetDataReader(bytes, 2, bytes.Length), out _));
+        Assert.Throws<ArgumentException>(() => NetworkProtocol.Write(value with { Mode = (BasicAttackMode)255 }));
+    }
+
+    [Fact]
+    public void ExecutionIdentityIsSeparateFromTheContinuousInputSequence()
+    {
+        var first = new AttackEvent(new(1), 7, 10, Vector2.Zero, Vector2.UnitY, 2, default, 0, 0, false, ExecutionId: 41);
+        var next = first with { ServerTick = 30, ExecutionId = 42 };
+        Assert.Equal(73, NetworkProtocol.Write(first).Length);
+        Assert.True(NetworkProtocol.TryReadAttackEvent(Body(NetworkProtocol.Write(first)), out var a));
+        Assert.True(NetworkProtocol.TryReadAttackEvent(Body(NetworkProtocol.Write(next)), out var b));
+        Assert.Equal(a.Sequence, b.Sequence); Assert.NotEqual(a.ExecutionId, b.ExecutionId);
+        var forged = NetworkProtocol.Write(first).CopyData();
+        Array.Clear(forged, forged.Length - 9, 8);
+        Assert.False(NetworkProtocol.TryReadAttackEvent(new NetDataReader(forged, 2, forged.Length), out _));
+        Assert.Throws<ArgumentException>(() => NetworkProtocol.Write(first with { ExecutionId = 0 }));
     }
 
     private static NetDataReader Body(NetDataWriter writer)
@@ -85,7 +115,7 @@ public sealed class CombatProtocolTests
     {
         15 => NetworkProtocol.Write(new AttackCommand(1, 1, Vector2.UnitX)),
         16 => NetworkProtocol.Write(new AttackResult(1, 1, AttackOutcome.Accepted)),
-        17 => NetworkProtocol.Write(new AttackEvent(new(1), 1, 1, Vector2.Zero, Vector2.UnitX, 2, new(2), 10, 90, false)),
+        17 => NetworkProtocol.Write(new AttackEvent(new(1), 1, 1, Vector2.Zero, Vector2.UnitX, 2, new(2), 10, 90, false, ExecutionId: 1)),
         18 => NetworkProtocol.Write(new CombatState(new(1), 1, CombatEntityKind.Player, Vector2.Zero, 100, 100, 1, 2, 0.5f)),
         _ => throw new ArgumentOutOfRangeException(nameof(type))
     };

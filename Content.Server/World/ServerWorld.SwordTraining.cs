@@ -65,7 +65,7 @@ public sealed partial class ServerWorld
         if (!_swordTrainer.IsValid || !_playersByEntity.TryGetValue(id, out var player)) return false;
         var position = _questNpcs[_swordTrainer].Position;
         var range = _progressionCatalog!.Swordsman!.InteractionRange;
-        return !player.Motion.IsMoving && !player.Motion.IsDashing && !Inventory!.IsTrading(id) &&
+        return !Combat!.InCombat(id) && !player.Motion.IsMoving && !player.Motion.IsDashing && !Inventory!.IsTrading(id) &&
             Vector3.DistanceSquared(player.Foot, GroundFoot(position)) <= range * range && Navigation.ClearAttack(player.Foot, GroundFoot(position));
     }
 
@@ -73,7 +73,7 @@ public sealed partial class ServerWorld
     {
         var s = _progressionCatalog!.Swordsman!; var value = _progression[id];
         var actor = Combat!.Get(id);
-        var outcome = actor.Health <= 0 ? QuestOutcome.InvalidState : actor.IsCasting || Inventory!.IsTrading(id) ? QuestOutcome.Busy
+        var outcome = actor.Health <= 0 ? QuestOutcome.InvalidState : Combat.InCombat(id) || actor.IsCasting || Inventory!.IsTrading(id) ? QuestOutcome.Busy
             : !NearSwordTrainer(id) ? QuestOutcome.TooFar : QuestOutcome.Accepted;
         if (outcome == QuestOutcome.Accepted && command.Action == QuestAction.TrainingSword)
         {

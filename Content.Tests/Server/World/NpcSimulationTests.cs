@@ -13,7 +13,7 @@ public sealed class NpcSimulationTests
     private static ServerWorld Create(NpcOptions? npc = null, NavigationOptions? navigation = null) => new(
         Options.Create(new MovementOptions()), Options.Create(new InterestOptions()),
         Options.Create(navigation ?? new NavigationOptions()), ContentCatalogTests.Load(),
-        npc: Options.Create(npc ?? new NpcOptions { Enabled = true, X = -4, Z = 0 }));
+        npc: Options.Create(npc ?? new NpcOptions { Enabled = true, X = -4, Z = 0 }), hitRoll: () => 0, criticalRoll: () => 1);
 
     [Fact]
     public void MonsterAcquiresChasesTelegraphsAndDamagesOnlyOnRelease()

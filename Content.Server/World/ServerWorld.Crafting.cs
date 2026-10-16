@@ -55,7 +55,7 @@ public sealed partial class ServerWorld
             {
                 if(_nodeAudit.Count>=128) outcome=CraftOutcome.RateLimited;
                 else if(actor.Health<=0) outcome=CraftOutcome.InvalidState;
-                else if(actor.IsCasting || player.Motion.IsMoving || player.Motion.IsDashing || Abilities!.HasActiveEffects(player.EntityId)) outcome=CraftOutcome.Busy;
+                else if(Combat.InCombat(player.EntityId) || actor.IsCasting || player.Motion.IsMoving || player.Motion.IsDashing || Abilities!.HasActiveEffects(player.EntityId)) outcome=CraftOutcome.Busy;
                 else
                 {
                     var resource=command.Action==CraftAction.Gather ? Array.Find(_crafting.Resources,n=>n.Id==command.Target) : null;

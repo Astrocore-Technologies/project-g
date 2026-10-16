@@ -10,7 +10,7 @@ namespace Content.Tests.Server;
 public sealed class AvatarSimulationTests
 {
     private static ServerWorld World() => new(Options.Create(new MovementOptions()),Options.Create(new InterestOptions()),
-        catalog:ContentCatalogTests.Load(), combat:Options.Create(new CombatOptions()));
+        catalog:ContentCatalogTests.Load(), combat:Options.Create(new CombatOptions()), hitRoll: () => 0, criticalRoll: () => 1);
     [Fact]
     public void EmotesValidateOwnershipReplayBusyAndCancelOnMovement()
     {

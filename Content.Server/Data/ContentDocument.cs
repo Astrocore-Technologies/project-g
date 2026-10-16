@@ -7,8 +7,11 @@ public sealed record ContentDocument
 {
     public required int SchemaVersion { get; init; }
     public required int BalanceVersion { get; init; }
+    public required string UnarmedWeaponId { get; init; }
     public required StatBalance Balance { get; init; }
     public Content.Server.Combat.DefenseBalance Defense { get; init; } = new();
+    public Content.Server.Combat.ControlBalance Control { get; init; } = new();
+    public Content.Server.Combat.CombatLifecycleBalance Lifecycle { get; init; } = new();
     public Content.Server.Progression.ProgressionBalance Progression { get; init; } = new();
     public Content.Server.Professions.ProfessionDefinition[] Professions { get; init; } = [];
     public Content.Server.Professions.SwordsmanDefinition? Swordsman { get; init; }
@@ -16,6 +19,7 @@ public sealed record ContentDocument
     public Content.Server.StarterZone.StarterZoneDefinition? StarterZone { get; init; }
     public required WeaponDefinition[] Weapons { get; init; }
     public required AbilityDefinition[] Abilities { get; init; }
+    public EffectDefinition[] Effects { get; init; } = [];
     public required CreatureDefinition[] Creatures { get; init; }
     public Content.Server.Crafting.CraftingDefinition? Crafting { get; init; }
     public Content.Server.Quests.DeliveryQuestDefinition? DeliveryQuest {get;init;}

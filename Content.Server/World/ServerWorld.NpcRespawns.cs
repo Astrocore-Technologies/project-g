@@ -10,13 +10,24 @@ public sealed partial class ServerWorld
     private readonly Dictionary<NetworkEntityId, NpcSpawn> _npcSpawnActors = new();
     private readonly Dictionary<string, SavedNpcRespawn> _waitingNpcRespawns = new(StringComparer.Ordinal);
     private readonly List<string> _dueNpcRespawns = new();
+    private readonly Dictionary<NetworkEntityId,NpcSimulation> _retiredNpcCorpses=new();
+    private readonly Dictionary<NetworkEntityId,NpcSimulation> _npcActors=new(),_pendingNpcActors=new();
+    internal bool TryGetNpcActor(NetworkEntityId id,out NpcSimulation actor)=>_npcActors.TryGetValue(id,out actor!) || _pendingNpcActors.TryGetValue(id,out actor!);
+    private void AttachPendingNpcActors()
+    {foreach(var (id,actor) in _pendingNpcActors)_npcActors.Add(id,actor);_pendingNpcActors.Clear();}
+    private void ApplyNpcPatrol(float radius)
+    {
+        if(_npcActors.Count==0){Npc?.ApplyPatrol(radius,Tick);return;}
+        foreach(var actor in _npcActors.Values)
+            if(Combat!.Get(actor.Id).Kind==CombatEntityKind.Monster)actor.ApplyPatrol(radius,Tick);
+    }
     internal Func<long> NpcRespawnClock { get; set; } = StableClock();
 
     private void InitializeNpcRespawns()
     {
         Register(Npc, "npc", CombatEntityKind.Monster);
         Register(Boss, "boss", CombatEntityKind.Boss);
-        if (_npcSpawns.Count != 0) Combat!.Defeated += OnNpcDefeated;
+        if (_npcSpawns.Count != 0) {Combat!.Defeated += OnNpcDefeated;Combat.CorpseExpired+=RetireExpiredNpcCorpse;}
 
         void Register(NpcSimulation? actor, string fallback, CombatEntityKind kind)
         {
@@ -29,15 +40,19 @@ public sealed partial class ServerWorld
             var spawn = new NpcSpawn(key, actor, kind);
             _npcSpawns.Add(key, spawn);
             _npcSpawnActors.Add(actor.Id, spawn);
+            _npcActors.Add(actor.Id,actor);
         }
     }
 
     private void OnNpcDefeated(NetworkEntityId id)
     {
+        if(!_npcSpawnActors.ContainsKey(id) && TryGetNpcActor(id,out var independent))
+        {independent.Defeat(Tick);_retiredNpcCorpses[id]=independent;return;}
         if (!_npcSpawnActors.TryGetValue(id, out var spawn) || _waitingNpcRespawns.ContainsKey(spawn.Key)) return;
         spawn.Actor.Defeat(Tick);
         var seconds = spawn.Actor.Options.RespawnSeconds;
-        var state = new SavedNpcRespawn(1, spawn.Key, seconds == 0 ? 0 : checked(NpcRespawnClock() + seconds * 1000L));
+        var state = new SavedNpcRespawn(1, spawn.Key, seconds == 0 ? 0 : checked(NpcRespawnClock() + seconds * 1000L),
+            checked(NpcRespawnClock()+(long)Math.Ceiling(Combat!.CaptureLife(id).CorpseSeconds*1000)));
         state.Validate();
         _waitingNpcRespawns.Add(spawn.Key, state);
         SaveNpcRespawns("NpcDefeated", spawn.Key);
@@ -51,6 +66,7 @@ public sealed partial class ServerWorld
                 throw new InvalidDataException($"Saved NPC spawn '{state.SpawnId}' requires a content migration.");
             _waitingNpcRespawns.Add(state.SpawnId, state);
             Combat!.Get(spawn.Actor.Id).Health = 0;
+            Combat.RestoreLife(spawn.Actor.Id,new(1,1,true,Math.Max(0,(state.CorpseUntilUnixMilliseconds-NpcRespawnClock())/1000d),0),0);
             spawn.Actor.Defeat(Tick);
         }
         // An elapsed deadline is processed by the first fixed tick, through the normal durable barrier.
@@ -70,19 +86,41 @@ public sealed partial class ServerWorld
             var spawn = _npcSpawns[key];
             var actor = spawn.Actor;
             var oldId = actor.Id;
-            // Retire the previous life before publishing the replacement. AOI sends despawn + fresh CombatState.
+            // The replacement owns a fresh identity; the former body keeps its own remaining lifetime.
             Abilities!.Remove(oldId);
-            Combat!.Remove(oldId);
-            _spatial.Remove(oldId);
+            if(Combat!.CaptureLife(oldId).CorpseSeconds>0)_retiredNpcCorpses.Add(oldId,actor);
+            else{Combat.Remove(oldId);_spatial.Remove(oldId);}
             _npcSpawnActors.Remove(oldId);
+            _npcActors.Remove(oldId);
             var nextId = AllocateEntityId();
             Combat.Add(nextId, actor.Home, spawn.Kind, actor.Options.DefinitionId, height: actor.HomeHeight);
             _spatial.Add(nextId, actor.Home);
             actor.BeginNewLife(nextId);
             _npcSpawnActors.Add(nextId, spawn);
+            _npcActors.Add(nextId,actor);
             _waitingNpcRespawns.Remove(key);
             SaveNpcRespawns("NpcRespawned", key);
         }
+    }
+
+    private void RetireExpiredNpcCorpse(NetworkEntityId id)
+    {
+        if(!_retiredNpcCorpses.Remove(id))return;
+        _npcActors.Remove(id);_pendingNpcActors.Remove(id);
+        _spatial.Remove(id);Combat!.Remove(id);
+    }
+
+    private void ResumeResurrectedNpc(NetworkEntityId id)
+    {
+        if(!_npcSpawnActors.TryGetValue(id,out var spawn))
+        {
+            if(!_retiredNpcCorpses.Remove(id,out var template))return;
+            if(TryGetNpcActor(id,out var existing))existing.ResumeAfterResurrection();
+            else _pendingNpcActors.Add(id,template.ForkExistingLife(id,_movement,_interest.CellSize,new(_progressionCatalog!.Balance)));
+            return;
+        }
+        spawn.Actor.ResumeAfterResurrection();
+        if(_waitingNpcRespawns.Remove(spawn.Key))SaveNpcRespawns("NpcResurrected",spawn.Key);
     }
 
     private void SaveNpcRespawns(string operation, string spawn)

@@ -22,6 +22,7 @@ public sealed class AbilityProtocolTests
 
     [Theory]
     [InlineData(19)] [InlineData(20)] [InlineData(21)] [InlineData(22)] [InlineData(23)]
+    [InlineData(97)]
     public void RoundTripAndEveryTruncationOrTrailingByte(int type)
     {
         var bytes = Sample(type).CopyData();
@@ -36,7 +37,7 @@ public sealed class AbilityProtocolTests
     public void ExactValuesAndBoundedPrivateLoadoutRoundTrip()
     {
         var command = new AbilityCommand(123, 45, 1, Vector2.UnitY);
-        Assert.Equal(32, NetworkProtocol.Write(command).Length);
+        Assert.Equal(33, NetworkProtocol.Write(command).Length);
         Assert.True(NetworkProtocol.TryReadAbilityCommand(Body(NetworkProtocol.Write(command)), out var parsed));
         Assert.Equal(command, parsed);
         var loadout = new AbilityLoadout(new(1), 2, 40, 55, new[] { Profile });
@@ -61,15 +62,22 @@ public sealed class AbilityProtocolTests
         var bytes = Sample(19).CopyData();
         BitConverter.GetBytes(float.NaN).CopyTo(bytes, 12);
         Assert.False(Read(19, new(bytes, 2, bytes.Length)));
-        bytes = Sample(21).CopyData(); bytes[30] = 255;
+        bytes = Sample(21).CopyData(); bytes[34] = 255;
         Assert.False(Read(21, new(bytes, 2, bytes.Length)));
         bytes = Sample(22).CopyData(); bytes[28] = 255;
         Assert.False(Read(22, new(bytes, 2, bytes.Length)));
         Assert.Throws<ArgumentException>(() => NetworkProtocol.Write(new AbilityCommand(0, 0, 1, Vector2.UnitX)));
         Assert.Throws<ArgumentException>(() => NetworkProtocol.Write(Effect with { EffectId = 0 }));
+        Assert.Throws<ArgumentException>(() => NetworkProtocol.Write(new ActionCancelCommand(0,1)));
+        Assert.Throws<ArgumentException>(() => NetworkProtocol.Write(new ActionCancelCommand(1,0)));
+        bytes=Sample(97).CopyData(); Array.Clear(bytes,6,4);
+        Assert.False(Read(97,new(bytes,2,bytes.Length)));
+        Assert.Throws<ArgumentException>(()=>NetworkProtocol.Write(new AbilityLoadout(new(1),1,1,1,[Profile with {MaxCharges=0}])));
+        Assert.Throws<ArgumentException>(()=>NetworkProtocol.Write(new AbilityLoadout(new(1),1,1,1,[Profile with {Charges=2}])));
+        Assert.Throws<ArgumentException>(()=>NetworkProtocol.Write(new AbilityLoadout(new(1),1,1,1,[Profile with {RechargeInSeconds=3}])));
     }
 
-    private static AbilityProfile Profile => new(1, AbilityForm.Projectile, 10, 0.3f, 8, 0.5, 2, 5, 1);
+    private static AbilityProfile Profile => new(1, AbilityForm.Projectile, 10, 0.3f, 8, 0.5, 2, 5, 1,Charges:0,RechargeInSeconds:1,RechargeDuration:2);
     private static AbilityEffectState Effect => new(1, new(2), 3, 4, 1, AbilityForm.Projectile,
         AbilityPhase.Flying, Vector2.Zero, Vector2.One, Vector2.UnitY, 0.3f, 8, 1);
     private static NetDataReader Body(NetDataWriter value) => new(value.CopyData(), 2, value.Length);
@@ -80,6 +88,7 @@ public sealed class AbilityProtocolTests
         21 => NetworkProtocol.Write(new AbilityLoadout(new(1), 2, 40, 55, new[] { Profile })),
         22 => NetworkProtocol.Write(Effect),
         23 => NetworkProtocol.Write(new AbilityHit(1, new(2), new(3), 4, 20, 60)),
+        97 => NetworkProtocol.Write(new ActionCancelCommand(1,2)),
         _ => throw new ArgumentOutOfRangeException(nameof(type))
     };
     private static bool Read(int type, NetDataReader value) => type switch
@@ -89,6 +98,7 @@ public sealed class AbilityProtocolTests
         21 => NetworkProtocol.TryReadAbilityLoadout(value, out _),
         22 => NetworkProtocol.TryReadAbilityEffectState(value, out _),
         23 => NetworkProtocol.TryReadAbilityHit(value, out _),
+        97 => NetworkProtocol.TryReadActionCancelCommand(value, out _),
         _ => false
     };
 }

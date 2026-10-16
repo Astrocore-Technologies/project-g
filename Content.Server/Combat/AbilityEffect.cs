@@ -12,6 +12,8 @@ internal struct AbilityEffect
     public uint Sequence;
     public AbilityDefinition Definition;
     public AbilityProfile Profile;
+    public ActionInstance? Action;
+    public int AbilityIndex;
     public AbilityPhase Phase;
     public Vector2 Origin;
     public Vector2 Position;
@@ -23,6 +25,11 @@ internal struct AbilityEffect
     public float CompensationSeconds;
     public double FocusFactor;
     public double RecoveryEndsAt;
+    public DirectHitSnapshot? HitSnapshot;
+    public ReleasedSourceSnapshot? ReleasedSource;
+    public ChannelTimeline? Channel;
+    public ulong WeaponExecution;
+    public double ChargeStartedAt,ChargeSeconds,ChargePower;
 
     public readonly AbilityEffectState State(uint tick) => new(Id, ActorId, Sequence, tick, Profile.Id, Profile.Form,
         Phase, Origin, Position, Direction, Profile.Form == AbilityForm.Melee ? Profile.Range : Profile.Radius, Profile.Speed, Math.Max(0, Remaining), OriginHeight, Height, DirectionY, Profile.Area);

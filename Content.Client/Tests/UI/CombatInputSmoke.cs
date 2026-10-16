@@ -1,147 +1,198 @@
 using Content.Shared.Network;
 using Godot;
-using ProjectG.Combat;
-using ProjectG.Gameplay;
 using ProjectG.Networking;
+using ProjectG.Gameplay;
 namespace ProjectG.Tests.UI;
 
-/// <summary>Graphical smoke with real input and an isolated server/profile supplied by CLI.</summary>
+/// <summary>Real Godot input and UDP, using an isolated server and identity supplied by CLI.</summary>
 public partial class CombatInputSmoke : Node
 {
-    private int _hits, _attacks;
-    private double _attackInterval;
+    private readonly List<AttackEvent> _attacks=[];
+    private double _interval;
     public override async void _Ready()
     {
         try
         {
-            GetWindow().Mode=Window.ModeEnum.Windowed; GetWindow().Size=new(1280,720); GetWindow().GrabFocus();
-            var world=GD.Load<PackedScene>("res://Scenes/World.tscn").Instantiate<WorldController>(); world.AutoConnect=false; AddChild(world);
+            GetWindow().Size=new(1280,720); GetWindow().GrabFocus();
+            var world=GD.Load<PackedScene>("res://Scenes/World.tscn").Instantiate<WorldController>();
+            world.AutoConnect=false; AddChild(world);
             var network=world.GetNode<NetworkClient>("NetworkClient");
-            network.AttackReceived+=hit=> { _attacks++; if(hit.Damage>0) _hits++; };
-            network.CombatStateReceived+=state=> { if(state.Kind==CombatEntityKind.Player) _attackInterval=state.AttackInterval; };
-            network.ConnectToServer(); await Wait(()=>network.LatestDefense is not null,"defense snapshot"); await Delay(.5);
-            var player=world.GetChildren().OfType<PlayerController>().Single(p=>p.GetNode<Camera3D>("CameraRig/Camera3D").Current);
-            if (OS.GetCmdlineUserArgs().Contains("--attack-input-only"))
+            AbilityEffectState? casting=null; AbilityResult? cancelled=null; AbilityLoadout loadout=default;
+            InventoryState inventory=default;CombatState health=default;CombatFeedback? healing=null;
+            ProgressionState progression=default;network.ProgressionReceived+=state=>progression=state;
+            AbilityResult? lastResult=null;AbilityEffectState? supportState=null;
+            AbilityEffectState? channelState=null;
+            AbilityEffectState? chargedState=null,automaticCharge=null;
+            AbilityEffectState? heldState=null;
+            AbilityEffectState? toggleState=null;
+            var chargeActivated=false;
+            network.InventoryReceived+=state=>inventory=state;
+            network.CombatFeedbackReceived+=value=>{if(value.Kind==CombatFeedbackKind.Healing)healing=value;};
+            network.AbilityEffectReceived+=state=> { if(state.Phase==AbilityPhase.Telegraph) casting=state; };
+            network.AbilityResultReceived+=result=> { lastResult=result;if(result.Outcome==AbilityOutcome.Cancelled) cancelled=result; };
+            network.AbilityEffectReceived+=state=>{if(state.AbilityId==2)supportState=state;};
+            network.AbilityEffectReceived+=state=>{if(state.AbilityId==600)channelState=state;};
+            network.AbilityEffectReceived+=state=>
             {
-                await VerifyAttackInput(world,network,player);
-                world.QueueFree(); await Delay(.2);
-                GD.Print("ATTACK_INPUT_OK: ground click, Ctrl directional swing, held chord, NPC bypass, modal guard, target bypass, approach/autoattack, manual cancellation.");
-                GetTree().Quit(); return;
-            }
-            // The authored town starts outside the training target AOI; walk to its approach first.
-            if (!player.MoveTo(new(-7,7))) throw new Exception("Training approach is not navigable.");
-            await Wait(()=>System.Numerics.Vector2.Distance(player.PredictedPosition,new(-7,7))<.3,"training approach");
-            var target=world.GetChildren().OfType<Node3D>().Single(p=>p.Name.ToString().StartsWith("TrainingTarget-"));
-            var camera=GetViewport().GetCamera3D();
-            Input.WarpMouse(camera.UnprojectPosition(target.GlobalPosition)); await Delay(.1);
-            KeyEvent(Key.Shift,true); KeyEvent(Key.Shift,false);
-            await Wait(()=>network.LatestDefense is { Stamina:90 },"parry cost");
-            KeyEvent(Key.Tab,true); await Wait(()=>network.LatestDefense is { Blocking:true },"Tab guard");
-            if (OS.GetCmdlineUserArgs().Contains("--capture"))
-            { await ToSignal(RenderingServer.Singleton,RenderingServer.SignalName.FramePostDraw); GetViewport().GetTexture().GetImage().SavePng("res://../.artifacts/defense-hud.png"); }
-            KeyEvent(Key.Tab,false); await Wait(()=>network.LatestDefense is { Blocking:false },"Tab release");
+                if(state.AbilityId==602){chargedState=state;if(state.Phase==AbilityPhase.Impact)chargeActivated=true;}
+                if(state.AbilityId==603)automaticCharge=state;
+                if(state.AbilityId==604)heldState=state;
+                if(state.AbilityId==605)toggleState=state;
+            };
+            network.AbilityLoadoutReceived+=state=>loadout=state;
+            network.AttackReceived+=hit=>_attacks.Add(hit);
+            network.CombatStateReceived+=state=> { if(state.Kind==CombatEntityKind.Player){_interval=state.AttackInterval;health=state;} };
+            network.ConnectToServer(); await Wait(()=>network.LatestDefense is not null && _interval>0,"initial combat state");
+            await Wait(()=>progression.Skills?.Any(s=>s.Id==610 && s.IsPassive && s.Level==1 && s.Slot==0)==true && loadout.Abilities is not null,"known passive arrives without an active slot");
+            if(loadout.Abilities.Any(s=>s.Id==610))throw new Exception("Passive consumed an active profile slot.");
+            await Delay(.5);
+            KeyEvent(Key.Tab,true);
+            await Wait(()=>network.LatestDefense is {Outcome:DefenseOutcome.NeedsWeapon,Blocking:false},"unarmed Block rejection");
+            await Wait(()=>world.FindChildren("*","Label3D",true,false).OfType<Label3D>().Any(label=>label.Text.Contains("Для блока нужно оружие")),"unarmed Block reason");
+            KeyEvent(Key.Tab,false);await Delay(.2);
+            var player=world.GetChildren().OfType<PlayerController>().Single(p=>p.GetNode<Camera3D>("CameraRig/Camera3D").Current);
+            var camera=GetViewport().GetCamera3D(); var start=player.PredictedPosition;
+            Vector2 Aim(Vector3 offset)=>camera.UnprojectPosition(player.GlobalPosition+offset);
+            var point=Aim(new(0,-1,-3)); Input.WarpMouse(point); await Delay(.1);
+            Mouse(true,point); Mouse(false,point);
+            await Wait(()=>_attacks.Count==1,"single ground tap"); await Delay(_interval+.25);
+            if(_attacks.Count!=1) throw new Exception("A tap resumed attacks after release.");
+            KeyEvent(Key.Ctrl,true); Mouse(true,point,true);
+            await Wait(()=>_attacks.Count==2,"manual chord"); await Delay(2*_interval+.25);
+            Mouse(false,point,true); KeyEvent(Key.Ctrl,false);
+            if(_attacks.Count!=2) throw new Exception("Manual mode repeated while held.");
+            Mouse(true,point); await Wait(()=>_attacks.Count>=4,"continuous server repetition");
+            var before=_attacks.Count; var previous=_attacks[^1].Direction;
+            point=Aim(new(3,-1,-1)); Input.WarpMouse(point);
+            Input.ParseInputEvent(new InputEventMouseMotion {Position=point,GlobalPosition=point,ButtonMask=MouseButtonMask.Left});
+            await Wait(()=>_attacks.Count>before && System.Numerics.Vector2.Dot(_attacks[^1].Direction,previous)<.8,"manual aim update");
+            Mouse(false,point); await Delay(.3); before=_attacks.Count; await Delay(2*_interval+.25);
+            if(_attacks.Count!=before) throw new Exception("Released continuous input kept attacking.");
+            if(System.Numerics.Vector2.Distance(start,player.PredictedPosition)>.1)
+                throw new Exception("Directional attack automatically moved the character.");
+            Mouse(true,point); await Wait(()=>_attacks.Count>before,"new deliberate hold");
+            KeyEvent(Key.Shift,true); KeyEvent(Key.Shift,false); await Delay(.4);
+            before=_attacks.Count; await Delay(2*_interval+.25); Mouse(false,point);
+            if(_attacks.Count!=before) throw new Exception("Parry resumed stale held basic input.");
+            if(_attacks.Select(a=>a.ExecutionId).Distinct().Count()!=_attacks.Count)
+                throw new Exception("Repeated attacks reused a server execution ID.");
+            await Delay(.5);
+            var mana=loadout.Mana;
+            KeyEvent(Key.Q,true); await Delay(.1); KeyEvent(Key.Q,false);
+            await Wait(()=>casting is not null,"server preparation phase");
+            KeyEvent(Key.Escape,true); KeyEvent(Key.Escape,false);
+            await Wait(()=>cancelled?.Sequence==casting?.Sequence,"Esc cancellation acknowledged");
+            await Delay(.65);
+            if(loadout.Mana<mana || loadout.Abilities.First(p=>p.Id==casting!.Value.AbilityId).ReadyInSeconds>0)
+                throw new Exception("Voluntary cast cancellation spent mana or started skill cooldown.");
+            var skillId=casting!.Value.AbilityId;
+            AbilityProfile Skill()=>loadout.Abilities.First(p=>p.Id==skillId);
+            if(Skill().MaxCharges!=3 || Skill().Charges!=3) throw new Exception("Isolated three-charge profile was not loaded.");
+            KeyEvent(Key.Q,true); await Delay(.1); KeyEvent(Key.Q,false);
+            await Wait(()=>Skill().Charges==2,"first charged activation");
+            var recharge=Skill().RechargeInSeconds;
+            KeyEvent(Key.Q,true); await Delay(.1); KeyEvent(Key.Q,false);
+            await Wait(()=>Skill().Charges==1,"second charge before recovery");
+            if(Skill().ReadyInSeconds!=0 || Skill().RechargeInSeconds>=recharge)
+                throw new Exception("Spending a remaining charge restarted recovery or blocked the remaining charge.");
+            await Wait(()=>world.FindChildren("*","Label",true,false).OfType<Label>().Any(label=>label.Text.Contains("1/3")),"HUD charge count");
+            await Wait(()=>Skill().Charges==2,"sequential first recovery");
+            await Wait(()=>Skill().Charges==3,"sequential final recovery");
+            await Wait(()=>inventory.Items is not null,"inventory preparation for healing");
+            var armor=inventory.Items.Single(item=>item.Slot==EquipmentSlot.Armor);
+            network.SendInventory(new(1,InventoryAction.Equip,armor.Handle));
+            await Wait(()=>inventory.Items.Any(item=>item.Handle==armor.Handle&&item.Equipped)&&health.MaxHealth>health.Health,"equipment raises maximum without healing");
+            var beforeHealing=health.Health;point=Aim(new(.5f,-1,0));Input.WarpMouse(point);
+            Input.ParseInputEvent(new InputEventMouseMotion{Position=point,GlobalPosition=point});await Delay(.1);
+            if(!player.TryCursorSurface(out var supportAim,out var supportHeight))throw new Exception("Support smoke could not pick the surface near the caster.");
+            if(System.Numerics.Vector2.Distance(supportAim,player.PredictedPosition)>loadout.Abilities.First(p=>p.Id==2).Radius)
+                throw new Exception("Support smoke aimed outside the caster's healing area.");
+            KeyEvent(Key.W,true);await Delay(.1);KeyEvent(Key.W,false);
+            try{await Wait(()=>healing is not null,"confirmed support area healing");}
+            catch(TimeoutException)
+            {throw new Exception($"Support failed: foot={player.PredictedFoot}, aim={supportAim}/{supportHeight}, result={lastResult}, effect={supportState}, HP={health.Health}/{health.MaxHealth}, profile={loadout.Abilities.FirstOrDefault(p=>p.Id==2)}");}
+            if(healing!.Value.TargetId!=player.EntityId || health.Health!=beforeHealing+healing.Value.Amount)
+                throw new Exception("Confirmed support feedback and final HP disagree.");
+            await Wait(()=>world.FindChildren("*","Label3D",true,false).OfType<Label3D>().Any(label=>label.Text.Contains('+')&&label.Text.Contains("HP")),"positive healing feedback in world UI");
             await Delay(.4);
-            var start=player.PredictedPosition;
-            var point=camera.UnprojectPosition(target.GlobalPosition);
-            Input.WarpMouse(point); Mouse(MouseButton.Left,true,point); Mouse(MouseButton.Left,false,point);
-            await Wait(()=>_hits>=2,"automatic approach and repeated attacks");
-            if (System.Numerics.Vector2.Distance(start,player.PredictedPosition)<.2) throw new Exception("Autoattack did not approach target.");
-            var destination=player.GlobalPosition+new Vector3(3,-1,0);
-            point=camera.UnprojectPosition(destination); Input.WarpMouse(point); Mouse(MouseButton.Right,true,point);
-            await Delay(.3);
-            // Aim above the avatar: the bottom resource HUD intentionally consumes mouse input.
-            var follow=player.GlobalPosition+new Vector3(0,-1,-3);
-            var beforeFollow=player.PredictedPosition;
-            Input.WarpMouse(camera.UnprojectPosition(follow)); await Delay(.4);
-            Mouse(MouseButton.Right,false,camera.UnprojectPosition(follow)); await Delay(.3);
-            var hits=_hits; await Delay(1.1); if (_hits!=hits) throw new Exception("RMB did not cancel autoattack.");
-            if (beforeFollow.Y-player.PredictedPosition.Y<1) throw new Exception("Held RMB did not follow the changed cursor destination.");
-            await Wait(()=>network.LatestDefense is { Stamina:>=99.9 },"stamina regeneration");
-            var directions=new[] { System.Numerics.Vector2.UnitX,System.Numerics.Vector2.UnitY,-System.Numerics.Vector2.UnitX,-System.Numerics.Vector2.UnitY };
-            var dashDirection=directions.First(d=>network.Navigation!.CanTraverse(player.PredictedPosition,player.PredictedPosition+d*3));
-            Input.WarpMouse(camera.UnprojectPosition(player.GlobalPosition+new Vector3(dashDirection.X*3,-1,dashDirection.Y*3))); await Delay(.15);
-            KeyEvent(Key.Space,true); KeyEvent(Key.Space,false);
-            await Wait(()=>network.LatestDefense is { Stamina:<90 },"dash stamina cost");
+            ProjectG.UI.GameUi.Navigate("combat");
+            await Wait(()=>world.FindChildren("CombatJournalText","Label",true,false).OfType<Label>().Any(label=>label.Text.Contains("Лечение +")),"private combat journal through live UDP");
+            KeyEvent(Key.Escape,true);KeyEvent(Key.Escape,false);await Delay(.1);
+            KeyEvent(Key.E,true);await Delay(.1);KeyEvent(Key.E,false);
+            await Wait(()=>channelState is {Phase:AbilityPhase.Channeling},"channel starts through input");
+            await Wait(()=>loadout.Abilities.Any(p=>p.Id==600&&p.PendingEndCharges==1),"deferred channel charge");
+            await Wait(()=>world.FindChildren("*","Label",true,false).OfType<Label>().Any(label=>label.Text.Contains("Поддерживается")),"channel HUD status");
+            if(!world.FindChildren("*","PanelContainer",true,false).OfType<PanelContainer>().Any(panel=>panel.TooltipText.Contains("2 MP/с")))
+                throw new Exception("Channel resource rate was absent from the HUD.");
+            var channelSequence=channelState!.Value.Sequence;
+            KeyEvent(Key.Escape,true);KeyEvent(Key.Escape,false);
+            await Wait(()=>cancelled?.Sequence==channelSequence,"Esc stops active channel");
+            await Wait(()=>loadout.Abilities.Any(p=>p.Id==600&&p.PendingEndCharges==0&&p.ReadyInSeconds>0),"channel cooldown begins after stop");
+            var chargeMana=loadout.Mana;
+            KeyEvent(Key.A,true);
+            await Wait(()=>chargedState is {Phase:AbilityPhase.Charging},"Charged begins on press before release");
+            await Delay(.8);
+            if(chargeActivated || loadout.Abilities.First(p=>p.Id==602).Charges!=1 || loadout.Mana<chargeMana)
+                throw new Exception("Held full charge released or paid before key release.");
+            KeyEvent(Key.Escape,true);KeyEvent(Key.Escape,false);KeyEvent(Key.A,false);
+            await Wait(()=>cancelled?.Sequence==chargedState?.Sequence,"Charged Esc cancellation");
+            if(loadout.Abilities.First(p=>p.Id==602).Charges!=1)throw new Exception("Cancelled charge consumed a charge.");
+            chargedState=null;KeyEvent(Key.A,true);await Wait(()=>chargedState is {Phase:AbilityPhase.Charging},"second Charged press");
+            KeyEvent(Key.A,false);
+            await Wait(()=>chargeActivated&&loadout.Abilities.First(p=>p.Id==602).Charges==0,"Charged release activates and pays once");
+            await Delay(.3);KeyEvent(Key.S,true);
+            await Wait(()=>automaticCharge is {Phase:AbilityPhase.Charging},"automatic Charged press");
+            await Wait(()=>loadout.Abilities.First(p=>p.Id==603).Charges==0,"full charge auto-release while key remains down");
+            KeyEvent(Key.S,false);await Delay(.3);
+            KeyEvent(Key.D,true);await Wait(()=>heldState is {Phase:AbilityPhase.Channeling},"Hold starts on key press");
+            await Delay(.3);if(loadout.Abilities.First(p=>p.Id==604).PendingEndCharges!=1)throw new Exception("Hold did not reserve completion cooldown.");
+            var heldSequence=heldState!.Value.Sequence;KeyEvent(Key.D,false);
+            await Wait(()=>cancelled?.Sequence==heldSequence && loadout.Abilities.First(p=>p.Id==604).ReadyInSeconds>0,"Hold stops on release and starts cooldown");
+            lastResult=null;KeyEvent(Key.F,true);KeyEvent(Key.F,false);KeyEvent(Key.F,true);KeyEvent(Key.F,false);
+            await Wait(()=>lastResult?.Outcome==AbilityOutcome.Cancelled && loadout.Abilities.First(p=>p.Id==605).ToggleState==Content.Shared.Combat.ToggleState.Off,"rapid Toggle on/off keeps the final off intention");
+            await Wait(()=>loadout.Abilities.First(p=>p.Id==605).ReadyInSeconds==0,"rapid Toggle completion settles its cooldown");
+            toggleState=null;KeyEvent(Key.F,true);await Wait(()=>toggleState is {Phase:AbilityPhase.Sustaining},"Toggle starts on press without taking the ordinary lane");
+            KeyEvent(Key.F,false);
+            await Wait(()=>loadout.Abilities.First(p=>p.Id==605).ToggleState==Content.Shared.Combat.ToggleState.Active,"Toggle owner state");
+            await Wait(()=>world.FindChildren("*","Label",true,false).OfType<Label>().Any(label=>label.Text=="Включён"),"Toggle HUD state");
+            var attacksDuringToggle=_attacks.Count;point=Aim(new(2,-1,0));Input.WarpMouse(point);await Delay(.1);Mouse(true,point);Mouse(false,point);
+            await Wait(()=>_attacks.Count>attacksDuringToggle,"basic attack while background Toggle remains active");
+            if(loadout.Abilities.First(p=>p.Id==605).ToggleState!=Content.Shared.Combat.ToggleState.Active)throw new Exception("Basic attack unexpectedly disabled a background Toggle.");
+            casting=null;KeyEvent(Key.Q,true);await Delay(.1);KeyEvent(Key.Q,false);
+            await Wait(()=>casting is not null,"ordinary Cast while background Toggle remains active");
+            KeyEvent(Key.Escape,true);KeyEvent(Key.Escape,false);
+            await Wait(()=>cancelled?.Sequence==casting?.Sequence,"Esc cancels ordinary Cast rather than background Toggle");
+            if(loadout.Abilities.First(p=>p.Id==605).ToggleState!=Content.Shared.Combat.ToggleState.Active)throw new Exception("Esc on the ordinary Cast also stopped background Toggle.");
+            KeyEvent(Key.F,true);KeyEvent(Key.F,false);
+            await Wait(()=>loadout.Abilities.First(p=>p.Id==605).ToggleState==Content.Shared.Combat.ToggleState.Off && loadout.Abilities.First(p=>p.Id==605).ReadyInSeconds>0,"second Toggle press stops only its own sustain");
+            // Reconnect fixture: a fresh presentation must advance beyond the retained body's acknowledged inputs.
+            player.GetChildren().OfType<ProjectG.Combat.AbilityPresentation>().Single().ApplyLoadout(loadout with {LastInputSequence=5000});
+            casting=null;cancelled=null;KeyEvent(Key.Q,true);await Delay(.1);KeyEvent(Key.Q,false);
+            await Wait(()=>casting is {Sequence:5001},"server input floor seeds the next real key command");
+            KeyEvent(Key.Escape,true);KeyEvent(Key.Escape,false);
+            await Wait(()=>cancelled?.Sequence==5001,"Esc addresses the confirmed server execution");
+            KeyEvent(Key.R,true);await Delay(.1);KeyEvent(Key.R,false);
+            await Wait(()=>lastResult?.Outcome==AbilityOutcome.NoMana,"channel resource exhaustion result");
+            await Wait(()=>world.FindChildren("*","Label3D",true,false).OfType<Label3D>().Any(label=>label.Text.Contains("Поддержание прекращено: закончилась мана")),"channel resource exhaustion reason");
+            if(network.LatestDefense!.Value.InCombatRemaining!=0)throw new Exception("Empty attacks incorrectly started combat.");
+            var navigation=world.GetChildren().OfType<ProjectG.UI.GameNavigation>().Single();navigation.ToggleMenu();await Delay(.1);
+            var logout=world.FindChildren("LogoutButton","Button",true,false).OfType<Button>().Single();logout.EmitSignal(Button.SignalName.Pressed);
+            await Wait(()=>network.LoggedOut,"menu logout committed and acknowledged");
+            if(network.LastConnectionError.Length!=0)throw new Exception("Ordinary logout was presented as a connection error.");
             world.QueueFree(); await Delay(.2);
-            var restoredWorld=GD.Load<PackedScene>("res://Scenes/World.tscn").Instantiate<WorldController>(); restoredWorld.AutoConnect=false; AddChild(restoredWorld);
-            var restoredNetwork=restoredWorld.GetNode<NetworkClient>("NetworkClient"); restoredNetwork.ConnectToServer();
-            await Wait(()=>restoredNetwork.LatestDefense is not null,"stamina reconnect snapshot");
-            if (restoredNetwork.LatestDefense!.Value.Stamina>=95) throw new Exception("Reconnect refilled stamina.");
-            restoredWorld.QueueFree(); await Delay(.2);
-            GD.Print("COMBAT_INPUT_OK: Shift, Tab press/release, approach, repeated attacks, held RMB tracking/cancellation, regeneration, dash stamina, durable reconnect, cleanup."); GetTree().Quit();
+            GD.Print("COMBAT_INPUT_OK: manual/held/release/aim, no approach, Parry, execution IDs, Cast/Esc, sequential charges/HUD, support area, private journal, Channel/Esc/rates/exhaustion, Charged, Hold, rapid and ordinary background Toggle, learned Passive without active slot via UDP/UI, empty actions stay out of combat, menu logout and cleanup.");
+            GetTree().Quit();
         }
-        catch(Exception e) { GD.PushError(e.ToString()); GetTree().Quit(1); }
+        catch(Exception error) { GD.PushError(error.ToString()); GetTree().Quit(1); }
     }
     private static void KeyEvent(Key key,bool pressed)=>Input.ParseInputEvent(new InputEventKey { PhysicalKeycode=key,Keycode=key,Pressed=pressed });
-    private async Task VerifyAttackInput(WorldController world,NetworkClient network,PlayerController player)
-    {
-        // River City trainer is outside the spawn AOI; approach before testing NPC input.
-        var approach=new System.Numerics.Vector2(15,-8);
-        if (!player.MoveTo(approach)) throw new Exception("Training approach is not navigable.");
-        await Wait(()=>System.Numerics.Vector2.Distance(player.PredictedPosition,approach)<.3,"city arena approach");
-        await Delay(.4);
-        await Wait(()=>_attackInterval>0 && network.QuestNpcs.Count>0,"combat and NPC baseline");
-        var camera=GetViewport().GetCamera3D();
-        var start=player.PredictedPosition;
-        var ground=camera.UnprojectPosition(player.GlobalPosition+new Vector3(-5,-1,-3));
-        await Click(ground);
-        await Delay(_attackInterval+.3);
-        if (_attacks!=0 || System.Numerics.Vector2.Distance(start,player.PredictedPosition)>.1)
-            throw new Exception("Plain ground click attacked or moved the character.");
-
-        // Holding the chord must remain a single intention, not a repeating attack mode.
-        Input.WarpMouse(ground); await Delay(.1);
-        KeyEvent(Key.Ctrl,true); Mouse(MouseButton.Left,true,ground,true);
-        await Wait(()=>_attacks==1,"Ctrl ground swing");
-        await Delay(_attackInterval+.3);
-        Mouse(MouseButton.Left,false,ground,true); KeyEvent(Key.Ctrl,false);
-        if (_attacks!=1 || _hits!=0) throw new Exception("Held Ctrl + LMB repeated or ground swing hit a target.");
-
-        var npc=network.QuestNpcs.Values.OrderBy(n=>System.Numerics.Vector2.DistanceSquared(n.Position,start)).First();
-        var npcPoint=camera.UnprojectPosition(new Vector3(npc.Position.X,1,npc.Position.Y));
-        await Click(npcPoint,true);
-        await Wait(()=>_attacks==2,"Ctrl NPC swing"); await Delay(_attackInterval+.3);
-        if (ProjectG.UI.GameUi.GameplayModalOpen || _attacks!=2) throw new Exception("Ctrl NPC click opened dialogue or repeated.");
-        await Click(npcPoint);
-        await Wait(()=>ProjectG.UI.GameUi.GameplayModalOpen,"plain NPC dialogue");
-        await Click(ground,true); await Delay(.3);
-        if (_attacks!=2) throw new Exception("Ctrl attack bypassed a modal window.");
-        KeyEvent(Key.Escape,true); KeyEvent(Key.Escape,false);
-        await Wait(()=>!ProjectG.UI.GameUi.GameplayModalOpen,"close dialogue");
-
-        // The centre dummy is still outside melee range after talking to the trainer.
-        var target=world.GetChildren().OfType<Node3D>().Where(n=>n.Name.ToString().StartsWith("TrainingTarget-"))
-            .OrderBy(n=>n.GlobalPosition.DistanceSquaredTo(new Vector3(15,1,-14))).First();
-        var point=camera.UnprojectPosition(target.GlobalPosition);
-        start=player.PredictedPosition;
-        await Click(point,true);
-        await Wait(()=>_attacks==3,"Ctrl target swing"); await Delay(_attackInterval+.3);
-        if (_attacks!=3 || _hits!=0 || System.Numerics.Vector2.Distance(start,player.PredictedPosition)>.1)
-            throw new Exception("Ctrl target click started pursuit or autoattack.");
-
-        await Click(point);
-        await Wait(()=>_hits>=2,"plain LMB approach and repeated attacks");
-        if (System.Numerics.Vector2.Distance(start,player.PredictedPosition)<.2)
-            throw new Exception("Autoattack did not approach the dummy.");
-        // Even during cooldown the manual chord cancels the selected autoattack target.
-        point=camera.UnprojectPosition(player.GlobalPosition+new Vector3(-5,-1,-3));
-        await Click(point,true); await Delay(.3);
-        var attacks=_attacks; await Delay(_attackInterval+.3);
-        if (_attacks!=attacks) throw new Exception("Ctrl click did not cancel autoattack.");
-        await Click(point,true);
-        await Wait(()=>_attacks==attacks+1,"manual swing after cancellation");
-        await Delay(_attackInterval+.3);
-        if (_attacks!=attacks+1) throw new Exception("Manual swing resumed autoattack.");
-    }
-    private async Task Click(Vector2 point,bool ctrl=false)
-    {
-        Input.WarpMouse(point); await Delay(.1);
-        if(ctrl) KeyEvent(Key.Ctrl,true);
-        Mouse(MouseButton.Left,true,point,ctrl); Mouse(MouseButton.Left,false,point,ctrl);
-        if(ctrl) KeyEvent(Key.Ctrl,false);
-    }
-    private static void Mouse(MouseButton button,bool pressed,Vector2 point,bool ctrl=false)=>Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex=button,Pressed=pressed,Position=point,GlobalPosition=point,CtrlPressed=ctrl });
+    private static void Mouse(bool pressed,Vector2 point,bool ctrl=false)=>Input.ParseInputEvent(new InputEventMouseButton
+        { ButtonIndex=MouseButton.Left,Pressed=pressed,Position=point,GlobalPosition=point,CtrlPressed=ctrl });
     private async Task Delay(double seconds)=>await ToSignal(GetTree().CreateTimer(seconds),SceneTreeTimer.SignalName.Timeout);
     private async Task Wait(Func<bool> predicate,string stage)
-    { var until=Time.GetTicksMsec()+15000; while(!predicate() && Time.GetTicksMsec()<until) await ToSignal(GetTree(),SceneTree.SignalName.ProcessFrame); if(!predicate()) throw new TimeoutException(stage); }
+    {
+        var until=Time.GetTicksMsec()+15000;
+        while(!predicate() && Time.GetTicksMsec()<until) await ToSignal(GetTree(),SceneTree.SignalName.ProcessFrame);
+        if(!predicate()) throw new TimeoutException(stage);
+    }
 }

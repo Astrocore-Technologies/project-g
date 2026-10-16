@@ -80,7 +80,7 @@ public sealed class InterestTests
 
     private static ServerWorld CreateWorld(float radius, float exitRadius) => new(
         Options.Create(new MovementOptions()),
-        Options.Create(new InterestOptions { Radius = radius, ExitRadius = exitRadius }));
+        Options.Create(new InterestOptions { Radius = radius, ExitRadius = exitRadius }), hitRoll: () => 0, criticalRoll: () => 1);
 
     private static void MoveTo(ServerWorld world, int connectionId, uint sequence, Vector2 target)
     {

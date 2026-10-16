@@ -19,7 +19,7 @@ namespace Content.Tests.Server.Persistence;
 public sealed class CharacterPersistenceTests
 {
     internal static ServerWorld World() => new(Options.Create(new MovementOptions()), Options.Create(new InterestOptions()),
-        catalog: ContentCatalogTests.Load());
+        catalog: ContentCatalogTests.Load(), hitRoll: () => 0, criticalRoll: () => 1);
 
     [Fact]
     public void StateRoundTripsAndRestoresStatsPositionResourcesAndCooldown()
@@ -124,7 +124,7 @@ public sealed class CharacterPersistenceTests
             await Poll(duplicate, () => duplicate.Rejection.HasValue);
             Assert.Equal(HandshakeRejectCode.CharacterInUse, duplicate.Rejection!.Value.Code);
             Assert.Empty(duplicate.Spawns);
-            first.Disconnect();
+            first.Logout();
             await Poll(first, () => !store.IsHeld);
             using var reconnect = new NetworkMovementIntegrationTests.TestClient(port, token);
             await Poll(reconnect, () => reconnect.Spawns.Count != 0);

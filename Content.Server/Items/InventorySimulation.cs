@@ -8,9 +8,18 @@ using Content.Shared.Network;
 namespace Content.Server.Items;
 
 /// <summary>Owner-bound instances and fixed-tick equipment intentions, independent of transport/Godot.</summary>
-public sealed partial class InventorySimulation(ContentCatalog catalog, CombatSimulation combat, AbilitySimulation abilities,
-    Func<NetworkEntityId, BaseStats> primary)
+public sealed partial class InventorySimulation
 {
+    private readonly ContentCatalog catalog;
+    private readonly CombatSimulation combat;
+    private readonly AbilitySimulation abilities;
+    private readonly Func<NetworkEntityId,BaseStats> primary;
+    public InventorySimulation(ContentCatalog catalog,CombatSimulation combat,AbilitySimulation abilities,Func<NetworkEntityId,BaseStats> primary)
+    {
+        this.catalog=catalog;this.combat=combat;this.abilities=abilities;this.primary=primary;
+        combat.WeaponExecutionStarted+=BeginWeaponUse;combat.WeaponExecutionFinished+=EndWeaponUse;
+        combat.WeaponHealthDamage+=QueueWear;combat.WeaponActionBoundary+=FlushWear;
+    }
     private readonly Dictionary<NetworkEntityId, Actor> _actors = new();
     private readonly Dictionary<NetworkEntityId, InventoryCommand> _pending = new();
     private readonly HashSet<NetworkEntityId> _dirty = new();
@@ -29,7 +38,7 @@ public sealed partial class InventorySimulation(ContentCatalog catalog, CombatSi
         public SavedMaintenance? Maintenance;
         public SavedEconomy? Economy;
         public ulong TradeSession;
-        public uint LastWearSequence;
+        public readonly Dictionary<ulong,WeaponUse> WeaponUses=new();
         public double CraftReadyAt;
         public uint Sequence;
         public uint? RequestTick;
@@ -71,8 +80,9 @@ public sealed partial class InventorySimulation(ContentCatalog catalog, CombatSi
         var actor = new Actor(items) { Crafting=saved.Crafting, Maintenance=saved.Maintenance, Economy=saved.Economy, CraftReadyAt=combat.Time+Math.Max(0,(saved.Crafting?.CooldownSeconds ?? 0)-offlineSeconds) };
         Apply(id, actor, null, EquipmentSlot.None);
         _actors.Add(id, actor); _dirty.Add(id);
+        foreach(var item in items)if(item.Saved.Condition is {PendingWear:>0}){_wearPending.Add(id);break;}
     }
-    public void Remove(NetworkEntityId id) { _actors.Remove(id); _pending.Remove(id); _dirty.Remove(id); _results.Remove(id); }
+    public void Remove(NetworkEntityId id) { _actors.Remove(id); _wearPending.Remove(id);_pending.Remove(id); _dirty.Remove(id); _results.Remove(id); }
     public SavedInventory Capture(NetworkEntityId id) => new() { Items = _actors[id].Items.Select(item => item.Saved).ToArray(), Crafting=CaptureCrafting(id), Maintenance=_actors[id].Maintenance, Economy=_actors[id].Economy };
     public InventoryState State(NetworkEntityId id, uint tick) => new(id, tick, _actors[id].Items.Select(item => new InventoryEntry(
         item.Handle, item.Definition.Name+(item.Saved.Enhancement>0?" +"+item.Saved.Enhancement:""), item.Definition.Slot, item.Saved.EquippedSlot != EquipmentSlot.None,
@@ -96,7 +106,7 @@ public sealed partial class InventorySimulation(ContentCatalog catalog, CombatSi
             var outcome = target is null ? InventoryOutcome.NotOwned
                 : actor.TradeSession!=0 ? InventoryOutcome.Busy
                 : combat.Get(id).Health <= 0 ? InventoryOutcome.InvalidState
-                : combat.Get(id).IsCasting || abilities.HasActiveEffects(id) ? InventoryOutcome.Busy : InventoryOutcome.Accepted;
+                : combat.InCombat(id) || combat.Get(id).IsCasting || abilities.HasActiveEffects(id) ? InventoryOutcome.Busy : InventoryOutcome.Accepted;
             if (outcome == InventoryOutcome.Accepted)
             {
                 try
@@ -108,6 +118,7 @@ public sealed partial class InventorySimulation(ContentCatalog catalog, CombatSi
                         if (item == target) item.Saved = ChangeSlot(item.Saved,slot);
                         else if (slot != EquipmentSlot.None && item.Saved.EquippedSlot == slot)
                             item.Saved = ChangeSlot(item.Saved,EquipmentSlot.None);
+                    combat.RefreshBlockPermission(id);
                     _dirty.Add(id);
                 }
                 catch (ArgumentException) { outcome = InventoryOutcome.InvalidState; }
@@ -128,7 +139,7 @@ public sealed partial class InventorySimulation(ContentCatalog catalog, CombatSi
         }
         equipment.Sort((left, right) => left.Slot.CompareTo(right.Slot));
         var profile = combat.PrepareEquipment(primary(id), equipment);
-        var resource = abilities.PrepareEquipment(id, profile.Stats);
+        var resource = abilities.PrepareEquipment(id, combat.WithEffects(id,profile.Stats,profile.Weapon));
         combat.ApplyEquipment(id, profile); abilities.ApplyEquipment(id, resource);
     }
     internal void ResetSession(NetworkEntityId id){var a=_actors[id];a.Sequence=0;a.RequestTick=null;_pending.Remove(id);_results.Remove(id);}
@@ -143,7 +154,7 @@ public sealed partial class InventorySimulation(ContentCatalog catalog, CombatSi
             if (item.Saved.EquippedSlot != EquipmentSlot.None && item.Saved.Condition?.Current != 0)
                 equipment.Add(EffectiveDefinition(item));
         equipment.Sort((left, right) => left.Slot.CompareTo(right.Slot));
-        return combat.PrepareEquipment(stats, equipment).Stats;
+        var profile=combat.PrepareEquipment(stats,equipment);return combat.WithEffects(id,profile.Stats,profile.Weapon);
     }
     public void ClearResults() { _dirty.Clear(); _results.Clear(); }
 }

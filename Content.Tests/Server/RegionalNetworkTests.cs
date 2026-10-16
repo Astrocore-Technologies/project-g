@@ -67,9 +67,12 @@ public sealed class RegionalNetworkTests
         TaskCompletionSource? gate = null;
         try
         {
-            await Poll(() => a.Spawns.Count == 2 && b.Spawns.Count == 2 && a.SocialRosters.Count == 2 && b.SocialRosters.Count == 2, a, b);
+            // Baseline spawns/rosters can precede RegionActivated under loss; commands are still gated then.
+            await Poll(() => a.Active && b.Active && a.Spawns.Count == 2 && b.Spawns.Count == 2 && a.SocialRosters.Count == 2 && b.SocialRosters.Count == 2, a, b);
             var original = a.LocalSpawn; var oldEpoch = a.Region!.Value.Epoch;
             a.Social(new(1, SocialKind.Party, SocialAction.Create, 0, 0, 0, 0, false, ""));
+            await Poll(() => a.SocialResults.Any(r=>r.Operation==1), a, b);
+            Assert.Equal(SocialOutcome.Accepted,a.SocialResults.Last(r=>r.Operation==1).Outcome);
             await Poll(() => a.SocialRosters[SocialKind.Party].Id != 0, a, b);
             a.Social(new(2, SocialKind.Party, SocialAction.Invite, b.LocalSpawn.EntityId.Value,
                 a.SocialRosters[SocialKind.Party].Revision, 0, 0, false, ""));
@@ -131,8 +134,7 @@ public sealed class RegionalNetworkTests
             await Poll(() => { a.Move(++sequence, new(14, 10)); return store.PendingTravel; }, a);
             a.Disconnect(); await Task.Delay(400); a.Poll(); Assert.Equal("prototype", store.SingleState.RegionId);
             gate.SetResult();
-            await Poll(() => store.SingleState.RegionId == "outskirts" && !store.PendingSave &&
-                (combat ? server.DetachedCombatantCount == 1 : !store.IsHeld), a);
+            await Poll(() => store.SingleState.RegionId == "outskirts" && !store.PendingSave && server.DetachedCombatantCount==1, a);
             using var reconnected = new Client(port, token);
             await Poll(() => reconnected.Region?.Region == "outskirts" && reconnected.Spawns.Count == 1 && reconnected.Echoes.Count == 3, reconnected);
             Assert.Empty(worlds.Primary.Players); Assert.Single(worlds.Worlds[1].Players);

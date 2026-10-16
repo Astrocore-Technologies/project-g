@@ -46,7 +46,7 @@ public sealed class EchoTests
         var store = new SqliteCharacterStore(); await store.InitializeAsync(default);
         var old = WithEcho(World()) with { Health = 17, Mana = 9 };
         var disabled = new ServerWorld(Options.Create(new MovementOptions()), Options.Create(new InterestOptions()),
-            catalog: ContentCatalogTests.Load(), echoes: Options.Create(new EchoOptions { Enabled = false }));
+            catalog: ContentCatalogTests.Load(), echoes: Options.Create(new EchoOptions { Enabled = false }), hitRoll: () => 0, criticalRoll: () => 1);
         string credential;
         await using (var session = await store.OpenAsync("", old, default))
         {
@@ -131,7 +131,7 @@ public sealed class EchoTests
         Step(world); Assert.Empty(world.Echoes!.Actions);
         world.Echoes.Alert(player.EntityId, world.TrainingTargetId); Step(world);
         Assert.Contains(world.Echoes.Actions, action => action.Kind == EchoActionKind.BasicAttack);
-        var dead = world.CaptureCharacter(1) with { Health = 0 };
+        var dead = world.CaptureCharacter(1) with { Health = 0,Life=null };
         world.RemovePlayer(1); player = world.AddPlayer(1, new(1), dead);
         Assert.True(world.TryQueueEchoSignature(1, new(1, 0, 1, new(-7, 3)))); Step(world);
         Assert.Empty(world.Echoes.Actions); Assert.Equal(EchoCommandOutcome.InvalidState, world.Echoes.Results[player.EntityId].Outcome);
@@ -185,7 +185,7 @@ public sealed class EchoTests
     [Fact]
     public async Task TwoLossyClientsObserveEchoesAndSignatureOnlyAfterCommit()
     {
-        var store = new SqliteCharacterStore(); await store.InitializeAsync(default); var world = World();
+        var store = new SqliteCharacterStore(); await store.InitializeAsync(default); var world = World();long now=100000;world.PvpClock=()=>Interlocked.Read(ref now);
         string firstToken, secondToken;
         await using (var seed = await store.OpenAsync("", WithEcho(world), default)) firstToken = seed.IssuedToken;
         await using (var seed = await store.OpenAsync("", WithEcho(world), default)) secondToken = seed.IssuedToken;
@@ -219,7 +219,9 @@ public sealed class EchoTests
             Assert.Equal(world.Combat!.Get(world.TrainingTargetId).Health, first.CombatStates[world.TrainingTargetId].Health);
             Assert.Equal(first.CombatStates[world.TrainingTargetId].Health, second.CombatStates[world.TrainingTargetId].Health);
             await Poll(() => { first.Move(++sequence, new(2, 2)); return first.IsAt(echoId, new(.5f, 2)) && second.IsAt(echoId, new(.5f, 2)); });
-            first.Disconnect(); await Poll(() => !second.Echoes.ContainsKey(echoId));
+            first.Disconnect();await Poll(()=>server.DetachedCombatantCount==1);
+            Assert.Contains(echoId,second.Echoes.Keys);
+            Interlocked.Add(ref now,60000);await Poll(() => !second.Echoes.ContainsKey(echoId));
         }
         finally { gate?.TrySetResult(); await server.StopAsync(default); }
     }

@@ -42,6 +42,7 @@ public sealed partial class ServerWorld
     {
         if(character==Guid.Empty || !_playersByConnection.ContainsKey(connection)) throw new ArgumentException("Invalid persistent actor.");
         _persistentActors[connection]=character.ToString("N");
+        Combat?.BindSource(_playersByConnection[connection].EntityId,new(Content.Server.Combat.CombatSourceKind.Character,character));
         if(HasPvp)_pvpIdentities[_playersByConnection[connection].EntityId]=character;
     }
     public WorldNodeState PublicWorldNode() => new((ulong)_nodeRevision,Tick,_node!.Position,Consequences,_node.KeeperName,_node.KeeperLines[Consequences],_node.Rumors[_nodeState.StormRumor ? 4 : Consequences]);
@@ -65,7 +66,7 @@ public sealed partial class ServerWorld
             var p=_playersByConnection[connection]; var actor=Combat.Get(p.EntityId); var history=_progression[p.EntityId].WorldParticipation;
             var bit=(byte)command.Action; var outcome=WorldNodeOutcome.Accepted;
             if(actor.Health<=0) outcome=WorldNodeOutcome.InvalidState;
-            else if(actor.IsCasting || p.Motion.IsDashing || p.Motion.IsMoving) outcome=WorldNodeOutcome.Busy;
+            else if(Combat.InCombat(p.EntityId) || actor.IsCasting || p.Motion.IsDashing || p.Motion.IsMoving) outcome=WorldNodeOutcome.Busy;
             else if(Vector3.DistanceSquared(p.Foot, GroundFoot(_node.Position))>_node.InteractionRange*_node.InteractionRange || !Navigation.ClearAttack(p.Foot, GroundFoot(_node.Position))) outcome=WorldNodeOutcome.TooFar;
             else if((history.Contributions&bit)!=0) outcome=WorldNodeOutcome.AlreadyContributed;
             else if((Consequences&bit)!=0 || command.Action==WorldNodeAction.Patrol && history.PatrolHits<_node.PatrolHitsRequired) outcome=WorldNodeOutcome.Unavailable;
@@ -92,7 +93,7 @@ public sealed partial class ServerWorld
         {
             var opened=Navigation.ToMessage(); foreach(var cell in _node!.OpeningCells) opened.BlockedCells[cell]=0; Navigation.ApplyOpening(opened);
         }
-        if((consequences&2)!=0 && (_appliedConsequences&2)==0) Npc!.ApplyPatrol(_node!.PatrolAggroRadius,Tick);
+        if((consequences&2)!=0 && (_appliedConsequences&2)==0) ApplyNpcPatrol(_node!.PatrolAggroRadius);
         _appliedConsequences=consequences;
     }
     internal void ApplyLiveDm(AuthorizedLiveDm command)

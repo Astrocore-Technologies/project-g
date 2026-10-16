@@ -5,25 +5,46 @@ public static class EditorLabels
 {
     private static readonly Dictionary<string, string> Names = new()
     {
+        ["channel"]="Поддержание навыка",["maximumSeconds"]="Предел поддержания · с",
+        ["toggle"]="Переключаемый навык",["occupiesAction"]="Занимает обычное действие",["stopOn"]="Дополнительные события прекращения",
+        ["charge"]="Зарядка навыка",["fullSeconds"]="До полного заряда · с",["startPower"]="Множитель при начале зарядки",["fullPower"]="Множитель полного заряда",
+        ["manaPerSecond"]="Расход MP/с",["staminaPerSecond"]="Расход выносливости/с",
         ["sword_rising"]="Восходящий удар", ["hitRecoverySeconds"]="Восстановление после попадания · с",
         ["missRecoverySeconds"]="Восстановление после промаха / защиты · с", ["hitCancelAfterSeconds"]="Продолжение после попадания · с",
         ["knockupSeconds"]="Полёт · с", ["knockdownSeconds"]="Падение · с", ["knockupHeight"]="Высота полёта · м",
         ["knockbackDistance"]="Отбрасывание · м", ["knockbackSpeed"]="Скорость отбрасывания · м/с", ["minimumWindupSeconds"]="Минимальный замах · с",
-        ["inputBufferSeconds"]="Буфер действия · с", ["controlResetSeconds"]="Сброс повторного контроля · с",
-        ["repeatedControlFactor"]="Сила второго контроля", ["quickRecoverCost"]="Стоимость Quick Recover",
+        ["inputBufferSeconds"]="Буфер действия · с", ["quickRecoverCost"]="Стоимость Quick Recover",
+        ["control"]="Контроль и ACR", ["lambda"]="Сила накопленного сопротивления",
+        ["resetSeconds"]="Полный сброс после окончания контроля · с", ["hardBudget"]="Бюджет Hard · с",
+        ["movementBudget"]="Бюджет Movement · с", ["actionBudget"]="Бюджет Action · с",
+        ["softBudget"]="Бюджет Soft", ["targetingBudget"]="Бюджет Targeting",
+        ["minimumSlowMultiplier"]="Минимум скорости под Slow", ["blindAccuracyUnits"]="Accuracy на единицу силы Blind",
+        ["defaultTauntPenalty"]="Стартовый штраф Taunt",
+        ["lifecycle"]="Боевой жизненный цикл",["inCombatSeconds"]="In Combat после события · с",
+        ["disconnectBodySeconds"]="Тело после обрыва связи · с",["corpseSeconds"]="Тело после смерти · с",
+        ["respawnSeconds"]="Respawn после смерти · с",["respawnHealthFraction"]="HP при respawn",
+        ["respawnManaFraction"]="MP при respawn",["respawnStaminaFraction"]="Stamina при respawn",
+        ["effects"]="Эффекты",["sword_rend_bleed"]="Кровотечение от Рассечения",["durationSeconds"]="Длительность эффекта · с",
+        ["distance"]="Дистанция перемещения · м",["downSeconds"]="Лежание после полёта · с",
+        ["intervalSeconds"]="Интервал периодического эффекта · с",["weaponScale"]="Доля базового удара за тик",
+        ["cooldownReduction"]="Сокращение перезарядок", ["maxCharges"]="Максимум зарядов",
         ["quickRecoverCooldown"]="Перезарядка Quick Recover · с", ["quickRecoverRange"]="Перекат Quick Recover · м",
         ["quickRecoverSpeed"]="Скорость переката · м/с",
         ["balance"]="Влияние характеристик", ["progression"]="Уровни и опыт", ["defense"]="Защита и выносливость", ["swordsman"]="Мечник · пассивки", ["melee"]="Приём", ["stats"]="Характеристики", ["modifiers"]="Добавки",
         ["weapons"]="Оружие", ["abilities"]="Навыки", ["creatures"]="Существа", ["items"]="Предметы", ["professions"]="Профессии",
-        ["strength"]="STR · Сила", ["agility"]="AGI · Ловкость", ["vitality"]="VIT · Живучесть", ["intelligence"]="INT · Интеллект", ["dexterity"]="DEX · Точность", ["luck"]="LUK · Удача",
+        ["strength"]="STR · Сила", ["agility"]="AGI · Ловкость", ["vitality"]="VIT · Живучесть", ["intelligence"]="INT · Интеллект", ["dexterity"]="DEX · Точность", ["luck"]="LUK · Удача", ["wisdom"]="WIS · Мудрость",
+        ["accuracy"]="Точность", ["evasion"]="Числовое уклонение", ["criticalDamage"]="Критический урон", ["baseCriticalDamage"]="Базовый множитель критического урона",
+        ["blockStrength"]="Прочность блока", ["baseBlockStrength"]="Базовая прочность блока", ["pressureScale"]="Коэффициент давления на блок",
+        ["blockHoldPerSecond"]="Удержание блока · Stamina/с", ["guardBreakSeconds"]="Запрет блока после пробития · с", ["frontalAngleDegrees"]="Сектор защиты · градусы",
         ["meleeAttack"]="Ближняя атака", ["rangedAttack"]="Дальняя атака", ["magicAttack"]="Магическая атака", ["physicalDefense"]="Физическая защита", ["magicDefense"]="Магическая защита",
         ["health"]="Рост HP", ["mana"]="Рост маны", ["healthRecovery"]="Регенерация HP", ["manaRecovery"]="Регенерация маны", ["attackSpeed"]="Скорость атаки", ["castSpeed"]="Скорость каста",
         ["baseHealth"]="Базовое HP", ["baseMana"]="Базовая мана", ["baseHealthRecovery"]="Базовый реген HP / с", ["baseManaRecovery"]="Базовый реген маны / с",
         ["attack"]="Атака оружия", ["attackIntervalSeconds"]="Интервал атаки · с", ["range"]="Дальность · м", ["radius"]="Радиус · м", ["speed"]="Скорость · м/с",
-        ["power"]="Базовая сила", ["magicAttackScale"]="Коэффициент магической атаки", ["manaCost"]="Стоимость маны", ["staminaCost"]="Стоимость выносливости", ["cooldownSeconds"]="Перезарядка · с", ["castSeconds"]="Применение · с",
-        ["damageFactor"]="Урон от базового удара", ["rangeFactor"]="Дальность от базовой", ["armorIgnore"]="Игнорирование брони", ["bleedFactor"]="Урон кровотечения", ["bleedSeconds"]="Кровотечение · с",
+        ["power"]="Базовая сила", ["flat"]="Постоянная сила",["meleeScale"]="Коэффициент ближней атаки",["rangedScale"]="Коэффициент дальней атаки",["magicScale"]="Коэффициент магической атаки",
+        ["magicAttackScale"]="Коэффициент магической атаки", ["manaCost"]="Стоимость маны", ["staminaCost"]="Стоимость выносливости", ["cooldownSeconds"]="Перезарядка · с", ["castSeconds"]="Применение · с",
+        ["damageFactor"]="Урон от базового удара", ["rangeFactor"]="Дальность от базовой", ["armorIgnore"]="Игнорирование брони",
         ["stunSeconds"]="Оглушение · с", ["slowFraction"]="Замедление", ["slowSeconds"]="Замедление · с", ["executeThreshold"]="Порог HP цели", ["executeFactor"]="Урон добивания", ["restoreStamina"]="Восстановление выносливости",
-        ["baseBlockDamage"]="Блокируемый урон", ["baseCriticalChance"]="Базовый шанс крита", ["basicDamageBonus"]="Бонус автоатаки", ["blockRemainderReduction"]="Доп. снижение остатка урона", ["focusBonus"]="Бонус концентрации", ["footworkBonus"]="Бонус скорости передвижения",
+        ["baseBlockDamage"]="Блокируемый урон", ["baseCriticalChance"]="Базовый шанс крита", ["basicDamageBonus"]="Бонус автоатаки", ["blockAbsorptionBonus"]="Доп. поглощение блока", ["focusBonus"]="Бонус концентрации", ["footworkBonus"]="Бонус скорости передвижения",
         ["dashRange"]="Рывок · м", ["dashCost"]="Стоимость рывка", ["dashCooldown"]="Перезарядка рывка · с", ["requiredDamage"]="Урон для получения профессии", ["dummyResetSeconds"]="Восстановление манекена · с",
         ["maxStamina"]="Максимум выносливости", ["recoveryPerSecond"]="Реген выносливости / с", ["recoveryDelay"]="Задержка регена · с", ["parryWindow"]="Окно парирования / ответа · с", ["parryCooldown"]="Перезарядка парирования · с",
         ["blockCost"]="Стоимость блока", ["parryCost"]="Стоимость парирования", ["dodgeCost"]="Стоимость уклонения", ["blockMovementMultiplier"]="Скорость при блоке",
@@ -31,7 +52,7 @@ public static class EditorLabels
         ["rhythmHits"]="Ударов в серии", ["rhythmWindow"]="Окно серии · с", ["rhythmStamina"]="Выносливость за серию", ["footworkSeconds"]="Длительность подвижности · с",
         ["sword_thrust"]="Выпад", ["sword_sweep"]="Размашистый удар", ["sword_rend"]="Рассечение", ["sword_breaker"]="Проламывающий удар", ["sword_whirl"]="Круговой удар", ["sword_pommel"]="Удар навершием", ["sword_hamstring"]="Подрез", ["sword_riposte"]="Ответный удар", ["sword_breath"]="Перевести дух", ["sword_finisher"]="Решающий удар",
         ["trail_impulse"]="Импульс троп",
-        ["training_sword"]="Тренировочный меч", ["arena_training_sword"]="Тренировочный меч арены", ["arena_dummy"]="Манекен", ["test_creature"]="Обычный моб", ["test_boss"]="Босс", ["test_adventurer"]="Базовый персонаж",
+        ["unarmed"]="Без оружия", ["training_sword"]="Тренировочный меч", ["arena_training_sword"]="Тренировочный меч арены", ["arena_dummy"]="Манекен", ["test_creature"]="Обычный моб", ["test_boss"]="Босс", ["test_adventurer"]="Базовый персонаж",
         ["training_bow"]="Тренировочный лук", ["training_staff"]="Тренировочный посох", ["boss_claw"]="Когти босса",
         ["Training sword"]="Тренировочный меч", ["Training armor"]="Тренировочная броня",
         ["test_projectile"]="Магический снаряд", ["test_ground_area"]="Область поражения", ["test_dash"]="Обычный рывок", ["boss_ground_area"]="Область босса", ["discovery_bolt"]="Открытый магический болт",
@@ -41,8 +62,8 @@ public static class EditorLabels
         ["meleeWeaponMultiplier"]="Усиление ближнего оружия", ["rangedWeaponMultiplier"]="Усиление дальнего оружия", ["healthItemMultiplier"]="Усиление предметов HP", ["manaItemMultiplier"]="Усиление предметов маны", ["attackSpeedMultiplier"]="Бонус скорости атаки", ["castSpeedMultiplier"]="Бонус скорости каста", ["criticalChance"]="Добавка к шансу крита", ["blockDamage"]="Добавка к блокированию",
         ["practicePerUse"]="Практика за применение", ["practiceToNext"]="Практика до следующего уровня", ["powerMultiplier"]="Сила навыка"
     };
-    private static readonly HashSet<string> Percent = ["damageFactor","rangeFactor","armorIgnore","bleedFactor","slowFraction","executeThreshold","executeFactor","baseBlockDamage","baseCriticalChance","basicDamageBonus","blockRemainderReduction","focusBonus","footworkBonus","blockMovementMultiplier","powerPerSkillLevel","repeatedControlFactor"];
+    private static readonly HashSet<string> Percent = ["damageFactor","rangeFactor","weaponScale","slowFraction","executeThreshold","executeFactor","baseBlockDamage","baseCriticalChance","basicDamageBonus","blockAbsorptionBonus","focusBonus","footworkBonus","blockMovementMultiplier","powerPerSkillLevel","minimumSlowMultiplier","defaultTauntPenalty"];
     public static string Name(string key) => Names.GetValueOrDefault(key, key);
-    public static bool IsPercent(string path) => Percent.Contains(path.Split('/')[^1]) || path.Split('/')[^1] is "powerMultiplier" or "magicAttackScale" or "meleeWeaponMultiplier" or "rangedWeaponMultiplier" or "healthItemMultiplier" or "manaItemMultiplier" or "attackSpeedMultiplier" or "castSpeedMultiplier" or "criticalChance" or "blockDamage";
+    public static bool IsPercent(string path) => Percent.Contains(path.Split('/')[^1]) || path.Split('/')[^1] is "powerMultiplier" or "magicAttackScale" or "meleeWeaponMultiplier" or "rangedWeaponMultiplier" or "healthItemMultiplier" or "manaItemMultiplier" or "attackSpeedMultiplier" or "castSpeedMultiplier" or "criticalChance" or "blockDamage" or "cooldownReduction" or "respawnHealthFraction" or "respawnManaFraction" or "respawnStaminaFraction";
     public static string Label(string path) => string.Join(" / ", path.Split('/').Skip(2).Select(Name)) is { Length: > 0 } text ? text : Name(path.Split('/')[^1]);
 }

@@ -40,7 +40,11 @@ public sealed class DevelopmentReviveTests
     public async Task NetworkChecksEnvironmentAndOnlyPublishesRevivedHealthAfterSQLiteCommit(string environment, bool permitted)
     {
         var store = new SqliteCharacterStore(); await store.InitializeAsync(CancellationToken.None);
-        var world = InventoryTests.World(); var maximumHealth = world.CreateInitialCharacter().Health;
+        var data=System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(Content.Tests.Server.Data.ContentCatalogTests.DataPath))!;
+        // This test isolates revive/commit ownership from independently tested online mana recovery.
+        data["creatures"]![0]!["baseManaRecovery"]=0; data["balance"]!["manaRecovery"]!["wisdom"]=0;
+        var catalog=Content.Server.Data.ContentCatalog.Parse(System.Text.Encoding.UTF8.GetBytes(data.ToJsonString()));
+        var world = InventoryTests.World(catalog); var maximumHealth = world.CreateInitialCharacter().Health;
         var initial = world.CreateInitialCharacter() with { Health = 0, Mana = 12 };
         string token;
         await using (var session = await store.OpenAsync("", initial, CancellationToken.None)) token = session.IssuedToken;

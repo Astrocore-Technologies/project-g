@@ -1,5 +1,7 @@
 namespace Content.Server.Data;
 
+public enum AbilityContactDisposition : byte { Harmful, Support }
+
 /// <summary>Server-only skill definition; a public profile reveals only an owned ability's execution parameters.</summary>
 public sealed record AbilityDefinition
 {
@@ -9,13 +11,27 @@ public sealed record AbilityDefinition
     public required double Power { get; init; }
     public required double ManaCost { get; init; }
     public required double CooldownSeconds { get; init; }
-    public required double CastSeconds { get; init; }
+    public byte MaxCharges { get; init; } = 1;
+    public required ActionDefinition Action { get; init; }
+    public ChannelDefinition? Channel {get;init;}
+    public ChargeDefinition? Charge {get;init;}
+    public ToggleDefinition? Toggle {get;init;}
+    public PassiveDefinition? Passive {get;init;}
+    [System.Text.Json.Serialization.JsonIgnore]
+    public double CastSeconds => Action.Preparation.Seconds>0 ? Action.Preparation.Seconds : Action.Active.Seconds;
     public required double Range { get; init; }
     public required double Radius { get; init; }
     public required double Speed { get; init; }
     public required double MagicAttackScale { get; init; }
     public double StaminaCost { get; init; }
     public MeleeTechnique? Melee { get; init; }
-    public bool Interruptible { get; init; } = true;
+    public AbilityContactDisposition ContactDisposition {get;init;}
+    public SkillEffectApplication[] Effects { get; init; } = [];
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool Interruptible => Action.Interruptible;
+    public HitDefense? Defense { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore]
+    public HitDefense HitRules => Defense ?? (Kind == AbilityKind.Melee ? HitDefense.Melee :
+        Kind == AbilityKind.Projectile ? HitDefense.Projectile : HitDefense.Unblockable);
     public Content.Server.Progression.SkillProgressionDefinition? Progression { get; init; }
 }

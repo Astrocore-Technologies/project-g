@@ -38,7 +38,8 @@ public sealed class SwordTrainingTests
     [Fact]
     public void OnlyPersonalOrdinaryTrainingSwordDamageCountsAndOfferWaitsForReturn()
     {
-        var w=City(); var p=w.AddPlayer(42,new(1),w.CreateInitialCharacter() with {X=15,Z=-7});
+        var w=City(); long now=100000; w.PvpClock=()=>now;
+        var p=w.AddPlayer(42,new(1),w.CreateInitialCharacter() with {X=15,Z=-7});
         var other=w.AddPlayer(43,new(2),w.CreateInitialCharacter());
         Assert.Equal(QuestOutcome.Accepted,Talk(w,1,QuestAction.TrainingSword));
         Assert.Equal(QuestOutcome.Accepted,Talk(w,2,QuestAction.TrainingSword));
@@ -46,20 +47,22 @@ public sealed class SwordTrainingTests
         Assert.Single(inventory.Items,i=>i.DefinitionId=="arena_training_sword");
         Assert.True(inventory.Items.Single(i=>i.DefinitionId=="arena_training_sword").Bound);
         Move(w,new(15,-12.5f),1);
-        Assert.True(w.TryQueueAttack(42,new(1,0,-Vector2.UnitY,w.TrainingTargetId))); Step(w,22);
+        Assert.True(w.TryQueueAttack(42,new(1,0,-Vector2.UnitY))); Step(w,22);
         Assert.Equal(0,w.CaptureCharacter(42).Progression!.SwordTraining!.Damage); // fallback sword is not the trainer's item
         Assert.True(w.TryQueueAbility(42,new(1,0,1,-Vector2.UnitY),0)); Step(w,40);
         Assert.Equal(0,w.CaptureCharacter(42).Progression!.SwordTraining!.Damage);
         w.Combat!.ApplyEchoDamage(w.TrainingTargetId,10,p.EntityId); Step(w);
         Assert.Equal(0,w.CaptureCharacter(42).Progression!.SwordTraining!.Damage);
+        now+=30001; Step(w);
         var handle=w.Inventory!.State(p.EntityId,w.Tick).Items.Single(i=>i.Name=="Тренировочный меч").Handle;
         Assert.True(w.TryQueueInventory(42,new(1,InventoryAction.Equip,handle))); Step(w);
         uint attack=2;
         for(var i=0;i<20 && w.CaptureCharacter(42).Progression!.SwordTraining!.Damage<100;i++)
-        { Assert.True(w.TryQueueAttack(42,new(attack++,0,-Vector2.UnitY,w.TrainingTargetId))); Step(w,22); }
+        { Assert.True(w.TryQueueAttack(42,new(attack++,0,-Vector2.UnitY))); Step(w,22); }
         Assert.Equal(100,w.CaptureCharacter(42).Progression!.SwordTraining!.Damage);
         Assert.Equal((ushort)0,w.ProfessionState(p.EntityId,w.Tick).OfferedId);
         Assert.Null(w.CaptureCharacter(43).Progression!.SwordTraining);
+        now+=30001; Step(w);
         Assert.Equal(QuestOutcome.TooFar,Talk(w,3));
         Move(w,new(15,-7),2);
         Assert.Equal(QuestOutcome.Accepted,Talk(w,4));

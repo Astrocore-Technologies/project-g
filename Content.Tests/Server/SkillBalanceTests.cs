@@ -92,10 +92,9 @@ public sealed class SkillBalanceTests
     }
 
     [Fact]
-    public void LegacyFileCanBeOpenedAndUpgradedOnFirstSkillEditWithoutTouchingDisk()
+    public void InheritedSkillCurveCanBeEditedWithoutTouchingDisk()
     {
         var json = JsonNode.Parse(File.ReadAllText(ContentCatalogTests.DataPath))!;
-        json["schemaVersion"] = 3;
         foreach (var ability in json["abilities"]!.AsArray()) ability!.AsObject().Remove("progression");
         var file = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".json");
         try
@@ -103,7 +102,7 @@ public sealed class SkillBalanceTests
             File.WriteAllText(file, json.ToJsonString()); var original = File.ReadAllText(file);
             var document = new BalanceDocument(file);
             document.SetSkillLevel("abilities/6", 2, 7, 1.2);
-            Assert.Equal(4, document.Root["schemaVersion"]!.GetValue<int>());
+            Assert.Equal(ContentCatalog.SchemaVersion, document.Root["schemaVersion"]!.GetValue<int>());
             Assert.Equal(7, document.Catalog.SkillProgressions["sword_thrust"].PracticeThreshold(2));
             Assert.Equal(original, File.ReadAllText(file));
             document.Undo(); Assert.False(document.Dirty);
@@ -130,7 +129,7 @@ public sealed class SkillBalanceTests
         document.SetSkillCurve("abilities/0", curve);
         var catalog = document.Catalog;
         ServerWorld Create() => new(Options.Create(new MovementOptions()), Options.Create(new InterestOptions()), catalog: catalog,
-            inventory: Options.Create(new InventoryOptions { Enabled = true }));
+            inventory: Options.Create(new InventoryOptions { Enabled = true }), hitRoll: () => 0, criticalRoll: () => 1);
         var world = Create(); var player = world.AddPlayer(1, new(1));
         Assert.True(world.TryQueueAbility(1, new(1, 0, 1, Vector2.UnitY), 0));
         for (var i = 0; i < 40; i++) world.Simulate(.05f);
@@ -149,7 +148,7 @@ public sealed class SkillBalanceTests
         // An incompatible balance edit is reported, never silently erasing a saved level or practice.
         document.ResizeSkillCurve("abilities/0", 1);
         var incompatible = new ServerWorld(Options.Create(new MovementOptions()), Options.Create(new InterestOptions()), catalog: document.Catalog,
-            inventory: Options.Create(new InventoryOptions { Enabled = true }));
+            inventory: Options.Create(new InventoryOptions { Enabled = true }), hitRoll: () => 0, criticalRoll: () => 1);
         var error = Assert.Throws<InvalidDataException>(() => incompatible.AddPlayer(1, new(1), saved));
         Assert.Contains("test_projectile", error.Message); Assert.Empty(incompatible.Players);
     }

@@ -27,11 +27,14 @@ public abstract class DatabaseSession(Guid characterId, Guid ownerId, long revis
     public string Inventory { get; } = inventory;
     public string Echoes { get; } = echoes;
     public string? Progression { get; init; }
+    public IReadOnlyList<DatabaseEffectRow> Effects { get; init; } = [];
+    public IReadOnlyList<DatabaseDeathLogRow> DeathLogs {get;init;}=[];
     public string IssuedToken { get; } = issuedToken;
     public abstract ValueTask DisposeAsync();
 }
 public sealed record DatabaseSave(DatabaseSession Session, long ExpectedRevision, string State, string? Inventory,
-    IReadOnlyList<Guid>? GroundClaims = null, string? Echoes = null, string? Progression = null, IReadOnlyList<Guid>? InventoryItems = null);
+    IReadOnlyList<Guid>? GroundClaims = null, string? Echoes = null, string? Progression = null, IReadOnlyList<Guid>? InventoryItems = null,
+    IReadOnlyList<DatabaseEffectRow>? Effects = null,IReadOnlyList<DatabaseDeathLogRow>? DeathLogs=null);
 public sealed class DatabaseInvalidIdentityException : Exception;
 public sealed class DatabaseCharacterInUseException : Exception;
 internal static class StorageBounds

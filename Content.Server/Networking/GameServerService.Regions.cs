@@ -110,6 +110,7 @@ public sealed partial class GameServerService
         // Only the bounded set of live sessions is checked, never every entity in the world.
         foreach (var connection in _views.Keys)
         {
+            if(_departed.Contains(connection))continue;
             if (!_regions.TryBeginTravel(connection, (IRegionalCharacterStore)_characters!, _worldLeases, _socialSession!)) continue;
             _intentions.Remove(connection);
             _views.Remove(connection); // Ignore intentions until destination bootstrap has been published.

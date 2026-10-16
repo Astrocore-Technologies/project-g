@@ -11,7 +11,7 @@ public sealed class RegionalWorldTests
 {
     private static ServerWorld World(string region, RuntimeEntityAllocator ids) => new(
         Options.Create(new MovementOptions()), Options.Create(new InterestOptions()),
-        catalog: ContentCatalogTests.Load(), regionId: region, entityIds: ids);
+        catalog: ContentCatalogTests.Load(), regionId: region, entityIds: ids, hitRoll: () => 0, criticalRoll: () => 1);
 
     [Fact]
     public void RegionsShareRuntimeAllocationButNotSpatialActors()

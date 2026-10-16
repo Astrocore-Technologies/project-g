@@ -3,7 +3,7 @@ namespace Content.Server.Progression;
 public sealed record ProgressionBalance
 {
     public int LevelCap { get; init; } = 30;
-    public int InitialStatPoints { get; init; } = 5; // NC: only granted on creation.
+    public int InitialStatPoints { get; init; } = 18; // GDD 01 model B, granted once on creation.
     public int ExperiencePerLevel { get; init; } = 100;
     public int StatPointsPerLevel { get; init; } = 5;
     public int DiscoveryExperience { get; init; } = 60;

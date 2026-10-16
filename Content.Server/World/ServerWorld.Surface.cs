@@ -47,7 +47,13 @@ public sealed partial class ServerWorld
     public void SetLoaded(int connection, bool loaded)
     {
         var player = _playersByConnection[connection]; player.Loaded = loaded;
-        if (Combat is not null) Combat.Get(player.EntityId).Active = loaded || IsCombatTagged(connection);
-        if (!loaded) { _movingPlayers.Remove(connection); player.Motion.Reset(player.Position, player.Position, player.Height, player.Height); }
+        var retainedBody=Combat?.Get(player.EntityId).DetachedBody==true;
+        if (Combat is not null)
+        {
+            var actor=Combat.Get(player.EntityId);actor.Active=loaded || retainedBody || IsCombatTagged(connection);
+            if(loaded)actor.DetachedBody=false;
+            Combat.RefreshHealthRecovery(player.EntityId);
+        }
+        if (!loaded && !retainedBody) { _movingPlayers.Remove(connection); player.Motion.Reset(player.Position, player.Position, player.Height, player.Height); }
     }
 }

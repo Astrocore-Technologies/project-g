@@ -22,7 +22,7 @@ public sealed class NetworkMovementIntegrationTests
         using var socket=new UdpClient(new IPEndPoint(IPAddress.Loopback,0));
         var port=((IPEndPoint)socket.Client.LocalEndPoint!).Port; socket.Close();
         using var server=new GameServerService(Options.Create(new ServerOptions { Port=port,NetworkPollIntervalMilliseconds=1 }),
-            new HandshakeCoordinator(),new ServerWorld(Options.Create(new MovementOptions()),Options.Create(new InterestOptions()),catalog:ContentCatalogTests.Load()),NullLogger<GameServerService>.Instance);
+            new HandshakeCoordinator(),new ServerWorld(Options.Create(new MovementOptions()),Options.Create(new InterestOptions()),catalog:ContentCatalogTests.Load(), hitRoll: () => 0, criticalRoll: () => 1),NullLogger<GameServerService>.Instance);
         await server.StartAsync(CancellationToken.None);
         using var first=new TestClient(port); using var second=new TestClient(port);
         using var timeout=new CancellationTokenSource(TimeSpan.FromSeconds(20));
@@ -59,7 +59,7 @@ public sealed class NetworkMovementIntegrationTests
                 ConnectionKey = NetworkConstants.ConnectionKey
             }),
             new HandshakeCoordinator(),
-            new ServerWorld(Options.Create(new MovementOptions()), Options.Create(new InterestOptions())),
+            new ServerWorld(Options.Create(new MovementOptions()), Options.Create(new InterestOptions()), hitRoll: () => 0, criticalRoll: () => 1),
             NullLogger<GameServerService>.Instance);
         await server.StartAsync(CancellationToken.None);
 
@@ -114,7 +114,7 @@ public sealed class NetworkMovementIntegrationTests
     {
         var port = GetFreePort();
         var world = new ServerWorld(Options.Create(new MovementOptions()),
-            Options.Create(new InterestOptions { Radius = 30f, ExitRadius = 32f }));
+            Options.Create(new InterestOptions { Radius = 30f, ExitRadius = 32f }), hitRoll: () => 0, criticalRoll: () => 1);
         for (var i = 1; i <= 64; i++)
             world.AddPlayer(1000 + i, new PlayerId((ulong) 1000 + (ulong) i));
         using var server = CreateServer(port, world);
@@ -140,7 +140,7 @@ public sealed class NetworkMovementIntegrationTests
         var port = GetFreePort();
         using var server = CreateServer(port, new ServerWorld(
             Options.Create(new MovementOptions()),
-            Options.Create(new InterestOptions { Radius = 4f, ExitRadius = 5f })));
+            Options.Create(new InterestOptions { Radius = 4f, ExitRadius = 5f }), hitRoll: () => 0, criticalRoll: () => 1));
         await server.StartAsync(CancellationToken.None);
         using var first = new TestClient(port);
         using var second = new TestClient(port);
@@ -183,7 +183,7 @@ public sealed class NetworkMovementIntegrationTests
             Options.Create(new InterestOptions()), Options.Create(new NavigationOptions
             {
                 BlockedAreas = new() { new BlockedAreaOptions { X = 14, Z = 10, Width = 2, Height = 10 } }
-            }));
+            }), hitRoll: () => 0, criticalRoll: () => 1);
         using var server = CreateServer(port, world);
         await server.StartAsync(CancellationToken.None);
         using var client = new TestClient(port);
@@ -224,7 +224,7 @@ public sealed class NetworkMovementIntegrationTests
     {
         var port = GetFreePort();
         var world = new ServerWorld(Options.Create(new MovementOptions()), Options.Create(new InterestOptions()),
-            catalog: ContentCatalogTests.Load(), combat: Options.Create(new CombatOptions { TargetX = -7, TargetZ = 1 }));
+            catalog: ContentCatalogTests.Load(), combat: Options.Create(new CombatOptions { TargetX = -7, TargetZ = 1 }), hitRoll: () => 0, criticalRoll: () => 1);
         using var server = CreateServer(port, world);
         await server.StartAsync(CancellationToken.None);
         using var first = new TestClient(port);
@@ -271,7 +271,7 @@ public sealed class NetworkMovementIntegrationTests
     {
         var port = GetFreePort();
         var world = new ServerWorld(Options.Create(new MovementOptions()), Options.Create(new InterestOptions()),
-            catalog: ContentCatalogTests.Load());
+            catalog: ContentCatalogTests.Load(), hitRoll: () => 0, criticalRoll: () => 1);
         using var server = CreateServer(port, world);
         await server.StartAsync(CancellationToken.None);
         using var first = new TestClient(port); using var second = new TestClient(port);
@@ -287,13 +287,13 @@ public sealed class NetworkMovementIntegrationTests
             await PollUntilAsync(first, second, () => first.AbilityHits.Count == 1 && second.AbilityHits.Count == 1, timeout.Token);
             Assert.Equal(first.AbilityHits[0], second.AbilityHits[0]);
             Assert.Contains(caster.Effects, effect => effect.Phase == AbilityPhase.Telegraph);
-            Assert.InRange(caster.Loadouts[id].Mana, 45.5, 50.5); // NC: recovery can arrive during lossy polling.
+            Assert.InRange(caster.Loadouts[id].Mana, 135, 140); // NC: recovery can arrive during lossy polling.
             caster.Ability(2, 2, new(-7, 3));
             await PollUntilAsync(first, second, () => first.AbilityHits.Count == 2 && second.AbilityHits.Count == 2, timeout.Token);
             Assert.Equal(first.AbilityHits[1], second.AbilityHits[1]);
             caster.Ability(3, 3, Vector2.UnitX);
             await PollUntilAsync(first, second, () => first.IsAt(id, new(-4, 0)) && second.IsAt(id, new(-4, 0)), timeout.Token);
-            Assert.InRange(caster.Loadouts[id].Mana, 35.5, 50.5);
+            Assert.InRange(caster.Loadouts[id].Mana, 125, 140);
             Assert.Single(observer.Loadouts);
             Assert.DoesNotContain(id, observer.Loadouts.Keys);
             Assert.Empty(observer.AbilityResults);
@@ -312,7 +312,7 @@ public sealed class NetworkMovementIntegrationTests
     {
         var port = GetFreePort();
         var world = new ServerWorld(Options.Create(new MovementOptions()), Options.Create(new InterestOptions()),
-            catalog: ContentCatalogTests.Load(), npc: Options.Create(new NpcOptions { Enabled = true, X = -3, Z = 1 }));
+            catalog: ContentCatalogTests.Load(), npc: Options.Create(new NpcOptions { Enabled = true, X = -3, Z = 1 }), hitRoll: () => 0, criticalRoll: () => 1);
         using var server = CreateServer(port, world);
         await server.StartAsync(CancellationToken.None);
         using var first = new TestClient(port); using var second = new TestClient(port);
@@ -346,7 +346,7 @@ public sealed class NetworkMovementIntegrationTests
             catalog: ContentCatalogTests.Load(), boss: Options.Create(new BossOptions
             {
                 Actor = new NpcOptions { Enabled = true, DefinitionId = "test_boss", X = -3, Z = 1 }
-            }));
+            }), hitRoll: () => 0, criticalRoll: () => 1);
         using var server = CreateServer(port, world); await server.StartAsync(CancellationToken.None);
         using var first = new TestClient(port); using var second = new TestClient(port);
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
@@ -458,10 +458,20 @@ public sealed class NetworkMovementIntegrationTests
         public Dictionary<NetworkEntityId, CombatState> CombatStates { get; } = new();
         public List<AttackEvent> Attacks { get; } = new();
         public List<AttackResult> Results { get; } = new();
+        public List<LogoutResult> LogoutResults {get;}=new();
+        public Dictionary<NetworkEntityId,ActorLifeState> Lives {get;}=new();
+        public List<RespawnResult> RespawnResults {get;}=new();
+        public void Respawn(uint sequence,ulong death)=>SendGame(NetworkProtocol.Write(new RespawnCommand(sequence,death)),DeliveryMethod.ReliableOrdered);
+        public void Logout(uint sequence=1)=>SendGame(NetworkProtocol.Write(new LogoutCommand(sequence)),DeliveryMethod.ReliableOrdered);
         public Dictionary<NetworkEntityId, AbilityLoadout> Loadouts { get; } = new();
         public List<AbilityResult> AbilityResults { get; } = new();
         public List<AbilityEffectState> Effects { get; } = new();
         public List<AbilityHit> AbilityHits { get; } = new();
+        public List<CombatFeedback> Feedback {get;}=new();
+        public List<CombatJournalIndex> JournalIndices {get;}=new();
+        public List<CombatJournalChunk> JournalChunks {get;}=new();
+        public List<CombatJournalResult> JournalResults {get;}=new();
+        public void Journal(uint sequence,ulong death=0)=>SendGame(NetworkProtocol.Write(new CombatJournalRequest(sequence,death)),DeliveryMethod.ReliableOrdered);
         public List<NpcWindup> Windups { get; } = new();
         public List<NpcArea> Areas { get; } = new();
         public Dictionary<NetworkEntityId, InventoryState> Inventories { get; } = new();
@@ -494,15 +504,15 @@ public sealed class NetworkMovementIntegrationTests
 
         public PlayerSpawn LocalSpawn => Spawns.Values.Single(spawn => spawn.PlayerId == _playerId);
 
-        public TestClient(int port, string token = "")
+        public TestClient(int port, string token = "",bool lossy=true)
         {
             var listener = new EventBasedNetListener();
             _manager = new NetManager(listener)
             {
-                SimulateLatency = true,
+                SimulateLatency = lossy,
                 SimulationMinLatency = 100,
                 SimulationMaxLatency = 150,
-                SimulatePacketLoss = true,
+                SimulatePacketLoss = lossy,
                 SimulationPacketLossChance = 10
             };
             listener.PeerConnectedEvent += peer =>
@@ -514,6 +524,10 @@ public sealed class NetworkMovementIntegrationTests
             listener.PeerDisconnectedEvent += (_, info) =>
             {
                 var reader = info.AdditionalData;
+                var start=reader.Position;
+                if(reader.AvailableBytes!=0 && NetworkProtocol.TryReadMessageType(reader,out var extraType) &&
+                    extraType==NetworkMessageType.LogoutResult && NetworkProtocol.TryReadLogoutResult(reader,out var logout))LogoutResults.Add(logout);
+                reader.SetPosition(start);
                 if (reader.AvailableBytes != 0 && NetworkProtocol.TryReadMessageType(reader, out var type) &&
                     type == NetworkMessageType.ServerReject && NetworkProtocol.TryReadServerReject(reader, out var reject))
                     Rejection = reject;
@@ -545,6 +559,12 @@ public sealed class NetworkMovementIntegrationTests
                     }
                     switch (type)
                     {
+                        case NetworkMessageType.ActorLifeState:
+                            Assert.True(NetworkProtocol.TryReadActorLifeState(reader,out var life));Lives[life.EntityId]=life;break;
+                        case NetworkMessageType.RespawnResult:
+                            Assert.True(NetworkProtocol.TryReadRespawnResult(reader,out var respawn));RespawnResults.Add(respawn);break;
+                        case NetworkMessageType.LogoutResult:
+                            Assert.True(NetworkProtocol.TryReadLogoutResult(reader,out var logout));LogoutResults.Add(logout);break;
                         case NetworkMessageType.SurfaceChunk:
                             Assert.True(NetworkProtocol.TryReadSurfaceChunk(reader, out var surfaceChunk));
                             if (_surfaceAssembly.Add(surfaceChunk) is { } surface) { Navigation!.AttachSurface(surface); if(AutoReady)Ready(Region!.Value.GeometryHash); }
@@ -718,6 +738,14 @@ public sealed class NetworkMovementIntegrationTests
                             Assert.Contains(windup.ActorId, CombatStates.Keys);
                             Windups.Add(windup);
                             break;
+                        case NetworkMessageType.CombatFeedback:
+                            Assert.True(NetworkProtocol.TryReadCombatFeedback(reader,out var feedback));Feedback.Add(feedback);break;
+                        case NetworkMessageType.CombatJournalIndex:
+                            Assert.True(NetworkProtocol.TryReadCombatJournalIndex(reader,out var journalIndex));JournalIndices.Add(journalIndex);break;
+                        case NetworkMessageType.CombatJournalChunk:
+                            Assert.True(NetworkProtocol.TryReadCombatJournalChunk(reader,out var journalChunk));JournalChunks.Add(journalChunk);break;
+                        case NetworkMessageType.CombatJournalResult:
+                            Assert.True(NetworkProtocol.TryReadCombatJournalResult(reader,out var journalResult));JournalResults.Add(journalResult);break;
                         case NetworkMessageType.NpcArea:
                             Assert.True(NetworkProtocol.TryReadNpcArea(reader, out var area));
                             Assert.Contains(area.ActorId, CombatStates.Keys);
@@ -793,8 +821,8 @@ public sealed class NetworkMovementIntegrationTests
             _states.Count == count && _snapshotCoverage.Values.Any(ids => ids.Count == count);
         public void Move(uint sequence, Vector2 target, float height = 0) => SendGame(
             NetworkProtocol.Write(new MoveCommand(sequence, sequence, target, height, Navigation?.SurfaceHash ?? 0)), DeliveryMethod.Sequenced);
-        public void Attack(uint sequence, Vector2 direction) => SendGame(
-            NetworkProtocol.Write(new AttackCommand(sequence, uint.MaxValue, direction)), DeliveryMethod.ReliableOrdered);
+        public void Attack(uint sequence, Vector2 direction, BasicAttackMode mode=BasicAttackMode.Manual) => SendGame(
+            NetworkProtocol.Write(new AttackCommand(sequence, _ticks.GetValueOrDefault(Spawns.Values.FirstOrDefault(spawn=>spawn.PlayerId==_playerId).EntityId), direction, mode)), DeliveryMethod.ReliableOrdered);
         public void Ability(uint sequence, ushort id, Vector2 aim) => SendGame(
             NetworkProtocol.Write(new AbilityCommand(sequence, _ticks.GetValueOrDefault(LocalSpawn.EntityId), id, aim)), DeliveryMethod.ReliableOrdered);
         public uint LastAbilitySequence(NetworkEntityId id) => _states[id].LastAbilitySequence;

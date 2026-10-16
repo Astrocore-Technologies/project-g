@@ -25,9 +25,9 @@ public sealed class InterestView
     internal List<NetworkEntityId> GroundLeft { get; } = new();
     internal ulong WorldNodeRevision { get; set; }
     internal bool BridgeNavigationSent { get; set; }
-    internal uint NpcWindupVersion { get; set; }
-    internal uint BossWindupVersion { get; set; }
-    internal uint BossAreaVersion { get; set; }
+    internal Dictionary<NetworkEntityId,(uint Windup,uint Area)> NpcFeedbackVersions {get;}=new();
+    internal bool JournalInitialized;
+    internal ulong JournalSerial,JournalDeathId;
 
     public IReadOnlyCollection<NetworkEntityId> Entities => Visible;
     public IReadOnlyList<NetworkEntityId> Entered => EnteredIds;

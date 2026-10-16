@@ -1,4 +1,5 @@
 using Content.Server.Configuration;
+using Content.Server.Data;
 using Content.Server.Persistence;
 using Content.Server.World;
 using Content.Shared.Network;
@@ -11,8 +12,8 @@ namespace Content.Tests.Server.Items;
 
 public sealed class InventoryTests
 {
-    internal static ServerWorld World() => new(Options.Create(new MovementOptions()), Options.Create(new InterestOptions()),
-        catalog: ContentCatalogTests.Load(), inventory: Options.Create(new InventoryOptions { Enabled = true }));
+    internal static ServerWorld World(ContentCatalog? catalog=null) => new(Options.Create(new MovementOptions()), Options.Create(new InterestOptions()),
+        catalog: catalog ?? ContentCatalogTests.Load(), inventory: Options.Create(new InventoryOptions { Enabled = true }), hitRoll: () => 0, criticalRoll: () => 1);
 
     [Fact]
     public void EquipmentRunsOnTickAndDoesNotHealOrResetCooldowns()

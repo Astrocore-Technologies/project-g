@@ -55,7 +55,8 @@ public sealed class RegionalWorlds
         if (Routes.Any(r => !Worlds.Any(w => w.RegionId == r.Source))) throw new InvalidDataException("Unknown source region.");
     }
 
-    public static RegionalWorlds Load(string path, IConfiguration configuration, ContentCatalog catalog)
+    public static RegionalWorlds Load(string path, IConfiguration configuration, ContentCatalog catalog,
+        Func<double>? hitRoll=null,Func<double>? criticalRoll=null)
     {
         var definitions = JsonSerializer.Deserialize<Layout[]>(File.ReadAllText(path), new JsonSerializerOptions
         { PropertyNameCaseInsensitive = true, UnmappedMemberHandling = System.Text.Json.Serialization.JsonUnmappedMemberHandling.Disallow })
@@ -142,7 +143,8 @@ public sealed class RegionalWorlds
                 Settings<InventoryOptions>("Inventory"), primary && definition.Id == "prototype" ? Settings<GroundItemOptions>("GroundItems") :
                     Options.Create(new GroundItemOptions { Enabled = true, PickupRange = Settings<GroundItemOptions>("GroundItems").Value.PickupRange }),
                 Settings<EchoOptions>("Echoes"), Settings<WorldStoryOptions>("WorldStory"), Settings<StarterZoneOptions>("StarterZone"),
-                definition.Crafting is { } crafting ? Options.Create(crafting) : Settings<CraftingOptions>("Crafting"), definition.Id, ids, node, starter,Settings<QuestOptions>("Quests"),pvp,placements.GetValueOrDefault(definition.Id)));
+                definition.Crafting is { } crafting ? Options.Create(crafting) : Settings<CraftingOptions>("Crafting"), definition.Id, ids, node, starter,Settings<QuestOptions>("Quests"),pvp,placements.GetValueOrDefault(definition.Id),
+                criticalRoll:criticalRoll,hitRoll:hitRoll));
         }
         var routes = new List<RegionBoundary>();
         foreach (var d in definitions)

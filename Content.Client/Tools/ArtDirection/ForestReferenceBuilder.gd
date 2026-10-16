@@ -617,3 +617,15 @@ func save_lighting_presets() -> Dictionary:
 		preset.set("fog_colour",spec[7])
 		save_resource(preset,path)
 	return {"success":true,"presets":3}
+
+
+
+
+
+
+
+
+
+
+
+

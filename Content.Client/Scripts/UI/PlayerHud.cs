@@ -10,6 +10,7 @@ public partial class PlayerHud : CanvasLayer
     private ProgressBar _hp = null!, _mana = null!, _xp = null!;
     private ProgressBar _stamina = null!;
     private Label _staminaText = null!, _defenseText = null!;
+    private Label _combatText=null!;
     private DefenseState _defense;
     private double _defenseReceived;
     private readonly Label[] _slotNames = new Label[9], _slotTimers = new Label[9];
@@ -32,6 +33,8 @@ public partial class PlayerHud : CanvasLayer
         var portrait = GameUi.Button("◇",character); portrait.FocusMode=Control.FocusModeEnum.None; portrait.CustomMinimumSize = new(36,32); portrait.TooltipText = "Персонаж · K"; header.AddChild(portrait);
         if(UiAssets.Texture("nav.character") is {} portraitIcon) { portrait.Text=""; portrait.Icon=portraitIcon; portrait.ExpandIcon=true; portrait.AddThemeConstantOverride("icon_max_width",24); }
         _level = GameUi.Text("Путешественник",18); _level.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill; header.AddChild(_level);
+        _combatText=GameUi.Text("",12);_combatText.Name="CombatStatus";_combatText.Modulate=new Color("efaa82");header.AddChild(_combatText);
+        _combatText.TooltipText="В бою нельзя менять экипировку и панель навыков, использовать еду, взаимодействовать с NPC, переходить в другой регион или выходить обычным способом.";
         var open = GameUi.Button("K",character); open.FocusMode=Control.FocusModeEnum.None; header.AddChild(open);
         (_hp,_hpText) = Resource(body,"HP",UiAssets.Skin.Health,22,UiAssets.Skin.HealthFill);
         (_mana,_manaText) = Resource(body,"Мана",UiAssets.Skin.Mana,22,UiAssets.Skin.ManaFill);
@@ -85,8 +88,12 @@ public partial class PlayerHud : CanvasLayer
     public override void _Process(double delta) { _root.Visible=!GameUi.GameplayModalOpen; _refresh+=delta; if (_refresh<.1) return; _refresh=0; UpdateSlots(); }
     private void UpdateSlots()
     {
+        var inCombat=Math.Max(0,_defense.InCombatRemaining-(Time.GetTicksMsec()/1000d-_defenseReceived));
+        _combatText.Text=inCombat>0 ? $"В БОЮ · {inCombat:0.0} с" : "";
         var parry=Math.Max(0,_defense.ParryCooldown-(Time.GetTicksMsec()/1000d-_defenseReceived));
         _defenseText.Text=(_defense.Blocking ? "Tab · БЛОК" : "Tab · блок")+(parry>0 ? $"   Shift · {parry:0.0} с" : "   Shift · парирование");
+        var guardBreak=Math.Max(0,_defense.GuardBreakRemaining-(Time.GetTicksMsec()/1000d-_defenseReceived));
+        if (guardBreak>0) _defenseText.Text=$"Блок пробит · {guardBreak:0.0} с"+(parry>0 ? $"   Shift · {parry:0.0} с" : "   Shift · парирование");
         var quick=Math.Max(0,_defense.QuickRecoverCooldown-(Time.GetTicksMsec()/1000d-_defenseReceived));
         if(quick>0) _defenseText.Text+=$"   Подъём · {quick:0.0} с";
         if (_loadout.Abilities is null) return;
@@ -105,10 +112,52 @@ public partial class PlayerHud : CanvasLayer
             if (skill.Form==AbilityForm.Dash) { _slotNames[i].Text=skill.Range>3 ? "Длинный рывок" : "Рывок"; _slots[i].TooltipText=$"{_slotNames[i].Text}\nВыносливость: {skill.StaminaCost:0}\nДо {skill.Range:0.#} м · {skill.CooldownSeconds:0.#} с\nSpace · до курсора, без неуязвимости"; }
             if (skill.Id is >=20 and <=30) _slots[i].TooltipText=$"{GameUi.SkillName(skill.Id)}\n{SwordsmanUi.Description(skill.Id)}\nТекущий расход: {skill.StaminaCost:0}; перезарядка: {skill.CooldownSeconds:0.#} с";
             if (skill.RecoverySeconds>0) _slots[i].TooltipText+=$"\nВосстановление после удара: до {skill.RecoverySeconds:0.##} с";
-            _slots[i].TooltipText += "\nУдерживайте клавишу — область применения; отпустите — применить.\nEsc или ПКМ — отменить прицеливание.";
-            if (skill.Availability!=AbilityAvailability.Ready && _alive && cooldown<=0)
-            { _slotTimers[i].Text=skill.Availability==AbilityAvailability.NeedsSword ? "Нужен меч" : "Парируй"; _slotTimers[i].Modulate=new Color("a9aeb7"); }
-            if (exhausted && _alive && cooldown<=0) { _slotTimers[i].Text="Нет сил"; _slotTimers[i].Modulate=new Color("a9aeb7"); }
+            if(skill.MaxCharges>1)
+            {
+                _slotTimers[i].Text=$"{skill.Charges}/{skill.MaxCharges} · "+_slotTimers[i].Text;
+                _slots[i].TooltipText+=$"\nЗаряды: {skill.Charges}/{skill.MaxCharges}";
+                if(skill.Charges+skill.PendingEndCharges<skill.MaxCharges) _slots[i].TooltipText+=$"\nСледующий заряд: {Math.Max(0,skill.RechargeInSeconds-elapsed):0.0} с";
+            }
+            if(skill.ExecutionForm is Content.Shared.Combat.CombatActionForm.Channel or Content.Shared.Combat.CombatActionForm.Hold or Content.Shared.Combat.CombatActionForm.Toggle)
+            {
+                _slots[i].TooltipText+=$"\nПоддержание: {skill.ChannelManaPerSecond:0.##} MP/с, {skill.ChannelStaminaPerSecond:0.##} выносливости/с";
+                _slots[i].TooltipText+=skill.ChannelMaximumSeconds>0?$"\nДо {skill.ChannelMaximumSeconds:0.##} с":"\nДо прекращения поддержания";
+                _slots[i].TooltipText+="\nEsc — прекратить поддержание";
+                if(skill.PendingEndCharges>0 && skill.Charges==0){_slotTimers[i].Text="Поддерживается";_slotTimers[i].Modulate=new Color("a9aeb7");}
+            }
+            if(skill.ExecutionForm==Content.Shared.Combat.CombatActionForm.Charged)
+            {
+                _slots[i].TooltipText+=$"\nПолная зарядка: {skill.ChargeSeconds:0.##} с · "+(skill.ChargeAutoRelease?"автовыпуск":"удержание до отпускания");
+                _slots[i].TooltipText+="\nНажатие — зарядка; отпускание — выпуск; Esc/ПКМ — отмена";
+            }
+            if(skill.ExecutionForm==Content.Shared.Combat.CombatActionForm.Hold)
+                _slots[i].TooltipText+="\nНажатие — начало; удержание — работа; отпускание — завершение";
+            if(skill.ExecutionForm==Content.Shared.Combat.CombatActionForm.Toggle)
+            {
+                _slots[i].TooltipText+="\nНажатие — включить; повторное нажатие — выключить";
+                _slots[i].TooltipText+=skill.ToggleOccupiesAction?"\nЗанимает обычное действие":"\nДействует вместе с обычным действием";
+                if(skill.ToggleStopOn!=Content.Shared.Combat.ToggleStopTriggers.None)_slots[i].TooltipText+=$"\nДополнительные условия прекращения: {ToggleStops(skill.ToggleStopOn)}";
+                if(skill.ToggleState!=Content.Shared.Combat.ToggleState.Off)
+                {_slotTimers[i].Text=skill.ToggleState==Content.Shared.Combat.ToggleState.Preparing?"Включается":"Включён";_slotTimers[i].Modulate=GameUi.Accent;}
+            }
+            if(skill.ExecutionForm is not (Content.Shared.Combat.CombatActionForm.Charged or Content.Shared.Combat.CombatActionForm.Hold or Content.Shared.Combat.CombatActionForm.Toggle))
+                _slots[i].TooltipText += "\nУдерживайте клавишу — область применения; отпустите — применить.\nEsc или ПКМ — отменить прицеливание.";
+            if (skill.Availability!=AbilityAvailability.Ready && _alive && cooldown<=0 && skill.ToggleState==Content.Shared.Combat.ToggleState.Off)
+            { _slotTimers[i].Text=skill.Availability switch {AbilityAvailability.NeedsSword=>"Нужен меч",AbilityAvailability.NeedsWeapon=>"Нужно оружие",_=>"Парируй"}; _slotTimers[i].Modulate=new Color("a9aeb7"); }
+            if (exhausted && _alive && cooldown<=0 && skill.ToggleState==Content.Shared.Combat.ToggleState.Off) { _slotTimers[i].Text="Нет сил"; _slotTimers[i].Modulate=new Color("a9aeb7"); }
         }
     }
+
+    private static string ToggleStops(Content.Shared.Combat.ToggleStopTriggers flags)
+    {
+        if(ToggleStopLabels[(byte)flags] is {} cached)return cached;
+        var labels=new List<string>();
+        if((flags&Content.Shared.Combat.ToggleStopTriggers.Movement)!=0)labels.Add("движение");
+        if((flags&Content.Shared.Combat.ToggleStopTriggers.Skill)!=0)labels.Add("другой навык");
+        if((flags&Content.Shared.Combat.ToggleStopTriggers.BasicAttack)!=0)labels.Add("обычная атака");
+        if((flags&Content.Shared.Combat.ToggleStopTriggers.Defense)!=0)labels.Add("защита");
+        if((flags&Content.Shared.Combat.ToggleStopTriggers.EnemyInterrupt)!=0)labels.Add("прерывание противником");
+        return ToggleStopLabels[(byte)flags]=string.Join(", ",labels);
+    }
+    private static readonly string?[] ToggleStopLabels=new string?[32];
 }

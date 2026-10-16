@@ -61,5 +61,5 @@ public sealed class ServerWorldTests
     }
 
     private static ServerWorld CreateWorld() =>
-        new(Options.Create(new MovementOptions()), Options.Create(new InterestOptions()));
+        new(Options.Create(new MovementOptions()), Options.Create(new InterestOptions()), hitRoll: () => 0, criticalRoll: () => 1);
 }

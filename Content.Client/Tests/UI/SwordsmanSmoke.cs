@@ -39,10 +39,10 @@ public partial class SwordsmanSmoke : Node
             await Walk(player,new(15,-12.5f)); await Capture("swordsman-arena");
             var dummy=_combat.Values.Single(s=>s.Kind==CombatEntityKind.TrainingTarget && System.Numerics.Vector2.Distance(s.Position,new(15,-14))<.1);
             var point=GetViewport().GetCamera3D().UnprojectPosition(new(dummy.Position.X,1.5f,dummy.Position.Y));
-            await MouseClick(point);
-            await Wait(()=>_profession.TrainingDamage==100,"100 actual training damage");
+            Input.WarpMouse(point); Mouse(true,point);
+            await Wait(()=>_profession.TrainingDamage==100,"100 actual training damage"); Mouse(false,point);
             if (!_animatedBasic) throw new Exception("Ordinary attacks did not animate the avatar.");
-            player.GetNode<ProjectG.Combat.CombatPresentation>("CombatPresentation").CancelAutoAttack();
+            player.GetNode<ProjectG.Combat.CombatPresentation>("CombatPresentation").CancelBasicAttack();
             if(_profession.OfferedId!=0) throw new Exception("Profession was offered before returning to trainer.");
             await Walk(player,new(15,-7)); reply=null; Press(Key.F2); await Wait(()=>reply is {Choices:8},"trainer graduation");
             await ClickText(dialogue,"Рассмотреть профессию Мечника");
@@ -66,7 +66,7 @@ public partial class SwordsmanSmoke : Node
             await Wait(()=>_profession.ActiveId==2 && _progression.Skills.Count(s=>s.Id is >=20 and <=29)==10,"saved swordsman reconnect");
             restored.QueueFree(); await Delay(.3);
             if(GameUi.GameplayModalOpen) throw new Exception("Modal leaked after cleanup.");
-            GD.Print("SWORDSMAN_SMOKE_OK: trainer GUI, equip, real autoattack training, voluntary confirmation, ten skills, long dash, skill hit, durable reconnect."); GetTree().Quit();
+            GD.Print("SWORDSMAN_SMOKE_OK: trainer GUI, equip, held directional attack training, voluntary confirmation, ten skills, long dash, skill hit, durable reconnect."); GetTree().Quit();
         }
         catch(Exception error) { await Capture("swordsman-failure"); GD.PushError(error.ToString()); GetTree().Quit(1); }
     }
@@ -97,6 +97,8 @@ public partial class SwordsmanSmoke : Node
         Input.ParseInputEvent(new InputEventMouseButton {ButtonIndex=MouseButton.Left,Pressed=true,Position=p,GlobalPosition=p}); await Delay(.05);
         Input.ParseInputEvent(new InputEventMouseButton {ButtonIndex=MouseButton.Left,Pressed=false,Position=p,GlobalPosition=p});
     }
+    private static void Mouse(bool pressed,Vector2 point)=>Input.ParseInputEvent(new InputEventMouseButton
+        {ButtonIndex=MouseButton.Left,Pressed=pressed,Position=point,GlobalPosition=point});
     private static void Press(Key k) { Input.ParseInputEvent(new InputEventKey {PhysicalKeycode=k,Keycode=k,Pressed=true}); Input.ParseInputEvent(new InputEventKey {PhysicalKeycode=k,Keycode=k,Pressed=false}); }
     private async Task Delay(double seconds)=>await ToSignal(GetTree().CreateTimer(seconds),SceneTreeTimer.SignalName.Timeout);
     private async Task Wait(Func<bool> done,string stage)

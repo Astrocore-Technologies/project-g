@@ -26,7 +26,7 @@ public sealed partial class ServerWorld
             {
                 var actor=Combat!.Get(id);
                 if(actor.Health<=0) outcome=CraftOutcome.InvalidState;
-                else if(actor.IsCasting || player.Motion.IsMoving || player.Motion.IsDashing || Abilities!.HasActiveEffects(id)) outcome=CraftOutcome.Busy;
+                else if(Combat.InCombat(id) || actor.IsCasting || player.Motion.IsMoving || player.Motion.IsDashing || Abilities!.HasActiveEffects(id)) outcome=CraftOutcome.Busy;
                 else if(Vector3.DistanceSquared(player.Foot, GroundFoot(_crafting!.StationPosition))>_crafting.InteractionRange*_crafting.InteractionRange) outcome=CraftOutcome.TooFar;
                 else if(!Navigation.ClearAttack(player.Foot, GroundFoot(_crafting!.StationPosition))) outcome=CraftOutcome.Blocked;
                 else if(!Inventory.TryRepairInfo(id,command.ItemHandle,out var revision,out var material,out var quantity) || revision!=command.ItemRevision) outcome=CraftOutcome.Unavailable;

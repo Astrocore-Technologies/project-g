@@ -16,6 +16,7 @@ public partial class SwordAttackAnimation : Node3D
     private Transform3D _rest;
     private uint _sequence;
     private ulong _effect;
+    private ulong _basicExecution;
     private bool _ability, _waiting, _predicted, _active;
     private double _elapsed, _duration, _age;
     private float _from;
@@ -46,8 +47,12 @@ public partial class SwordAttackAnimation : Node3D
     {
         // A delayed basic acknowledgement may arrive after the next skill was locally started.
         if (_active && _ability && _waiting) return;
-        if (!_active || _ability || _sequence != hit.Sequence)
-            Begin(hit.Sequence % 2 == 0 ? "basic_left" : "basic_right", hit.Sequence, false, hit.Direction, 0, false);
+        var predicted = _active && !_ability && _predicted && _sequence == hit.Sequence;
+        var confirmed = _active && !_ability && hit.ExecutionId != 0 && _basicExecution == hit.ExecutionId;
+        if (!predicted && !confirmed)
+            Begin((hit.ExecutionId == 0 ? hit.Sequence : hit.ExecutionId) % 2 == 0 ? "basic_left" : "basic_right",
+                hit.Sequence, false, hit.Direction, 0, false);
+        _basicExecution = hit.ExecutionId;
         Contact(); // Confirm the predicted swing once; don't restart its wind-up.
     }
 
@@ -78,6 +83,9 @@ public partial class SwordAttackAnimation : Node3D
             _weapon.Visible = state.AbilityId != 3;
         }
         _effect = state.EffectId; _predicted = false;
+        _charging=state.Phase is AbilityPhase.Charging or AbilityPhase.Channeling;
+        if(_charging)
+        {Rotation=new(0,Mathf.Atan2(state.Direction.X,state.Direction.Y),0);_age=0;}
         if (state.Phase == AbilityPhase.Impact || state.Phase == AbilityPhase.Recovery) Contact();
         if (state.Phase == AbilityPhase.Recovery)
         { _from=ClipPosition; _elapsed=0; _duration=Math.Max(.001,state.RemainingSeconds); }
@@ -90,6 +98,8 @@ public partial class SwordAttackAnimation : Node3D
 
     public void RejectAbility(uint sequence)
     { if (_active && _ability && _sequence == sequence && _predicted) Stop(); }
+    public void ReleaseAbility(uint sequence)
+    {if(_active && _ability && _sequence==sequence)Stop();}
 
     private void Begin(string clip, uint sequence, bool ability, NumericsVector2 direction, double windup, bool predicted)
     {
@@ -98,11 +108,14 @@ public partial class SwordAttackAnimation : Node3D
         _sounded = false;
         if(clip=="breath" && _character is not null) { _character.SwingCue(clip); _sounded=true; }
         _elapsed = _age = 0; _duration = Math.Max(.001, windup); _from = 0; _effect = 0;
+        _basicExecution = 0;
         Rotation = new(0, Mathf.Atan2(direction.X, direction.Y), 0);
         Clip = clip;
         if (_animation.HasAnimation(Clip)) { _animation.Play(Clip); _animation.Pause(); }
         _weapon.Visible = _character is null; Visible = true; SetProcess(true); Sample(0);
     }
+
+    private bool _charging;
 
     private void Contact()
     {
@@ -116,7 +129,7 @@ public partial class SwordAttackAnimation : Node3D
     {
         _age += delta; _elapsed += delta;
         // Missing confirmations or lost lifecycle messages cannot leave a stuck pose.
-        if ((_predicted && _age > 2) || _age > 12) { Stop(); return; }
+        if ((_predicted && _age > 2) || !_charging && _age > 12) { Stop(); return; }
         var t = (float)Math.Clamp(_elapsed / _duration, 0, 1);
         Sample(Mathf.Lerp(_from, _waiting ? ContactTime : 1, t));
         if (!_waiting && t >= 1) Stop();
@@ -139,6 +152,7 @@ public partial class SwordAttackAnimation : Node3D
 
     public void Stop()
     {
+        _charging=false;
         _active = false; Visible = false; SetProcess(false);
         _character?.EndAttack();
         if (_animation is null) return;

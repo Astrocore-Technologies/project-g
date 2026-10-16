@@ -68,7 +68,7 @@ public sealed partial class InventorySimulation
         {if(received is null||_nextHandle==0)throw new InvalidOperationException("Missing escrow item/runtime handle.");items.Add(new(_nextHandle,received,catalog.Items[received.DefinitionId]));effect=c.Action==EconomyAction.Buy?EconomyEffect.Bought:EconomyEffect.Cancelled;}
         else if(c.Action==EconomyAction.Claim)effect=EconomyEffect.Claimed;
         var next=items.ToArray();var equipment=next.Where(i=>i.Saved.EquippedSlot!=EquipmentSlot.None&&i.Saved.Condition?.Current!=0).OrderBy(i=>i.Definition.Slot).Select(EffectiveDefinition).ToArray();
-        var profile=combat.PrepareEquipment(primary(id),equipment);var resource=abilities.PrepareEquipment(id,profile.Stats);
+        var profile=combat.PrepareEquipment(primary(id),equipment);var resource=abilities.PrepareEquipment(id,combat.WithEffects(id,profile.Stats,profile.Weapon));
         var receipt=new SavedEconomy{LastOperation=c.Operation,Coins=checked(wallet.Coins+quote.CoinChange),PayloadHash=EconomyHash(c),Effect=effect};receipt.Validate();
         // No mutation or RNG outcome is published until the enclosing atomic checkpoint commits.
         actor.Items=next;actor.Crafting=materials with {Materials=nextMaterials};actor.Economy=receipt;

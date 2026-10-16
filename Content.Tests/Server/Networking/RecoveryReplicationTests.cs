@@ -33,7 +33,7 @@ public sealed class RecoveryReplicationTests
     public async Task TwoLossyClientsSeeHealedHpOnlyAfterCheckpointAndRestartRetainsIt()
     {
         var world = new ServerWorld(Options.Create(new MovementOptions()), Options.Create(new InterestOptions()),
-            catalog: ContentCatalogTests.Load());
+            catalog: ContentCatalogTests.Load(), hitRoll: () => 0, criticalRoll: () => 1);
         var store = new SqliteCharacterStore(); await store.InitializeAsync(default);
         string credential;
         await using (var seed = await store.OpenAsync("", world.CreateInitialCharacter() with { Health = 10 }, default))

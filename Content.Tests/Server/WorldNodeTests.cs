@@ -17,7 +17,7 @@ public sealed class WorldNodeTests
     internal static ServerWorld World(int required=2,bool nearbyMonster=false)
     {
         var json=JsonNode.Parse(File.ReadAllText(ContentCatalogTests.DataPath))!; json["worldNode"]!["contributionsRequired"]=required;
-        return new(Options.Create(new MovementOptions()),Options.Create(new InterestOptions()),Options.Create(new NavigationOptions { BlockedAreas=[new() { X=14,Z=10,Width=2,Height=10 }] }),ContentCatalog.Parse(Encoding.UTF8.GetBytes(json.ToJsonString())),npc:Options.Create(new NpcOptions { Enabled=true,X=nearbyMonster ? -4 : 7,Z=nearbyMonster ? -2 : 3 }),worldStory:Options.Create(new WorldStoryOptions { Enabled=true }));
+        return new(Options.Create(new MovementOptions()),Options.Create(new InterestOptions()),Options.Create(new NavigationOptions { BlockedAreas=[new() { X=14,Z=10,Width=2,Height=10 }] }),ContentCatalog.Parse(Encoding.UTF8.GetBytes(json.ToJsonString())),npc:Options.Create(new NpcOptions { Enabled=true,X=nearbyMonster ? -4 : 7,Z=nearbyMonster ? -2 : 3 }),worldStory:Options.Create(new WorldStoryOptions { Enabled=true }), hitRoll: () => 0, criticalRoll: () => 1);
     }
     internal static CharacterState Initial(ServerWorld w,bool patrol=false) { var initial=w.CreateInitialCharacter() with { X=-3,Z=-2 }; return initial with { Progression=initial.Progression! with { WorldParticipation=new() { PatrolHits=patrol ? 1 : 0 } } }; }
     internal static WorldNodeOutcome Command(ServerWorld w,ServerPlayer p,uint seq,WorldNodeAction action)
@@ -41,16 +41,18 @@ public sealed class WorldNodeTests
         Assert.False(w.TryQueueWorldNode(99,new(1,WorldNodeAction.Repair))); Assert.False(w.TryQueueWorldNode(42,new(1,WorldNodeAction.Repair)));
         Assert.True(w.TryQueueWorldNode(42,new(2,WorldNodeAction.Repair))); for(uint i=3;i<100;i++) Assert.False(w.TryQueueWorldNode(42,new(i,WorldNodeAction.Repair))); w.Simulate(0.05f); Assert.Equal(WorldNodeOutcome.RateLimited,w.WorldNodeResults[p.EntityId].Outcome); Assert.False(w.WorldNodeDirty);
         var saved=w.CaptureCharacter(42); w.RemovePlayer(42); p=w.AddPlayer(42,new(1),saved with { X=5,Z=-2 }); Assert.Equal(WorldNodeOutcome.TooFar,Command(w,p,1,WorldNodeAction.Repair));
-        w.RemovePlayer(42); p=w.AddPlayer(42,new(1),saved with { Health=0 }); Assert.Equal(WorldNodeOutcome.InvalidState,Command(w,p,1,WorldNodeAction.Repair));
+        w.RemovePlayer(42); p=w.AddPlayer(42,new(1),saved with { Health=0,Life=null }); Assert.Equal(WorldNodeOutcome.InvalidState,Command(w,p,1,WorldNodeAction.Repair));
         w.RemovePlayer(42); p=w.AddPlayer(42,new(1),saved); w.TryQueueAbility(42,new(1,0,1,Vector2.UnitX),0); w.Simulate(0.05f); Assert.Equal(WorldNodeOutcome.Busy,Command(w,p,1,WorldNodeAction.Repair)); Assert.False(w.WorldNodeDirty);
     }
     [Fact] public void RealMonsterHitEnablesPatrolButMissTrainingDummyAndIdleDoNot()
     {
-        var w=World(1,true); var p=w.AddPlayer(42,new(1),Initial(w));
+        var w=World(1,true);long now=100000;w.PvpClock=()=>now; var p=w.AddPlayer(42,new(1),Initial(w));
         w.TryQueueAttack(42,new(1,0,Vector2.UnitX)); w.Simulate(0.05f); Assert.Equal(0,w.CaptureCharacter(42).Progression!.WorldParticipation.PatrolHits);
         ProfessionTests.Step(w,40); Assert.Equal(0,w.CaptureCharacter(42).Progression!.WorldParticipation.PatrolHits);
         w.TryQueueAttack(42,new(2,0,-Vector2.UnitX)); w.Simulate(0.05f); Assert.Equal(1,w.CaptureCharacter(42).Progression!.WorldParticipation.PatrolHits);
-        Assert.Equal(WorldNodeOutcome.Accepted,Command(w,p,1,WorldNodeAction.Patrol)); Assert.Equal((byte)2,w.PublicWorldNode().Consequences);
+        Assert.Equal(WorldNodeOutcome.Busy,Command(w,p,1,WorldNodeAction.Patrol));
+        now+=30001;
+        Assert.Equal(WorldNodeOutcome.Accepted,Command(w,p,2,WorldNodeAction.Patrol)); Assert.Equal((byte)2,w.PublicWorldNode().Consequences);
     }
     [Fact] public void LegacyPrivateHistoryDefaultsButCorruptDocumentsAndDefinitionsFailClosed()
     {

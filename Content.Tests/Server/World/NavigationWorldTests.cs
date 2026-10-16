@@ -64,7 +64,7 @@ public sealed class NavigationWorldTests
             Options.Create(new InterestOptions()), Options.Create(new NavigationOptions
             {
                 BlockedAreas = new() { new BlockedAreaOptions { X = 14, Z = 0, Width = 2, Height = 30 } }
-            }));
+            }), hitRoll: () => 0, criticalRoll: () => 1);
         var player = world.AddPlayer(1, new PlayerId(1));
         var start = player.Position;
         Assert.False(world.TryApplyMove(1, new MoveCommand(1, 1, new Vector2(8f, 0f))));
@@ -79,5 +79,5 @@ public sealed class NavigationWorldTests
         Options.Create(new NavigationOptions
         {
             BlockedAreas = new() { new BlockedAreaOptions { X = 14, Z = 10, Width = 2, Height = 10 } }
-        }));
+        }), hitRoll: () => 0, criticalRoll: () => 1);
 }

@@ -44,7 +44,17 @@ public sealed class DatabaseCharacterStore(ICharacterDatabase database, RiverLan
         catch (DatabaseCharacterInUseException) { throw new CharacterInUseException(); }
         try
         {
-            var state = CharacterState.Deserialize(lease.State) with { Inventory = SavedInventory.Deserialize(lease.Inventory), Echoes = SavedEchoes.Deserialize(lease.Echoes), Progression = lease.Progression is null ? null : SavedProgression.Deserialize(lease.Progression) };
+            if (CombatModelMigration.RequiresReset(lease.State))
+            {
+                // D002: old combat builds may be wiped. Commit character + inventory + Echo + progression
+                // together under the existing lease, before publishing any state. Ownership is synced in SaveAsync.
+                await database.SaveAsync([new(lease, lease.Revision, initial.Serialize(),
+                    (initial.Inventory ?? SavedInventory.Empty).Serialize(), null,
+                    (initial.Echoes ?? SavedEchoes.Empty).Serialize(), initial.Progression?.Serialize(),
+                    initial.Inventory?.Items.Select(item => item.InstanceId).ToArray() ?? [], [],[])], token);
+                return new Session(lease, initial) { Revision = checked(lease.Revision + 1) };
+            }
+            var state = CharacterState.Deserialize(lease.State) with { Inventory = SavedInventory.Deserialize(lease.Inventory), Echoes = SavedEchoes.Deserialize(lease.Echoes), Progression = lease.Progression is null ? null : SavedProgression.Deserialize(lease.Progression), Effects = CombatEffectDocuments.Deserialize(lease.Effects),DeathLogs=DeathLogDocuments.Deserialize(lease.DeathLogs) };
             await database.EnsureInventoryOwnershipAsync(lease,state.Inventory.Items.Select(i=>i.InstanceId).ToArray(),token);
             var migrated = migration?.Apply(state) ?? state;
             var session = new Session(lease, migrated);
@@ -62,10 +72,11 @@ public sealed class DatabaseCharacterStore(ICharacterDatabase database, RiverLan
     public Task SaveAsync(IReadOnlyList<CharacterSave> changes, CancellationToken token) => SaveWithWorldAsync(changes,null,token);
     public Task SaveWithWorldAsync(IReadOnlyList<CharacterSave> changes,WorldNodeSave? world,CancellationToken token)
     => SaveRegionalCheckpointAsync(changes,world is null ? [] : [world],null,token);
-    public Task SaveRegionalCheckpointAsync(IReadOnlyList<CharacterSave> changes,IReadOnlyList<WorldNodeSave> worlds,SocialSave? social,CancellationToken token)
+    public async Task SaveRegionalCheckpointAsync(IReadOnlyList<CharacterSave> changes,IReadOnlyList<WorldNodeSave> worlds,SocialSave? social,CancellationToken token)
     {
         if (changes.Count > 64 || worlds.Count > Content.Server.Regions.RegionalWorlds.MaxRegions) throw new InvalidDataException("Regional checkpoint exceeds the prototype budget.");
         var writes = new DatabaseSave[changes.Count];
+        List<(Session Session,ulong Ordinal)>? journalUpdates=null;
         for (var i = 0; i < writes.Length; i++)
         {
             var change = changes[i];
@@ -74,7 +85,17 @@ public sealed class DatabaseCharacterStore(ICharacterDatabase database, RiverLan
                 foreach (var instance in claims)
                     if (change.State.Inventory is null || !change.State.Inventory.Items.Any(item => item.InstanceId == instance && item.EquippedSlot == Content.Shared.Network.EquipmentSlot.None))
                         throw new InvalidDataException("Picked instance missing from inventory.");
-            writes[i] = new(session.Lease, session.Revision, change.State.Serialize(), change.State.Inventory?.Serialize(), change.GroundClaims, change.State.Echoes?.Serialize(), change.State.Progression?.Serialize(),change.State.Inventory?.Items.Select(i=>i.InstanceId).ToArray());
+            IReadOnlyList<DatabaseDeathLogRow>? journalRows=null;
+            if(change.State.DeathLogs is {} deaths)
+            {
+                var ordinal=deaths.Count==0?0:deaths[^1].DeathId;
+                if(ordinal<session.DeathLogOrdinal)throw new InvalidDataException("Committed death evidence cannot be rolled back.");
+                if(ordinal!=session.DeathLogOrdinal)
+                {journalRows=DeathLogDocuments.Serialize(deaths);(journalUpdates??=[]).Add((session,ordinal));}
+            }
+            writes[i] = new(session.Lease, session.Revision, change.State.Serialize(), change.State.Inventory?.Serialize(), change.GroundClaims, change.State.Echoes?.Serialize(), change.State.Progression?.Serialize(),change.State.Inventory?.Items.Select(i=>i.InstanceId).ToArray(),
+                change.State.Effects is {} effects ? CombatEffectDocuments.Serialize(effects) : null,
+                journalRows);
         }
         var worldWrites = new List<DatabaseWorldSave>(worlds.Count);
         foreach (var world in worlds)
@@ -88,12 +109,16 @@ public sealed class DatabaseCharacterStore(ICharacterDatabase database, RiverLan
             if (social.Session is not SocialLease owner) throw new ArgumentException("Foreign social session.");
             socialWrite = new(new(owner.Lease, owner.Revision, "{}", [new("social", "SocialCheckpoint", "Rows " + social.Rows.Count, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())], []), social.Rows);
         }
-        return database.SaveRegionalCheckpointAsync(writes,worldWrites,socialWrite,token);
+        await database.SaveRegionalCheckpointAsync(writes,worldWrites,socialWrite,token);
+        // Ordinary movement/resource checkpoints do not serialize or rewrite 3000 historic entries.
+        // Advance this cache only after the whole fenced transaction succeeds.
+        if(journalUpdates is not null)foreach(var update in journalUpdates)update.Session.DeathLogOrdinal=update.Ordinal;
     }
     private sealed class Session(DatabaseSession lease, CharacterState state)
         : CharacterSession(lease.CharacterId, lease.OwnerId, lease.Revision, state, lease.IssuedToken)
     {
         internal DatabaseSession Lease { get; } = lease;
+        internal ulong DeathLogOrdinal {get;set;}=state.DeathLogs is {Count:>0} deaths?deaths[^1].DeathId:0;
         public override ValueTask DisposeAsync() => Lease.DisposeAsync();
     }
 }

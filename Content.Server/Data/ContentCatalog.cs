@@ -9,6 +9,8 @@ namespace Content.Server.Data;
 public sealed class ContentCatalog
 {
     public Content.Server.Combat.DefenseBalance Defense { get; }
+    public Content.Server.Combat.ControlBalance Control { get; }
+    public Content.Server.Combat.CombatLifecycleBalance Lifecycle { get; }
     public Content.Server.Professions.SwordsmanDefinition? Swordsman { get; }
     public Content.Server.WorldStory.WorldNodeDefinition? WorldNode { get; }
     public Content.Server.StarterZone.StarterZoneDefinition? StarterZone { get; }
@@ -16,7 +18,8 @@ public sealed class ContentCatalog
     public Content.Server.Quests.DeliveryQuestDefinition? DeliveryQuest {get;}
     public Content.Server.Pvp.PvpDefinition? Pvp {get;}
     public Content.Server.Economy.EconomyDefinition? Economy { get; }
-    public const int SchemaVersion = 4;
+    public const int SchemaVersion = 10;
+    public WeaponDefinition UnarmedWeapon { get; }
     public const int MaxFileBytes = 4 * 1024 * 1024;
     private const int MaxDefinitions = 4096;
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -30,11 +33,13 @@ public sealed class ContentCatalog
 
     private ContentCatalog(ContentDocument document)
     {
-        if (document.SchemaVersion is not (3 or SchemaVersion) || document.BalanceVersion <= 0)
+        if (document.SchemaVersion != SchemaVersion || document.BalanceVersion <= 0)
             throw new ArgumentException("Unsupported schemaVersion or invalid balanceVersion.");
         ArgumentNullException.ThrowIfNull(document.Balance);
         document.Balance.Validate();
         ArgumentNullException.ThrowIfNull(document.Defense); document.Defense.Validate(); Defense=document.Defense;
+        ArgumentNullException.ThrowIfNull(document.Control); document.Control.Validate(); Control=document.Control;
+        ArgumentNullException.ThrowIfNull(document.Lifecycle); document.Lifecycle.Validate(); Lifecycle=document.Lifecycle;
         document.StarterZone?.Validate(); StarterZone=document.StarterZone;
         document.WorldNode?.Validate(); WorldNode = document.WorldNode;
         Balance = document.Balance;
@@ -42,9 +47,16 @@ public sealed class ContentCatalog
         ArgumentNullException.ThrowIfNull(document.Progression); document.Progression.Validate();
         Progression = document.Progression;
         Weapons = Index(document.Weapons, item => item.Id, "weapons");
+        if(document.UnarmedWeaponId is null || !Weapons.TryGetValue(document.UnarmedWeaponId,out var unarmed) ||
+            unarmed.Kind!=WeaponKind.Melee || unarmed.IsSword || (unarmed.Capabilities&Content.Shared.Combat.ActionCapability.Weapon)!=0)
+            throw new ArgumentException("Invalid unarmed weapon profile.");
+        UnarmedWeapon=unarmed;
         Abilities = Index(document.Abilities, item => item.Id, "abilities");
         Creatures = Index(document.Creatures, item => item.Id, "creatures");
         Items = Index(document.Items, item => item.Id, "items");
+        Check(document.Effects is not null && document.Effects.Length <= MaxDefinitions,"effects: invalid definition count");
+        Effects = document.Effects!.Length==0 ? FrozenDictionary<string,EffectDefinition>.Empty : Index(document.Effects,item=>item.Id,"effects");
+        foreach(var effect in Effects.Values) effect.Validate();
         foreach (var item in Items.Values)
         {
             Check(item.Name is { Length: > 0 and <= 24 } && System.Text.Encoding.UTF8.GetByteCount(item.Name) <= 48,
@@ -64,6 +76,9 @@ public sealed class ContentCatalog
         document.Economy?.Validate(this); Economy=document.Economy; document.Pvp?.Validate(); Pvp=document.Pvp;
         foreach (var weapon in Weapons.Values)
         {
+            weapon.HitRules.Validate();
+            Check((weapon.Capabilities&~(Content.Shared.Combat.ActionCapability.Weapon|Content.Shared.Combat.ActionCapability.Magical|
+                Content.Shared.Combat.ActionCapability.Movement))==0,$"weapon {weapon.Id}: unknown action capabilities");
             Check(Enum.IsDefined(weapon.Kind), $"weapon {weapon.Id}: unknown kind");
             NonNegative(weapon.Attack, $"weapon {weapon.Id}.attack");
             Positive(weapon.Range, $"weapon {weapon.Id}.range");
@@ -74,6 +89,105 @@ public sealed class ContentCatalog
         var skillCurves = new Dictionary<string, Content.Server.Progression.SkillProgressionDefinition>(StringComparer.Ordinal);
         foreach (var ability in Abilities.Values)
         {
+            if(ability.Action is null) throw new ArgumentException($"ability {ability.Id}: missing action lifecycle");
+            ability.Action.Validate($"ability {ability.Id}.action");
+            var passive=ability.Action.Form==Content.Shared.Combat.CombatActionForm.Passive;
+            Check(passive==(ability.Passive is not null) && passive==(ability.Kind==AbilityKind.Passive),
+                $"ability {ability.Id}: missing, unexpected or inconsistent passive policy");
+            if(passive)
+                Check(ability.Power==0 && ability.MagicAttackScale==0 && ability.ManaCost==0 && ability.StaminaCost==0 &&
+                    ability.CooldownSeconds==0 && ability.MaxCharges==1 && ability.Effects is {Length:0} &&
+                    ability.Range==0 && ability.Radius==0 && ability.Speed==0 && ability.Melee is null &&
+                    ability.Action.Preparation.Seconds==0 && ability.Action.Active.Seconds==0 && ability.Action.Recovery.Seconds==0 &&
+                    ability.Action.Capabilities==Content.Shared.Combat.ActionCapability.None && ability.ContactDisposition==AbilityContactDisposition.Harmful,
+                    $"ability {ability.Id}: passive cannot define an active execution, payment, cooldown or contact payload");
+            var channel=ability.Action.Form is Content.Shared.Combat.CombatActionForm.Channel or Content.Shared.Combat.CombatActionForm.Hold or Content.Shared.Combat.CombatActionForm.Toggle;
+            var toggle=ability.Action.Form==Content.Shared.Combat.CombatActionForm.Toggle;
+            Check(toggle==(ability.Toggle is not null),$"ability {ability.Id}: missing or unexpected toggle policy");
+            if(toggle)
+            {
+                ability.Toggle!.Validate($"ability {ability.Id}.toggle");
+                Check(ability.Toggle.OccupiesAction || ability.Action.Recovery.Seconds==0,
+                    $"ability {ability.Id}: background toggle recovery cannot own the ordinary lane");
+                Check(ability.Action.Interruptible || (ability.Toggle.StopOn&Content.Shared.Combat.ToggleStopTriggers.EnemyInterrupt)==0,
+                    $"ability {ability.Id}: conflicting interruption policies");
+            }
+            var charged=ability.Action.Form==Content.Shared.Combat.CombatActionForm.Charged;
+            Check(charged==(ability.Charge is not null),$"ability {ability.Id}: missing or unexpected charge policy");
+            if(charged)
+            {
+                ability.Charge!.Validate($"ability {ability.Id}.charge");
+                Check(ability.Kind!=AbilityKind.Dash && ability.Action.Preparation.Seconds==0 && ability.Action.Active.Seconds==0 &&
+                    (ability.Action.Preparation.Cancel&Content.Shared.Combat.ActionCancelPermission.Voluntary)!=0,
+                    $"ability {ability.Id}: charge owns preparation timing, requires voluntary cancellation and does not support dash");
+            }
+            Check(channel==(ability.Channel is not null),$"ability {ability.Id}: missing or unexpected channel policy");
+            if(channel)
+            {
+                ability.Channel!.Validate($"ability {ability.Id}.channel");
+                Check(ability.Kind is AbilityKind.GroundArea or AbilityKind.Recovery && ability.Action.Active.Seconds==0,
+                    $"ability {ability.Id}: channel currently requires ground-area or self-recovery pulses and a separate channel duration");
+            }
+            if(ability.Action.Form is Content.Shared.Combat.CombatActionForm.Hold or Content.Shared.Combat.CombatActionForm.Toggle)
+                Check((ability.Action.Preparation.Cancel&Content.Shared.Combat.ActionCancelPermission.Voluntary)!=0 &&
+                    (ability.Action.Active.Cancel&Content.Shared.Combat.ActionCancelPermission.Voluntary)!=0,
+                    $"ability {ability.Id}: Hold requires release cancellation during preparation and active work");
+            ability.HitRules.Validate();
+            Check(ability.Effects is not null && ability.Effects.Length<=MaxDefinitions,$"ability {ability.Id}: invalid effects list");
+            Check(Enum.IsDefined(ability.ContactDisposition),$"ability {ability.Id}: invalid contact disposition");
+            var support=ability.ContactDisposition==AbilityContactDisposition.Support;
+            Check(!support || ability.Kind==AbilityKind.GroundArea && ability.Power==0 && ability.MagicAttackScale==0,
+                $"ability {ability.Id}: support contact currently requires a ground area without damage");
+            var applications=new HashSet<(SkillEffectOperation,string,Content.Shared.Combat.CrowdControlKind?,SkillEffectTrigger,SkillEffectTarget)>();
+            foreach(var application in ability.Effects!)
+            {
+                Check(application is not null && Enum.IsDefined(application.Operation) &&
+                    Enum.IsDefined(application.Trigger) && Enum.IsDefined(application.Target) &&
+                    (application.Trigger!=SkillEffectTrigger.Activated || application.Target==SkillEffectTarget.Self) &&
+                    (!support || application.Trigger is SkillEffectTrigger.Activated or SkillEffectTrigger.Contact) &&
+                    applications.Add((application.Operation,application.EffectId??"",application.Control?.Kind,application.Trigger,application.Target)),$"ability {ability.Id}: invalid effect application");
+                Check((application!.Operation==SkillEffectOperation.Control)==(application.Control is not null),
+                    $"ability {ability.Id}: missing or unexpected control payload");
+                var removal=application.Operation is SkillEffectOperation.Cleanse or SkillEffectOperation.Dispel;
+                Check(removal==(application.Removal is not null),$"ability {ability.Id}: missing or unexpected removal payload");
+                if(application!.Operation==SkillEffectOperation.Timed)
+                {
+                    Check(application.EffectId is not null && Effects.ContainsKey(application.EffectId) && application.Power is null,
+                        $"ability {ability.Id}: invalid timed effect reference/power");
+                    var harmful=Effects[application.EffectId!].Disposition==EffectDisposition.Harmful;
+                    Check(!application.AllowOtherPlayers || !harmful,$"ability {ability.Id}: harmful effect cannot grant support permission");
+                    Check(!support || !harmful,$"ability {ability.Id}: harmful effect in support area");
+                }
+                else if(application.Operation==SkillEffectOperation.Control)
+                {
+                    Check(!support && application.EffectId is null && application.Power is null && !application.RequiresBleedable &&
+                        !application.AllowOtherPlayers && !application.ScalePowerWithSkillLevel && application.Target==SkillEffectTarget.HitTarget,
+                        $"ability {ability.Id}: control requires a hostile hit target without a separate power or support permission");
+                    application.Control!.Validate($"ability {ability.Id}.control");
+                }
+                else if(removal)
+                {
+                    var cleanse=application.Operation==SkillEffectOperation.Cleanse;
+                    Check(application.EffectId is null && application.Power is null && !application.RequiresBleedable &&
+                        !application.ScalePowerWithSkillLevel &&
+                        (cleanse ? application.Target==SkillEffectTarget.Self || support :
+                            !support && application.Target==SkillEffectTarget.HitTarget && !application.AllowOtherPlayers),
+                        $"ability {ability.Id}: invalid cleanse/support or hostile dispel target");
+                    application.Removal!.Validate(cleanse,$"ability {ability.Id}.removal");
+                }
+                else
+                {
+                    Check(application.EffectId is null && application.Power is not null && !application.RequiresBleedable &&
+                        (application.Target==SkillEffectTarget.Self || support) &&
+                        (application.Operation!=SkillEffectOperation.Resurrect || application.Target==SkillEffectTarget.HitTarget),
+                        $"ability {ability.Id}: invalid direct support operation");
+                    application.Power!.Validate();
+                    Check(application.Power.Flat>0 || application.Power.MeleeScale>0 || application.Power.RangedScale>0 ||
+                        application.Power.MagicScale>0 || application.Power.WeaponScale>0,$"ability {ability.Id}: support power must be positive");
+                }
+            }
+            Check(ability.Kind == AbilityKind.Melee || !ability.HitRules.Parryable, $"ability {ability.Id}: only melee attacks may be parried");
+            Check(ability.Kind != AbilityKind.GroundArea || !ability.HitRules.Blockable, $"ability {ability.Id}: ground areas cannot be blocked");
             Check(document.SchemaVersion >= 4 || ability.Progression is null, $"ability {ability.Id}: individual progression requires schemaVersion 4");
             var curve = ability.Progression ?? defaultSkillCurve;
             curve.Validate(ability.Id);
@@ -83,9 +197,9 @@ public sealed class ContentCatalog
             NonNegative(ability.Power, $"ability {ability.Id}.power");
             NonNegative(ability.ManaCost, $"ability {ability.Id}.manaCost");
             NonNegative(ability.CastSeconds, $"ability {ability.Id}.castSeconds");
-            Positive(ability.CooldownSeconds, $"ability {ability.Id}.cooldownSeconds");
-            Positive(ability.Range, $"ability {ability.Id}.range");
-            Positive(ability.Radius, $"ability {ability.Id}.radius");
+            NonNegative(ability.CooldownSeconds, $"ability {ability.Id}.cooldownSeconds");
+            Check(ability.MaxCharges>0,$"ability {ability.Id}: maxCharges must be positive");
+            if(!passive){Positive(ability.Range, $"ability {ability.Id}.range");Positive(ability.Radius, $"ability {ability.Id}.radius");}
             NonNegative(ability.Speed, $"ability {ability.Id}.speed");
             Check(ability.Kind is not (AbilityKind.Projectile or AbilityKind.Dash) || ability.Speed > 0, $"ability {ability.Id}: speed must be positive");
             NonNegative(ability.StaminaCost, $"ability {ability.Id}.staminaCost");
@@ -109,12 +223,14 @@ public sealed class ContentCatalog
                 profession.SkillId is not null && Abilities.TryGetValue(profession.SkillId,out var skill) && skill.Kind != AbilityKind.Dash,
                 "Invalid profession definition/reference.");
         Professions = Array.AsReadOnly((Content.Server.Professions.ProfessionDefinition[])document.Professions.Clone());
+        foreach(var ability in Abilities.Values)ability.Passive?.Validate(this,$"ability {ability.Id}.passive");
         foreach (var profession in Professions)
             Check(profession.AdditionalSkills is not null && profession.AdditionalSkills.Length < Content.Shared.Network.NetworkConstants.MaxLearnedSkills && profession.AllSkills.Distinct().Count() == profession.AdditionalSkills.Length + 1 &&
                 profession.AllSkills.All(id => Abilities.TryGetValue(id, out var a) && a.Kind != AbilityKind.Dash), "Invalid profession skill list.");
         document.Swordsman?.Validate(this); Swordsman = document.Swordsman;
         foreach (var creature in Creatures.Values)
         {
+            ArgumentNullException.ThrowIfNull(creature.ControlResistance); creature.ControlResistance.Validate();
             Check(creature.Modifiers is not null && creature.Modifiers.IsValid(),
                 $"creature {creature.Id}: derived modifiers must be finite");
             Positive(creature.BaseHealth, $"creature {creature.Id}.baseHealth");
@@ -142,6 +258,7 @@ public sealed class ContentCatalog
     public StatBalance Balance { get; }
     public FrozenDictionary<string, WeaponDefinition> Weapons { get; }
     public FrozenDictionary<string, AbilityDefinition> Abilities { get; }
+    public FrozenDictionary<string, EffectDefinition> Effects { get; }
     public FrozenDictionary<string, Content.Server.Progression.SkillProgressionDefinition> SkillProgressions { get; }
     public FrozenDictionary<ushort, Content.Server.Progression.SkillProgressionDefinition> SkillProgressionByNetworkId { get; }
     public FrozenDictionary<string, CreatureDefinition> Creatures { get; }

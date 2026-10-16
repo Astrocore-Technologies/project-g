@@ -1,6 +1,21 @@
 {
-  "schemaVersion": 4,
-  "balanceVersion": 4,
+  "schemaVersion": 10,
+  "balanceVersion": 5,
+  "unarmedWeaponId": "unarmed",
+  "lifecycle": { "inCombatSeconds": 30, "disconnectBodySeconds": 60, "corpseSeconds": 60,
+    "respawnSeconds": 60, "respawnHealthFraction": 0.5, "respawnManaFraction": 0.5, "respawnStaminaFraction": 1 },
+  "control": {
+    "lambda": 1,
+    "resetSeconds": 12,
+    "hardBudget": 6,
+    "movementBudget": 5,
+    "actionBudget": 6,
+    "softBudget": 3,
+    "targetingBudget": 2,
+    "minimumSlowMultiplier": 0.1,
+    "blindAccuracyUnits": 100,
+    "defaultTauntPenalty": 0.3
+  },
   "swordsman": {
     "professionId": 2,
     "regionId": "river_city",
@@ -28,7 +43,6 @@
     "rhythmHits": 3,
     "rhythmWindow": 4,
     "rhythmStamina": 6,
-    "blockRemainderReduction": 0.15,
     "footworkBonus": 0.1,
     "footworkSeconds": 1.5,
     "parryWindow": 3,
@@ -42,7 +56,8 @@
       "sword_riposte",
       "sword_breath",
       "sword_finisher"
-    ]
+    ],
+    "blockAbsorptionBonus": 0.15
   },
   "deliveryQuest": {
     "id": "river-road-supplies",
@@ -82,13 +97,14 @@
     "parryCooldown": 0.5,
     "blockMovementMultiplier": 0.5,
     "guardLeaseSeconds": 0.5,
-    "inputBufferSeconds": 0.2,
-    "controlResetSeconds": 4,
-    "repeatedControlFactor": 0.5,
+    "inputBufferSeconds": 0.15,
     "quickRecoverCost": 15,
     "quickRecoverCooldown": 12,
     "quickRecoverRange": 1.5,
-    "quickRecoverSpeed": 6
+    "quickRecoverSpeed": 6,
+    "blockHoldPerSecond": 5,
+    "guardBreakSeconds": 1,
+    "frontalAngleDegrees": 120
   },
   "balance": {
     "baseBlockDamage": 0.3,
@@ -103,9 +119,8 @@
       "luck": 0.3333333333333333
     },
     "magicAttack": {
-      "intelligence": 1.5,
-      "dexterity": 0.2,
-      "luck": 0.3333333333333333
+      "intelligence": 3,
+      "luck": 0.4
     },
     "meleeWeapon": {
       "strength": 0.005
@@ -118,28 +133,24 @@
       "agility": 0.2
     },
     "magicDefense": {
-      "intelligence": 1,
-      "vitality": 0.2,
-      "dexterity": 0.2
+      "wisdom": 1.5
     },
     "health": {
       "vitality": 0.01
     },
     "mana": {
-      "intelligence": 0.01
+      "wisdom": 8
     },
     "healthRecovery": {
       "vitality": 0.03333333333333333
     },
     "manaRecovery": {
-      "intelligence": 0.027777777777777776
+      "wisdom": 0.2
     },
     "healthItem": {
       "vitality": 0.02
     },
-    "manaItem": {
-      "intelligence": 0.01
-    },
+    "manaItem": {},
     "attackSpeed": {
       "agility": 0.01,
       "dexterity": 0.0025
@@ -151,7 +162,22 @@
       "luck": 0.06315789473684211
     },
     "baseCriticalChance": 0.05,
-    "defenseScale": 100
+    "defenseScale": 100,
+    "accuracy": {
+      "dexterity": 1
+    },
+    "evasion": {
+      "agility": 1
+    },
+    "criticalDamage": {
+      "dexterity": 0.01
+    },
+    "baseCriticalDamage": 1.5,
+    "blockStrength": {
+      "strength": 1,
+      "vitality": 1
+    },
+    "baseBlockStrength": 10
   },
   "weapons": [
     {
@@ -182,6 +208,14 @@
       "attack": 12,
       "attackIntervalSeconds": 1.5,
       "range": 2.5
+    },
+    {
+      "id": "unarmed",
+      "kind": "Melee",
+      "capabilities": "None",
+      "attack": 0,
+      "attackIntervalSeconds": 1,
+      "range": 1
     }
   ],
   "abilities": [
@@ -192,11 +226,20 @@
       "power": 15,
       "manaCost": 5,
       "cooldownSeconds": 2,
-      "castSeconds": 0.5,
       "range": 10,
       "radius": 0.3,
       "speed": 8,
-      "magicAttackScale": 1
+      "magicAttackScale": 1,
+      "action": {
+        "form": "Cast",
+        "category": "Skill",
+        "preparation": {
+          "seconds": 0.5,
+          "speed": "CastSpeed",
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge"
+        },
+        "capabilities": "Magical"
+      }
     },
     {
       "id": "test_ground_area",
@@ -205,11 +248,20 @@
       "power": 10,
       "manaCost": 10,
       "cooldownSeconds": 5,
-      "castSeconds": 1,
       "range": 8,
       "radius": 2,
       "speed": 0,
-      "magicAttackScale": 1
+      "magicAttackScale": 1,
+      "action": {
+        "form": "Cast",
+        "category": "Skill",
+        "preparation": {
+          "seconds": 1,
+          "speed": "CastSpeed",
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge"
+        },
+        "capabilities": "Magical"
+      }
     },
     {
       "id": "test_dash",
@@ -218,25 +270,44 @@
       "power": 0,
       "manaCost": 0,
       "cooldownSeconds": 3,
-      "castSeconds": 0,
       "range": 3,
       "radius": 0.45,
       "speed": 15,
-      "magicAttackScale": 0
+      "magicAttackScale": 0,
+      "action": {
+        "form": "Instant",
+        "category": "Dodge",
+        "active": {
+          "seconds": 0,
+          "speed": "CastSpeed",
+          "movementMultiplier": 1,
+          "canTurn": false
+        },
+        "capabilities": "Movement"
+      }
     },
     {
       "id": "boss_ground_area",
-      "interruptible": false,
       "networkId": 4,
       "kind": "GroundArea",
       "power": 12,
       "manaCost": 0,
       "cooldownSeconds": 3,
-      "castSeconds": 1.5,
       "range": 8,
       "radius": 2,
       "speed": 0,
-      "magicAttackScale": 0.5
+      "magicAttackScale": 0.5,
+      "action": {
+        "form": "Cast",
+        "category": "Skill",
+        "preparation": {
+          "seconds": 1.5,
+          "speed": "CastSpeed",
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge"
+        },
+        "interruptible": false,
+        "capabilities": "Magical"
+      }
     },
     {
       "id": "discovery_bolt",
@@ -245,27 +316,66 @@
       "power": 17,
       "manaCost": 5,
       "cooldownSeconds": 2,
-      "castSeconds": 0.5,
       "range": 10,
       "radius": 0.3,
       "speed": 8,
-      "magicAttackScale": 1
+      "magicAttackScale": 1,
+      "action": {
+        "form": "Cast",
+        "category": "Skill",
+        "preparation": {
+          "seconds": 0.5,
+          "speed": "CastSpeed",
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge"
+        },
+        "capabilities": "Magical"
+      }
     },
     {
       "id": "trail_impulse",
       "progression": {
         "practicePerUse": 1,
         "levels": [
-          { "practiceToNext": 3, "powerMultiplier": 1 },
-          { "practiceToNext": 6, "powerMultiplier": 1.05 },
-          { "practiceToNext": 9, "powerMultiplier": 1.1 },
-          { "practiceToNext": 12, "powerMultiplier": 1.15 },
-          { "practiceToNext": 15, "powerMultiplier": 1.2 },
-          { "practiceToNext": 18, "powerMultiplier": 1.25 },
-          { "practiceToNext": 21, "powerMultiplier": 1.3 },
-          { "practiceToNext": 24, "powerMultiplier": 1.35 },
-          { "practiceToNext": 27, "powerMultiplier": 1.4 },
-          { "practiceToNext": 0, "powerMultiplier": 1.45 }
+          {
+            "practiceToNext": 3,
+            "powerMultiplier": 1
+          },
+          {
+            "practiceToNext": 6,
+            "powerMultiplier": 1.05
+          },
+          {
+            "practiceToNext": 9,
+            "powerMultiplier": 1.1
+          },
+          {
+            "practiceToNext": 12,
+            "powerMultiplier": 1.15
+          },
+          {
+            "practiceToNext": 15,
+            "powerMultiplier": 1.2
+          },
+          {
+            "practiceToNext": 18,
+            "powerMultiplier": 1.25
+          },
+          {
+            "practiceToNext": 21,
+            "powerMultiplier": 1.3
+          },
+          {
+            "practiceToNext": 24,
+            "powerMultiplier": 1.35
+          },
+          {
+            "practiceToNext": 27,
+            "powerMultiplier": 1.4
+          },
+          {
+            "practiceToNext": 0,
+            "powerMultiplier": 1.45
+          }
         ]
       },
       "networkId": 6,
@@ -273,27 +383,66 @@
       "power": 20,
       "manaCost": 5,
       "cooldownSeconds": 2,
-      "castSeconds": 0.5,
       "range": 10,
       "radius": 0.3,
       "speed": 8,
-      "magicAttackScale": 1
+      "magicAttackScale": 1,
+      "action": {
+        "form": "Cast",
+        "category": "Skill",
+        "preparation": {
+          "seconds": 0.5,
+          "speed": "CastSpeed",
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge"
+        },
+        "capabilities": "Magical"
+      }
     },
     {
       "id": "sword_thrust",
       "progression": {
         "practicePerUse": 1,
         "levels": [
-          { "practiceToNext": 3, "powerMultiplier": 1 },
-          { "practiceToNext": 6, "powerMultiplier": 1.05 },
-          { "practiceToNext": 9, "powerMultiplier": 1.1 },
-          { "practiceToNext": 12, "powerMultiplier": 1.15 },
-          { "practiceToNext": 15, "powerMultiplier": 1.2 },
-          { "practiceToNext": 18, "powerMultiplier": 1.25 },
-          { "practiceToNext": 21, "powerMultiplier": 1.3 },
-          { "practiceToNext": 24, "powerMultiplier": 1.35 },
-          { "practiceToNext": 27, "powerMultiplier": 1.4 },
-          { "practiceToNext": 0, "powerMultiplier": 1.45 }
+          {
+            "practiceToNext": 3,
+            "powerMultiplier": 1
+          },
+          {
+            "practiceToNext": 6,
+            "powerMultiplier": 1.05
+          },
+          {
+            "practiceToNext": 9,
+            "powerMultiplier": 1.1
+          },
+          {
+            "practiceToNext": 12,
+            "powerMultiplier": 1.15
+          },
+          {
+            "practiceToNext": 15,
+            "powerMultiplier": 1.2
+          },
+          {
+            "practiceToNext": 18,
+            "powerMultiplier": 1.25
+          },
+          {
+            "practiceToNext": 21,
+            "powerMultiplier": 1.3
+          },
+          {
+            "practiceToNext": 24,
+            "powerMultiplier": 1.35
+          },
+          {
+            "practiceToNext": 27,
+            "powerMultiplier": 1.4
+          },
+          {
+            "practiceToNext": 0,
+            "powerMultiplier": 1.45
+          }
         ]
       },
       "networkId": 20,
@@ -301,7 +450,6 @@
       "power": 0,
       "manaCost": 0,
       "cooldownSeconds": 4,
-      "castSeconds": 0,
       "range": 3,
       "radius": 0.3,
       "speed": 0,
@@ -314,7 +462,21 @@
         "hitRecoverySeconds": 0.2,
         "missRecoverySeconds": 0.4,
         "hitCancelAfterSeconds": 0.1,
-        "hitFollowups": ["sword_rend", "sword_sweep"]
+        "hitFollowups": [
+          "sword_rend",
+          "sword_sweep"
+        ]
+      },
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "active": {
+          "seconds": 0,
+          "speed": "CastSpeed",
+          "movementMultiplier": 1,
+          "canTurn": false
+        },
+        "capabilities": "Weapon"
       }
     },
     {
@@ -322,16 +484,46 @@
       "progression": {
         "practicePerUse": 1,
         "levels": [
-          { "practiceToNext": 3, "powerMultiplier": 1 },
-          { "practiceToNext": 6, "powerMultiplier": 1.05 },
-          { "practiceToNext": 9, "powerMultiplier": 1.1 },
-          { "practiceToNext": 12, "powerMultiplier": 1.15 },
-          { "practiceToNext": 15, "powerMultiplier": 1.2 },
-          { "practiceToNext": 18, "powerMultiplier": 1.25 },
-          { "practiceToNext": 21, "powerMultiplier": 1.3 },
-          { "practiceToNext": 24, "powerMultiplier": 1.35 },
-          { "practiceToNext": 27, "powerMultiplier": 1.4 },
-          { "practiceToNext": 0, "powerMultiplier": 1.45 }
+          {
+            "practiceToNext": 3,
+            "powerMultiplier": 1
+          },
+          {
+            "practiceToNext": 6,
+            "powerMultiplier": 1.05
+          },
+          {
+            "practiceToNext": 9,
+            "powerMultiplier": 1.1
+          },
+          {
+            "practiceToNext": 12,
+            "powerMultiplier": 1.15
+          },
+          {
+            "practiceToNext": 15,
+            "powerMultiplier": 1.2
+          },
+          {
+            "practiceToNext": 18,
+            "powerMultiplier": 1.25
+          },
+          {
+            "practiceToNext": 21,
+            "powerMultiplier": 1.3
+          },
+          {
+            "practiceToNext": 24,
+            "powerMultiplier": 1.35
+          },
+          {
+            "practiceToNext": 27,
+            "powerMultiplier": 1.4
+          },
+          {
+            "practiceToNext": 0,
+            "powerMultiplier": 1.45
+          }
         ]
       },
       "networkId": 21,
@@ -339,7 +531,6 @@
       "power": 0,
       "manaCost": 0,
       "cooldownSeconds": 6,
-      "castSeconds": 0.2,
       "range": 3,
       "radius": 0.3,
       "speed": 0,
@@ -351,6 +542,17 @@
         "firstTargetOnly": false,
         "hitRecoverySeconds": 0.25,
         "missRecoverySeconds": 0.25
+      },
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "active": {
+          "seconds": 0.2,
+          "speed": "CastSpeed",
+          "movementMultiplier": 1,
+          "canTurn": false
+        },
+        "capabilities": "Weapon"
       }
     },
     {
@@ -358,16 +560,46 @@
       "progression": {
         "practicePerUse": 1,
         "levels": [
-          { "practiceToNext": 3, "powerMultiplier": 1 },
-          { "practiceToNext": 6, "powerMultiplier": 1.05 },
-          { "practiceToNext": 9, "powerMultiplier": 1.1 },
-          { "practiceToNext": 12, "powerMultiplier": 1.15 },
-          { "practiceToNext": 15, "powerMultiplier": 1.2 },
-          { "practiceToNext": 18, "powerMultiplier": 1.25 },
-          { "practiceToNext": 21, "powerMultiplier": 1.3 },
-          { "practiceToNext": 24, "powerMultiplier": 1.35 },
-          { "practiceToNext": 27, "powerMultiplier": 1.4 },
-          { "practiceToNext": 0, "powerMultiplier": 1.45 }
+          {
+            "practiceToNext": 3,
+            "powerMultiplier": 1
+          },
+          {
+            "practiceToNext": 6,
+            "powerMultiplier": 1.05
+          },
+          {
+            "practiceToNext": 9,
+            "powerMultiplier": 1.1
+          },
+          {
+            "practiceToNext": 12,
+            "powerMultiplier": 1.15
+          },
+          {
+            "practiceToNext": 15,
+            "powerMultiplier": 1.2
+          },
+          {
+            "practiceToNext": 18,
+            "powerMultiplier": 1.25
+          },
+          {
+            "practiceToNext": 21,
+            "powerMultiplier": 1.3
+          },
+          {
+            "practiceToNext": 24,
+            "powerMultiplier": 1.35
+          },
+          {
+            "practiceToNext": 27,
+            "powerMultiplier": 1.4
+          },
+          {
+            "practiceToNext": 0,
+            "powerMultiplier": 1.45
+          }
         ]
       },
       "networkId": 22,
@@ -375,19 +607,36 @@
       "power": 0,
       "manaCost": 0,
       "cooldownSeconds": 8,
-      "castSeconds": 0.15,
       "range": 3,
       "radius": 0.3,
       "speed": 0,
       "magicAttackScale": 0,
       "staminaCost": 14,
+      "effects": [
+        {
+          "effectId": "sword_rend_bleed",
+          "trigger": "UnblockedHealthDamage",
+          "target": "HitTarget",
+          "requiresBleedable": true,
+          "scalePowerWithSkillLevel": true
+        }
+      ],
       "melee": {
         "damageFactor": 0.8,
-        "bleedFactor": 0.6,
-        "bleedSeconds": 4,
         "hitRecoverySeconds": 0.25,
         "missRecoverySeconds": 0.3,
-        "blockPreventsBleed": true
+        "firstTargetOnly": true
+      },
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "active": {
+          "seconds": 0.15,
+          "speed": "CastSpeed",
+          "movementMultiplier": 1,
+          "canTurn": false
+        },
+        "capabilities": "Weapon"
       }
     },
     {
@@ -395,16 +644,46 @@
       "progression": {
         "practicePerUse": 1,
         "levels": [
-          { "practiceToNext": 3, "powerMultiplier": 1 },
-          { "practiceToNext": 6, "powerMultiplier": 1.05 },
-          { "practiceToNext": 9, "powerMultiplier": 1.1 },
-          { "practiceToNext": 12, "powerMultiplier": 1.15 },
-          { "practiceToNext": 15, "powerMultiplier": 1.2 },
-          { "practiceToNext": 18, "powerMultiplier": 1.25 },
-          { "practiceToNext": 21, "powerMultiplier": 1.3 },
-          { "practiceToNext": 24, "powerMultiplier": 1.35 },
-          { "practiceToNext": 27, "powerMultiplier": 1.4 },
-          { "practiceToNext": 0, "powerMultiplier": 1.45 }
+          {
+            "practiceToNext": 3,
+            "powerMultiplier": 1
+          },
+          {
+            "practiceToNext": 6,
+            "powerMultiplier": 1.05
+          },
+          {
+            "practiceToNext": 9,
+            "powerMultiplier": 1.1
+          },
+          {
+            "practiceToNext": 12,
+            "powerMultiplier": 1.15
+          },
+          {
+            "practiceToNext": 15,
+            "powerMultiplier": 1.2
+          },
+          {
+            "practiceToNext": 18,
+            "powerMultiplier": 1.25
+          },
+          {
+            "practiceToNext": 21,
+            "powerMultiplier": 1.3
+          },
+          {
+            "practiceToNext": 24,
+            "powerMultiplier": 1.35
+          },
+          {
+            "practiceToNext": 27,
+            "powerMultiplier": 1.4
+          },
+          {
+            "practiceToNext": 0,
+            "powerMultiplier": 1.45
+          }
         ]
       },
       "networkId": 23,
@@ -412,7 +691,6 @@
       "power": 0,
       "manaCost": 0,
       "cooldownSeconds": 10,
-      "castSeconds": 0.65,
       "range": 3,
       "radius": 0.3,
       "speed": 0,
@@ -420,9 +698,19 @@
       "staminaCost": 20,
       "melee": {
         "damageFactor": 1.7,
-        "armorIgnore": 0.3,
         "hitRecoverySeconds": 0.45,
         "missRecoverySeconds": 0.45
+      },
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "active": {
+          "seconds": 0.65,
+          "speed": "CastSpeed",
+          "movementMultiplier": 1,
+          "canTurn": false
+        },
+        "capabilities": "Weapon"
       }
     },
     {
@@ -430,16 +718,46 @@
       "progression": {
         "practicePerUse": 1,
         "levels": [
-          { "practiceToNext": 3, "powerMultiplier": 1 },
-          { "practiceToNext": 6, "powerMultiplier": 1.05 },
-          { "practiceToNext": 9, "powerMultiplier": 1.1 },
-          { "practiceToNext": 12, "powerMultiplier": 1.15 },
-          { "practiceToNext": 15, "powerMultiplier": 1.2 },
-          { "practiceToNext": 18, "powerMultiplier": 1.25 },
-          { "practiceToNext": 21, "powerMultiplier": 1.3 },
-          { "practiceToNext": 24, "powerMultiplier": 1.35 },
-          { "practiceToNext": 27, "powerMultiplier": 1.4 },
-          { "practiceToNext": 0, "powerMultiplier": 1.45 }
+          {
+            "practiceToNext": 3,
+            "powerMultiplier": 1
+          },
+          {
+            "practiceToNext": 6,
+            "powerMultiplier": 1.05
+          },
+          {
+            "practiceToNext": 9,
+            "powerMultiplier": 1.1
+          },
+          {
+            "practiceToNext": 12,
+            "powerMultiplier": 1.15
+          },
+          {
+            "practiceToNext": 15,
+            "powerMultiplier": 1.2
+          },
+          {
+            "practiceToNext": 18,
+            "powerMultiplier": 1.25
+          },
+          {
+            "practiceToNext": 21,
+            "powerMultiplier": 1.3
+          },
+          {
+            "practiceToNext": 24,
+            "powerMultiplier": 1.35
+          },
+          {
+            "practiceToNext": 27,
+            "powerMultiplier": 1.4
+          },
+          {
+            "practiceToNext": 0,
+            "powerMultiplier": 1.45
+          }
         ]
       },
       "networkId": 24,
@@ -447,7 +765,6 @@
       "power": 0,
       "manaCost": 0,
       "cooldownSeconds": 12,
-      "castSeconds": 0.1,
       "range": 3,
       "radius": 0.3,
       "speed": 0,
@@ -456,9 +773,27 @@
       "melee": {
         "damageFactor": 0.4,
         "rangeFactor": 0.7,
-        "stunSeconds": 0.4,
         "hitRecoverySeconds": 0.15,
         "missRecoverySeconds": 0.25
+      },
+      "effects": [
+        {
+          "operation": "Control",
+          "trigger": "HealthDamage",
+          "target": "HitTarget",
+          "control": { "kind": "Stun", "durationSeconds": 0.4 }
+        }
+      ],
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "active": {
+          "seconds": 0.1,
+          "speed": "CastSpeed",
+          "movementMultiplier": 1,
+          "canTurn": false
+        },
+        "capabilities": "Weapon"
       }
     },
     {
@@ -466,16 +801,46 @@
       "progression": {
         "practicePerUse": 1,
         "levels": [
-          { "practiceToNext": 3, "powerMultiplier": 1 },
-          { "practiceToNext": 6, "powerMultiplier": 1.05 },
-          { "practiceToNext": 9, "powerMultiplier": 1.1 },
-          { "practiceToNext": 12, "powerMultiplier": 1.15 },
-          { "practiceToNext": 15, "powerMultiplier": 1.2 },
-          { "practiceToNext": 18, "powerMultiplier": 1.25 },
-          { "practiceToNext": 21, "powerMultiplier": 1.3 },
-          { "practiceToNext": 24, "powerMultiplier": 1.35 },
-          { "practiceToNext": 27, "powerMultiplier": 1.4 },
-          { "practiceToNext": 0, "powerMultiplier": 1.45 }
+          {
+            "practiceToNext": 3,
+            "powerMultiplier": 1
+          },
+          {
+            "practiceToNext": 6,
+            "powerMultiplier": 1.05
+          },
+          {
+            "practiceToNext": 9,
+            "powerMultiplier": 1.1
+          },
+          {
+            "practiceToNext": 12,
+            "powerMultiplier": 1.15
+          },
+          {
+            "practiceToNext": 15,
+            "powerMultiplier": 1.2
+          },
+          {
+            "practiceToNext": 18,
+            "powerMultiplier": 1.25
+          },
+          {
+            "practiceToNext": 21,
+            "powerMultiplier": 1.3
+          },
+          {
+            "practiceToNext": 24,
+            "powerMultiplier": 1.35
+          },
+          {
+            "practiceToNext": 27,
+            "powerMultiplier": 1.4
+          },
+          {
+            "practiceToNext": 0,
+            "powerMultiplier": 1.45
+          }
         ]
       },
       "networkId": 25,
@@ -483,7 +848,6 @@
       "power": 0,
       "manaCost": 0,
       "cooldownSeconds": 9,
-      "castSeconds": 0.15,
       "range": 3,
       "radius": 0.3,
       "speed": 0,
@@ -491,10 +855,27 @@
       "staminaCost": 12,
       "melee": {
         "damageFactor": 0.7,
-        "slowFraction": 0.25,
-        "slowSeconds": 2,
         "hitRecoverySeconds": 0.2,
         "missRecoverySeconds": 0.25
+      },
+      "effects": [
+        {
+          "operation": "Control",
+          "trigger": "HealthDamage",
+          "target": "HitTarget",
+          "control": { "kind": "Slow", "durationSeconds": 2, "strength": 0.25 }
+        }
+      ],
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "active": {
+          "seconds": 0.15,
+          "speed": "CastSpeed",
+          "movementMultiplier": 1,
+          "canTurn": false
+        },
+        "capabilities": "Weapon"
       }
     },
     {
@@ -502,16 +883,46 @@
       "progression": {
         "practicePerUse": 1,
         "levels": [
-          { "practiceToNext": 3, "powerMultiplier": 1 },
-          { "practiceToNext": 6, "powerMultiplier": 1.05 },
-          { "practiceToNext": 9, "powerMultiplier": 1.1 },
-          { "practiceToNext": 12, "powerMultiplier": 1.15 },
-          { "practiceToNext": 15, "powerMultiplier": 1.2 },
-          { "practiceToNext": 18, "powerMultiplier": 1.25 },
-          { "practiceToNext": 21, "powerMultiplier": 1.3 },
-          { "practiceToNext": 24, "powerMultiplier": 1.35 },
-          { "practiceToNext": 27, "powerMultiplier": 1.4 },
-          { "practiceToNext": 0, "powerMultiplier": 1.45 }
+          {
+            "practiceToNext": 3,
+            "powerMultiplier": 1
+          },
+          {
+            "practiceToNext": 6,
+            "powerMultiplier": 1.05
+          },
+          {
+            "practiceToNext": 9,
+            "powerMultiplier": 1.1
+          },
+          {
+            "practiceToNext": 12,
+            "powerMultiplier": 1.15
+          },
+          {
+            "practiceToNext": 15,
+            "powerMultiplier": 1.2
+          },
+          {
+            "practiceToNext": 18,
+            "powerMultiplier": 1.25
+          },
+          {
+            "practiceToNext": 21,
+            "powerMultiplier": 1.3
+          },
+          {
+            "practiceToNext": 24,
+            "powerMultiplier": 1.35
+          },
+          {
+            "practiceToNext": 27,
+            "powerMultiplier": 1.4
+          },
+          {
+            "practiceToNext": 0,
+            "powerMultiplier": 1.45
+          }
         ]
       },
       "networkId": 26,
@@ -519,7 +930,6 @@
       "power": 0,
       "manaCost": 0,
       "cooldownSeconds": 6,
-      "castSeconds": 0,
       "range": 3,
       "radius": 0.3,
       "speed": 0,
@@ -531,6 +941,17 @@
         "hitRecoverySeconds": 0.25,
         "missRecoverySeconds": 0.4,
         "narrowThrust": true
+      },
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "active": {
+          "seconds": 0,
+          "speed": "CastSpeed",
+          "movementMultiplier": 1,
+          "canTurn": false
+        },
+        "capabilities": "Weapon"
       }
     },
     {
@@ -538,16 +959,46 @@
       "progression": {
         "practicePerUse": 1,
         "levels": [
-          { "practiceToNext": 3, "powerMultiplier": 1 },
-          { "practiceToNext": 6, "powerMultiplier": 1.05 },
-          { "practiceToNext": 9, "powerMultiplier": 1.1 },
-          { "practiceToNext": 12, "powerMultiplier": 1.15 },
-          { "practiceToNext": 15, "powerMultiplier": 1.2 },
-          { "practiceToNext": 18, "powerMultiplier": 1.25 },
-          { "practiceToNext": 21, "powerMultiplier": 1.3 },
-          { "practiceToNext": 24, "powerMultiplier": 1.35 },
-          { "practiceToNext": 27, "powerMultiplier": 1.4 },
-          { "practiceToNext": 0, "powerMultiplier": 1.45 }
+          {
+            "practiceToNext": 3,
+            "powerMultiplier": 1
+          },
+          {
+            "practiceToNext": 6,
+            "powerMultiplier": 1.05
+          },
+          {
+            "practiceToNext": 9,
+            "powerMultiplier": 1.1
+          },
+          {
+            "practiceToNext": 12,
+            "powerMultiplier": 1.15
+          },
+          {
+            "practiceToNext": 15,
+            "powerMultiplier": 1.2
+          },
+          {
+            "practiceToNext": 18,
+            "powerMultiplier": 1.25
+          },
+          {
+            "practiceToNext": 21,
+            "powerMultiplier": 1.3
+          },
+          {
+            "practiceToNext": 24,
+            "powerMultiplier": 1.35
+          },
+          {
+            "practiceToNext": 27,
+            "powerMultiplier": 1.4
+          },
+          {
+            "practiceToNext": 0,
+            "powerMultiplier": 1.45
+          }
         ]
       },
       "networkId": 27,
@@ -555,7 +1006,6 @@
       "power": 0,
       "manaCost": 0,
       "cooldownSeconds": 12,
-      "castSeconds": 0.45,
       "range": 3,
       "radius": 0.3,
       "speed": 0,
@@ -567,9 +1017,26 @@
         "firstTargetOnly": false,
         "stationary": true,
         "hitRecoverySeconds": 0.35,
-        "missRecoverySeconds": 0.35,
-        "knockbackDistance": 1,
-        "knockbackSpeed": 8
+        "missRecoverySeconds": 0.35
+      },
+      "effects": [
+        {
+          "operation": "Control",
+          "trigger": "HealthDamage",
+          "target": "HitTarget",
+          "control": { "kind": "Knockback", "distance": 1, "speed": 8, "origin": "Source" }
+        }
+      ],
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "active": {
+          "seconds": 0.45,
+          "speed": "CastSpeed",
+          "movementMultiplier": 0,
+          "canTurn": false
+        },
+        "capabilities": "Weapon"
       }
     },
     {
@@ -577,16 +1044,46 @@
       "progression": {
         "practicePerUse": 1,
         "levels": [
-          { "practiceToNext": 3, "powerMultiplier": 1 },
-          { "practiceToNext": 6, "powerMultiplier": 1.05 },
-          { "practiceToNext": 9, "powerMultiplier": 1.1 },
-          { "practiceToNext": 12, "powerMultiplier": 1.15 },
-          { "practiceToNext": 15, "powerMultiplier": 1.2 },
-          { "practiceToNext": 18, "powerMultiplier": 1.25 },
-          { "practiceToNext": 21, "powerMultiplier": 1.3 },
-          { "practiceToNext": 24, "powerMultiplier": 1.35 },
-          { "practiceToNext": 27, "powerMultiplier": 1.4 },
-          { "practiceToNext": 0, "powerMultiplier": 1.45 }
+          {
+            "practiceToNext": 3,
+            "powerMultiplier": 1
+          },
+          {
+            "practiceToNext": 6,
+            "powerMultiplier": 1.05
+          },
+          {
+            "practiceToNext": 9,
+            "powerMultiplier": 1.1
+          },
+          {
+            "practiceToNext": 12,
+            "powerMultiplier": 1.15
+          },
+          {
+            "practiceToNext": 15,
+            "powerMultiplier": 1.2
+          },
+          {
+            "practiceToNext": 18,
+            "powerMultiplier": 1.25
+          },
+          {
+            "practiceToNext": 21,
+            "powerMultiplier": 1.3
+          },
+          {
+            "practiceToNext": 24,
+            "powerMultiplier": 1.35
+          },
+          {
+            "practiceToNext": 27,
+            "powerMultiplier": 1.4
+          },
+          {
+            "practiceToNext": 0,
+            "powerMultiplier": 1.45
+          }
         ]
       },
       "networkId": 28,
@@ -594,7 +1091,6 @@
       "power": 0,
       "manaCost": 0,
       "cooldownSeconds": 24,
-      "castSeconds": 1.2,
       "range": 3,
       "radius": 0.3,
       "speed": 0,
@@ -606,6 +1102,33 @@
         "restoreStamina": 25,
         "hitRecoverySeconds": 0,
         "missRecoverySeconds": 0
+      },
+      "action": {
+        "form": "Hold",
+        "category": "Skill",
+        "preparation": {
+          "movementMultiplier": 0,
+          "canTurn": false,
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge, BasicAttack, Movement"
+        },
+        "active": {
+          "seconds": 0,
+          "speed": "None",
+          "movementMultiplier": 0,
+          "canTurn": false,
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge, BasicAttack, Movement"
+        },
+        "capabilities": "Weapon"
+      },
+      "channel": {
+        "maximumSeconds": 1.2,
+        "intervalSeconds": 1.2,
+        "intervalSpeed": "None",
+        "pulseAtStart": false,
+        "manaPerSecond": 0,
+        "staminaPerSecond": 0,
+        "cooldownStart": "Activation",
+        "damageCalculation": "Dynamic"
       }
     },
     {
@@ -613,16 +1136,46 @@
       "progression": {
         "practicePerUse": 1,
         "levels": [
-          { "practiceToNext": 3, "powerMultiplier": 1 },
-          { "practiceToNext": 6, "powerMultiplier": 1.05 },
-          { "practiceToNext": 9, "powerMultiplier": 1.1 },
-          { "practiceToNext": 12, "powerMultiplier": 1.15 },
-          { "practiceToNext": 15, "powerMultiplier": 1.2 },
-          { "practiceToNext": 18, "powerMultiplier": 1.25 },
-          { "practiceToNext": 21, "powerMultiplier": 1.3 },
-          { "practiceToNext": 24, "powerMultiplier": 1.35 },
-          { "practiceToNext": 27, "powerMultiplier": 1.4 },
-          { "practiceToNext": 0, "powerMultiplier": 1.45 }
+          {
+            "practiceToNext": 3,
+            "powerMultiplier": 1
+          },
+          {
+            "practiceToNext": 6,
+            "powerMultiplier": 1.05
+          },
+          {
+            "practiceToNext": 9,
+            "powerMultiplier": 1.1
+          },
+          {
+            "practiceToNext": 12,
+            "powerMultiplier": 1.15
+          },
+          {
+            "practiceToNext": 15,
+            "powerMultiplier": 1.2
+          },
+          {
+            "practiceToNext": 18,
+            "powerMultiplier": 1.25
+          },
+          {
+            "practiceToNext": 21,
+            "powerMultiplier": 1.3
+          },
+          {
+            "practiceToNext": 24,
+            "powerMultiplier": 1.35
+          },
+          {
+            "practiceToNext": 27,
+            "powerMultiplier": 1.4
+          },
+          {
+            "practiceToNext": 0,
+            "powerMultiplier": 1.45
+          }
         ]
       },
       "networkId": 29,
@@ -630,7 +1183,6 @@
       "power": 0,
       "manaCost": 0,
       "cooldownSeconds": 16,
-      "castSeconds": 0.55,
       "range": 3,
       "radius": 0.3,
       "speed": 0,
@@ -642,6 +1194,17 @@
         "executeFactor": 2.3,
         "hitRecoverySeconds": 0.45,
         "missRecoverySeconds": 0.45
+      },
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "active": {
+          "seconds": 0.55,
+          "speed": "CastSpeed",
+          "movementMultiplier": 1,
+          "canTurn": false
+        },
+        "capabilities": "Weapon"
       }
     },
     {
@@ -696,7 +1259,6 @@
       "power": 0,
       "manaCost": 0,
       "cooldownSeconds": 12,
-      "castSeconds": 0.35,
       "range": 3,
       "radius": 0.3,
       "speed": 0,
@@ -708,10 +1270,26 @@
         "arcDegrees": 50,
         "hitRecoverySeconds": 0.25,
         "missRecoverySeconds": 0.4,
-        "knockupSeconds": 0.7,
-        "knockupHeight": 1,
-        "knockdownSeconds": 0.6,
         "minimumWindupSeconds": 0.25
+      },
+      "effects": [
+        {
+          "operation": "Control",
+          "trigger": "HealthDamage",
+          "target": "HitTarget",
+          "control": { "kind": "Knockup", "durationSeconds": 0.7, "height": 1, "downSeconds": 0.6 }
+        }
+      ],
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "active": {
+          "seconds": 0.35,
+          "speed": "CastSpeed",
+          "movementMultiplier": 1,
+          "canTurn": false
+        },
+        "capabilities": "Weapon"
       }
     }
   ],
@@ -777,15 +1355,16 @@
     {
       "id": "test_adventurer",
       "stats": {
-        "strength": 1,
-        "agility": 1,
-        "vitality": 1,
-        "intelligence": 1,
-        "dexterity": 1,
-        "luck": 1
+        "strength": 10,
+        "agility": 10,
+        "vitality": 10,
+        "intelligence": 10,
+        "dexterity": 10,
+        "luck": 10,
+        "wisdom": 10
       },
       "baseHealth": 100,
-      "baseMana": 50,
+      "baseMana": 60,
       "baseHealthRecovery": 1,
       "baseManaRecovery": 1,
       "weaponId": "training_sword",
@@ -807,7 +1386,8 @@
         "vitality": 5,
         "intelligence": 0,
         "dexterity": 5,
-        "luck": 0
+        "luck": 0,
+        "wisdom": 0
       },
       "baseHealth": 80,
       "baseMana": 20,
@@ -824,7 +1404,8 @@
         "vitality": 10,
         "intelligence": 5,
         "dexterity": 5,
-        "luck": 0
+        "luck": 0,
+        "wisdom": 0
       },
       "baseHealth": 220,
       "baseMana": 20,
@@ -843,7 +1424,8 @@
         "vitality": 0,
         "intelligence": 0,
         "dexterity": 0,
-        "luck": 0
+        "luck": 0,
+        "wisdom": 0
       },
       "baseHealth": 10000,
       "baseMana": 1,
@@ -857,7 +1439,7 @@
   ],
   "progression": {
     "levelCap": 30,
-    "initialStatPoints": 5,
+    "initialStatPoints": 18,
     "experiencePerLevel": 100,
     "statPointsPerLevel": 5,
     "discoveryExperience": 60,
@@ -1047,6 +1629,21 @@
     "listingLimit": 8,
     "refillSeconds": 600
   },
+  "effects": [
+    {
+      "id": "sword_rend_bleed",
+      "durationSeconds": 4,
+      "disposition": "Harmful",
+      "cleansable": true,
+      "tags": ["bleed"],
+      "periodic": {
+        "kind": "Damage",
+        "intervalSeconds": 1,
+        "damageFamily": "Physical",
+        "power": { "weaponScale": 0.15 }
+      }
+    }
+  ],
   "pvp": {
     "safeMinX": -12,
     "safeMaxX": -7,

@@ -147,7 +147,7 @@ public sealed class CombatSimulationTests
     public void WorldOwnershipAndAoiIncludeTrainingTargetWithoutMovementSnapshot()
     {
         var world = new ServerWorld(Options.Create(new MovementOptions()), Options.Create(new InterestOptions()),
-            catalog: ContentCatalogTests.Load(), combat: Options.Create(new CombatOptions { TargetX = -7, TargetZ = 1 }));
+            catalog: ContentCatalogTests.Load(), combat: Options.Create(new CombatOptions { TargetX = -7, TargetZ = 1 }), hitRoll: () => 0, criticalRoll: () => 1);
         var player = world.AddPlayer(42, new PlayerId(1));
         var view = new InterestView();
         world.UpdateInterest(42, view);
@@ -159,6 +159,96 @@ public sealed class CombatSimulationTests
         world.Simulate(0.05f);
         Assert.Equal(world.TrainingTargetId, Assert.Single(world.Combat!.Events).TargetId);
         Assert.Equal(position, player.Position);
+    }
+
+    [Fact]
+    public void ContinuousInputRepeatsOnTicksWithIndependentExecutionIdsAndSameManualPower()
+    {
+        var held = new Fixture(); var manual = new Fixture();
+        Assert.True(held.Combat.Queue(new(1), new(1, 0, Vector2.UnitY, BasicAttackMode.BeginContinuous), 0));
+        Assert.Empty(held.Combat.Events);
+        var executions = new HashSet<ulong>(); uint sequence = 1, manualSequence = 0;
+        var count = 0;
+        for (var step = 0; step < 80; step++)
+        {
+            if (step > 0 && step % 2 == 0)
+                Assert.True(held.Combat.Queue(new(1), new(++sequence, uint.MaxValue, Vector2.UnitY, BasicAttackMode.UpdateContinuous), held.Tick));
+            held.Step();
+            if (held.Combat.Events.Count == 0) { manual.Step(); continue; }
+            var hit = Assert.Single(held.Combat.Events);
+            Assert.Equal(1u, hit.Sequence); Assert.NotEqual(0ul, hit.ExecutionId); Assert.True(executions.Add(hit.ExecutionId));
+            Assert.True(manual.Combat.Queue(new(1), new(++manualSequence, 0, Vector2.UnitY), manual.Tick));
+            manual.Step();
+            Assert.Equal(Assert.Single(manual.Combat.Events).Damage, hit.Damage, 9);
+            Assert.Equal(Assert.Single(manual.Combat.Events).Critical, hit.Critical);
+            count++;
+        }
+        Assert.True(count >= 3);
+        Assert.Equal(Vector2.Zero, held.Combat.Get(new(1)).Position);
+    }
+
+    [Fact]
+    public void SameTickReleaseKeepsOneTapButStopsAllFutureRepetition()
+    {
+        var f = new Fixture();
+        Assert.True(f.Combat.Queue(new(1), new(1, 0, Vector2.UnitY, BasicAttackMode.BeginContinuous), 0));
+        Assert.True(f.Combat.Queue(new(1), new(2, 0, Vector2.UnitY, BasicAttackMode.EndContinuous), 0));
+        f.Step(); Assert.Single(f.Combat.Events); Assert.False(f.Combat.HasContinuousBasic(new(1)));
+        for (var i = 0; i < 60; i++) { f.Step(); Assert.Empty(f.Combat.Events); }
+        Assert.True(f.Combat.Queue(new(1), new(3, 0, Vector2.UnitY, BasicAttackMode.UpdateContinuous), f.Tick));
+        f.Step(); Assert.Empty(f.Combat.Events); Assert.False(f.Combat.HasContinuousBasic(new(1)));
+    }
+
+    [Fact]
+    public void ExpiredContinuousInputCannotBeRevivedByHeartbeatsOrReconnect()
+    {
+        var f = new Fixture();
+        Assert.True(f.Combat.Queue(new(1), new(1, 0, -Vector2.UnitY, BasicAttackMode.BeginContinuous), 0));
+        f.Step(); Assert.Single(f.Combat.Events);
+        for (var i = 0; i < 40; i++) { f.Step(); Assert.Empty(f.Combat.Events); }
+        Assert.False(f.Combat.HasContinuousBasic(new(1)));
+        Assert.True(f.Combat.Queue(new(1), new(2, 0, Vector2.UnitY, BasicAttackMode.UpdateContinuous), f.Tick));
+        f.Step(); Assert.Empty(f.Combat.Events);
+        Assert.True(f.Combat.Queue(new(1), new(3, 0, Vector2.UnitY, BasicAttackMode.BeginContinuous), f.Tick));
+        f.Step(); Assert.Single(f.Combat.Events);
+        f.Combat.ResetSession(new(1)); Assert.False(f.Combat.HasContinuousBasic(new(1)));
+        for (var i = 0; i < 25; i++) { f.Step(); Assert.Empty(f.Combat.Events); }
+    }
+
+    [Fact]
+    public void SuccessfulDefenseInterruptsHoldingAndUpdatesDoNotResumeIt()
+    {
+        var f = new Fixture();
+        Assert.True(f.Combat.Queue(new(1), new(1, 0, -Vector2.UnitY, BasicAttackMode.BeginContinuous), 0));
+        f.Step();
+        Assert.True(f.Combat.QueueDefense(new(1), new(1, DefenseAction.Block, Vector2.UnitY), f.Tick));
+        f.Step(); Assert.False(f.Combat.HasContinuousBasic(new(1)));
+        uint sequence = 1;
+        for (var i = 0; i < 45; i++)
+        {
+            Assert.True(f.Combat.Queue(new(1), new(++sequence, 0, Vector2.UnitY, BasicAttackMode.UpdateContinuous), f.Tick));
+            f.Step(); Assert.Empty(f.Combat.Events);
+        }
+    }
+
+    [Fact]
+    public void ContinuousDirectionIsManualAndHeartbeatFloodCannotSpeedAttacks()
+    {
+        var f = new Fixture();
+        Assert.True(f.Combat.Queue(new(1), new(1, 0, -Vector2.UnitY, BasicAttackMode.BeginContinuous), 0));
+        f.Step(); Assert.False(Assert.Single(f.Combat.Events).TargetId.IsValid);
+        uint sequence = 1; var hits = new List<AttackEvent>();
+        for (var i = 0; i < 40; i++)
+        {
+            Assert.True(f.Combat.Queue(new(1), new(++sequence, uint.MaxValue, Vector2.UnitY, BasicAttackMode.UpdateContinuous), f.Tick));
+            for (var flood = 0; flood < 4; flood++)
+                Assert.False(f.Combat.Queue(new(1), new(++sequence, uint.MaxValue, Vector2.UnitY, BasicAttackMode.UpdateContinuous), f.Tick));
+            f.Step(); hits.AddRange(f.Combat.Events);
+        }
+        Assert.NotEmpty(hits);
+        Assert.All(hits, hit => Assert.Equal(new NetworkEntityId(2), hit.TargetId));
+        for (var i = 1; i < hits.Count; i++)
+            Assert.True((hits[i].ServerTick - hits[i - 1].ServerTick) * .05 + .0001 >= f.Combat.Get(new(1)).AttackInterval);
     }
 
     private sealed class Fixture
@@ -176,7 +266,7 @@ public sealed class CombatSimulationTests
             var options = new NavigationOptions();
             if (wall) options.BlockedAreas.Add(new BlockedAreaOptions { X = 14, Z = 10, Width = 2, Height = 10 });
             var grid = options.CreateGrid(new MovementOptions().ToSettings());
-            Combat = new(catalog, Spatial, grid, new CombatOptions(), 20, 8, roll ?? (() => 1));
+            Combat = new(catalog, Spatial, grid, new CombatOptions(), 20, 8, roll ?? (() => 1), hitRoll: () => 0);
             var playerPosition = wall ? new Vector2(-1.5f, 0) : Vector2.Zero;
             var targetPosition = wall ? new Vector2(1.5f, 0) : new Vector2(0, 1);
             Combat.Add(new(1), playerPosition, CombatEntityKind.Player);

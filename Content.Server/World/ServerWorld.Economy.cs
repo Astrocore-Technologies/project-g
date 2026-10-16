@@ -33,7 +33,7 @@ public sealed partial class ServerWorld
             if(definition.Condition is not null && l.Item.Condition is null)throw new InvalidDataException("Escrow condition migration required.");
         }
     }
-    public bool CanViewMarket(int connection)=>HasEconomy && _playersByConnection.TryGetValue(connection,out var p) && Vector3.DistanceSquared(p.Foot, GroundFoot(_crafting!.StationPosition))<=_crafting.InteractionRange*_crafting.InteractionRange && Navigation.ClearAttack(p.Foot, GroundFoot(_crafting.StationPosition));
+    public bool CanViewMarket(int connection)=>HasEconomy && _playersByConnection.TryGetValue(connection,out var p) && Combat?.InCombat(p.EntityId)!=true && Vector3.DistanceSquared(p.Foot, GroundFoot(_crafting!.StationPosition))<=_crafting.InteractionRange*_crafting.InteractionRange && Navigation.ClearAttack(p.Foot, GroundFoot(_crafting.StationPosition));
     public MarketState MarketState(int connection,bool includeListings=true)
     {
         var id=_playersByConnection[connection].EntityId;var owner=EconomyOwner(connection);var market=_nodeState.Market??SavedMarket.Empty;
@@ -71,7 +71,7 @@ public sealed partial class ServerWorld
                 var actor=Combat!.Get(id);
                 if(_nodeAudit.Count>=128)outcome=CraftOutcome.RateLimited;
                 else if(actor.Health<=0)outcome=CraftOutcome.InvalidState;
-                else if(actor.IsCasting||player.Motion.IsMoving||player.Motion.IsDashing||Abilities!.HasActiveEffects(id))outcome=CraftOutcome.Busy;
+                else if(Combat.InCombat(id)||actor.IsCasting||player.Motion.IsMoving||player.Motion.IsDashing||Abilities!.HasActiveEffects(id))outcome=CraftOutcome.Busy;
                 else if(Vector3.DistanceSquared(player.Foot, GroundFoot(_crafting!.StationPosition))>_crafting.InteractionRange*_crafting.InteractionRange)outcome=CraftOutcome.TooFar;
                 else if(!Navigation.ClearAttack(player.Foot, GroundFoot(_crafting.StationPosition)))outcome=CraftOutcome.Blocked;
                 else

@@ -10,7 +10,7 @@ using Xunit;
 namespace Content.Tests.Server;
 public sealed class PvpTests
 {
-    internal static ServerWorld World(ContentCatalog? catalog=null)=>new(Options.Create(new MovementOptions()),Options.Create(new InterestOptions()),Options.Create(new NavigationOptions{BlockedAreas=[new(){X=14,Z=10,Width=2,Height=10}]}),catalog??ContentCatalogTests.Load(),inventory:Options.Create(new InventoryOptions{Enabled=true}),groundItems:Options.Create(new GroundItemOptions{Enabled=true,Seeds=[]}),npc:Options.Create(new NpcOptions{Enabled=true,X=13,Z=13}),worldStory:Options.Create(new WorldStoryOptions{Enabled=true}),crafting:Options.Create(new CraftingOptions{Enabled=true}),echoes:Options.Create(new EchoOptions{Enabled=true}));
+    internal static ServerWorld World(ContentCatalog? catalog=null)=>new(Options.Create(new MovementOptions()),Options.Create(new InterestOptions()),Options.Create(new NavigationOptions{BlockedAreas=[new(){X=14,Z=10,Width=2,Height=10}]}),catalog??ContentCatalogTests.Load(),inventory:Options.Create(new InventoryOptions{Enabled=true}),groundItems:Options.Create(new GroundItemOptions{Enabled=true,Seeds=[]}),npc:Options.Create(new NpcOptions{Enabled=true,X=13,Z=13}),worldStory:Options.Create(new WorldStoryOptions{Enabled=true}),crafting:Options.Create(new CraftingOptions{Enabled=true}),echoes:Options.Create(new EchoOptions{Enabled=true}), hitRoll: () => 0, criticalRoll: () => 1);
     internal static CharacterState Initial(ServerWorld w,float x=-5,float z=-5,bool bound=false,bool equipped=true)
     {
         var s=w.CreateInitialCharacter();return s with {X=x,Z=z,Health=20,Progression=s.Progression! with {Experience=20},Inventory=new(){Items=[new(Guid.NewGuid(),"crafted_crossing_blade",equipped?EquipmentSlot.Weapon:EquipmentSlot.None){Bound=bound,Enhancement=2,Condition=new(){Current=60,Maximum=70,Revision=7}}]}};
@@ -35,7 +35,9 @@ public sealed class PvpTests
         Assert.True(w.Combat.ApplyAbilityDamage(a.EntityId,1,b.EntityId)>0);Assert.Equal(0,w.PrivatePvp(b.EntityId).Pk);Kill(w,a.EntityId,b.EntityId);
         var death=w.PrivatePvp(b.EntityId);Assert.True(death.Dead);Assert.True(death.PvpDeath);Assert.Equal(2,death.ExperienceLost);Assert.Equal(-110,w.PrivatePvp(a.EntityId).Reputation);Assert.Equal(1,w.PrivatePvp(a.EntityId).Pk);Assert.Equal(1,calls);Assert.Empty(w.CaptureCharacter(43).Inventory!.Items);
         var loot=Assert.Single(w.CaptureWorldNode().DeathLoot!);Assert.Equal(before.Inventory!.Items[0] with {EquippedSlot=EquipmentSlot.None},loot.Item);
-        Assert.Equal(PvpOutcome.NotReady,Command(w,43,1,PvpMode.Peaceful,PvpAction.Respawn,death.DeathId));now+=60000;Assert.Equal(PvpOutcome.Accepted,Command(w,43,2,PvpMode.Peaceful,PvpAction.Respawn,death.DeathId));Assert.False(w.PrivatePvp(b.EntityId).Dead);Assert.Equal(new Vector2(-9,0),b.Position);Assert.Equal(w.Combat.Get(b.EntityId).Stats.MaxHealth,w.Combat.Get(b.EntityId).Health);
+        Assert.Equal(PvpOutcome.NotReady,Command(w,43,1,PvpMode.Peaceful,PvpAction.Respawn,death.DeathId));now+=60000;Assert.Equal(PvpOutcome.Accepted,Command(w,43,2,PvpMode.Peaceful,PvpAction.Respawn,death.DeathId));Assert.False(w.PrivatePvp(b.EntityId).Dead);Assert.Equal(new Vector2(-9,0),b.Position);Assert.Equal(w.Combat.Get(b.EntityId).Stats.MaxHealth*.5,w.Combat.Get(b.EntityId).Health);
+        Assert.Equal(w.Abilities!.Loadout(b.EntityId,w.Tick).MaxMana*.5,w.Abilities.Mana(b.EntityId));
+        Assert.Equal(w.Combat.DefenseState(b.EntityId,w.Tick).MaxStamina,w.Combat.DefenseState(b.EntityId,w.Tick).Stamina);
         Assert.Equal(PvpOutcome.AlreadyProcessed,Command(w,43,2,PvpMode.Peaceful,PvpAction.Respawn,death.DeathId));Assert.Equal(1,calls);Assert.Equal(18,w.CaptureCharacter(43).Progression!.Experience);
     }
     [Fact]public void PvpPickupRequiresTagFiveSecondsAndRaceHasExactlyOneOwner()

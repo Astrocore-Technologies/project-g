@@ -42,6 +42,8 @@ public partial class WorldController : Node3D
     private ProjectG.Trading.TradePresentation? _trade;
     private ProjectG.Economy.EconomyPresentation? _economy;
     private ProjectG.Pvp.PvpPresentation? _pvp;
+    private LifePresentation? _lifePresentation;
+    private CombatJournalPresentation? _combatJournal;
     private ProjectG.Social.SocialPresentation? _social;
     private readonly Dictionary<NetworkEntityId,Label3D> _pvpLabels=new();
     private Node3D? _safeVisual;
@@ -63,6 +65,7 @@ public partial class WorldController : Node3D
         _network.AbilityResultReceived += OnAbilityResult;
         _network.AbilityEffectReceived += OnAbilityEffect;
         _network.AbilityHitReceived += OnAbilityHit;
+        _network.CombatFeedbackReceived+=OnCombatFeedback;
         _network.NpcWindupReceived += OnNpcWindup;
         _network.NpcAreaReceived += OnNpcArea;
         _network.InventoryReceived += OnInventory;
@@ -103,6 +106,7 @@ public partial class WorldController : Node3D
         _network.AbilityResultReceived -= OnAbilityResult;
         _network.AbilityEffectReceived -= OnAbilityEffect;
         _network.AbilityHitReceived -= OnAbilityHit;
+        _network.CombatFeedbackReceived-=OnCombatFeedback;
         _network.NpcWindupReceived -= OnNpcWindup;
         _network.NpcAreaReceived -= OnNpcArea;
         _network.InventoryReceived -= OnInventory;
@@ -126,7 +130,7 @@ public partial class WorldController : Node3D
     private void StopForMenu()
     {
         if(!_players.TryGetValue(_localEntityId,out var player)) return;
-        player.StopMovement(); player.GetNodeOrNull<CombatPresentation>("CombatPresentation")?.CancelAutoAttack();
+        player.StopMovement(); player.GetNodeOrNull<CombatPresentation>("CombatPresentation")?.CancelBasicAttack();
     }
     private void OnNavigationReceived(NavigationGrid grid)
     {
@@ -168,6 +172,8 @@ public partial class WorldController : Node3D
             // NC: preview the same modular appearance used by the world avatar.
             _progression.SetPreviewVisual(player.AppearanceScene);
             _hud = new(); AddChild(_hud); _hud.Initialize(_localEntityId,()=>_progression?.Toggle());
+            _lifePresentation=new();AddChild(_lifePresentation);_lifePresentation.Initialize(_network,_localEntityId);
+            _combatJournal=new();AddChild(_combatJournal);_combatJournal.Initialize(_network,_localEntityId);
             _quests=new(); AddChild(_quests); _quests.Initialize(_network,player);
             var defense = new DefensePresentation(); player.AddChild(defense); defense.Initialize(player,_network,_hud);
             _profession = new(); AddChild(_profession); _profession.Initialize(_network);
@@ -177,6 +183,8 @@ public partial class WorldController : Node3D
             ProjectG.UI.GameUi.RegisterRoute("inventory",()=>_inventory?.Toggle());
             ProjectG.UI.GameUi.RegisterRoute("echo",()=>_echoControls?.Toggle());
             ProjectG.UI.GameUi.RegisterRoute("journal",()=>_quests?.OpenJournal());
+            ProjectG.UI.GameUi.RegisterRoute("combat",()=>_combatJournal?.Toggle());
+            ProjectG.UI.GameUi.RegisterRoute("death-log",()=>_combatJournal?.OpenLatestDeath());
             ProjectG.UI.GameUi.RegisterRoute("profession",()=>_profession?.Toggle());
             if(_starter is not null) { ProjectG.UI.GameUi.RegisterRoute("map",_starter.ToggleMap); ProjectG.UI.GameUi.RegisterRoute("guide",_starter.ToggleGuide); }
             if(_crafting is not null) ProjectG.UI.GameUi.RegisterRoute("craft",_crafting.Toggle);
@@ -308,6 +316,9 @@ public partial class WorldController : Node3D
             ApplyTargetHit(value.TargetId,Vector3.Forward,value.Guard);
     }
 
+    private void OnCombatFeedback(CombatFeedback value)
+    {if(_combat.TryGetValue(value.TargetId,out var target))target.ApplyFeedback(value);}
+
     private void ApplyTargetHit(NetworkEntityId id,Vector3 direction,GuardImpact guard)
     {
         if(!_targets.TryGetValue(id,out var target)) return;
@@ -351,13 +362,16 @@ public partial class WorldController : Node3D
     {
         _abilities?.Confirm(value);
         if (_players.TryGetValue(value.ActorId, out var animated) && animated.IsAlive)
-            animated.SwordAnimation.ApplyAbility(value);
+        {
+            if(value.Phase==AbilityPhase.Sustaining)animated.SwordAnimation.ReleaseAbility(value.Sequence);
+            else animated.SwordAnimation.ApplyAbility(value);
+        }
         if (value.Phase == AbilityPhase.Finished)
         {
             if (_effects.Remove(value.EffectId, out var old) && GodotObject.IsInstanceValid(old)) old.QueueFree();
             return;
         }
-        if (!_players.ContainsKey(value.ActorId)) return;
+        if (!_players.TryGetValue(value.ActorId,out var caster) && value.Phase!=AbilityPhase.Flying) return;
         if (!_effects.TryGetValue(value.EffectId, out var visual) || !GodotObject.IsInstanceValid(visual))
         {
             // Bounded presentation cache; reliable lifecycle plus TTL provides cleanup.
@@ -365,7 +379,7 @@ public partial class WorldController : Node3D
             visual = new AbilityEffectVisual(); AddChild(visual);
             _effects[value.EffectId] = visual;
         }
-        visual.Caster=_players[value.ActorId]; visual.Apply(value);
+        visual.Caster=caster; visual.Apply(value);
     }
 
     private void OnSnapshotReceived(WorldSnapshot snapshot)
@@ -412,6 +426,8 @@ public partial class WorldController : Node3D
         DetachPresentation(_inventory); _inventory = null;
         DetachPresentation(_progression); _progression = null;
         DetachPresentation(_hud); _hud = null;
+        DetachPresentation(_lifePresentation);_lifePresentation=null;
+        DetachPresentation(_combatJournal);_combatJournal=null;
         DetachPresentation(_profession); _profession = null;
         DetachPresentation(_worldNode); _worldNode=null;
         DetachPresentation(_starter); _starter=null;

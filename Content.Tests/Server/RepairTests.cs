@@ -7,6 +7,21 @@ using Xunit;
 namespace Content.Tests.Server;
 public sealed class RepairTests
 {
+    [Fact]public void ContinuousBasicUsesExecutionIdsForWearAndAnOldHitCannotWearAgain()
+    {
+        var world=CraftingTests.World();var player=world.AddPlayer(42,new(1),Initial(world,80) with {X=-7,Z=2});
+        Assert.True(world.TryQueueAttack(42,new(1,0,Vector2.UnitY,BasicAttackMode.BeginContinuous)));
+        var hits=new List<AttackEvent>();uint sequence=2;
+        for(var i=0;i<100 && hits.Count<3;i++)
+        {
+            world.Simulate(.05f);hits.AddRange(world.Combat!.Events.Where(e=>e.AttackerId==player.EntityId && e.Damage>0));
+            Assert.True(world.TryQueueAttack(42,new(sequence++,world.Tick,Vector2.UnitY,BasicAttackMode.UpdateContinuous)));
+        }
+        Assert.Equal(3,hits.Count);Assert.All(hits,e=>Assert.Equal(1u,e.Sequence));Assert.Equal(3,hits.Select(e=>e.ExecutionId).Distinct().Count());
+        Assert.Equal(77,world.CaptureCharacter(42).Inventory!.Items.Last().Condition!.Current);
+        world.Inventory!.Wear(hits[0]);Assert.Equal(77,world.CaptureCharacter(42).Inventory!.Items.Last().Condition!.Current);
+    }
+
     internal static CharacterState Initial(ServerWorld world,int current=80,int maximum=100,int ore=5)
     {
         var initial=CraftingTests.Materials(world,new SavedMaterial(2,ore));
@@ -26,20 +41,26 @@ public sealed class RepairTests
         w.RemovePlayer(42); w.AddPlayer(42,new(1),Initial(w,23,70)); Assert.Equal(23,w.CaptureCharacter(42).Inventory!.Items.Last().Condition!.Current); Assert.Equal(70,w.CaptureCharacter(42).Inventory!.Items.Last().Condition!.Maximum);
         var json=saved.Inventory.Serialize().Replace("\"Current\":100","\"Current\":101"); Assert.Throws<InvalidDataException>(()=>SavedInventory.Deserialize(json));
     }
-    [Fact] public void AuthoritativeHitWearsOnceAndZeroRejectsNextBasicAttackWithoutDeletingItem()
+    [Fact] public void AuthoritativeHitWearsOnceAndBrokenWeaponUsesUnarmedBasicsWithoutDeletingItem()
     {
         var w=CraftingTests.World(); var p=w.AddPlayer(42,new(1),Initial(w,1) with { X=-7,Z=2 });
         Assert.True(w.TryQueueAttack(42,new(1,0,Vector2.UnitY))); w.Simulate(0.05f); var hit=Assert.Single(w.Combat!.Events,e=>e.AttackerId==p.EntityId); Assert.True(hit.Damage>0);
         var state=w.CaptureCharacter(42); var blade=state.Inventory!.Items.Last(); Assert.Equal(0,blade.Condition!.Current); Assert.Equal(2UL,blade.Condition.Revision);
         w.Inventory!.Wear(hit); Assert.Equal(2UL,w.CaptureCharacter(42).Inventory!.Items.Last().Condition!.Revision);
-        Assert.True(w.TryQueueAttack(42,new(2,0,Vector2.UnitY))); w.Simulate(0.05f); Assert.Equal(AttackOutcome.InvalidState,w.Combat.Results[p.EntityId].Outcome); Assert.DoesNotContain(w.Combat.Events,e=>e.AttackerId==p.EntityId); Assert.Equal(blade.InstanceId,w.CaptureCharacter(42).Inventory!.Items.Last().InstanceId);
+        Assert.Equal("unarmed",w.Combat.Get(p.EntityId).Weapon.Id);
+        Assert.True(w.TryQueueAttack(42,new(2,0,Vector2.UnitY))); w.Simulate(0.05f); Assert.Equal(AttackOutcome.Cooldown,w.Combat.Results[p.EntityId].Outcome);
+        for(var i=0;i<25;i++)w.Simulate(.05f);
+        Assert.True(w.TryQueueAttack(42,new(3,0,Vector2.UnitY)));w.Simulate(.05f);Assert.Equal(AttackOutcome.Accepted,w.Combat.Results[p.EntityId].Outcome);
+        Assert.Equal(blade.InstanceId,w.CaptureCharacter(42).Inventory!.Items.Last().InstanceId);Assert.Equal(2UL,w.CaptureCharacter(42).Inventory!.Items.Last().Condition!.Revision);
     }
-    [Fact] public void SameTickGearSwitchWearsWeaponUsedForAttackNotNewEquipment()
+    [Fact] public void HitStartsCombatBeforeSameTickGearSwitchAndWearsOnlyTheUsedWeapon()
     {
-        var w=CraftingTests.World(); var p=w.AddPlayer(42,new(1),Initial(w,80) with { X=-7,Z=2 }); var sword=w.Inventory!.State(p.EntityId,w.Tick).Items.First();
+        var w=CraftingTests.World();long now=100000;w.PvpClock=()=>now; var p=w.AddPlayer(42,new(1),Initial(w,80) with { X=-7,Z=2 }); var sword=w.Inventory!.State(p.EntityId,w.Tick).Items.First();
         Assert.True(w.TryQueueAttack(42,new(1,0,Vector2.UnitY))); Assert.True(w.TryQueueInventory(42,new(1,InventoryAction.Equip,sword.Handle))); w.Simulate(0.05f);
-        var items=w.CaptureCharacter(42).Inventory!.Items; Assert.Equal(79,items.Last().Condition!.Current); Assert.Equal(EquipmentSlot.None,items.Last().EquippedSlot); Assert.Equal(EquipmentSlot.Weapon,items.First().EquippedSlot);
+        var items=w.CaptureCharacter(42).Inventory!.Items; Assert.Equal(79,items.Last().Condition!.Current); Assert.Equal(EquipmentSlot.Weapon,items.Last().EquippedSlot);Assert.Equal(InventoryOutcome.Busy,w.Inventory.Results[p.EntityId].Outcome);
         w.Combat!.ClearResults(); Assert.True(w.TryQueueAttack(42,new(2,0,-Vector2.UnitY))); ProfessionTests.Step(w,80); Assert.Equal(79,w.CaptureCharacter(42).Inventory!.Items.Last().Condition!.Current);
+        now+=30001;Assert.True(w.TryQueueInventory(42,new(2,InventoryAction.Equip,sword.Handle)));w.Simulate(.05f);
+        items=w.CaptureCharacter(42).Inventory!.Items;Assert.Equal(79,items.Last().Condition!.Current);Assert.Equal(EquipmentSlot.None,items.Last().EquippedSlot);Assert.Equal(EquipmentSlot.Weapon,items.First().EquippedSlot);
     }
     [Fact] public void RepairQuoteIsFreeConfirmPreservesMaximumResourcesAndReplayDoesNotCharge()
     {

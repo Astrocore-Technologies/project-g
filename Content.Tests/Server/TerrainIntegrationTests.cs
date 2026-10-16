@@ -40,6 +40,7 @@ public sealed class TerrainIntegrationTests
     {
         var world = Worlds().Worlds.Single(w=>w.RegionId==region);
         world.Combat!.Get(world.Npc!.Id).Health=0;
+        world.Combat.RestoreLife(world.Npc.Id,new(1,1,true,0,0),0);
         var player = world.AddPlayer(1,new(1),world.CreateInitialCharacter());
         var client = new NavigationMover(world.Navigation,world.CreateSpawn(player).Movement,new NavigationPathfinder(world.Navigation),player.Position,player.Height);
         var goal = Located(world.Navigation,new(x,y,z));
@@ -81,12 +82,12 @@ public sealed class TerrainIntegrationTests
         map.Seal(); var grid=new NavigationGrid(new(new(-15,-15),1,.45f,30,30,new byte[900]));grid.AttachSurface(map);
         var json=JsonNode.Parse(File.ReadAllText(ContentCatalogTests.DataPath))!;json["weapons"]![0]!["range"]=range;
         var catalog=ContentCatalog.Parse(Encoding.UTF8.GetBytes(json.ToJsonString()));var spatial=new SpatialIndex(8);
-        var combat=new CombatSimulation(catalog,spatial,grid,new CombatOptions(),20,8,()=>1);
+        var combat=new CombatSimulation(catalog,spatial,grid,new CombatOptions(),20,8,()=>1, hitRoll: () => 0);
         combat.Add(new(1),Vector2.Zero,CombatEntityKind.Player,height:sourceHeight);
         combat.Add(new(2),new(horizontal,0),CombatEntityKind.TrainingTarget,height:targetHeight);
         spatial.Add(new(1),Vector2.Zero);spatial.Add(new(2),new(horizontal,0));
         var before=combat.Get(new(2)).Health;
-        Assert.True(combat.Queue(new(1),new(1,0,Vector2.UnitX,new(2)),0));combat.Simulate(.05f,1);
+        Assert.True(combat.Queue(new(1),new(1,0,Vector2.UnitX),0));combat.Simulate(.05f,1);
         Assert.Equal(hits,combat.Get(new(2)).Health<before);
     }
 
@@ -100,7 +101,7 @@ public sealed class TerrainIntegrationTests
             Polygons=[[0,1,2,3],[4,5,6,7]] };
         map.Seal();var grid=new NavigationGrid(new(new(-15,-15),1,.45f,30,30,new byte[900]));grid.AttachSurface(map);
         var catalog=ContentCatalogTests.Load();var spatial=new SpatialIndex(8);var options=new CombatOptions();
-        var combat=new CombatSimulation(catalog,spatial,grid,options,20,8,()=>1);
+        var combat=new CombatSimulation(catalog,spatial,grid,options,20,8,()=>1, hitRoll: () => 0);
         combat.Add(new(1),Vector2.Zero,CombatEntityKind.Player);
         combat.Add(new(2),new(6,0),CombatEntityKind.TrainingTarget,height:8);
         spatial.Add(new(1),Vector2.Zero);spatial.Add(new(2),new(6,0));
@@ -120,7 +121,7 @@ public sealed class TerrainIntegrationTests
     [Fact]
     public void ActualAreaAndProjectileCannotDamageAcrossBridgeDeckButAreaWorksOnSameFloor()
     {
-        var world=Worlds().Worlds.Single(w=>w.RegionId=="terrain_test");world.Combat!.Get(world.Npc!.Id).Health=0;
+        var world=Worlds().Worlds.Single(w=>w.RegionId=="terrain_test");world.Combat!.Get(world.Npc!.Id).Health=0;world.Combat.RestoreLife(world.Npc.Id,new(1,1,true,0,0),0);
         var foot=Located(world.Navigation,new(6,0,-6));
         var player=world.AddPlayer(1,new(1),world.CreateInitialCharacter() with { X=6,Z=-6,Surface=new(1,foot.Y,world.Navigation.SurfaceHash) });
         var target=world.Combat.Get(world.TrainingTargetId);var before=target.Health;
@@ -200,6 +201,7 @@ public sealed class TerrainIntegrationTests
     {
         var worlds=Worlds();var surface=worlds.Worlds.Single(w=>w.RegionId=="terrain_test");var dungeon=worlds.Worlds.Single(w=>w.RegionId=="dungeon_test");
         surface.Combat!.Get(surface.Npc!.Id).Health=0; dungeon.Combat!.Get(dungeon.Npc!.Id).Health=0;
+        surface.Combat.RestoreLife(surface.Npc.Id,new(1,1,true,0,0),0);dungeon.Combat.RestoreLife(dungeon.Npc.Id,new(1,1,true,0,0),0);
         var store=new SqliteCharacterStore();await store.InitializeAsync(default);
         async Task<string> Seed()
         {

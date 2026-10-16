@@ -19,7 +19,7 @@ public sealed class CombatControlIntegrationTests
             AgentHeight=1.8f,Vertices=[new(-10,0,-10),new(10,0,-10),new(10,0,10),new(-10,0,10)],
             Polygons=[[0,1,2,3]],Occluders=[new(new(0,2.3f,0),new(20,.2f,20),new(0,0,0))] };
         map.Seal(); var grid=new NavigationGrid(new(new(-16,-16),1,.45f,32,32,new byte[1024]));grid.AttachSurface(map);
-        var combat=new CombatSimulation(ContentCatalogTests.Load(),new SpatialIndex(8),grid,new CombatOptions(),20,8);
+        var combat=new CombatSimulation(ContentCatalogTests.Load(),new SpatialIndex(8),grid,new CombatOptions(),20,8, hitRoll: () => 0);
         combat.Add(new(1),Vector2.Zero,CombatEntityKind.Player);
         Assert.True(combat.Knockup(new(1),.7,1,.6));
         for(uint tick=1;tick<=7;tick++)combat.Simulate(.05f,tick);
@@ -52,7 +52,7 @@ public sealed class CombatControlIntegrationTests
         Assert.Equal(player.Height,snapshot.Height); Assert.True(world.Navigation.IsOnSurface(player.Foot));
         var saved=world.CaptureCharacter(42); Assert.Equal(player.Height,saved.Surface!.Height);
         world.RemovePlayer(42); var restored=world.AddPlayer(42,new(1),saved);
-        Assert.Equal(CombatControlPhase.KnockedDown,world.Combat.Get(restored.EntityId).Control);
+        Assert.Equal(CombatControlPhase.None,world.Combat.Get(restored.EntityId).Control); // D043: restart finishes an airborne movement.
         Assert.Equal(anchor,restored.Foot);
     }
     [Fact]

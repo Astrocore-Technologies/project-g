@@ -7,24 +7,25 @@ public static partial class NetworkProtocol
 {
     public static NetDataWriter Write(AttackCommand message)
     {
-        if (message.Sequence == 0 || !BasicAttackShape.IsValidDirection(message.Direction))
+        if (message.Sequence == 0 || !BasicAttackShape.IsValidDirection(message.Direction) || !Enum.IsDefined(message.Mode))
             throw new ArgumentException("Invalid attack intention.");
         var writer = CreateWriter(NetworkMessageType.AttackCommand);
         writer.Put(message.Sequence);
         writer.Put(message.ClientTick);
         WriteVector2(writer, message.Direction);
-        writer.Put(message.TargetId.Value);
+        writer.Put((byte)message.Mode);
         return writer;
     }
 
     public static bool TryReadAttackCommand(NetDataReader reader, out AttackCommand message)
     {
         message = default;
-        if (reader.AvailableBytes != 24 || !reader.TryGetUInt(out var sequence) || sequence == 0 ||
+        if (reader.AvailableBytes != 17 || !reader.TryGetUInt(out var sequence) || sequence == 0 ||
             !reader.TryGetUInt(out var tick) || !TryReadVector2(reader, out var direction) ||
-            !BasicAttackShape.IsValidDirection(direction) || !reader.TryGetULong(out var target))
+            !BasicAttackShape.IsValidDirection(direction) || !reader.TryGetByte(out var mode) ||
+            !Enum.IsDefined((BasicAttackMode)mode))
             return false;
-        message = new(sequence, tick, direction,new(target));
+        message = new(sequence, tick, direction, (BasicAttackMode)mode);
         return true;
     }
 
@@ -66,21 +67,24 @@ public static partial class NetworkProtocol
         writer.Put(message.TargetHealth);
         writer.Put(message.Critical);
         writer.Put((byte)message.Guard);
+        writer.Put(message.ExecutionId);
+        writer.Put(message.Evaded);
         return writer;
     }
 
     public static bool TryReadAttackEvent(NetDataReader reader, out AttackEvent message)
     {
         message = default;
-        if (reader.AvailableBytes != 62 || !reader.TryGetULong(out var actor) ||
+        if (reader.AvailableBytes != 71 || !reader.TryGetULong(out var actor) ||
             !reader.TryGetUInt(out var sequence) || !reader.TryGetUInt(out var tick) ||
             !TryReadVector2(reader, out var origin) || !TryReadVector2(reader, out var direction) ||
             !reader.TryGetFloat(out var range) || !reader.TryGetULong(out var target) ||
             !reader.TryGetDouble(out var damage) || !reader.TryGetDouble(out var health) ||
-            !reader.TryGetByte(out var critical) || critical > 1 || !reader.TryGetByte(out var guard) || !Enum.IsDefined((GuardImpact)guard))
+            !reader.TryGetByte(out var critical) || critical > 1 || !reader.TryGetByte(out var guard) || !Enum.IsDefined((GuardImpact)guard) ||
+            !reader.TryGetULong(out var execution) || execution == 0 || !reader.TryGetByte(out var evaded) || evaded > 1)
             return false;
         var value = new AttackEvent(new(actor), sequence, tick, origin, direction,
-            range, new(target), damage, health, critical == 1,(GuardImpact)guard);
+            range, new(target), damage, health, critical == 1,(GuardImpact)guard, execution, evaded == 1);
         if (!ValidAttackEvent(value))
             return false;
         message = value;
@@ -121,11 +125,12 @@ public static partial class NetworkProtocol
         return true;
     }
 
-    private static bool ValidAttackEvent(AttackEvent value) => value.AttackerId.IsValid && value.Sequence != 0 && Enum.IsDefined(value.Guard) &&
+    private static bool ValidAttackEvent(AttackEvent value) => value.AttackerId.IsValid && value.Sequence != 0 && value.ExecutionId != 0 && Enum.IsDefined(value.Guard) &&
         float.IsFinite(value.Origin.X) && float.IsFinite(value.Origin.Y) &&
         BasicAttackShape.IsValidDirection(value.Direction) && float.IsFinite(value.Range) && value.Range > 0 &&
         double.IsFinite(value.Damage) && value.Damage >= 0 && double.IsFinite(value.TargetHealth) && value.TargetHealth >= 0 &&
-        (value.TargetId.IsValid || (value.Damage == 0 && value.TargetHealth == 0 && !value.Critical));
+        (value.TargetId.IsValid || (value.Damage == 0 && value.TargetHealth == 0 && !value.Critical)) &&
+        (!value.Evaded || value.TargetId.IsValid && value.Damage == 0 && !value.Critical && value.Guard == GuardImpact.None);
 
     private static bool ValidCombatState(CombatState value) => value.EntityId.IsValid && Enum.IsDefined(value.Kind) &&
         float.IsFinite(value.Position.X) && float.IsFinite(value.Position.Y) &&

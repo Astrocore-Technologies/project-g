@@ -5,6 +5,13 @@ namespace Content.Server.Stats;
 /// <summary>Pure authoritative calculations: no RNG, transport, Godot or per-tick allocations.</summary>
 public sealed class StatCalculator
 {
+    public static double CooldownDuration(double seconds,DerivedStats stats)
+    {
+        RequireNonNegative(seconds);
+        if(!double.IsFinite(stats.CooldownReduction)) throw new ArgumentException("Cooldown reduction must be finite.");
+        return seconds*(1-Math.Clamp(stats.CooldownReduction,0,1));
+    }
+
     private readonly StatBalance _balance;
 
     public StatCalculator(StatBalance balance)
@@ -35,13 +42,16 @@ public sealed class StatCalculator
             StatMath.PositiveScale(_balance.RangedWeapon.Evaluate(stats)),
             _balance.PhysicalDefense.Evaluate(stats), _balance.MagicDefense.Evaluate(stats),
             StatMath.ScalePositive(baseHealth, _balance.Health.Evaluate(stats)),
-            StatMath.ScalePositive(baseMana, _balance.Mana.Evaluate(stats)),
+            StatMath.Add(baseMana, _balance.Mana.Evaluate(stats)),
             Recovery(baseHealthRecovery, _balance.HealthRecovery.Evaluate(stats)),
             Recovery(baseManaRecovery, _balance.ManaRecovery.Evaluate(stats)),
             StatMath.PositiveScale(_balance.HealthItem.Evaluate(stats)),
             StatMath.PositiveScale(_balance.ManaItem.Evaluate(stats)),
             StatMath.PositiveScale(_balance.AttackSpeed.Evaluate(stats)),
-            StatMath.PositiveScale(_balance.CastSpeed.Evaluate(stats)), critical, _balance.BaseBlockDamage);
+            StatMath.PositiveScale(_balance.CastSpeed.Evaluate(stats)), critical, _balance.BaseBlockDamage,
+            _balance.Accuracy.Evaluate(stats), _balance.Evasion.Evaluate(stats),
+            StatMath.Add(_balance.BaseCriticalDamage, _balance.CriticalDamage.Evaluate(stats)),
+            StatMath.Add(_balance.BaseBlockStrength, _balance.BlockStrength.Evaluate(stats)));
         return modifiers?.Apply(result) ?? result;
     }
 
@@ -67,6 +77,18 @@ public sealed class StatCalculator
 
     /// <summary>Raw crit stat can be signed; a probability is necessarily in [0, 1].</summary>
     public static double CriticalProbability(DerivedStats stats) => Math.Clamp(stats.CriticalChance, 0, 1);
+
+    /// <summary>Approved GDD 01 accuracy curve. Geometry must succeed before the server rolls it.</summary>
+    public static double HitProbability(double accuracy, double evasion)
+    {
+        if (!double.IsFinite(accuracy) || !double.IsFinite(evasion))
+            throw new ArgumentException("Accuracy and evasion must be finite.");
+        // Divide first to avoid overflow at opposite finite extremes; stable logistic in either tail.
+        var logOdds = Math.Log(19) + (accuracy / 100 - evasion / 100);
+        if (logOdds >= 0) return 1 / (1 + Math.Exp(-logOdds));
+        var odds = Math.Exp(logOdds);
+        return odds / (1 + odds);
+    }
 
     public double ApplyDefense(double damage, double defense)
     {

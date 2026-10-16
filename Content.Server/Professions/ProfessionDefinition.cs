@@ -3,6 +3,7 @@ namespace Content.Server.Professions;
 public sealed record ProfessionDefinition
 {
     public bool RequiresTrainer { get; init; }
+    public bool AllowsUnarmedBlock { get; init; }
     public string[] AdditionalSkills { get; init; } = [];
     [System.Text.Json.Serialization.JsonIgnore]
     public IEnumerable<string> AllSkills => new[] { SkillId }.Concat(AdditionalSkills);

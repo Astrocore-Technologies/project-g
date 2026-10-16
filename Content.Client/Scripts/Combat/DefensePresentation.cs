@@ -14,6 +14,7 @@ public partial class DefensePresentation : Node
     private PlayerHud _hud = null!;
     private uint _sequence;
     private bool _held;
+    private bool _blockDenied;
     private bool _quickHeld;
     private readonly AbilityAreaVisual _quickArea = new();
     private readonly Label3D _quickLabel = new() { Position=new(0,2.8f,0), Billboard=BaseMaterial3D.BillboardModeEnum.Enabled };
@@ -32,7 +33,7 @@ public partial class DefensePresentation : Node
         _player=player; _network=network; _hud=hud;
         _focusWindow=GetWindow(); _focusWindow.FocusExited+=CancelQuick;
         AddChild(_quickArea); player.AddChild(_quickLabel);
-        _guard=new MeshInstance3D { Mesh=CombatPresentation.BuildCone(1.1f,MathF.PI/2),MaterialOverride=_material,Visible=false,Position=new(0,-.8f,0) };
+        _guard=new MeshInstance3D { Mesh=CombatPresentation.BuildCone(1.1f,MathF.PI/3),MaterialOverride=_material,Visible=false,Position=new(0,-.8f,0) };
         player.AddChild(_guard);
         network.DefenseReceived+=Apply;
         if (network.LatestDefense is { } state) Apply(state);
@@ -42,6 +43,9 @@ public partial class DefensePresentation : Node
         if (state.OwnerId!=_player.EntityId) return;
         _hud.Apply(state);
         _state=state; _quickReadyAt=Now()+state.QuickRecoverCooldown;
+        if(_lastAction==DefenseAction.Block && state.Sequence==_sequence)_blockDenied=!state.Blocking;
+        if(_lastAction!=DefenseAction.QuickRecover && state.Sequence==_sequence)
+            _quickLabel.Text=_lastAction==DefenseAction.Block && state.Outcome==DefenseOutcome.NeedsWeapon ? "Для блока нужно оружие или особая способность" : "";
         _player.SetRecoveryRemaining(state.RecoveryRemaining);
         if (_lastAction==DefenseAction.QuickRecover && state.Sequence==_sequence && state.Outcome!=DefenseOutcome.Accepted)
             _quickLabel.Text=state.Outcome switch { DefenseOutcome.NoStamina=>"Не хватает выносливости", DefenseOutcome.Cooldown=>"Восстановление перезаряжается", _=>"Сейчас нельзя восстановиться" };
@@ -64,7 +68,7 @@ public partial class DefensePresentation : Node
         if (!_player.IsAlive || GameUi.GameplayModalOpen || ev is not InputEventKey { Pressed:true, Echo:false } key) return;
         if (key.PhysicalKeycode==Key.Space && _player.Control is CombatControlPhase.Airborne or CombatControlPhase.KnockedDown)
         { _quickHeld=true; ShowQuick(); GetViewport().SetInputAsHandled(); return; }
-        if (key.PhysicalKeycode==Key.Tab) { _held=true; Send(DefenseAction.Block); }
+        if (key.PhysicalKeycode==Key.Tab) { _held=true; _blockDenied=false; Send(DefenseAction.Block); }
         else if (key.PhysicalKeycode==Key.Shift) Send(DefenseAction.Parry);
         else return;
         _player.DefenseHeld=true;
@@ -89,7 +93,7 @@ public partial class DefensePresentation : Node
         }
         if (_held && (!Input.IsPhysicalKeyPressed(Key.Tab) || !_player.IsAlive || !GetWindow().HasFocus() || GameUi.GameplayModalOpen)) Release();
         if (_held && !_player.IsDashing && Now()>=_heartbeat) Send(DefenseAction.Block);
-        _player.DefenseHeld=!_player.IsDashing && (_held || Now()<_parryUntil);
+        _player.DefenseHeld=!_player.IsDashing && (_held && !_blockDenied || Now()<_parryUntil);
         _guard.Visible=_player.DefenseHeld && _player.IsAlive;
         _guard.Rotation=new(0,Mathf.Atan2(_facing.X,_facing.Y),0);
         _material.AlbedoColor=Now()<_parryUntil ? new Color(.3f,.8f,1,.55f) : new Color(.8f,.7f,.3f,.3f);

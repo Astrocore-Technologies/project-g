@@ -16,7 +16,7 @@ public sealed class CraftingTests
     internal static ServerWorld World(ContentCatalog? catalog=null) => new(Options.Create(new MovementOptions()),Options.Create(new InterestOptions()),
         Options.Create(new NavigationOptions { BlockedAreas=[new() { X=14,Z=10,Width=2,Height=10 }] }),catalog ?? ContentCatalogTests.Load(),
         inventory:Options.Create(new InventoryOptions { Enabled=true }),npc:Options.Create(new NpcOptions { Enabled=true,X=13,Z=13 }),
-        worldStory:Options.Create(new WorldStoryOptions { Enabled=true }),crafting:Options.Create(new CraftingOptions { Enabled=true }));
+        worldStory:Options.Create(new WorldStoryOptions { Enabled=true }),crafting:Options.Create(new CraftingOptions { Enabled=true }), hitRoll: () => 0, criticalRoll: () => 1);
     internal static CraftOutcome Do(ServerWorld w,int connection,ulong operation,CraftAction action,ushort target)
     { Assert.True(w.TryQueueCraft(connection,new(operation,action,target))); w.Simulate(0.05f); var p=w.Players.Single(p=>p.ConnectionId==connection); return w.CraftResults[p.EntityId].Outcome; }
     internal static CharacterState Materials(ServerWorld w,params SavedMaterial[] amounts)
@@ -59,7 +59,7 @@ public sealed class CraftingTests
         full=full.Select(i=>i with { DefinitionId=before.Inventory!.Items[0].DefinitionId }).ToArray();
         w.RemovePlayer(42); p=w.AddPlayer(42,new(1),before with { Inventory=before.Inventory! with { Items=full } });
         Assert.Equal(CraftOutcome.InventoryFull,Do(w,42,1,CraftAction.Make,2)); Assert.Equal(before.Inventory!.Crafting!.Materials,w.CaptureCharacter(42).Inventory!.Crafting!.Materials); Assert.Equal(0UL,w.CraftState(p.EntityId).LastOperation);
-        w.RemovePlayer(42); p=w.AddPlayer(42,new(1),before with { Health=0 }); Assert.Equal(CraftOutcome.InvalidState,Do(w,42,1,CraftAction.Make,2)); Assert.Equal(before.Progression!.Serialize(),w.CaptureCharacter(42).Progression!.Serialize());
+        w.RemovePlayer(42); p=w.AddPlayer(42,new(1),before with { Health=0,Life=null }); Assert.Equal(CraftOutcome.InvalidState,Do(w,42,1,CraftAction.Make,2)); Assert.Equal(before.Progression!.Serialize(),w.CaptureCharacter(42).Progression!.Serialize());
         w.RemovePlayer(42); p=w.AddPlayer(42,new(1),Materials(w)); Assert.Equal(CraftOutcome.MissingMaterials,Do(w,42,1,CraftAction.Make,1)); Assert.Equal(0UL,w.CraftState(p.EntityId).LastOperation); Assert.Equal((ushort)16,w.ResourceState(1).Remaining);
     }
     [Fact] public void CooldownAndFloodCannotSpendAgainAndLargeMaterialStacksAreBounded()

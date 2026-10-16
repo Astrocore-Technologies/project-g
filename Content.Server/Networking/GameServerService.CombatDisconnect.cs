@@ -15,11 +15,11 @@ public sealed partial class GameServerService
     {
         var world = WorldFor(connection);
         world.DisconnectPvp(connection);
-        if(!world.IsCombatTagged(connection)||!_sessionCredentialHashes.Remove(connection,out var key))return false;
+        if(!_sessionCredentialHashes.Remove(connection,out var key))return false;
         if(_nextDetached==int.MinValue)throw new InvalidOperationException("Detached handles exhausted.");
         var detached=_nextDetached--;var session=_sessions[connection];_sessions.Remove(connection);_sessions[detached]=session;_sessionCredentialHashes[detached]=key;
         RebindRegionalPlayer(connection,detached,world.GetPlayer(connection).PlayerId);
-        _detached[key]=(detached,world.PvpNow+30000);return true;
+        _detached[key]=(detached,world.PvpNow+world.DisconnectBodyMilliseconds);return true;
     }
     private bool TryResumeCombat(NetPeer peer,ClientHello hello,PlayerId player)
     {
@@ -41,6 +41,6 @@ public sealed partial class GameServerService
     }
     private void ExpireDetachedCombatants()
     {
-        var now=_world.PvpNow;foreach(var (key,d) in _detached.ToArray())if(now>=d.Until||!WorldFor(d.Connection).IsCombatTagged(d.Connection)){_detached.Remove(key);_departed.Add(d.Connection);}
+        foreach(var (key,d) in _detached.ToArray())if(WorldFor(d.Connection).PvpNow>=d.Until){_detached.Remove(key);_departed.Add(d.Connection);}
     }
 }

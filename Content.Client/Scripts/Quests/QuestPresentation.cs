@@ -126,7 +126,7 @@ public partial class QuestPresentation : CanvasLayer
         _journalMode=journal; _overlay=target; GameUi.QuestWindowOpen=true;
         _accept.Visible=false; _deliver.Visible=false;
         _trainingSword.Visible=false; _swordsman.Visible=false;
-        _player.StopMovement(); _player.GetNodeOrNull<CombatPresentation>("CombatPresentation")?.CancelAutoAttack();
+        _player.StopMovement(); _player.GetNodeOrNull<CombatPresentation>("CombatPresentation")?.CancelBasicAttack();
         return true;
     }
     private void Close() { _dialogue.Close(); _journalWindow.Close(); GameUi.QuestWindowOpen=false; }

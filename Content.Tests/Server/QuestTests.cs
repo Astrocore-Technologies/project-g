@@ -17,7 +17,7 @@ public sealed class QuestTests
     internal static ServerWorld World(NavigationOptions? navigation = null, string region = "prototype") => new(
         Options.Create(new MovementOptions { MinX = -20, MaxX = 20, MinZ = -20, MaxZ = 20, SpawnX = -15, SpawnZ = 18 }),
         Options.Create(new InterestOptions()), navigation is null ? null : Options.Create(navigation), ContentCatalogTests.Load(),
-        inventory: Options.Create(new InventoryOptions { Enabled = true }), regionId: region, quests: Options.Create(new QuestOptions { Enabled = true }));
+        inventory: Options.Create(new InventoryOptions { Enabled = true }), regionId: region, quests: Options.Create(new QuestOptions { Enabled = true }), hitRoll: () => 0, criticalRoll: () => 1);
     internal static NetworkEntityId Npc(ServerWorld world, string name)
     {
         // Runtime IDs are intentionally discovered through AOI, not persisted or assumed.

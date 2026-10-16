@@ -15,7 +15,7 @@ public sealed class StarterZoneTests
     internal static ServerWorld World(bool echoes=false,bool node=false) => new(Options.Create(new MovementOptions()),Options.Create(new InterestOptions()),
         Options.Create(new NavigationOptions { BlockedAreas=[new() { X=14,Z=10,Width=2,Height=10 }] }),ContentCatalogTests.Load(),
         combat:Options.Create(new CombatOptions { TargetX=-9,TargetZ=1 }), echoes:Options.Create(new EchoOptions { Enabled=echoes }),
-        npc:Options.Create(new NpcOptions { Enabled=node,X=13,Z=13 }),worldStory:Options.Create(new WorldStoryOptions { Enabled=node }),starterZone:Options.Create(new StarterZoneOptions { Enabled=true }));
+        npc:Options.Create(new NpcOptions { Enabled=node,X=13,Z=13 }),worldStory:Options.Create(new WorldStoryOptions { Enabled=node }),starterZone:Options.Create(new StarterZoneOptions { Enabled=true }), hitRoll: () => 0, criticalRoll: () => 1);
     internal static int Count(ExplorationState state) => state.Cells.Sum(b=>System.Numerics.BitOperations.PopCount((uint)b));
     internal static void Walk(ServerWorld w,int connection,Vector2 target,uint seq=1)
     {
@@ -51,7 +51,7 @@ public sealed class StarterZoneTests
         var w=World(); var p=w.AddPlayer(42,new(1),w.CreateInitialCharacter()); w.Simulate(0.05f);
         var map=w.ExplorationState(p.EntityId); Assert.False(w.TryApplyMove(42,new(1,0,new(100,100)))); Assert.False(w.TryApplyMove(99,new(1,0,new(9,9))));
         ProfessionTests.Step(w,5); Assert.Equal(map.Cells,w.ExplorationState(p.EntityId).Cells); Assert.Equal(0,w.ExplorationState(p.EntityId).Tutorial);
-        var saved=w.CaptureCharacter(42); w.RemovePlayer(42); p=w.AddPlayer(42,new(1),saved with { Health=0 });
+        var saved=w.CaptureCharacter(42); w.RemovePlayer(42); p=w.AddPlayer(42,new(1),saved with { Health=0,Life=null });
         Assert.False(w.TryApplyMove(42,new(1,0,new(-9,-6)))); ProfessionTests.Step(w,10); Assert.Equal(map.Cells,w.ExplorationState(p.EntityId).Cells); Assert.Equal(0,w.ExplorationState(p.EntityId).Tutorial);
     }
     [Fact] public void TutorialUsesConfirmedHitAbilityAndManualEchoInsteadOfClientClaims()

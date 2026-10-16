@@ -17,10 +17,10 @@ public sealed class RegionalTravelTests
     public async Task CombatTagBlocksTravelUntilItExpires()
     {
         await using var f = await Fixture.Create(); await f.Add();
-        Assert.True(f.Source.TryQueuePvp(42,new(1,PvpAction.Mode,PvpMode.Voluntary,false,0)));
+        Assert.True(f.Source.Combat!.ApplyAbilityDamage(f.Source.TrainingTargetId,1,f.Source.GetPlayer(42).EntityId)>0);
         f.Realm.Simulate(.05f);
         Assert.True(f.Source.IsCombatTagged(42)); Assert.False(f.Begin()); Assert.False(f.Realm.HasPendingJourney);
-        f.Now += 120_000; f.Realm.Simulate(.05f);
+        f.Now += 30_001; f.Realm.Simulate(.05f);
         Assert.False(f.Source.IsCombatTagged(42)); Assert.True(f.Begin()); await f.Complete();
     }
     private sealed class Fixture : IAsyncDisposable
@@ -47,7 +47,7 @@ public sealed class RegionalTravelTests
                 starterZone: Options.Create(new StarterZoneOptions { Enabled = true }),
                 crafting: Options.Create(new CraftingOptions { Enabled = true }),
                 echoes: Options.Create(new EchoOptions { Enabled = true }), regionId: region, entityIds: ids,
-                worldNodeDefinition: catalog.WorldNode! with { Key = region + "_crossing" });
+                worldNodeDefinition: catalog.WorldNode! with { Key = region + "_crossing" }, hitRoll: () => 0, criticalRoll: () => 1);
             f.Source = CreateWorld("prototype"); f.Target = CreateWorld("outskirts");
             foreach (var world in new[] { f.Source, f.Target })
             {

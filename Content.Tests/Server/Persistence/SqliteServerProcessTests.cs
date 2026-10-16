@@ -20,8 +20,9 @@ public sealed class SqliteServerProcessTests
         {
             try
             {
+                await WaitForUdp(child,port);
                 using var client = new NetworkMovementIntegrationTests.TestClient(port);
-                await CharacterPersistenceTests.Poll(client, () => client.Spawns.Count != 0 && client.Loadouts.Count != 0);
+                await CharacterPersistenceTests.Poll(client, () => client.Active && client.Spawns.Count != 0 && client.Loadouts.Count != 0);
                 token = client.Token; character = probe.SingleId;
                 var id = client.LocalSpawn.EntityId;
                 var before = client.Loadouts[id].Mana;
@@ -37,18 +38,29 @@ public sealed class SqliteServerProcessTests
                 Assert.InRange(durableMana, mana, before);
                 mana = durableMana;
             }
+            catch (Exception error)
+            {
+                await StopOwnChild(child.Process);
+                throw new InvalidOperationException("Isolated server failed: " + await child.Output + await child.Error, error);
+            }
             finally { await StopOwnChild(child.Process); }
         }
         using (var child = StartServer(port, probe.DatabasePath))
         {
             try
             {
+                await WaitForUdp(child,port);
                 using var restored = new NetworkMovementIntegrationTests.TestClient(port, token);
                 await CharacterPersistenceTests.Poll(restored, () => restored.Spawns.Count != 0 && restored.Loadouts.Count != 0);
                 Assert.Equal(target, restored.LocalSpawn.Position);
                 Assert.Equal(mana, restored.Loadouts[restored.LocalSpawn.EntityId].Mana);
                 Assert.Equal(character, probe.SingleId);
                 Assert.Equal(1, probe.Count);
+            }
+            catch(Exception error)
+            {
+                await StopOwnChild(child.Process);
+                throw new InvalidOperationException("Isolated restore failed: "+await child.Output+await child.Error,error);
             }
             finally { await StopOwnChild(child.Process); }
         }
@@ -79,6 +91,17 @@ public sealed class SqliteServerProcessTests
         start.ArgumentList.Add("--Server:StartingRegion=prototype");
         var process = Process.Start(start) ?? throw new InvalidOperationException("Test server process could not start.");
         return new(process, process.StandardOutput.ReadToEndAsync(), process.StandardError.ReadToEndAsync());
+    }
+
+    private static async Task WaitForUdp(Child child,int port)
+    {
+        using var deadline=new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        while(true)
+        {
+            if(child.Process.HasExited)throw new InvalidOperationException("Test server exited before opening UDP.");
+            if(System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties().GetActiveUdpListeners().Any(endpoint=>endpoint.Port==port))return;
+            await Task.Delay(20,deadline.Token);
+        }
     }
 
     private static async Task StopOwnChild(Process process)

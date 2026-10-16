@@ -6,7 +6,8 @@ public sealed record SavedItemCondition
     public required int Current { get; init; }
     public required int Maximum { get; init; }
     public required ulong Revision { get; init; }
-    public void Validate() { if(Version!=1 || Maximum is < 1 or > 1000 || Current<0 || Current>Maximum || Revision is 0 or > long.MaxValue) throw new InvalidDataException("Invalid item condition."); }
+    [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingDefault)] public int PendingWear { get; init; }
+    public void Validate() { if(Version!=1 || Maximum is < 1 or > 1000 || Current<0 || Current>Maximum || PendingWear<0 || PendingWear>Current || Revision is 0 or > long.MaxValue) throw new InvalidDataException("Invalid item condition."); }
 }
 /// <summary>One bounded durable receipt + monotonic watermark, atomically saved with materials/items.</summary>
 public sealed record SavedMaintenance

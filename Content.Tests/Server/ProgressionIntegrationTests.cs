@@ -28,14 +28,14 @@ public sealed class ProgressionIntegrationTests
         {
             await Poll(() => first.Progressions.Count == 1 && second.Progressions.Count == 1 && second.CombatStates.ContainsKey(first.LocalSpawn.EntityId));
             var id = first.LocalSpawn.EntityId; var before = first.Progressions[id]; var maxHp = second.CombatStates[id].MaxHealth;
-            first.Progression(new(1,ProgressionAction.PreviewStats,0,0,0,[0,0,1,1,1,0]));
+            first.Progression(new(1,ProgressionAction.PreviewStats,0,0,0,[0,0,1,1,1,0,0]));
             await Poll(()=>first.StatPreviews.Count == 1);
             Assert.Empty(second.StatPreviews); Assert.Equal(before.Stats,first.Progressions[id].Stats);
             Assert.Equal(maxHp,second.CombatStates[id].MaxHealth); first.ProgressionResults.Clear();
             var gate = store.PauseSaves();
             try
             {
-                first.Progression(new(2,ProgressionAction.AllocateStats,0,0,0,[0,0,1,1,1,0])); await Poll(() => store.PendingSave);
+                first.Progression(new(2,ProgressionAction.AllocateStats,0,0,0,[0,0,1,1,1,0,0])); await Poll(() => store.PendingSave);
                 for (var i=0;i<20;i++) { first.Poll(); second.Poll(); await Task.Delay(25); }
                 Assert.Empty(first.ProgressionResults); Assert.Equal(before.Stats[2],first.Progressions[id].Stats[2]); Assert.Equal(maxHp,second.CombatStates[id].MaxHealth);
                 gate.TrySetResult();
@@ -44,7 +44,7 @@ public sealed class ProgressionIntegrationTests
                 Assert.Equal(before.Stats[3]+1,first.Progressions[id].Stats[3]); Assert.Equal(before.Stats[4]+1,first.Progressions[id].Stats[4]);
                 Assert.Equal(first.StatPreviews[0].Projected[(int)CharacterStat.MaxHealth],second.CombatStates[id].MaxHealth);
                 Assert.Single(first.Progressions); Assert.Single(second.Progressions); Assert.Empty(second.ProgressionResults);
-                first.Progression(new(2,ProgressionAction.AllocateStats,0,0,0,[0,0,1,1,1,0]));
+                first.Progression(new(2,ProgressionAction.AllocateStats,0,0,0,[0,0,1,1,1,0,0]));
                 for (var i=0;i<20;i++) { first.Poll(); second.Poll(); await Task.Delay(25); }
                 Assert.Single(first.ProgressionResults); Assert.Equal(0,first.Progressions[id].StatPoints);
                 first.Disconnect(); await Task.Delay(500);

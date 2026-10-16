@@ -10,7 +10,8 @@ public sealed class CombatOptions
     public float TargetHeight { get; init; }
     public float TargetZ { get; set; } = 3f;
     public float HalfAngleDegrees { get; set; } = 45f;
-    public double CriticalMultiplier { get; set; } = 1.5;
+    // Input freshness only: never changes attack power, interval or resource costs.
+    public double ContinuousAttackLeaseSeconds { get; set; } = .75;
     public int MaxAbilityEffects { get; set; } = 128;
     public int MaxCompensationMilliseconds { get; set; } = 100;
     public float MaxAbilityLifetimeSeconds { get; set; } = 10;

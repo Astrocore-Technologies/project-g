@@ -24,7 +24,7 @@ public sealed record SavedProgression
         byte slot = 0;
         return new() { Level = 1, Experience = 0, StatPoints = catalog.Progression.InitialStatPoints, Discoveries = 0,
             Skills = definition.AbilityIds.Select(id => new SavedSkill(id,1,0,
-                catalog.Abilities[id].Kind == AbilityKind.Dash ? (byte)0 : ++slot)).ToArray() };
+                catalog.Abilities[id].Kind is AbilityKind.Dash or AbilityKind.Passive ? (byte)0 : ++slot)).ToArray() };
     }
     private static readonly JsonSerializerOptions Json = new()
     { UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow, RespectRequiredConstructorParameters = true, MaxDepth = 8 };

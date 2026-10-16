@@ -17,6 +17,8 @@ public partial class GameNavigation : CanvasLayer
     private bool _partyActive;
 
     private Label _questTitle=null!,_questText=null!,_rewards=null!;
+    private Button _logout=null!;
+    private Label _logoutStatus=null!;
     public void Initialize(NetworkClient network,NetworkEntityId owner)
     {
         _network=network; _owner=owner; Layer=40;
@@ -42,10 +44,15 @@ public partial class GameNavigation : CanvasLayer
         network.WorldNodeReceived+=WorldNotice; network.TradeStateReceived+=TradeNotice; network.SocialInvitesReceived+=InviteNotice; network.SocialRosterReceived+=PartyNotice; network.ProfessionReceived+=ProfessionNotice;
         _menu=new UiWindow { ToggleKey=Key.Escape }; root.AddChild(_menu); _menu.Build("Меню путешественника",new(730,620)); _menu.CloseRequested+=_menu.Close;
         var grid=new GridContainer { Columns=2,SizeFlagsVertical=Control.SizeFlags.ExpandFill }; _menu.Body.AddChild(grid);
-        (string Id,string Text)[] links=[("character","Персонаж · K"),("inventory","Инвентарь · I"),("echo","Эхо Прошлого · F3"),("guild","Гильдия авантюристов · G"),("map","Карта мира · M"),("journal","Журнал · L"),("profession","Профессия · P"),("craft","Ремесло и ремонт · C"),("trade","Обмен · B"),("market","Кузница и рынок · J"),("party","Группа · N"),("clan","Гильдия игроков · O"),("pvp","PvP и возрождение · V"),("keeper","Хранитель · H"),("guide","Управление · F1")];
+        (string Id,string Text)[] links=[("character","Персонаж · K"),("inventory","Инвентарь · I"),("echo","Эхо Прошлого · F3"),("guild","Гильдия авантюристов · G"),("map","Карта мира · M"),("journal","Журнал · L"),("combat","Бой и разбор смерти"),("profession","Профессия · P"),("craft","Ремесло и ремонт · C"),("trade","Обмен · B"),("market","Кузница и рынок · J"),("party","Группа · N"),("clan","Гильдия игроков · O"),("pvp","PvP и возрождение · V"),("keeper","Хранитель · H"),("guide","Управление · F1")];
         foreach(var link in links) { var button=GameUi.Button(link.Text,()=>GameUi.Navigate(link.Id)); button.SizeFlagsHorizontal=Control.SizeFlags.ExpandFill; button.Disabled=!GameUi.HasRoute(link.Id) && link.Id!="guild"; grid.AddChild(button); }
         _menu.Body.AddChild(GameUi.Text("Мир продолжает жить, пока открыто меню.",14));
         _menu.Body.AddChild(GameUi.Button("Продолжить приключение",_menu.Close));
+        _logoutStatus=GameUi.Text("",14);_menu.Body.AddChild(_logoutStatus);
+        _logout=GameUi.Button("Выйти в главное меню",()=>
+        {if(_network.RequestLogout()) {_logout.Disabled=true;_logoutStatus.Text="Сохранение персонажа…";}});
+        _logout.Name="LogoutButton";_menu.Body.AddChild(_logout);
+        network.LogoutReceived+=Logout;
         _guild=new UiWindow { ToggleKey=Key.G }; root.AddChild(_guild); _guild.Build("Гильдия авантюристов",new(1180,656)); _guild.CloseRequested+=_guild.Close;
         var page=UiComposition.Page(_guild,"guild");
         var tabs=new HBoxContainer(); page.AddChild(tabs);
@@ -64,6 +71,11 @@ public partial class GameNavigation : CanvasLayer
     private void Notice(string text)
     {
         if(_messages.LastOrDefault()==text) return; _messages.Enqueue(text); while(_messages.Count>3) _messages.Dequeue(); _noticeText.Text=string.Join("\n\n",_messages);
+    }
+    private void Logout(LogoutResult result)
+    {
+        _logout.Disabled=result.Outcome==LogoutOutcome.Accepted;
+        _logoutStatus.Text=result.Outcome==LogoutOutcome.InCombat?"Выход недоступен: персонаж ещё в бою.":"Персонаж сохранён.";
     }
     private void WorldNotice(WorldNodeState state) => Notice(state.Rumor);
     private void TradeNotice(TradeState state) { if(state.OwnerId==_owner && state.Phase==TradePhase.Invited) Notice("Приглашение к обмену · B"); }
@@ -90,5 +102,5 @@ public partial class GameNavigation : CanvasLayer
         if(key.PhysicalKeycode==Key.Escape) { ToggleMenu(); GetViewport().SetInputAsHandled(); }
         if(key.PhysicalKeycode==Key.G) { ToggleGuild(); GetViewport().SetInputAsHandled(); }
     }
-    public override void _ExitTree() { GameUi.ClearRoutes(); if(_network is not null) { _network.QuestJournalReceived-=Quest; _network.WorldNodeReceived-=WorldNotice; _network.TradeStateReceived-=TradeNotice; _network.SocialInvitesReceived-=InviteNotice; _network.SocialRosterReceived-=PartyNotice; _network.ProfessionReceived-=ProfessionNotice; } }
+    public override void _ExitTree() { GameUi.ClearRoutes(); if(_network is not null) { _network.LogoutReceived-=Logout;_network.QuestJournalReceived-=Quest; _network.WorldNodeReceived-=WorldNotice; _network.TradeStateReceived-=TradeNotice; _network.SocialInvitesReceived-=InviteNotice; _network.SocialRosterReceived-=PartyNotice; _network.ProfessionReceived-=ProfessionNotice; } }
 }

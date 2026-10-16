@@ -23,7 +23,7 @@ public sealed record SwordsmanDefinition
     public int RhythmHits { get; init; } = 3;
     public double RhythmWindow { get; init; } = 4;
     public double RhythmStamina { get; init; } = 6;
-    public double BlockRemainderReduction { get; init; } = .15;
+    public double BlockAbsorptionBonus { get; init; } = .15;
     public float FootworkBonus { get; init; } = .10f;
     public double FootworkSeconds { get; init; } = 1.5;
     public double ParryWindow { get; init; } = 3;
@@ -34,7 +34,7 @@ public sealed record SwordsmanDefinition
     {
         double[] numbers = [RequiredDamage, InteractionRange, DummyResetSeconds, RecoveryPerSecond,
             DashRange, DashCost, DashCooldown, RhythmWindow, RhythmStamina, FootworkSeconds, ParryWindow];
-        double[] fractions = [BasicDamageBonus, BlockRemainderReduction, FootworkBonus, FocusBonus];
+        double[] fractions = [BasicDamageBonus, BlockAbsorptionBonus, FootworkBonus, FocusBonus];
         var profession = catalog.Professions.SingleOrDefault(p => p.Id == ProfessionId);
         if (profession is null || !profession.RequiresTrainer || string.IsNullOrWhiteSpace(RegionId) ||
             !catalog.Items.TryGetValue(TrainingItemId, out var item) || item.WeaponId is null || !catalog.Weapons[item.WeaponId].IsSword ||
@@ -46,7 +46,7 @@ public sealed record SwordsmanDefinition
             string.IsNullOrWhiteSpace(Trainer.Role) || Trainer.Role.Length > 32 || !float.IsFinite(Trainer.X) || !float.IsFinite(Trainer.Z) ||
             DummyAnchors is not { Length: >= 2 and <= 8 } || DummyAnchors.Distinct().Count() != DummyAnchors.Length ||
             DummyAnchors.Any(string.IsNullOrWhiteSpace) || DefaultBar is not { Length: 8 } ||
-            DefaultBar.Distinct().Count() != 8 || DefaultBar.Any(id => !profession.AllSkills.Contains(id)))
+            DefaultBar.Distinct().Count() != 8 || DefaultBar.Any(id => !profession.AllSkills.Contains(id) || catalog.Abilities[id].Passive is not null))
             throw new ArgumentException("Invalid swordsman training/balance references.");
     }
 }

@@ -26,7 +26,7 @@ public sealed class GameServerServiceTests
             ConnectionKey = NetworkConstants.ConnectionKey
         });
         var world = new ServerWorld(
-            Options.Create(new MovementOptions()), Options.Create(new InterestOptions()));
+            Options.Create(new MovementOptions()), Options.Create(new InterestOptions()), hitRoll: () => 0, criticalRoll: () => 1);
 
         using var server = new GameServerService(
             serverOptions,

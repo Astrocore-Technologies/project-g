@@ -15,7 +15,7 @@ public sealed class ProgressionTests
     public void AreaPracticesOnceForMultipleTargetsAndDeathCancelsDashPractice()
     {
         var w = new ServerWorld(Options.Create(new MovementOptions()),Options.Create(new InterestOptions()),catalog:ContentCatalogTests.Load(),
-            npc:Options.Create(new NpcOptions { Enabled = true,X = -7,Z = 3,AggroRadius = 1 }));
+            npc:Options.Create(new NpcOptions { Enabled = true,X = -7,Z = 3,AggroRadius = 1 }), hitRoll: () => 0, criticalRoll: () => 1);
         var p = w.AddPlayer(42,new(1),w.CreateInitialCharacter() with { Health = 1 }); var hits = 0;
         w.TryQueueAbility(42,new(1,0,2,new(-7,3)),0);
         for (var i=0;i<40;i++) { Step(w); hits += w.Abilities!.Hits.Count; }
@@ -37,7 +37,7 @@ public sealed class ProgressionTests
             foreach (var creature in json["creatures"]!.AsArray()) creature!["baseHealth"] = 10000;
             catalog = ContentCatalog.Parse(System.Text.Encoding.UTF8.GetBytes(json.ToJsonString()));
         }
-        return new(Options.Create(new MovementOptions()),Options.Create(new InterestOptions()),catalog:catalog,inventory:Options.Create(new InventoryOptions { Enabled = true }));
+        return new(Options.Create(new MovementOptions()),Options.Create(new InterestOptions()),catalog:catalog,inventory:Options.Create(new InventoryOptions { Enabled = true }), hitRoll: () => 0, criticalRoll: () => 1);
     }
     private static void Step(ServerWorld w,int count = 1) { for (var i=0;i<count;i++) w.Simulate(0.05f); }
     private static SkillProgress Skill(ServerWorld w,ServerPlayer p,ushort id) => w.ProgressionState(p.EntityId,w.Tick).Skills.Single(s => s.Id == id);
@@ -85,7 +85,7 @@ public sealed class ProgressionTests
         Assert.Equal(60,next.ProgressionState(restored.EntityId,next.Tick).Experience); Assert.Equal(1,Skill(next,restored,5).Level);
         saved = next.CaptureCharacter(42) with { X = 9,Z = 6 }; var third = World(); var final = third.AddPlayer(42,new(1),saved);
         third.TryApplyMove(42,new(1,0,new(9,5))); Step(third,30);
-        var result = third.ProgressionState(final.EntityId,third.Tick); Assert.Equal(2,result.Level); Assert.Equal(20,result.Experience); Assert.Equal(10,result.StatPoints);
+        var result = third.ProgressionState(final.EntityId,third.Tick); Assert.Equal(2,result.Level); Assert.Equal(20,result.Experience); Assert.Equal(23,result.StatPoints);
     }
     [Fact]
     public void StatAllocationKeepsEquipmentHealthManaAndCooldownWhileReplayAndFloodAreRejected()

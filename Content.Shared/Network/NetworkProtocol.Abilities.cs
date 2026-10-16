@@ -6,21 +6,54 @@ namespace Content.Shared.Network;
 
 public static partial class NetworkProtocol
 {
+    public static NetDataWriter Write(AbilityControlCommand value)
+    {
+        if(value.Sequence==0 || value.ActionSequence==0 || !Enum.IsDefined(value.Kind) || !Finite(value.Aim) ||
+            !float.IsFinite(value.AimHeight) || MathF.Abs(value.AimHeight)>128 || !float.IsFinite(value.DirectionY) || MathF.Abs(value.DirectionY)>1)
+            throw new ArgumentException("Invalid ability control.");
+        var writer=CreateWriter(NetworkMessageType.AbilityControlCommand);
+        writer.Put(value.Sequence);writer.Put(value.ActionSequence);writer.Put(value.ObservedServerTick);writer.Put((byte)value.Kind);
+        WriteVector2(writer,value.Aim);WriteHeight(writer,value.AimHeight);WriteHeight(writer,value.DirectionY);writer.Put(value.ExecutionId);return writer;
+    }
+    public static bool TryReadAbilityControlCommand(NetDataReader reader,out AbilityControlCommand value)
+    {
+        value=default;
+        if(reader.AvailableBytes!=37 || !reader.TryGetUInt(out var sequence) || sequence==0 || !reader.TryGetUInt(out var action) || action==0 ||
+            !reader.TryGetUInt(out var tick) || !reader.TryGetByte(out var kind) || !Enum.IsDefined((AbilityControlKind)kind) ||
+            !TryReadVector2(reader,out var aim) || !ReadHeight(reader,out var height) || !ReadHeight(reader,out var dy) || MathF.Abs(dy)>1 ||
+            !reader.TryGetULong(out var execution))return false;
+        value=new(sequence,action,tick,(AbilityControlKind)kind,aim,height,dy,execution);return true;
+    }
+    public static NetDataWriter Write(ActionCancelCommand value)
+    {
+        if(value.Sequence==0 || value.ActionSequence==0) throw new ArgumentException("Invalid action cancellation.");
+        var writer=CreateWriter(NetworkMessageType.ActionCancelCommand);
+        writer.Put(value.Sequence); writer.Put(value.ActionSequence);writer.Put(value.ExecutionId); return writer;
+    }
+
+    public static bool TryReadActionCancelCommand(NetDataReader reader,out ActionCancelCommand value)
+    {
+        value=default;
+        if(reader.AvailableBytes!=16 || !reader.TryGetUInt(out var sequence) || sequence==0 ||
+            !reader.TryGetUInt(out var actionSequence) || actionSequence==0 || !reader.TryGetULong(out var execution)) return false;
+        value=new(sequence,actionSequence,execution); return true;
+    }
+
     public static NetDataWriter Write(AbilityCommand value)
     {
-        if (value.Sequence == 0 || value.AbilityId == 0 || !Finite(value.Aim) || !float.IsFinite(value.DashDistance) || value.DashDistance is < 0 or > 100 || !float.IsFinite(value.DirectionY) || MathF.Abs(value.DirectionY)>1) throw new ArgumentException("Invalid ability intent.");
+        if (value.Sequence == 0 || value.AbilityId == 0 || !Enum.IsDefined(value.Intent) || !Finite(value.Aim) || !float.IsFinite(value.DashDistance) || value.DashDistance is < 0 or > 100 || !float.IsFinite(value.DirectionY) || MathF.Abs(value.DirectionY)>1) throw new ArgumentException("Invalid ability intent.");
         var writer = CreateWriter(NetworkMessageType.AbilityCommand);
-        writer.Put(value.Sequence); writer.Put(value.ObservedServerTick); writer.Put(value.AbilityId); WriteVector2(writer, value.Aim); writer.Put(value.DashDistance); WriteHeight(writer, value.AimHeight); WriteHeight(writer, value.DirectionY);
+        writer.Put(value.Sequence); writer.Put(value.ObservedServerTick); writer.Put(value.AbilityId); WriteVector2(writer, value.Aim); writer.Put(value.DashDistance); WriteHeight(writer, value.AimHeight); WriteHeight(writer, value.DirectionY);writer.Put((byte)value.Intent);
         return writer;
     }
 
     public static bool TryReadAbilityCommand(NetDataReader reader, out AbilityCommand value)
     {
         value = default;
-        if (reader.AvailableBytes != 30 || !reader.TryGetUInt(out var sequence) || sequence == 0 ||
+        if (reader.AvailableBytes != 31 || !reader.TryGetUInt(out var sequence) || sequence == 0 ||
             !reader.TryGetUInt(out var tick) || !reader.TryGetUShort(out var id) || id == 0 || !TryReadVector2(reader, out var aim) ||
-            !reader.TryGetFloat(out var distance) || !float.IsFinite(distance) || distance is < 0 or > 100 || !ReadHeight(reader, out var height) || !ReadHeight(reader, out var dy) || MathF.Abs(dy) > 1) return false;
-        value = new(sequence, tick, id, aim, distance, height, dy); return true;
+            !reader.TryGetFloat(out var distance) || !float.IsFinite(distance) || distance is < 0 or > 100 || !ReadHeight(reader, out var height) || !ReadHeight(reader, out var dy) || MathF.Abs(dy) > 1 || !reader.TryGetByte(out var intent) || !Enum.IsDefined((AbilityIntent)intent)) return false;
+        value = new(sequence, tick, id, aim, distance, height, dy,(AbilityIntent)intent); return true;
     }
 
     public static NetDataWriter Write(AbilityResult value)
@@ -43,13 +76,22 @@ public static partial class NetworkProtocol
         if (!ValidLoadout(value)) throw new ArgumentException("Invalid ability loadout.");
         var writer = CreateWriter(NetworkMessageType.AbilityLoadout);
         writer.Put(value.EntityId.Value); writer.Put(value.ServerTick); writer.Put(value.Mana); writer.Put(value.MaxMana);
-        writer.Put((byte)value.Abilities.Count);
+        writer.Put(value.LastInputSequence);writer.Put((byte)value.Abilities.Count);
         foreach (var slot in value.Abilities)
         {
             writer.Put(slot.Id); writer.Put((byte)slot.Form); writer.Put(slot.Range); writer.Put(slot.Radius); writer.Put(slot.Speed);
             writer.Put(slot.CastSeconds); writer.Put(slot.CooldownSeconds); writer.Put(slot.ManaCost); writer.Put(slot.ReadyInSeconds);
             writer.Put(slot.StaminaCost); writer.Put((byte)slot.Availability);
             WriteArea(writer, slot.Area); writer.Put(slot.RecoverySeconds);
+            writer.Put(slot.Charges); writer.Put(slot.MaxCharges); writer.Put(slot.RechargeInSeconds); writer.Put(slot.RechargeDuration);
+            writer.Put((byte)slot.ExecutionForm);writer.Put(slot.PendingEndCharges);
+            if(slot.ExecutionForm is CombatActionForm.Channel or CombatActionForm.Hold or CombatActionForm.Toggle)
+            {writer.Put(slot.ChannelManaPerSecond);writer.Put(slot.ChannelStaminaPerSecond);writer.Put(slot.ChannelMaximumSeconds);}
+            if(slot.ExecutionForm==CombatActionForm.Hold)writer.Put(slot.SustainCanTurn);
+            if(slot.ExecutionForm==CombatActionForm.Toggle)
+            {writer.Put((byte)slot.ToggleState);writer.Put(slot.ToggleOccupiesAction);writer.Put((byte)slot.ToggleStopOn);}
+            if(slot.ExecutionForm==CombatActionForm.Charged)
+            {writer.Put(slot.ChargeSeconds);writer.Put(slot.ChargeAutoRelease);writer.Put(slot.ChargeCanTurn);}
         }
         return writer;
     }
@@ -57,20 +99,32 @@ public static partial class NetworkProtocol
     public static bool TryReadAbilityLoadout(NetDataReader reader, out AbilityLoadout value)
     {
         value = default;
-        if (reader.AvailableBytes < 29 || !reader.TryGetULong(out var actor) || actor == 0 ||
+        if (reader.AvailableBytes < 33 || !reader.TryGetULong(out var actor) || actor == 0 ||
             !reader.TryGetUInt(out var tick) || !reader.TryGetDouble(out var mana) || !reader.TryGetDouble(out var maximum) ||
-            !reader.TryGetByte(out var count) || count > NetworkConstants.MaxAbilityProfiles || reader.AvailableBytes != count * (64 + AbilityArea.WireBytes)) return false;
+            !reader.TryGetUInt(out var lastInput) || !reader.TryGetByte(out var count) || count > NetworkConstants.MaxAbilityProfiles || reader.AvailableBytes < count * 98) return false;
         var slots = new AbilityProfile[count];
         for (var i = 0; i < count; i++)
         {
             if (!reader.TryGetUShort(out var id) || !reader.TryGetByte(out var form) || !reader.TryGetFloat(out var range) ||
                 !reader.TryGetFloat(out var radius) || !reader.TryGetFloat(out var speed) || !reader.TryGetDouble(out var cast) ||
                 !reader.TryGetDouble(out var cooldown) || !reader.TryGetDouble(out var cost) || !reader.TryGetDouble(out var ready) ||
-                !reader.TryGetDouble(out var stamina) || !reader.TryGetByte(out var available) || !ReadArea(reader, out var area) || !reader.TryGetDouble(out var recovery)) return false;
-            slots[i] = new(id, (AbilityForm)form, range, radius, speed, cast, cooldown, cost, ready, stamina, (AbilityAvailability)available, area, recovery);
+                !reader.TryGetDouble(out var stamina) || !reader.TryGetByte(out var available) || !ReadArea(reader, out var area) || !reader.TryGetDouble(out var recovery) ||
+                !reader.TryGetByte(out var charges) || !reader.TryGetByte(out var maximumCharges) || !reader.TryGetDouble(out var recharge) || !reader.TryGetDouble(out var rechargeDuration) ||
+                !reader.TryGetByte(out var execution) || !Enum.IsDefined((CombatActionForm)execution) || !reader.TryGetByte(out var pendingEnd)) return false;
+            double manaRate=0,staminaRate=0,channelMaximum=0,chargeSeconds=0;byte autoRelease=0,canTurn=0,sustainTurn=0;
+            byte toggleState=0,toggleOccupies=0,toggleStops=0;
+            if((CombatActionForm)execution is CombatActionForm.Channel or CombatActionForm.Hold or CombatActionForm.Toggle &&
+                (!reader.TryGetDouble(out manaRate) || !reader.TryGetDouble(out staminaRate) || !reader.TryGetDouble(out channelMaximum)))return false;
+            if((CombatActionForm)execution==CombatActionForm.Hold && (!reader.TryGetByte(out sustainTurn) || sustainTurn>1))return false;
+            if((CombatActionForm)execution==CombatActionForm.Toggle && (!reader.TryGetByte(out toggleState) || !reader.TryGetByte(out toggleOccupies) || toggleOccupies>1 || !reader.TryGetByte(out toggleStops)))return false;
+            if((CombatActionForm)execution==CombatActionForm.Charged &&
+                (!reader.TryGetDouble(out chargeSeconds) || !reader.TryGetByte(out autoRelease) || autoRelease>1 || !reader.TryGetByte(out canTurn) || canTurn>1))return false;
+            slots[i] = new(id, (AbilityForm)form, range, radius, speed, cast, cooldown, cost, ready, stamina, (AbilityAvailability)available, area, recovery,charges,maximumCharges,recharge,rechargeDuration,
+                (CombatActionForm)execution,manaRate,staminaRate,channelMaximum,pendingEnd,chargeSeconds,autoRelease==1,canTurn==1,sustainTurn==1,
+                (ToggleState)toggleState,toggleOccupies==1,(ToggleStopTriggers)toggleStops);
         }
-        var candidate = new AbilityLoadout(new(actor), tick, mana, maximum, slots);
-        if (!ValidLoadout(candidate)) return false;
+        var candidate = new AbilityLoadout(new(actor), tick, mana, maximum, slots,lastInput);
+        if (reader.AvailableBytes!=0 || !ValidLoadout(candidate)) return false;
         value = candidate; return true;
     }
 
@@ -103,16 +157,18 @@ public static partial class NetworkProtocol
         if (!ValidHit(value)) throw new ArgumentException("Invalid ability hit.");
         var writer = CreateWriter(NetworkMessageType.AbilityHit);
         writer.Put(value.EffectId); writer.Put(value.ActorId.Value); writer.Put(value.TargetId.Value); writer.Put(value.ServerTick);
-        writer.Put(value.Damage); writer.Put(value.TargetHealth); writer.Put((byte)value.Guard); return writer;
+        writer.Put(value.Damage); writer.Put(value.TargetHealth); writer.Put((byte)value.Guard);
+        writer.Put(value.Critical); writer.Put(value.Evaded); return writer;
     }
 
     public static bool TryReadAbilityHit(NetDataReader reader, out AbilityHit value)
     {
         value = default;
-        if (reader.AvailableBytes != 45 || !reader.TryGetULong(out var effect) || !reader.TryGetULong(out var actor) ||
+        if (reader.AvailableBytes != 47 || !reader.TryGetULong(out var effect) || !reader.TryGetULong(out var actor) ||
             !reader.TryGetULong(out var target) || !reader.TryGetUInt(out var tick) || !reader.TryGetDouble(out var damage) ||
-            !reader.TryGetDouble(out var health) || !reader.TryGetByte(out var guard)) return false;
-        var candidate = new AbilityHit(effect, new(actor), new(target), tick, damage, health, (GuardImpact)guard);
+            !reader.TryGetDouble(out var health) || !reader.TryGetByte(out var guard) ||
+            !reader.TryGetByte(out var critical) || critical > 1 || !reader.TryGetByte(out var evaded) || evaded > 1) return false;
+        var candidate = new AbilityHit(effect, new(actor), new(target), tick, damage, health, (GuardImpact)guard, critical == 1, evaded == 1);
         if (!ValidHit(candidate)) return false;
         value = candidate; return true;
     }
@@ -138,8 +194,17 @@ public static partial class NetworkProtocol
         float.IsFinite(value.Range) && value.Range > 0 && float.IsFinite(value.Radius) && value.Radius > 0 &&
         float.IsFinite(value.Speed) && value.Speed >= 0 && (value.Form is not (AbilityForm.Projectile or AbilityForm.Dash) || value.Speed > 0) &&
         NonNegative(value.CastSeconds) && (value.Form != AbilityForm.Dash || value.CastSeconds == 0) &&
-        double.IsFinite(value.CooldownSeconds) && value.CooldownSeconds > 0 &&
-        NonNegative(value.ManaCost) && NonNegative(value.ReadyInSeconds) && NonNegative(value.StaminaCost) && Enum.IsDefined(value.Availability) && value.Area.IsValid && double.IsFinite(value.RecoverySeconds) && value.RecoverySeconds is >=0 and <=2;
+        NonNegative(value.CooldownSeconds) && value.MaxCharges>0 && value.Charges+value.PendingEndCharges<=value.MaxCharges &&
+        NonNegative(value.RechargeInSeconds) && NonNegative(value.RechargeDuration) && value.RechargeInSeconds<=value.RechargeDuration &&
+        (value.Charges+value.PendingEndCharges==value.MaxCharges ? value.RechargeInSeconds==0 && value.RechargeDuration==0 : value.RechargeDuration>0) &&
+        (value.Charges>0 ? value.ReadyInSeconds==0 : value.ReadyInSeconds==value.RechargeInSeconds) &&
+        NonNegative(value.ManaCost) && NonNegative(value.ReadyInSeconds) && NonNegative(value.StaminaCost) && Enum.IsDefined(value.Availability) && value.Area.IsValid && NonNegative(value.RecoverySeconds) &&
+        Enum.IsDefined(value.ExecutionForm) && NonNegative(value.ChannelManaPerSecond) && NonNegative(value.ChannelStaminaPerSecond) && NonNegative(value.ChannelMaximumSeconds) &&
+        (value.ExecutionForm is CombatActionForm.Channel or CombatActionForm.Hold or CombatActionForm.Toggle || value.PendingEndCharges==0 && value.ChannelManaPerSecond==0 && value.ChannelStaminaPerSecond==0 && value.ChannelMaximumSeconds==0) &&
+        (value.ExecutionForm==CombatActionForm.Hold || !value.SustainCanTurn) &&
+        Enum.IsDefined(value.ToggleState) && ((value.ToggleStopOn&~(ToggleStopTriggers.Movement|ToggleStopTriggers.Skill|ToggleStopTriggers.BasicAttack|ToggleStopTriggers.Defense|ToggleStopTriggers.EnemyInterrupt))==0) &&
+        (value.ExecutionForm==CombatActionForm.Toggle || value.ToggleState==ToggleState.Off && !value.ToggleOccupiesAction && value.ToggleStopOn==ToggleStopTriggers.None) &&
+        NonNegative(value.ChargeSeconds) && (value.ExecutionForm==CombatActionForm.Charged ? value.ChargeSeconds>0 && value.Form!=AbilityForm.Dash : value.ChargeSeconds==0 && !value.ChargeAutoRelease && !value.ChargeCanTurn);
 
     private static bool ValidLoadout(AbilityLoadout value)
     {
@@ -162,15 +227,17 @@ public static partial class NetworkProtocol
             : value.DirectionY==0 && BasicAttackShape.IsValidDirection(value.Direction)) &&
         float.IsFinite(value.Radius) && value.Radius > 0 && float.IsFinite(value.Speed) && value.Speed >= 0 &&
         (value.Form is not (AbilityForm.Projectile or AbilityForm.Dash) || value.Speed > 0) &&
-        (value.Phase == AbilityPhase.Finished || value.Form switch
+        (value.Phase == AbilityPhase.Finished || value.Phase==AbilityPhase.Charging && value.Form!=AbilityForm.Dash || value.Form switch
         {
             AbilityForm.Projectile => value.Phase is AbilityPhase.Telegraph or AbilityPhase.Flying,
-            AbilityForm.GroundArea => value.Phase is AbilityPhase.Telegraph or AbilityPhase.Impact,
-            AbilityForm.Melee or AbilityForm.Recovery => value.Phase is AbilityPhase.Telegraph or AbilityPhase.Impact or AbilityPhase.Recovery,
+            AbilityForm.GroundArea => value.Phase is AbilityPhase.Telegraph or AbilityPhase.Impact or AbilityPhase.Channeling or AbilityPhase.Recovery or AbilityPhase.Sustaining,
+            AbilityForm.Recovery => value.Phase is AbilityPhase.Telegraph or AbilityPhase.Impact or AbilityPhase.Recovery or AbilityPhase.Channeling or AbilityPhase.Sustaining,
+            AbilityForm.Melee => value.Phase is AbilityPhase.Telegraph or AbilityPhase.Impact or AbilityPhase.Recovery,
             AbilityForm.Dash => value.Phase == AbilityPhase.Dash,
             _ => false
         }) && float.IsFinite(value.RemainingSeconds) && value.RemainingSeconds >= 0 && value.Area.IsValid;
 
     private static bool ValidHit(AbilityHit value) => value.EffectId != 0 && value.ActorId.IsValid && value.TargetId.IsValid &&
-        NonNegative(value.Damage) && NonNegative(value.TargetHealth) && Enum.IsDefined(value.Guard);
+        NonNegative(value.Damage) && NonNegative(value.TargetHealth) && Enum.IsDefined(value.Guard) &&
+        (!value.Evaded || value.Damage == 0 && !value.Critical && value.Guard == GuardImpact.None);
 }

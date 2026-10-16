@@ -5,6 +5,14 @@ namespace Content.Server.Items;
 
 public sealed partial class InventorySimulation
 {
+    internal bool HasFunctionalWeapon(NetworkEntityId id)
+    {
+        if(!_actors.TryGetValue(id,out var actor))return true; // Creature-owned profiles have no item inventory.
+        foreach(var item in actor.Items)
+            if(item.Saved.EquippedSlot==EquipmentSlot.Weapon && item.Saved.Condition?.Current!=0)return true;
+        return false;
+    }
+
     internal bool HasItem(NetworkEntityId id, string definitionId) => _actors.TryGetValue(id, out var a) &&
         a.Items.Any(i => i.Definition.Id == definitionId);
 

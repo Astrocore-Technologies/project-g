@@ -3,6 +3,8 @@ namespace Content.Server.Stats;
 /// <summary>Signed derived modifiers for future equipment/effects, not changes to primary stats.</summary>
 public sealed record DerivedStatModifiers
 {
+    private static readonly DerivedStatModifiers Empty=new();
+    internal bool IsEmpty=>this==Empty;
     public double MeleeAttack { get; init; }
     public double RangedAttack { get; init; }
     public double MagicAttack { get; init; }
@@ -20,6 +22,11 @@ public sealed record DerivedStatModifiers
     public double CastSpeedMultiplier { get; init; }
     public double CriticalChance { get; init; }
     public double BlockDamage { get; init; }
+    public double Accuracy { get; init; }
+    public double Evasion { get; init; }
+    public double CriticalDamage { get; init; }
+    public double BlockStrength { get; init; }
+    public double CooldownReduction { get; init; }
 
     public bool IsValid() => double.IsFinite(MeleeAttack) && double.IsFinite(RangedAttack) &&
         double.IsFinite(MagicAttack) && double.IsFinite(MeleeWeaponMultiplier) &&
@@ -28,25 +35,27 @@ public sealed record DerivedStatModifiers
         double.IsFinite(HealthRecovery) && double.IsFinite(ManaRecovery) &&
         double.IsFinite(HealthItemMultiplier) && double.IsFinite(ManaItemMultiplier) &&
         double.IsFinite(AttackSpeedMultiplier) && double.IsFinite(CastSpeedMultiplier) &&
-        double.IsFinite(CriticalChance) && double.IsFinite(BlockDamage);
+        double.IsFinite(CriticalChance) && double.IsFinite(BlockDamage) && double.IsFinite(Accuracy) && double.IsFinite(Evasion) && double.IsFinite(CriticalDamage) && double.IsFinite(BlockStrength) && double.IsFinite(CooldownReduction);
 
-    public DerivedStats Apply(DerivedStats value)
+    public DerivedStats Apply(DerivedStats value, double stacks = 1, bool clampMaxHealth = true)
     {
-        if (!IsValid())
+        if (!IsValid() || !double.IsFinite(stacks) || stacks <= 0)
             throw new ArgumentException("Derived modifiers must be finite.");
         return new DerivedStats(
-            StatMath.Add(value.MeleeAttack, MeleeAttack), StatMath.Add(value.RangedAttack, RangedAttack),
-            StatMath.Add(value.MagicAttack, MagicAttack),
-            StatMath.Add(value.MeleeWeaponMultiplier, MeleeWeaponMultiplier),
-            StatMath.Add(value.RangedWeaponMultiplier, RangedWeaponMultiplier),
-            StatMath.Add(value.PhysicalDefense, PhysicalDefense), StatMath.Add(value.MagicDefense, MagicDefense),
-            Math.Max(double.Epsilon, StatMath.Add(value.MaxHealth, MaxHealth)),
-            StatMath.Add(value.MaxMana, MaxMana),
-            StatMath.Add(value.HealthRecovery, HealthRecovery), StatMath.Add(value.ManaRecovery, ManaRecovery),
-            StatMath.Add(value.HealthItemMultiplier, HealthItemMultiplier),
-            StatMath.Add(value.ManaItemMultiplier, ManaItemMultiplier),
-            StatMath.Add(value.AttackSpeedMultiplier, AttackSpeedMultiplier),
-            StatMath.Add(value.CastSpeedMultiplier, CastSpeedMultiplier),
-            StatMath.Add(value.CriticalChance, CriticalChance), StatMath.Add(value.BlockDamage, BlockDamage));
+            StatMath.Add(value.MeleeAttack, StatMath.Multiply(MeleeAttack, stacks)), StatMath.Add(value.RangedAttack, StatMath.Multiply(RangedAttack, stacks)),
+            StatMath.Add(value.MagicAttack, StatMath.Multiply(MagicAttack, stacks)),
+            StatMath.Add(value.MeleeWeaponMultiplier, StatMath.Multiply(MeleeWeaponMultiplier, stacks)),
+            StatMath.Add(value.RangedWeaponMultiplier, StatMath.Multiply(RangedWeaponMultiplier, stacks)),
+            StatMath.Add(value.PhysicalDefense, StatMath.Multiply(PhysicalDefense, stacks)), StatMath.Add(value.MagicDefense, StatMath.Multiply(MagicDefense, stacks)),
+            clampMaxHealth ? Math.Max(double.Epsilon, StatMath.Add(value.MaxHealth, StatMath.Multiply(MaxHealth, stacks))) : StatMath.Add(value.MaxHealth, StatMath.Multiply(MaxHealth, stacks)),
+            StatMath.Add(value.MaxMana, StatMath.Multiply(MaxMana, stacks)),
+            StatMath.Add(value.HealthRecovery, StatMath.Multiply(HealthRecovery, stacks)), StatMath.Add(value.ManaRecovery, StatMath.Multiply(ManaRecovery, stacks)),
+            StatMath.Add(value.HealthItemMultiplier, StatMath.Multiply(HealthItemMultiplier, stacks)),
+            StatMath.Add(value.ManaItemMultiplier, StatMath.Multiply(ManaItemMultiplier, stacks)),
+            StatMath.Add(value.AttackSpeedMultiplier, StatMath.Multiply(AttackSpeedMultiplier, stacks)),
+            StatMath.Add(value.CastSpeedMultiplier, StatMath.Multiply(CastSpeedMultiplier, stacks)),
+            StatMath.Add(value.CriticalChance, StatMath.Multiply(CriticalChance, stacks)), StatMath.Add(value.BlockDamage, StatMath.Multiply(BlockDamage, stacks)),
+            StatMath.Add(value.Accuracy, StatMath.Multiply(Accuracy, stacks)), StatMath.Add(value.Evasion, StatMath.Multiply(Evasion, stacks)), StatMath.Add(value.CriticalDamage, StatMath.Multiply(CriticalDamage, stacks)),
+            StatMath.Add(value.BlockStrength, StatMath.Multiply(BlockStrength, stacks)),StatMath.Add(value.CooldownReduction,StatMath.Multiply(CooldownReduction,stacks)));
     }
 }

@@ -12,10 +12,10 @@ public partial class ProgressionPresentation : CanvasLayer
     private Control _overlay = null!;
     private VBoxContainer _skills = null!;
     private Label _points = null!, _feedback = null!;
-    private readonly Label[] _stats = new Label[6], _derived = new Label[17];
-    private readonly Button[] _plus = new Button[6], _minus = new Button[6];
+    private readonly Label[] _stats = new Label[7], _derived = new Label[22];
+    private readonly Button[] _plus = new Button[7], _minus = new Button[7];
     private Button _apply = null!, _cancel = null!;
-    private readonly int[] _draft = new int[6];
+    private readonly int[] _draft = new int[7];
     private ProgressionState _state;
     private StatPreview? _preview;
     private uint _sequence, _pending;
@@ -27,15 +27,16 @@ public partial class ProgressionPresentation : CanvasLayer
     // NC: a visual-only scene includes the body, face and hair without gameplay nodes.
     public void SetPreviewVisual(PackedScene appearance) => _modelPreview.SetVisual(appearance);
     private static readonly string[] Keys = ["Q","W","E","R","A","S","D","F"];
-    private static readonly string[] StatNames = ["STR · Сила","AGI · Ловкость","VIT · Живучесть","INT · Интеллект","DEX · Сноровка","LUK · Удача"];
+    private static readonly string[] StatNames = ["STR · Сила","AGI · Ловкость","VIT · Живучесть","INT · Интеллект","DEX · Сноровка","LUK · Удача","WIS · Мудрость"];
     private static readonly string[] Descriptions = [
         "Ближняя атака и усиление оружия. Небольшой вклад в дальнюю атаку.",
-        "Скорость атак и немного физической защиты. Не меняет скорость бега.",
-        "Здоровье, восстановление HP, лечебные предметы, физическая и магическая защита.",
-        "Магическая атака, мана и её регенерация, mana-предметы, магическая защита. Не ускоряет каст.",
-        "Дальняя атака и оружие, скорость каста. Вторичный вклад в атаки, скорость атак и магическую защиту.",
-        "Шанс критического удара и вторичный вклад в физическую и магическую атаку."];
-    private static readonly string[] DerivedNames = ["Ближняя атака","Дальняя атака","Магическая атака","Ближнее оружие","Дальнее оружие","Физ. защита","Маг. защита","Макс. HP","Макс. мана","Восстановление HP*","Реген маны /с","Лечебные предметы","Предметы маны","Скорость атак","Скорость каста","Шанс крита"];
+        "Скорость атак, числовое уклонение и немного физической защиты. Не меняет скорость бега.",
+        "Здоровье, восстановление HP, лечебные предметы и физическая защита.",
+        "Магическая атака. Запас маны, регенерация и магическая защита зависят от WIS.",
+        "Дальняя атака и оружие, скорость каста, точность. Вторичный вклад в атаки и скорость атак.",
+        "Шанс критического удара и вторичный вклад в физическую и магическую атаку.",
+        "Максимальный запас маны, регенерация маны и магическая защита."];
+    private static readonly string[] DerivedNames = ["Ближняя атака","Дальняя атака","Магическая атака","Ближнее оружие","Дальнее оружие","Физ. защита","Маг. защита","Макс. HP","Макс. мана","Восстановление HP*","Реген маны /с","Лечебные предметы","Предметы маны","Скорость атак","Скорость каста","Шанс крита","Блок урона","Точность","Уклонение","Критический урон","Прочность блока","Сокращение перезарядок"];
     public void Initialize(NetworkClient network)
     {
         _network = network; Layer = 20;
@@ -57,7 +58,7 @@ public partial class ProgressionPresentation : CanvasLayer
         var columns=new VBoxContainer { SizeFlagsHorizontal=Control.SizeFlags.ExpandFill }; scroll.AddChild(columns);
         var primary = new VBoxContainer { CustomMinimumSize = new(330,0) }; columns.AddChild(primary);
         primary.AddChild(GameUi.Text("БАЗОВЫЕ ХАРАКТЕРИСТИКИ",14));
-        for (var i=0; i<6; i++)
+        for (var i=0; i<7; i++)
         {
             var index = i; var row = new HBoxContainer { TooltipText = Descriptions[i] }; primary.AddChild(row);
             _stats[i] = GameUi.Text(""); _stats[i].SizeFlagsHorizontal = Control.SizeFlags.ExpandFill; row.AddChild(_stats[i]);
@@ -69,7 +70,7 @@ public partial class ProgressionPresentation : CanvasLayer
         var details = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill }; columns.AddChild(details);
         details.AddThemeConstantOverride("separation",2);
         details.AddChild(GameUi.Text("СЕЙЧАС → ПОСЛЕ ПРИМЕНЕНИЯ",14));
-        for (var i=0;i<_derived.Length;i++) { _derived[i] = GameUi.Text((i==16 ? "Блок урона" : DerivedNames[i])+": —",14); details.AddChild(_derived[i]); }
+        for (var i=0;i<_derived.Length;i++) { _derived[i] = GameUi.Text(DerivedNames[i]+": —",14); details.AddChild(_derived[i]); }
         var skillScroll = new ScrollContainer { Name = "Навыки" }; tabs.AddChild(skillScroll);
         _skills = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill }; skillScroll.AddChild(_skills);
         _feedback = GameUi.Text("",14); body.AddChild(_feedback);
@@ -144,7 +145,7 @@ public partial class ProgressionPresentation : CanvasLayer
         if (_points is null) return;
         var total = _draft.Sum(); var busy = _pending != 0 && _pendingAction != ProgressionAction.PreviewStats;
         _points.Text = $"Уровень {_state.Level}  ·  Свободно: {_state.StatPoints-total}  ·  В черновике: {total}";
-        for (var i=0;i<6;i++)
+        for (var i=0;i<7;i++)
         {
             _stats[i].Text = $"{StatNames[i]}  {(_state.Stats is null ? 0 : _state.Stats[i]):0}"+(_draft[i]>0 ? $" → {_state.Stats![i]+_draft[i]:0}" : "");
             _plus[i].Disabled = busy || !_alive || total >= _state.StatPoints; _minus[i].Disabled = busy || !_alive || _draft[i] == 0;
@@ -154,7 +155,7 @@ public partial class ProgressionPresentation : CanvasLayer
         {
             var current = _preview is { } p ? Format(i,p.Current[i]) : "—";
             var after = _previewVersion == _version && _preview is { } v ? Format(i,v.Projected[i]) : "…";
-            _derived[i].Text = $"{(i==16 ? "Блок урона" : DerivedNames[i])}: {current}"+(total>0 ? $" → {after}" : "");
+            _derived[i].Text = $"{DerivedNames[i]}: {current}"+(total>0 ? $" → {after}" : "");
             _derived[i].Modulate = _previewVersion == _version && _preview is { } ready && ready.Projected[i] != ready.Current[i] ? GameUi.Accent : Colors.White;
         }
     }
@@ -163,7 +164,7 @@ public partial class ProgressionPresentation : CanvasLayer
         // Multipliers are displayed as bonuses relative to the unchanged 100% baseline.
         if (i is 3 or 4 or 11 or 12 or 13 or 14)
             return (value - 1).ToString("+0.#%;-0.#%;0%");
-        return i is 15 or 16 ? $"{value*100:0.#}%" : $"{value:0}";
+        return i is 15 or 16 or 19 or 21 ? $"{value*100:0.#}%" : $"{value:0}";
     }
     private void RebuildSkills()
     {
@@ -179,6 +180,7 @@ public partial class ProgressionPresentation : CanvasLayer
             if (skill.Id == 3) { row.AddChild(GameUi.Text("Space")); continue; }
             if (skill.Level == 0)
             { var learn = GameUi.Button("Изучить",()=>Send(ProgressionAction.LearnSkill,skill.Id)); learn.Disabled = !skill.Learnable || _pending != 0 || !_alive; row.AddChild(learn); continue; }
+            if(skill.IsPassive){row.AddChild(GameUi.Text("Пассивный · действует при выполнении условий · ячейка не нужна"));continue;}
             var choices = new OptionButton(); choices.AddItem("Снять"); foreach (var key in Keys) choices.AddItem(key); choices.Select(skill.Slot); row.AddChild(choices); choices.Disabled = _pending != 0 || !_alive;
             var assign = GameUi.Button("Назначить",()=>Send(ProgressionAction.AssignSlot,skill.Id,(byte)choices.Selected)); assign.Disabled = _pending != 0 || !_alive; row.AddChild(assign);
         }

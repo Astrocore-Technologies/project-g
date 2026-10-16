@@ -11,6 +11,19 @@ namespace Content.Tests.Server;
 public sealed class BalanceEditorWorkflowTests
 {
     [Fact]
+    public void AuthoredControlNumbersRemainVisibleAtTheirSkillWithoutConfusingStrengthWithStr()
+    {
+        var doc=new BalanceDocument(ContentCatalogTests.DataPath);var pages=EditorSchema.Pages(doc);
+        var whirl=pages.Single(p=>p.Key=="ability/sword_whirl");
+        Assert.Contains(EditorSchema.Fields(doc,whirl),f=>f.Path.EndsWith("/effects/0/control/speed") && f.Group=="Эффекты / Контроль");
+        var hamstring=pages.Single(p=>p.Key=="ability/sword_hamstring");
+        var strength=Assert.Single(EditorSchema.Fields(doc,hamstring),f=>f.Path.EndsWith("/effects/0/control/strength"));
+        Assert.Equal("Сила контроля",strength.Title);Assert.False(strength.Integer);
+        doc.Set(strength.Path,.4);Assert.Equal(.4,Assert.Single(doc.Catalog.Abilities["sword_hamstring"].Effects).Control!.Strength);
+        doc.Undo();Assert.False(doc.Dirty);
+    }
+
+    [Fact]
     public void CategoriesSeparateTrainingDashAndPassivesAndKeepAllEditableRules()
     {
         var doc = new BalanceDocument(ContentCatalogTests.DataPath); var pages = EditorSchema.Pages(doc);
@@ -19,9 +32,9 @@ public sealed class BalanceEditorWorkflowTests
         Assert.Contains(passives, f => f.Path == "swordsman/rhythmHits" && f.Group == "Боевой ритм");
         Assert.DoesNotContain(passives, f => f.Path is "swordsman/dashRange" or "swordsman/requiredDamage");
         var covered = pages.SelectMany(p => EditorSchema.Fields(doc, p)).Select(f => f.Path).ToHashSet();
-        foreach (var section in new[] { "balance", "defense", "swordsman", "progression" })
+        foreach (var section in new[] { "balance", "defense", "swordsman", "progression", "control", "lifecycle" })
             Assert.All(doc.Fields(section), field => Assert.Contains(field.Path, covered));
-        Assert.Contains(pages, p => p.Key == "ability/sword_rend" && EditorSchema.Fields(doc, p).Any(f => f.Title.Contains("кровотечения")));
+        Assert.Contains(pages, p => p.Key == "effect/sword_rend_bleed" && EditorSchema.Fields(doc, p).Any(f => f.Path.EndsWith("/periodic/power/weaponScale")));
     }
 
     [Fact]

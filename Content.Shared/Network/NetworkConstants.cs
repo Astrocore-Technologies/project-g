@@ -4,7 +4,8 @@ public static class NetworkConstants
 {
     public const int Port = 9050;
     public const string ConnectionKey = "project-g-dev";
-    public const ushort ProtocolVersion = 35; // Bounded 1 MiB static-region geometry.
+    public const ushort ProtocolVersion = 52; // GDD 01: confirmed execution control and reconnect input sequence floor.
+    public const double ContinuousAttackHeartbeatSeconds = .1;
     public const int MaxRegionGates = 4;
     public const int MaxActiveEchoes = 3;
     public const int MaxInventoryItems = 8;

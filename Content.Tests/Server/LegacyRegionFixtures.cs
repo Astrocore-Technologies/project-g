@@ -10,7 +10,7 @@ internal static class LegacyRegionFixtures
 {
     internal static RegionalWorlds Load(string? startingRegion = null, ContentCatalog? catalog = null)
         => RegionalWorlds.Load(Path.Combine(AppContext.BaseDirectory, "Fixtures", "retired-authored-regions.json"),
-            Configuration(startingRegion), catalog ?? ContentCatalogTests.Load());
+            Configuration(startingRegion), catalog ?? ContentCatalogTests.Load(),hitRoll:()=>0,criticalRoll:()=>1);
 
     internal static IConfigurationRoot Configuration(string? startingRegion = null)
     {

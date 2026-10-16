@@ -180,7 +180,7 @@ public partial class MainMenu : Node
         _connecting = false;
         _screen.Hide();
     }
-    private void OnDisconnected() => OnFailure(_network?.LastConnectionError is { Length: > 0 } message
+    private void OnDisconnected() => OnFailure(_network?.LoggedOut==true?"Персонаж сохранён. Вы вышли из мира.":_network?.LastConnectionError is { Length: > 0 } message
         ? message : "Соединение с сервером потеряно. Попробуй войти снова.");
     private void OnFailure(string message)
     {

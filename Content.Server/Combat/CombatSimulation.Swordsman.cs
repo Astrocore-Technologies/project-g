@@ -1,4 +1,5 @@
 using System.Numerics;
+using Content.Shared.Combat;
 using Content.Shared.Network;
 
 namespace Content.Server.Combat;
@@ -16,14 +17,21 @@ public sealed partial class CombatSimulation
     internal Func<NetworkEntityId, bool>? SwordEquipped { get; set; }
     internal event Action<NetworkEntityId>? DirectlyDamaged;
     internal event Action<NetworkEntityId>? InterruptRequested;
+    internal event Action<NetworkEntityId,Content.Shared.Combat.ActionCapability>? CapabilityInterruptRequested;
     internal event Action<NetworkEntityId>? ActionAttempted;
+    internal event Action<NetworkEntityId,Content.Shared.Combat.CombatActionCategory>? OrdinaryActionAccepted;
     internal event Action<NetworkEntityId>? SwordWindowsChanged;
     internal bool HasSword(NetworkEntityId id) => SwordEquipped?.Invoke(id) == true && WeaponUsable?.Invoke(id) != false;
     internal bool IsSwordsman(NetworkEntityId id) => _swords.TryGetValue(id, out var s) && s.Profession && HasSword(id);
     internal bool IsStunned(NetworkEntityId id) => _actors.TryGetValue(id, out var a) && a.StunnedUntil > _time;
-    internal bool IsRooted(NetworkEntityId id) => _actors.TryGetValue(id, out var a) && (a.StationaryCast || a.StunnedUntil > _time || a.Control != CombatControlPhase.None);
+    internal bool IsRooted(NetworkEntityId id) => _actors.TryGetValue(id, out var a) &&
+        (a.StationaryCast || a.StunnedUntil > _time || a.Control != CombatControlPhase.None || a.Controls.Has(CrowdControlKind.Root));
     internal void SetProfession(NetworkEntityId id, ushort profession)
     {
+        var actor=_actors[id];actor.ProfessionId=profession;actor.ProfessionAllowsUnarmedBlock=false;
+        foreach(var definition in _catalog.Professions)
+            if(definition.Id==profession){actor.ProfessionAllowsUnarmedBlock=definition.AllowsUnarmedBlock;break;}
+        RefreshPassiveConditions(id);RefreshBlockPermission(id);
         if (!_swords.TryGetValue(id, out var s)) _swords.Add(id, s = new());
         s.Profession = _catalog.Swordsman?.ProfessionId == profession;
         s.Rhythm = 0; s.FootworkUntil = s.FocusUntil = s.RiposteUntil = 0;
@@ -57,49 +65,34 @@ public sealed partial class CombatSimulation
         s.Rhythm = _time - s.LastHit > b.RhythmWindow ? 1 : s.Rhythm + 1; s.LastHit = _time;
         if (s.Rhythm >= b.RhythmHits) { s.Rhythm = 0; RestoreStamina(id, b.RhythmStamina); if(++s.RhythmCue==0)++s.RhythmCue; } // NC: one presentation cue per activation.
     }
-    internal float OrdinaryMovement(NetworkEntityId id)
+    internal float OrdinaryMovement(NetworkEntityId id,bool allowFear=false)
     {
         if (!_actors.TryGetValue(id, out var a)) return 1;
-        if (IsRooted(id)) return 0;
+        if (IsRooted(id) && !(allowFear && IsFleeing(id) && !a.StationaryCast && a.Control==CombatControlPhase.None &&
+            !a.Controls.Has(CrowdControlKind.Root) && !a.Controls.Has(CrowdControlKind.Stun) &&
+            !a.Controls.Has(CrowdControlKind.Freeze) && !a.Controls.Has(CrowdControlKind.Sleep))) return 0;
         var slow = a.SlowUntil > _time ? 1 - a.SlowFraction : 1;
         var footwork = IsSwordsman(id) && _swords[id].FootworkUntil > _time ? 1 + _catalog.Swordsman!.FootworkBonus : 1;
-        return slow * footwork;
+        return slow * footwork * (a.Action?.MovementMultiplier ?? 1);
     }
     internal double SwordPower(NetworkEntityId id) => Math.Max(0, _calculator.WeaponPower(_actors[id].Weapon, _actors[id].Stats));
     internal double ApplyBleedDamage(NetworkEntityId source, NetworkEntityId targetId, double power)
     {
         var target = _actors[targetId];
-        var damage = Math.Min(target.Health, _calculator.ApplyDefense(power, target.Stats.PhysicalDefense));
-        target.Health -= damage; NotifyDamage(source, targetId, damage, direct: false); return damage;
+        return ApplyHealthDamage(SourceIdentity(source),source,targetId,_calculator.ApplyDefense(power,target.Stats.PhysicalDefense),DamageOrigin.Periodic,Content.Server.Data.EffectDamageFamily.Physical);
     }
-    internal double ApplySwordDamage(NetworkEntityId source, NetworkEntityId targetId, Vector2 direction, double power, double armorIgnore, out GuardImpact guard)
+    internal void Stun(NetworkEntityId target, double seconds,NetworkEntityId source=default,ushort definition=0,ulong execution=0)
+        => ApplyStatusControl(source,target,definition,execution,CrowdControlKind.Stun,seconds);
+    internal void Slow(NetworkEntityId target, float fraction, double seconds,NetworkEntityId source=default,ushort definition=0,ulong execution=0)
+        => ApplyStatusControl(source,target,definition,execution,CrowdControlKind.Slow,seconds,fraction);
+
+    private void RefreshControlModifiers(Combatant actor)
     {
-        guard = GuardImpact.None;
-        if (!CanTarget(source, targetId)) return 0;
-        var target = _actors[targetId]; var armor = target.Stats.PhysicalDefense;
-        if (armor > 0) armor *= 1 - armorIgnore;
-        var damage = Math.Min(target.Health, Defend(target, _actors[source], direction, _calculator.ApplyDefense(power, armor), out guard));
-        target.Health -= damage; NotifyDamage(source, targetId, damage);
-        return damage;
-    }
-    internal void Stun(NetworkEntityId target, double seconds)
-    {
-        var actor = _actors[target];
-        // Boss action interruption is decided by the action, independently of stun immunity.
-        if (!actor.CanBeStunned) { InterruptRequested?.Invoke(target); return; }
-        var factor = ControlFactor(actor); if (factor == 0) return;
-        InterruptControl(target);
-        if (actor.Control is CombatControlPhase.Recovering or CombatControlPhase.Displaced)
-            actor.Control=CombatControlPhase.None;
-        actor.StunnedUntil = Math.Max(actor.StunnedUntil, _time + seconds * factor);
-        if (_defense.TryGetValue(target, out var d)) { d.GuardUntil = d.ParryUntil = 0; _defenseActive.Add(target); _defenseDirty.Add(target); }
-    }
-    internal void Slow(NetworkEntityId target, float fraction, double seconds)
-    {
-        var actor = _actors[target]; actor.SlowFraction = fraction; actor.SlowUntil = _time + seconds;
-        if (_defense.ContainsKey(target)) { _defenseActive.Add(target); _defenseDirty.Add(target); }
+        actor.SlowFraction=(float)Math.Min(1-_catalog.Control.MinimumSlowMultiplier,actor.Controls.Strength(CrowdControlKind.Slow));
+        actor.SlowUntil=actor.Controls.LastEnd(CrowdControlKind.Slow);
     }
     internal bool CanSpendStamina(NetworkEntityId id, double cost) => _defense.TryGetValue(id, out var d) && d.Stamina >= cost;
+    internal double AvailableStamina(NetworkEntityId id)=>_defense[id].Stamina;
     internal void SpendStamina(NetworkEntityId id, double cost) { if (cost > 0) Spend(id, _defense[id], cost); }
     internal void RestoreStamina(NetworkEntityId id, double amount)
     {

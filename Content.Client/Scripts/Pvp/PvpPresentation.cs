@@ -34,7 +34,7 @@ public partial class PvpPresentation:CanvasLayer
     public void Toggle() { if(_panel.Visible) _panel.Close(); else _panel.Open(); }
     private void Mode(PvpMode mode){if(mode==PvpMode.Criminal&&!_ack.ButtonPressed)return;Request(new(_state.LastSequence+1,PvpAction.Mode,mode,mode==PvpMode.Criminal,0));}
     private void Request(PvpCommand c){if(_pending is not null||_state.OwnerId!=_player.EntityId)return;_pending=c;_sent=_clock;_status.Text="Ожидаем сохранения…";_network.SendPvp(c);}
-    private void State(PvpState s){if(s.OwnerId!=_player.EntityId)return;var wasDead=_state.Dead;_state=s;_received=_clock;if(s.Dead&&!wasDead) _panel.Open();}
+    private void State(PvpState s){if(s.OwnerId!=_player.EntityId)return;_state=s;_received=_clock;}
     private void Channel(PickupChannelState c){if(c.OwnerId!=_player.EntityId)return;_channel=c;_channelAt=_clock;}
     private void Result(PvpResult r){if(_pending?.Sequence!=r.Sequence)return;_pending=null;_status.Text=r.Outcome switch{PvpOutcome.Accepted=>"Сохранено.",PvpOutcome.AlreadyProcessed=>"Запрос уже обработан.",PvpOutcome.NotReady=>"Дождитесь окончания таймера или активного эффекта.",PvpOutcome.Protected=>"Выйдите из города, чтобы включить PvP.",PvpOutcome.InvalidState=>"Действие недоступно в текущем состоянии.",PvpOutcome.RateLimited=>"Слишком много действий; попробуйте снова.",_=>"Запрос устарел. Получите текущее состояние."};}
     public override void _Process(double delta)

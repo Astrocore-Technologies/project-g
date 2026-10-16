@@ -10,7 +10,7 @@ namespace Content.Tests.Server.Combat;
 public sealed class HealthRecoveryTests
 {
     private static ServerWorld World() => new(Options.Create(new MovementOptions()),
-        Options.Create(new InterestOptions()), catalog: ContentCatalogTests.Load());
+        Options.Create(new InterestOptions()), catalog: ContentCatalogTests.Load(), hitRoll: () => 0, criticalRoll: () => 1);
 
     private static void Step(ServerWorld world, int ticks)
     {
@@ -29,7 +29,7 @@ public sealed class HealthRecoveryTests
     {
         var world = World();
         var initial = world.CreateInitialCharacter();
-        var player = world.AddPlayer(42, new(1), initial with { Health = 10, Stats = new(1, 1, vitality, 1, 1, 1) });
+        var player = world.AddPlayer(42, new(1), initial with { Health = 10, Stats = new(1, 1, vitality, 1, 1, 1, 10) });
         var actor = world.Combat!.Get(player.EntityId);
         Step(world, 19);
         Assert.Equal(10, actor.Health);
@@ -50,7 +50,7 @@ public sealed class HealthRecoveryTests
         world.Combat.ApplyAbilityDamage(player.EntityId, 10, world.TrainingTargetId);
         var damaged = actor.Health;
         Assert.True(world.TryApplyMove(42, new(1, 0, new(8, 0))));
-        actor.IsCasting = true;
+        Assert.True(world.TryQueueAbility(42,new(1,world.Tick,1,Vector2.UnitY),0));
         Step(world, 10);
         var secondHit = world.Combat.ApplyAbilityDamage(player.EntityId, 1, world.TrainingTargetId);
         Step(world, 10);
@@ -66,14 +66,16 @@ public sealed class HealthRecoveryTests
         var nearFull = world.AddPlayer(2, new(2), initial with { Health = initial.Health - .1 });
         var dead = world.AddPlayer(3, new(3), initial with { Health = 0 });
         var offline = world.AddPlayer(4, new(4), initial with { Health = 10 });
-        world.DisconnectPvp(4);
+        var offlineHealth = world.CaptureCharacter(4).Health;
+        world.RemovePlayer(4);
         world.Combat!.ApplyAbilityDamage(world.TrainingTargetId, 10);
         var dummyHealth = world.Combat.Get(world.TrainingTargetId).Health;
         Step(world, 100);
         Assert.Equal(initial.Health, world.Combat.Get(full.EntityId).Health);
         Assert.Equal(initial.Health, world.Combat.Get(nearFull.EntityId).Health);
         Assert.Equal(0, world.Combat.Get(dead.EntityId).Health);
-        Assert.Equal(10, world.Combat.Get(offline.EntityId).Health);
+        Assert.Equal(10, offlineHealth);
+        Assert.False(world.Combat.TryGet(offline.EntityId, out _));
         Assert.Equal(dummyHealth, world.Combat.Get(world.TrainingTargetId).Health);
         Assert.Empty(world.Combat.HealthRecovered);
         Assert.Empty(world.PersistenceDirty);

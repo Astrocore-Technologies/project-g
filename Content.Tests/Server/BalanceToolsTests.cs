@@ -67,7 +67,7 @@ public sealed class BalanceToolsTests
         var next = world.CreateInitialCharacter();
         Assert.NotEqual(initial.Inventory!.Items[0].InstanceId, next.Inventory!.Items[0].InstanceId);
         var player = world.AddPlayer(1, new PlayerId(1), initial);
-        var preview = BalancePreview.Calculate(catalog, build, 1.5);
+        var preview = BalancePreview.Calculate(catalog, build);
         var actor = world.Combat!.Get(player.EntityId);
         Assert.Equal(preview.Stats, actor.Stats);
         Assert.Equal(preview.Interval, actor.AttackInterval, 8);

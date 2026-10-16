@@ -21,12 +21,15 @@ public sealed partial class ServerWorld
     public bool HasPvp=>HasWorldNode&&Inventory is not null&&GroundItems is not null&&_pvpDefinition is not null;
     public IReadOnlyDictionary<NetworkEntityId,PvpResult> PvpResults=>_pvpResults;
     public bool IsPvpDirty(NetworkEntityId id)=>_pvpDirty.Contains(id);
-    public bool IsCombatTagged(int connection)=>HasPvp&&_playersByConnection.TryGetValue(connection,out var p)&&_pvp[p.EntityId].CombatUntil>PvpClock();
+    public bool IsCombatTagged(int connection)=>_playersByConnection.TryGetValue(connection,out var p)&&Combat?.InCombat(p.EntityId)==true;
+    internal long DisconnectBodyMilliseconds=>(long)Math.Ceiling((_progressionCatalog?.Lifecycle.DisconnectBodySeconds ?? 60)*1000);
     private void InitializePvp()
     {
         if(!HasPvp)return;
         if(!Navigation.IsWalkable(Rules.Respawn))throw new InvalidDataException("Blocked respawn position.");
         Combat!.DamageOriginPermission=position=>!Rules.IsSafe(position); Combat.DamagePermission=PvpCanHit;Combat.DamageApplied=PvpDamage;Combat.PlayerAction=PvpActionStarted;
+        Combat.CaptureReleasedPvp=CaptureProjectilePvp;Combat.ReleasedDamagePermission=ProjectileCanHit;
+        Combat.ReleasedDamageApplied=ProjectileDamageFromRemovedSource;
         Inventory!.ActionStarted=id=>GroundItems!.CancelChannel(id,Tick);
         GroundItems!.Clock=()=>PvpClock();GroundItems.ChannelSeconds=Rules.PickupSeconds;
         GroundItems.CanChannel=id=>_playersByEntity.TryGetValue(id,out var p)&&!p.Motion.IsMoving&&!p.Motion.IsDashing&&!Combat.Get(id).IsCasting&&!Abilities!.HasActiveEffects(id)&&!Inventory!.IsTrading(id)&&_pvp.TryGetValue(id,out var state)&&state.CombatUntil>PvpClock();
@@ -36,7 +39,7 @@ public sealed partial class ServerWorld
     {
         if(!HasPvp)return;var state=saved??new SavedPvp();state.Validate();
         if(saved is not null && saved.Dead!=(Combat!.Get(id).Health<=0))throw new InvalidDataException("Death/HP mismatch.");
-        if(saved is null&&Combat!.Get(id).Health<=0)state=state with {Dead=true,DeathId=1,RespawnAt=PvpClock()+Rules.PveRespawnSeconds*1000L};
+        if(saved is null&&Combat!.Get(id).Health<=0)state=state with {Dead=true,DeathId=1,RespawnAt=PvpClock()+(long)Math.Ceiling(_progressionCatalog!.Lifecycle.RespawnSeconds*1000)};
         _pvp.Add(id,state);_pvpIdentities[id]=Guid.NewGuid();DirtyPvp(id);
     }
     private void DirtyPvp(NetworkEntityId id){_pvpDirty.Add(id);_pvpTimed.Add(id);MarkPersistent(id);}
@@ -65,7 +68,7 @@ public sealed partial class ServerWorld
     private void PvpDamage(NetworkEntityId source,NetworkEntityId target,double damage)
     {
         if(!_pvp.ContainsKey(target))return;var now=PvpClock();GroundItems!.CancelChannel(target,Tick);
-        if(_pvp.TryGetValue(source,out var attacker))
+        if(source!=target && _pvp.TryGetValue(source,out var attacker))
         {
             var defender=_pvp[target];var victimId=_pvpIdentities[target];var episodes=attacker.Episodes.Where(e=>e.Until>now).ToList();
             var unlawful=episodes.Any(e=>e.Victim==victimId&&e.Civilian)||defender.Mode==PvpMode.Peaceful&&defender.CombatUntil<=now&&defender.AggressorUntil<=now;
@@ -78,7 +81,15 @@ public sealed partial class ServerWorld
             _pvp[target]=defender with {CombatUntil=now+Rules.CombatSeconds*1000L,LastAttacker=_pvpIdentities[source],LastPvpAt=now};
             DirtyPvp(source);DirtyPvp(target);
         }
-        if(Combat!.Get(target).Health<=0){_lethal.Add(target);var p=_playersByEntity[target];p.Motion.Reset(p.Position,p.Position);_movingPlayers.Remove(p.ConnectionId);Abilities!.StopDead(target);Echoes?.Wake(target);}
+    }
+    private void PlayerDefeated(NetworkEntityId target)
+    {
+        if(!_playersByEntity.TryGetValue(target,out var player))return;
+        if(_pvp.ContainsKey(target))_lethal.Add(target);
+        player.Motion.Reset(player.Position,player.Position,player.Height,player.Height);_movingPlayers.Remove(player.ConnectionId);
+        Abilities!.StopDead(target);Inventory?.FlushWear(target);Echoes?.Wake(target);MarkPersistent(target);
+        // A same-tick resurrection must not erase the legal consequences of an actual death.
+        if(_pvp.ContainsKey(target))SimulateDeaths();
     }
     public bool TryQueuePvp(int connection,PvpCommand c)
     {
@@ -117,9 +128,7 @@ public sealed partial class ServerWorld
     }
     private void RespawnPvp(ServerPlayer p)
     {
-        var id=p.EntityId;var spawn=Rules.Respawn;var height=LocateHeight(spawn);GroundItems!.CancelChannel(id,Tick);p.Motion.Reset(spawn,spawn,height,height);_movingPlayers.Remove(p.ConnectionId);_spatial.Move(id,spawn);Combat!.Move(id,spawn,p.Height);Combat.Respawn(id);Abilities!.Respawn(id);Echoes?.Respawn(id);
-        _pvp[id]=_pvp[id] with {Dead=false,CombatUntil=0,ProtectionUntil=PvpClock()+Rules.ProtectionSeconds*1000L};DirtyPvp(id);
-        Audit(_persistentActors.GetValueOrDefault(p.ConnectionId,"runtime"),"Respawn",_pvp[id].DeathId.ToString());
+        RespawnPlayer(p);
     }
     private void SimulateDeaths()
     {
@@ -149,7 +158,8 @@ public sealed partial class ServerWorld
                     if(k.Episodes.Any(e=>e.Victim==_pvpIdentities[id]&&e.Civilian&&e.Until>now)){_pvp[killer]=k with {Reputation=Math.Max(-1000,k.Reputation-Rules.KillPenalty),Pk=k.Pk==int.MaxValue?int.MaxValue:k.Pk+1};DirtyPvp(killer);}break;
                 }
             }
-            _pvp[id]=s with {Dead=true,PvpDeath=isPvp,DeathId=s.DeathId+1,RespawnAt=now+(isPvp?Rules.PvpRespawnSeconds:Rules.PveRespawnSeconds)*1000L,ExperienceLost=lost,DroppedItem=dropped,DropSkippedCapacity=skipped};DirtyPvp(id);
+            var life=Combat!.CaptureLife(id);
+            _pvp[id]=s with {Dead=true,PvpDeath=isPvp,DeathId=life.DeathId,RespawnAt=now+(long)Math.Ceiling(life.RespawnSeconds*1000),ExperienceLost=lost,DroppedItem=dropped,DropSkippedCapacity=skipped};DirtyPvp(id);
             Audit(_persistentActors.GetValueOrDefault(p.ConnectionId,"runtime"),"Death",$"{s.DeathId+1}, PvP {isPvp}, EXP {lost}, item {dropped:N}, capacity {skipped}");
         }
         _lethal.Clear();
@@ -162,24 +172,31 @@ public sealed partial class ServerWorld
     private SavedProgression? CaptureProgression(NetworkEntityId id)=>_progression.TryGetValue(id,out var s)?s with {Pvp=_pvp.GetValueOrDefault(id)}:null;
     public PvpZoneState PublicPvpZone()=>new(Rules.SafeMinX,Rules.SafeMaxX,Rules.SafeMinZ,Rules.SafeMaxZ);
     public PvpPublicState PublicPvp(NetworkEntityId id){var s=_pvp[id];var now=PvpClock();return new(id,Tick,s.Mode,s.CombatUntil>now,s.AggressorUntil>now,s.ProtectionUntil>now,s.Dead);}
-    public PvpState PrivatePvp(NetworkEntityId id){var s=_pvp[id];var now=PvpClock();static float Left(long at,long now,float cap)=>(float)Math.Clamp((at-now)/1000d,0,cap);return new(id,Tick,s.LastSequence,s.Mode,s.Reputation,s.Pk,s.DeathId,s.Dead,s.PvpDeath,s.Dead?Left(s.RespawnAt,now,60):0,s.ExperienceLost,s.DroppedItem!=Guid.Empty,s.DropSkippedCapacity,Left(s.CombatUntil,now,120),Left(s.AggressorUntil,now,600));}
+    public PvpState PrivatePvp(NetworkEntityId id){var s=_pvp[id];var now=PvpClock();static float Left(long at,long now,float cap)=>(float)Math.Clamp((at-now)/1000d,0,cap);return new(id,Tick,s.LastSequence,s.Mode,s.Reputation,s.Pk,s.DeathId,s.Dead,s.PvpDeath,s.Dead?Left(s.RespawnAt,now,60):0,s.ExperienceLost,s.DroppedItem!=Guid.Empty,s.DropSkippedCapacity,(float)(Combat?.CombatRemaining(id)??0),Left(s.AggressorUntil,now,600));}
     public void ClearPvpResults(){_pvpDirty.Clear();_pvpResults.Clear();}
     private void RemovePvp(int connection,NetworkEntityId id){_pvp.Remove(id);_pvpIdentities.Remove(id);_pvpPending.Remove(connection);_pvpRequests.Remove(connection);_pvpDirty.Remove(id);_pvpTimed.Remove(id);_lethal.Remove(id);_pvpResults.Remove(id);}
     public void DisconnectPvp(int connection){if(!_playersByConnection.TryGetValue(connection,out var p))return;
+        ResetLogoutSession(connection);
+        ResetLifeSession(connection);
         ResetQuestSession(p.EntityId);
-        Abilities?.SetManaRecoveryConnected(p.EntityId, false); // NC: logout bodies do not recover.
+        // A disconnected body remains in the simulation; only its input session ended.
+        if(Combat is not null)
+        {var actor=Combat.Get(p.EntityId);actor.DetachedBody=true;actor.Active=true;Combat.RefreshHealthRecovery(p.EntityId);}
+        Abilities?.DisconnectInput(p.EntityId);
         Combat?.SetDefenseConnected(p.EntityId,false);
         RemoveCraftPlayer(connection,p.EntityId);RemoveRepairPlayer(connection,p.EntityId);RemoveEconomyPlayer(connection,p.EntityId);_nodePending.Remove(connection);_nodeSequences.Remove(connection);_progressionPending.Remove(p.EntityId);_professionPending.Remove(p.EntityId);
-GroundItems?.CancelChannel(p.EntityId,Tick);_pvpPending.Remove(connection);if(_playerTrades.TryGetValue(p.EntityId,out var key)&&_trades.TryGetValue(key,out var trade))CloseTrade(trade,TradePhase.Cancelled);p.Motion.Reset(p.Position,p.Position);_movingPlayers.Remove(connection);}
+GroundItems?.CancelChannel(p.EntityId,Tick);_pvpPending.Remove(connection);if(_playerTrades.TryGetValue(p.EntityId,out var key)&&_trades.TryGetValue(key,out var trade))CloseTrade(trade,TradePhase.Cancelled);
+        if(!p.Motion.IsDashing && Combat?.IsFleeing(p.EntityId)!=true){p.Motion.Reset(p.Position,p.Position,p.Height,p.Height);_movingPlayers.Remove(connection);}}
     public ServerPlayer GetPlayer(int connection)=>_playersByConnection[connection];
     public void RebindConnection(int oldConnection,int newConnection,PlayerId player)
     {
+        ResetLogoutSession(oldConnection);ResetLogoutSession(newConnection);
+        ResetLifeSession(oldConnection);ResetLifeSession(newConnection);
         var p=_playersByConnection[oldConnection];_playersByConnection.Remove(oldConnection);p.ConnectionId=newConnection;p.PlayerId=player;_playersByConnection.Add(newConnection,p);
-        Abilities?.SetManaRecoveryConnected(p.EntityId, newConnection >= 0); // NC
         Combat?.SetDefenseConnected(p.EntityId,newConnection>=0);
         ResetQuestSession(p.EntityId);
         if(_persistentActors.Remove(oldConnection,out var identity))_persistentActors[newConnection]=identity;
-        if(newConnection>=0){p.LastProcessedSequence=0;p.LastPathRequestTick=null;Combat!.ResetSession(p.EntityId);Abilities!.ResetSession(p.EntityId);Inventory!.ResetSession(p.EntityId);Echoes?.ResetSession(p.EntityId);GroundItems!.RemovePlayer(p.EntityId);_progressionSequences.Remove(p.EntityId);_professionSequences.Remove(p.EntityId);_tradeRequests.Remove(oldConnection);}
-        _movingPlayers.Remove(oldConnection);_persistenceDirty.Remove(oldConnection);_pvpRequests.Remove(oldConnection);_pvpPending.Remove(oldConnection);MarkPersistent(p.EntityId);
+        if(newConnection>=0){p.LastProcessedSequence=0;p.LastPathRequestTick=null;Combat?.ResetSession(p.EntityId);Abilities?.ResetSession(p.EntityId);Inventory?.ResetSession(p.EntityId);Echoes?.ResetSession(p.EntityId);GroundItems?.RemovePlayer(p.EntityId);_progressionSequences.Remove(p.EntityId);_professionSequences.Remove(p.EntityId);_tradeRequests.Remove(oldConnection);}
+        if(_movingPlayers.Remove(oldConnection))_movingPlayers.Add(newConnection);_persistenceDirty.Remove(oldConnection);_pvpRequests.Remove(oldConnection);_pvpPending.Remove(oldConnection);MarkPersistent(p.EntityId);
     }
 }

@@ -28,21 +28,21 @@ public sealed class StatCalculatorTests
         Assert.Throws<ArgumentException>(() => new BaseStats(value, 0, 0, 0, 0, 0));
 
     [Fact]
-    public void PrototypeRagnarokContributionsAreFractionalAndDataDriven()
+    public void ApprovedCombatCoefficientsAreDataDriven()
     {
-        var result = Calculator.Calculate(new BaseStats(10, 10, 10, 10, 10, 10), 100, 50, 1, 1);
+        var result = Calculator.Calculate(new BaseStats(10, 10, 10, 10, 10, 10, 10), 100, 50, 1, 1);
         Assert.Equal(10 + 2 + 10d / 3, result.MeleeAttack, 10);
         Assert.Equal(result.MeleeAttack, result.RangedAttack);
-        Assert.Equal(15 + 2 + 10d / 3, result.MagicAttack, 10);
+        Assert.Equal(34, result.MagicAttack, 10);
         Assert.Equal(1.05, result.MeleeWeaponMultiplier, 10);
         Assert.Equal(7, result.PhysicalDefense, 10);
-        Assert.Equal(14, result.MagicDefense, 10);
+        Assert.Equal(15, result.MagicDefense, 10);
         Assert.Equal(110, result.MaxHealth, 10);
-        Assert.Equal(55, result.MaxMana, 10);
+        Assert.Equal(130, result.MaxMana, 10);
         Assert.Equal(1 + 10d / 30, result.HealthRecovery, 10);
-        Assert.Equal(1 + 10d / 36, result.ManaRecovery, 10);
+        Assert.Equal(3, result.ManaRecovery, 10);
         Assert.Equal(1.2, result.HealthItemMultiplier, 10);
-        Assert.Equal(1.1, result.ManaItemMultiplier, 10);
+        Assert.Equal(1, result.ManaItemMultiplier, 10);
         Assert.Equal(1.125, result.AttackSpeedMultiplier, 10);
         Assert.Equal(1.1, result.CastSpeedMultiplier, 10);
 
@@ -73,7 +73,7 @@ public sealed class StatCalculatorTests
             MaxMana = -100, HealthRecovery = -2, ManaRecovery = -2,
             AttackSpeedMultiplier = -2, CastSpeedMultiplier = -2,
             HealthItemMultiplier = -2, ManaItemMultiplier = -2,
-            MeleeWeaponMultiplier = -2, RangedWeaponMultiplier = -2, CriticalChance = -1, BlockDamage = -1
+            MeleeWeaponMultiplier = -2, RangedWeaponMultiplier = -2, CriticalChance = -1, BlockDamage = -1, Accuracy = -1, Evasion = -1, CriticalDamage = -2, BlockStrength = -100, CooldownReduction=-1
         });
         foreach (var property in typeof(DerivedStats).GetProperties())
         {

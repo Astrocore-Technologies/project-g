@@ -16,10 +16,13 @@ public sealed class DefenseSimulationTests
         public Fixture()
         {
             var spatial=new SpatialIndex(8);
-            Combat=new(ContentCatalogTests.Load(),spatial,new NavigationOptions().CreateGrid(new MovementOptions().ToSettings()),new CombatOptions(),20,8,()=>1);
+            Combat=new(ContentCatalogTests.Load(),spatial,new NavigationOptions().CreateGrid(new MovementOptions().ToSettings()),new CombatOptions(),20,8,()=>1, hitRoll: () => 0);
             Combat.Add(new(1),Vector2.Zero,CombatEntityKind.Player);
             Combat.Add(new(2),Vector2.UnitY,CombatEntityKind.Monster);
             Combat.Add(new(3),Vector2.UnitY,CombatEntityKind.Monster);
+            // 30 pressure against the player's 30 strength costs exactly 10 on impact.
+            Combat.Get(new(2)).Stats=Combat.Get(new(2)).Stats with {MeleeAttack=20,MeleeWeaponMultiplier=1};
+            Combat.Get(new(3)).Stats=Combat.Get(new(3)).Stats with {MeleeAttack=20,MeleeWeaponMultiplier=1};
             spatial.Add(new(1),Vector2.Zero); spatial.Add(new(2),Vector2.UnitY); spatial.Add(new(3),Vector2.UnitY);
         }
         public void Step(float delta=.05f)=>Combat.Simulate(delta,++Tick);
@@ -60,15 +63,16 @@ public sealed class DefenseSimulationTests
         f.Guard(3,DefenseAction.Release); Assert.False(f.State.Blocking);
     }
     [Fact]
-    public void InsufficientStaminaCannotParryBlockOrDodgeAndReconnectDoesNotRefill()
+    public void EmptyStaminaCannotDefendButDisconnectedBodyRegeneratesAndRebindDoesNotRefill()
     {
-        var f=new Fixture(); f.Combat.RestoreDefense(new(1),new SavedDefense(1,5,0,1));
+        var f=new Fixture(); f.Combat.RestoreDefense(new(1),new SavedDefense(1,0,0,1));
         f.Guard(1,DefenseAction.Parry); Assert.Equal(DefenseOutcome.NoStamina,f.State.Outcome);
         f.Guard(2,DefenseAction.Block); Assert.False(f.State.Blocking); Assert.True(f.Hit().Damage>0);
         Assert.False(f.Combat.CanDodge(new(1)));
         f.Combat.SetDefenseConnected(new(1),false); for(var i=0;i<40;i++) f.Step();
-        Assert.Equal(5,f.State.Stamina); f.Combat.ResetSession(new(1)); Assert.Equal(5,f.State.Stamina);
-        Assert.Equal(5,f.Combat.CaptureDefense(new(1)).Stamina);
+        var recovered=f.State.Stamina;Assert.InRange(recovered,1,99);
+        f.Combat.ResetSession(new(1)); Assert.Equal(recovered,f.State.Stamina);
+        Assert.Equal(recovered,f.Combat.CaptureDefense(new(1)).Stamina);
     }
     [Theory]
     [InlineData(.05f,40)] [InlineData(.1f,20)]
@@ -82,9 +86,9 @@ public sealed class DefenseSimulationTests
         Assert.Equal(95,f.State.Stamina,4);
     }
     [Fact]
-    public void ForgedTargetCannotRedirectToNearbyVictimAndGuardLeaseExpires()
+    public void ManualDirectionAndGuardLeaseAreAuthoritative()
     {
-        var f=new Fixture(); Assert.True(f.Combat.Queue(new(1),new(1,0,Vector2.UnitY,new(999)),0)); f.Step();
+        var f=new Fixture(); Assert.True(f.Combat.Queue(new(1),new(1,0,-Vector2.UnitY),0)); f.Step();
         Assert.False(Assert.Single(f.Combat.Events).TargetId.IsValid);
         f.Guard(1,DefenseAction.Block);
         Assert.False(f.Combat.QueueDefense(new(1),new(1,DefenseAction.Parry,Vector2.UnitY),f.Tick));

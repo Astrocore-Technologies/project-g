@@ -40,7 +40,7 @@ public sealed partial class ServerWorld
             if (!catalog.Abilities.TryGetValue(skill.DefinitionId,out var definition) ||
                 (!_playerDefinition!.AbilityIds.Contains(skill.DefinitionId) && definition.NetworkId != balance.DiscoverySkillId && !HasProfessionSkillSource(value,skill.DefinitionId)) ||
                 !catalog.SkillProgressions[skill.DefinitionId].Accepts(skill.Level, skill.Practice) ||
-                (definition.Kind == AbilityKind.Dash && skill.Slot != 0))
+                (definition.Kind is AbilityKind.Dash or AbilityKind.Passive && skill.Slot != 0))
                 throw new InvalidDataException($"Saved skill '{skill.DefinitionId}' level/practice/source requires content migration.");
         }
         if (value.Skills.Count(s => catalog.Abilities[s.DefinitionId].Kind == AbilityKind.Dash) > 1 ||
@@ -53,10 +53,11 @@ public sealed partial class ServerWorld
         var value = _progression[id]; var catalog = _progressionCatalog!; var balance = catalog.Progression;
         var stats = _playersByEntity[id].BaseStats;
         var skills = value.Skills.Select(s => new SkillProgress(catalog.Abilities[s.DefinitionId].NetworkId,s.Level,s.Practice,
-            catalog.SkillProgressions[s.DefinitionId].PracticeThreshold(s.Level),s.Slot,false)).ToList();
-        if (skills.Count < NetworkConstants.MaxLearnedSkills && !skills.Any(s => s.Id == balance.DiscoverySkillId)) skills.Add(new(balance.DiscoverySkillId,0,0,0,0,value.Discoveries != 0));
+            catalog.SkillProgressions[s.DefinitionId].PracticeThreshold(s.Level),s.Slot,false,catalog.Abilities[s.DefinitionId].Passive is not null)).ToList();
+        if (skills.Count < NetworkConstants.MaxLearnedSkills && !skills.Any(s => s.Id == balance.DiscoverySkillId)) skills.Add(new(balance.DiscoverySkillId,0,0,0,0,value.Discoveries != 0,
+            catalog.Abilities.Values.Single(a=>a.NetworkId==balance.DiscoverySkillId).Passive is not null));
         return new(id,tick,value.Level,value.Experience,value.Level == balance.LevelCap ? 0 : balance.LevelThreshold(value.Level),value.StatPoints,value.Discoveries,
-            [stats.Strength,stats.Agility,stats.Vitality,stats.Intelligence,stats.Dexterity,stats.Luck],skills.ToArray());
+            [stats.Strength,stats.Agility,stats.Vitality,stats.Intelligence,stats.Dexterity,stats.Luck,stats.Wisdom],skills.ToArray());
     }
     public bool HasProgression => _progressionCatalog is not null;
     public bool TryQueueProgression(int connectionId, ProgressionCommand command)
@@ -135,26 +136,26 @@ public sealed partial class ServerWorld
                 continue;
             }
             var actor = Combat.Get(id); var value = _progression[id]; var outcome = actor.Health <= 0 ? ProgressionOutcome.InvalidState
-                : actor.IsCasting || Abilities.HasActiveEffects(id) ? ProgressionOutcome.Busy : ProgressionOutcome.Accepted;
+                : command.Action==ProgressionAction.AssignSlot && Combat.InCombat(id) || actor.IsCasting || Abilities.HasActiveEffects(id) ? ProgressionOutcome.Busy : ProgressionOutcome.Accepted;
             if (outcome == ProgressionOutcome.Accepted)
             {
                 if (command.Action is ProgressionAction.AllocateStat or ProgressionAction.AllocateStats)
                 {
-                    var allocation = command.Allocation ?? new int[6];
+                    var allocation = command.Allocation ?? new int[7];
                     if (command.Action == ProgressionAction.AllocateStat) allocation[command.StatIndex] = 1;
                     var total = allocation.Sum();
                     if (value.StatPoints < total) outcome = ProgressionOutcome.NoPoints;
                     else
                     {
                         var player = _playersByEntity[id]; var old = player.BaseStats;
-                        double[] stats = [old.Strength,old.Agility,old.Vitality,old.Intelligence,old.Dexterity,old.Luck];
-                        for (var i = 0; i < 6; i++) stats[i] += allocation[i];
-                        player.BaseStats = new(stats[0],stats[1],stats[2],stats[3],stats[4],stats[5]);
+                        double[] stats = [old.Strength,old.Agility,old.Vitality,old.Intelligence,old.Dexterity,old.Luck,old.Wisdom];
+                        for (var i = 0; i < 7; i++) stats[i] += allocation[i];
+                        player.BaseStats = new(stats[0],stats[1],stats[2],stats[3],stats[4],stats[5],stats[6]);
                         try
                         {
                             if (Inventory is not null) Inventory.RefreshStats(id);
                             else
-                            { var profile = Combat.PrepareEquipment(player.BaseStats,[]); var resources = Abilities.PrepareEquipment(id,profile.Stats); Combat.ApplyEquipment(id,profile); Abilities.ApplyEquipment(id,resources); }
+                            { var profile = Combat.PrepareEquipment(player.BaseStats,[]); var resources = Abilities.PrepareEquipment(id,Combat.WithEffects(id,profile.Stats,profile.Weapon)); Combat.ApplyEquipment(id,profile); Abilities.ApplyEquipment(id,resources); }
                             _progression[id] = value with { StatPoints = value.StatPoints - total };
                         }
                         catch (ArgumentException) { player.BaseStats = old; outcome = ProgressionOutcome.InvalidState; }
@@ -170,7 +171,7 @@ public sealed partial class ServerWorld
                 else
                 {
                     var index = Array.FindIndex(value.Skills,s => catalog.Abilities[s.DefinitionId].NetworkId == command.SkillId);
-                    if (index < 0 || catalog.Abilities[value.Skills[index].DefinitionId].Kind == AbilityKind.Dash) outcome = ProgressionOutcome.Unavailable;
+                    if (index < 0 || catalog.Abilities[value.Skills[index].DefinitionId].Kind is AbilityKind.Dash or AbilityKind.Passive) outcome = ProgressionOutcome.Unavailable;
                     else
                     {
                         var skills = (SavedSkill[])value.Skills.Clone();
@@ -190,10 +191,10 @@ public sealed partial class ServerWorld
     {
         if (command.Allocation!.Sum() > _progression[id].StatPoints) return ProgressionOutcome.NoPoints;
         var stats = _playersByEntity[id].BaseStats; var a = command.Allocation!;
-        var proposed = new BaseStats(stats.Strength+a[0],stats.Agility+a[1],stats.Vitality+a[2],stats.Intelligence+a[3],stats.Dexterity+a[4],stats.Luck+a[5]);
+        var proposed = new BaseStats(stats.Strength+a[0],stats.Agility+a[1],stats.Vitality+a[2],stats.Intelligence+a[3],stats.Dexterity+a[4],stats.Luck+a[5],stats.Wisdom+a[6]);
         try
         {
-            var projected = Inventory?.PreviewStats(id,proposed) ?? Combat!.PrepareEquipment(proposed,[]).Stats;
+            var projected = Inventory?.PreviewStats(id,proposed) ?? Combat!.WithEffects(id,Combat.PrepareEquipment(proposed,[]).Stats);
             _statPreviews[id] = new(command.Sequence,Tick,DisplayStats(Combat!.Get(id).Stats),DisplayStats(projected));
             return ProgressionOutcome.Accepted;
         }
@@ -201,5 +202,5 @@ public sealed partial class ServerWorld
     }
     private static double[] DisplayStats(DerivedStats s) => [s.MeleeAttack,s.RangedAttack,s.MagicAttack,s.MeleeWeaponMultiplier,s.RangedWeaponMultiplier,
         s.PhysicalDefense,s.MagicDefense,s.MaxHealth,s.MaxMana,s.HealthRecovery,s.ManaRecovery,s.HealthItemMultiplier,s.ManaItemMultiplier,
-        s.AttackSpeedMultiplier,s.CastSpeedMultiplier,s.CriticalChance,s.BlockDamage];
+        s.AttackSpeedMultiplier,s.CastSpeedMultiplier,s.CriticalChance,s.BlockDamage,s.Accuracy,s.Evasion,s.CriticalDamage,s.BlockStrength,Math.Clamp(s.CooldownReduction,0,1)];
 }

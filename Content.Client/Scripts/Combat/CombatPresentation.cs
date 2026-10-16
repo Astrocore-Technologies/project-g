@@ -25,11 +25,16 @@ public partial class CombatPresentation : Node3D
     private Node3D _actor = null!;
     private CombatState _state;
     private bool _local;
+    private ActorLifeState? _life;
+    private double _lifeReceived;
+    private bool _corpseVisibilityPending;
     private PlayerController? _player;
     private SwordAttackAnimation? _swordAnimation;
-    private CombatPresentation? _autoTarget;
-    private double _chaseAt;
-    private readonly MeshInstance3D _selection=new() { Visible=false,Position=new(0,-.94f,0) };
+    private bool _continuousHeld;
+    private double _heartbeatAt;
+    private NumericsVector2 _basicDirection = NumericsVector2.UnitY;
+    private ulong _lastAttackExecution;
+    private ulong _lastFeedbackId;
     private uint _sequence;
     private uint _pending;
     private uint _lastAttackSequence;
@@ -50,17 +55,27 @@ public partial class CombatPresentation : Node3D
         _local = local;
         _player=local ? _actor as PlayerController : null;
         _swordAnimation=(_actor as PlayerController)?.SwordAnimation;
-        AddToGroup("CombatTargets");
-        if (_player is not null) _player.ManualMoveRequested+=CancelAutoAttack;
-        _selection.Mesh=new CylinderMesh { TopRadius=.65f,BottomRadius=.65f,Height=.025f };
-        _selection.MaterialOverride=new StandardMaterial3D { AlbedoColor=new(1,.65f,.12f,.45f),Transparency=BaseMaterial3D.TransparencyEnum.Alpha,ShadingMode=BaseMaterial3D.ShadingModeEnum.Unshaded };
-        AddChild(_selection);
+        if (_player is not null) _player.ManualMoveRequested+=CancelBasicAttack;
         _spawnTick = state.ServerTick;
         AddChild(_healthLabel);
         AddChild(_slash);
         AddChild(_areaVisual);
         _slash.MaterialOverride = _slashMaterial;
         ApplyState(state);
+        network.LifeReceived+=ApplyLife;
+        if(network.KnownLife.TryGetValue(state.EntityId,out var life))ApplyLife(life);
+    }
+    public void ApplyLife(ActorLifeState life)
+    {
+        if(life.EntityId!=_state.EntityId)return;
+        _life=life;_lifeReceived=Now();_corpseVisibilityPending=life.Dead&&life.CorpseRemaining>0;
+        _actor.Visible=!life.Dead || life.CorpseRemaining>0;
+        if(life.Dead)CancelBasicAttack();
+    }
+    private void UpdateCorpseVisibility()
+    {
+        if(_corpseVisibilityPending && _life is {} life && life.CorpseRemaining-(Now()-_lifeReceived)<=0)
+        {_actor.Visible=false;_corpseVisibilityPending=false;}
     }
 
     public void ApplyState(CombatState state)
@@ -77,95 +92,90 @@ public partial class CombatPresentation : Node3D
     {
         if (!_local || !IsAlive || ProjectG.UI.GameUi.GameplayModalOpen || @event is not InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } mouse)
             return;
-        CancelAutoAttack();
-        if (!mouse.CtrlPressed)
-        {
-            var selected=PickTarget(mouse.Position);
-            if (selected is not null)
-            { _autoTarget=selected; selected._selection.Visible=true; _chaseAt=0; GetViewport().SetInputAsHandled(); }
-            return;
-        }
-        // Ctrl reserves this click for one directional swing, even when the cursor overlaps a target.
-        if (Now() < _nextAttackAt || _pending != 0 || _player?.DefenseHeld==true) return;
-        var camera = GetViewport().GetCamera3D();
-        if (camera is null)
-            return;
-        var origin = camera.ProjectRayOrigin(mouse.Position);
-        var ray = camera.ProjectRayNormal(mouse.Position);
-        if (Mathf.Abs(ray.Y) < 0.0001f)
-            return;
-        var distance = -origin.Y / ray.Y;
-        if (distance <= 0)
-            return;
-        var point = origin + ray * distance;
-        var offset = new NumericsVector2(point.X - _actor.GlobalPosition.X, point.Z - _actor.GlobalPosition.Z);
-        if (offset.LengthSquared() < 0.000001f)
-            return;
-        var direction = NumericsVector2.Normalize(offset);
-        Swing(direction);
+        if (_network?.RegionActive != true || _pending != 0 || _player?.DefenseHeld == true ||
+            _player?.Control != CombatControlPhase.None || !TryBasicDirection(mouse.Position, out var direction)) return;
+        CancelBasicAttack();
+        // A tap produces one swing, a held button requests server-timed repetition.
+        // The existing Ctrl chord remains an explicit single-swing input.
+        if (mouse.CtrlPressed && Now() < _nextAttackAt) return;
+        _continuousHeld = !mouse.CtrlPressed;
+        Swing(direction, _continuousHeld ? BasicAttackMode.BeginContinuous : BasicAttackMode.Manual);
         GetViewport().SetInputAsHandled();
     }
-    private void Swing(NumericsVector2 direction,NetworkEntityId target=default)
+
+    public override void _Input(InputEvent @event)
     {
-        if (++_sequence == 0)
-            ++_sequence;
-        _pending = _sequence;
+        // Receive release even if UI consumed the press/focus moved afterwards.
+        if (_local && @event is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: false }) CancelBasicAttack();
+    }
+
+    private bool TryBasicDirection(Vector2? screen, out NumericsVector2 direction)
+    {
+        direction = _basicDirection;
+        if (_player is null || !_player.TryCursorSurface(out var point, out _, screen)) return false;
+        var offset = point - _player.PredictedPosition;
+        if (offset.LengthSquared() < .000001f) return false;
+        direction = NumericsVector2.Normalize(offset);
+        return true;
+    }
+
+    private uint NextSequence() { if (++_sequence == 0) ++_sequence; return _sequence; }
+
+    private void Swing(NumericsVector2 direction, BasicAttackMode mode)
+    {
+        _pending = NextSequence();
         _pendingSince = Now();
-        _nextAttackAt = Now() + _state.AttackInterval;
-        _swordAnimation?.PredictBasic(_sequence, direction, _state.AttackInterval);
-        ShowSwing(new(_actor.GlobalPosition.X, _actor.GlobalPosition.Z), direction, _state.Range, predicted: true);
-        _network?.SendAttack(new AttackCommand(_sequence, _player?.ClientTick ?? 0, direction,target));
-    }
-    private CombatPresentation? PickTarget(Vector2 mouse)
-    {
-        var camera=GetViewport().GetCamera3D(); if(camera is null) return null;
-        CombatPresentation? found=null; var nearest=float.MaxValue;
-        // Click-time search over rendered AOI actors, never a per-frame world scan.
-        foreach(var node in GetTree().GetNodesInGroup("CombatTargets"))
+        _basicDirection = direction;
+        _heartbeatAt = Now() + NetworkConstants.ContinuousAttackHeartbeatSeconds;
+        if (Now() >= _nextAttackAt)
         {
-            if(node is not CombatPresentation candidate || candidate==this || !candidate.IsAlive || camera.IsPositionBehind(candidate._actor.GlobalPosition)) continue;
-            var a=camera.UnprojectPosition(candidate._actor.GlobalPosition+Vector3.Up*.8f);
-            var b=camera.UnprojectPosition(candidate._actor.GlobalPosition-Vector3.Up*.8f);
-            var segment=b-a; var t=Math.Clamp((mouse-a).Dot(segment)/Math.Max(.001f,segment.LengthSquared()),0,1);
-            var distance=mouse.DistanceTo(a+segment*t);
-            if(distance>Math.Clamp(segment.Length()*.4f,12,32) || distance>=nearest) continue;
-            nearest=distance; found=candidate;
+            _nextAttackAt = Now() + _state.AttackInterval;
+            _swordAnimation?.PredictBasic(_sequence, direction, _state.AttackInterval);
+            ShowSwing(new(_actor.GlobalPosition.X, _actor.GlobalPosition.Z), direction, _state.Range, predicted: true);
         }
-        return found;
+        _network?.SendAttack(new(_sequence, _player?.ClientTick ?? 0, direction, mode));
     }
-    public void CancelAutoAttack()
-    { if(GodotObject.IsInstanceValid(_autoTarget)) _autoTarget!._selection.Visible=false; _autoTarget=null; }
-    public override void _ExitTree()
-    { CancelAutoAttack(); if(_player is not null) _player.ManualMoveRequested-=CancelAutoAttack; }
-    private void UpdateAutoAttack()
+
+    public void CancelBasicAttack()
     {
-        if (_autoTarget is null || _player is null) return;
-        if (!GodotObject.IsInstanceValid(_autoTarget) || !_autoTarget.IsInsideTree() || !_autoTarget.IsAlive || !IsAlive || !GetWindow().HasFocus())
-        { CancelAutoAttack(); _player.StopMovement(); return; }
-        if(ProjectG.UI.GameUi.GameplayModalOpen) { _player.StopMovement(); return; }
-        if (_player.DefenseHeld || _player.IsDashing || _player.Control != CombatControlPhase.None || _player.RecoveryRemaining > 0) return;
-        var targetPosition=_autoTarget._actor.GlobalPosition; var point=new NumericsVector2(targetPosition.X,targetPosition.Z);
-        var offset=point-_player.PredictedPosition;
-        var targetFoot = new System.Numerics.Vector3(point.X, targetPosition.Y - 1, point.Y);
-        var inRange=_player.CanAttack(targetFoot, _state.Range * MathF.Sqrt(.90f));
-        if(Now()>=_chaseAt)
-        { _chaseAt=Now()+.15; if(inRange) _player.StopMovement(); else if(!_player.MoveTo(point, targetFoot.Y)) { CancelAutoAttack(); _player.StopMovement(); return; } }
-        if(inRange && offset.LengthSquared()>.000001f && _pending==0 && Now()>=_nextAttackAt)
-            Swing(NumericsVector2.Normalize(offset),_autoTarget._state.EntityId);
+        if (!_continuousHeld) return;
+        _continuousHeld = false;
+        _network?.SendAttack(new(NextSequence(), _player?.ClientTick ?? 0, _basicDirection, BasicAttackMode.EndContinuous));
+    }
+
+    public override void _ExitTree()
+    { CancelBasicAttack(); if (_network is not null)_network.LifeReceived-=ApplyLife;if (_player is not null) _player.ManualMoveRequested -= CancelBasicAttack; }
+
+    public override void _PhysicsProcess(double delta)
+    {
+        if (!_local || !_continuousHeld || _player is null) return;
+        if (!Input.IsMouseButtonPressed(MouseButton.Left) || !IsAlive || !GetWindow().HasFocus() ||
+            _network?.RegionActive != true || ProjectG.UI.GameUi.GameplayModalOpen || _player.DefenseHeld ||
+            _player.IsDashing || _player.Control != CombatControlPhase.None || _player.RecoveryRemaining > 0)
+        { CancelBasicAttack(); return; }
+        if (Now() < _heartbeatAt) return;
+        _heartbeatAt = Now() + NetworkConstants.ContinuousAttackHeartbeatSeconds;
+        if (TryBasicDirection(null, out var direction)) _basicDirection = direction;
+        _network.SendAttack(new(NextSequence(), _player.ClientTick, _basicDirection, BasicAttackMode.UpdateContinuous));
     }
 
     public void Confirm(AttackEvent action)
     {
         if (!IsAlive || !MovementSimulation.IsSequenceNewer(action.ServerTick, _spawnTick) ||
-            !MovementSimulation.IsSequenceNewer(action.Sequence, _lastAttackSequence))
+            (action.ExecutionId != 0 ? action.ExecutionId <= _lastAttackExecution :
+                !MovementSimulation.IsSequenceNewer(action.Sequence, _lastAttackSequence)))
             return;
         _lastAttackSequence = action.Sequence;
+        _lastAttackExecution = action.ExecutionId;
+        if (_local) _nextAttackAt = Now() + _state.AttackInterval;
         if (action.Sequence == _areaSequence && _state.Kind == CombatEntityKind.Boss) return;
         if (_local && _pending == action.Sequence)
             _pending = 0;
         // Replace/restart the same visual with authoritative origin; do not apply damage twice.
         ShowSwing(action.Origin, action.Direction, action.Range, predicted: false);
         _swordAnimation?.ConfirmBasic(action);
+        if(!action.TargetId.IsValid)
+        { _damageText="ПРОМАХ"; _damageRemaining=.6; UpdateLabel(); }
     }
 
     public void ApplyResult(AttackResult result)
@@ -175,6 +185,7 @@ public partial class CombatPresentation : Node3D
         _pending = 0;
         if (result.Outcome != AttackOutcome.Accepted)
         {
+            CancelBasicAttack();
             _swordAnimation?.RejectBasic(result.Sequence);
             _slash.Visible = false;
             _slashRemaining = 0;
@@ -192,7 +203,7 @@ public partial class CombatPresentation : Node3D
         if (action.TargetHealth > _state.MaxHealth)
             return;
         _state = _state with { Health = action.TargetHealth, ServerTick = action.ServerTick };
-        _damageText = action.Guard==GuardImpact.Parried ? "ПАРИРОВАНИЕ" : $"{(action.Guard==GuardImpact.Blocked ? "БЛОК " : action.Critical ? "CRIT " : "")}-{action.Damage:0}";
+        _damageText = HitFeedback(action.Damage,action.Critical,action.Evaded,action.Guard);
         _damageRemaining = 0.6;
         UpdateLabel();
     }
@@ -202,8 +213,35 @@ public partial class CombatPresentation : Node3D
         if (hit.ServerTick != _state.ServerTick && !MovementSimulation.IsSequenceNewer(hit.ServerTick, _state.ServerTick)) return;
         if (hit.TargetHealth > _state.MaxHealth) return;
         _state = _state with { Health = hit.TargetHealth, ServerTick = hit.ServerTick };
-        _damageText = hit.Guard==GuardImpact.Parried ? "ПАРИРОВАНИЕ" : $"{(hit.Guard==GuardImpact.Blocked ? "БЛОК " : "")}-{hit.Damage:0}"; _damageRemaining = 0.6;
+        _damageText = HitFeedback(hit.Damage,hit.Critical,hit.Evaded,hit.Guard); _damageRemaining = 0.6;
         UpdateLabel();
+    }
+
+    private static string HitFeedback(double damage,bool critical,bool evaded,GuardImpact guard)
+    {
+        if(evaded) return "УКЛОНЕНИЕ";
+        if(guard==GuardImpact.Parried) return "ПАРИРОВАНИЕ";
+        var defense=guard==GuardImpact.GuardBroken ? "БЛОК ПРОБИТ " : guard==GuardImpact.Blocked ? "БЛОК " : "";
+        return $"{defense}{(critical ? "CRIT " : "")}-{damage:0}";
+    }
+
+    public void ApplyFeedback(CombatFeedback value)
+    {
+        if(value.TargetId!=_state.EntityId || value.EventId<=_lastFeedbackId ||
+            value.ServerTick!=_spawnTick && !MovementSimulation.IsSequenceNewer(value.ServerTick,_spawnTick))return;
+        _lastFeedbackId=value.EventId;
+        _damageText=value.Kind switch
+        {
+            CombatFeedbackKind.Healing=>$"{(value.Critical?"CRIT ":"")}+{value.Amount:0} HP",
+            CombatFeedbackKind.Resurrection=>$"ВОСКРЕШЕНИЕ +{value.Amount:0} HP",
+            CombatFeedbackKind.ShieldAbsorption=>$"ЩИТ {value.Amount:0}",
+            CombatFeedbackKind.LifeSteal=>$"ПОХИЩЕНИЕ +{value.Amount:0} HP",
+            CombatFeedbackKind.ManaSteal=>$"ПОХИЩЕНИЕ +{value.Amount:0} MP",
+            CombatFeedbackKind.Reflection=>$"ОТРАЖЕНИЕ -{value.Amount:0}",
+            CombatFeedbackKind.HealthPrice=>$"ЦЕНА -{value.Amount:0} HP",
+            _=>$"{(value.Critical?"CRIT ":"")}-{value.Amount:0}"
+        };
+        _damageRemaining=.8;UpdateLabel();
     }
 
     public void ShowWindup(NpcWindup value)
@@ -234,7 +272,7 @@ public partial class CombatPresentation : Node3D
 
     public override void _Process(double delta)
     {
-        if (_local) UpdateAutoAttack();
+        UpdateCorpseVisibility();
         if (_areaRemaining > 0 && (_areaRemaining -= delta) <= 0) _areaVisual.Visible = false;
         if (_slashRemaining > 0 && (_slashRemaining -= delta) <= 0)
             _slash.Visible = false;

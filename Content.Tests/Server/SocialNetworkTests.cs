@@ -25,7 +25,7 @@ public sealed class SocialNetworkTests
             a.Social(new(2,SocialKind.Party,SocialAction.Invite,b.LocalSpawn.EntityId.Value,group.Revision,0,0,false,""));await Poll(()=>b.SocialInvitations.Any(i=>i.Items.Length==1));var invite=b.SocialInvitations.Last().Items.Single();
             Assert.All(outsider.SocialInvitations,i=>Assert.Empty(i.Items));Assert.Equal(0UL,outsider.SocialRosters[SocialKind.Party].Id);
             b.Social(new(1,SocialKind.Party,SocialAction.Accept,0,invite.Revision,invite.Token,0,true,""));await Poll(()=>b.SocialRosters[SocialKind.Party].Total==2&&a.SocialRosters[SocialKind.Party].Total==2&&b.PartyPresences.Any(p=>p.Members.Length==2));
-            var self=b.SocialRosters[SocialKind.Party].Self;var token=b.Token;var old=b.LocalSpawn.EntityId;b.Disconnect();await Poll(()=>!a.Spawns.ContainsKey(old));
+            var self=b.SocialRosters[SocialKind.Party].Self;var token=b.Token;var old=b.LocalSpawn.EntityId;b.Logout();await Poll(()=>!a.Spawns.ContainsKey(old));
             using var reconnected=new NetworkMovementIntegrationTests.TestClient(port,token);await CharacterPersistenceTests.Poll(reconnected,()=>reconnected.SocialRosters.Count==2);Assert.Equal(group.Id,reconnected.SocialRosters[SocialKind.Party].Id);Assert.Equal(self,reconnected.SocialRosters[SocialKind.Party].Self);
         }
         finally{gate?.TrySetResult();await server.StopAsync(default);}

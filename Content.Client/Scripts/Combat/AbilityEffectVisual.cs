@@ -14,12 +14,26 @@ public partial class AbilityEffectVisual : Node3D
     private float _opacity;
     private double _life;
     public Node3D? Caster { get; set; }
+    private bool _applied;
     private Vector3 _casterPosition;
 
     public override void _Ready() => AddChild(_mesh);
 
     public void Apply(AbilityEffectState state, bool predicted = false)
     {
+        if(_applied && state.Phase is AbilityPhase.Charging or AbilityPhase.Channeling or AbilityPhase.Sustaining && _state.Phase==state.Phase && _state.EffectId==state.EffectId)
+        {
+            _state=state;_remaining=state.RemainingSeconds+.25;_casterPosition=new(state.Position.X,state.Height+1,state.Position.Y);
+            Position=new(state.Position.X,state.Height+.12f,state.Position.Y);
+            if(state.Form is AbilityForm.Projectile or AbilityForm.Melee)
+            {
+                var length=state.Form==AbilityForm.Projectile?1.2f:state.Area.Shape==AbilityAreaShape.Corridor?state.Area.Length:0;
+                Position+=new Vector3(state.Direction.X,0,state.Direction.Y)*length*.5f;
+                Rotation=new(0,Mathf.Atan2(state.Direction.X,state.Direction.Y),0);
+            }
+            return;
+        }
+        _applied=true;
         _state = state;
         _casterPosition=new(state.Position.X,state.Height+1,state.Position.Y);
         _remaining = state.RemainingSeconds + 0.25;
@@ -45,7 +59,7 @@ public partial class AbilityEffectVisual : Node3D
             Rotation = new(0,Mathf.Atan2(state.Direction.X,state.Direction.Y),0);
         }
         if (state.Phase == AbilityPhase.Dash ||
-            (state.Form == AbilityForm.Projectile && state.Phase == AbilityPhase.Telegraph))
+            (state.Form == AbilityForm.Projectile && state.Phase is AbilityPhase.Telegraph or AbilityPhase.Charging))
         {
             var length = state.Phase == AbilityPhase.Dash
                 ? System.Numerics.Vector2.Distance(state.Origin, state.Position) : 1.2f;
@@ -79,9 +93,10 @@ public partial class AbilityEffectVisual : Node3D
 
     public override void _Process(double delta)
     {
-        if (_state.Phase==AbilityPhase.Telegraph && _state.Form is AbilityForm.Melee or AbilityForm.Recovery && GodotObject.IsInstanceValid(Caster))
+        if (_state.Phase is AbilityPhase.Telegraph or AbilityPhase.Charging && _state.Form is AbilityForm.Melee or AbilityForm.Recovery && GodotObject.IsInstanceValid(Caster))
         { Position+=Caster!.GlobalPosition-_casterPosition; _casterPosition=Caster.GlobalPosition; }
-        if ((_remaining -= delta) <= 0) { QueueFree(); return; }
+        if(_state.Phase!=AbilityPhase.Charging && (_state.Phase is not (AbilityPhase.Channeling or AbilityPhase.Sustaining) || _state.RemainingSeconds>0))
+            if ((_remaining -= delta) <= 0) { QueueFree(); return; }
         if(_material is not null && _state.Phase == AbilityPhase.Impact)
         { var color=_material.AlbedoColor; color.A=_opacity*(float)(_remaining/Math.Max(.001,_life)); _material.AlbedoColor=color; }
         if (_state.Phase == AbilityPhase.Flying)

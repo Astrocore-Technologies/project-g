@@ -28,7 +28,7 @@ public partial class EmoteMenu : CanvasLayer
     private void Send(AvatarGesture gesture)
     {
         if(!_owner.IsAlive)return;
-        _owner.StopMovement(); _owner.GetNodeOrNull<ProjectG.Combat.CombatPresentation>("CombatPresentation")?.CancelAutoAttack();
+        _owner.StopMovement(); _owner.GetNodeOrNull<ProjectG.Combat.CombatPresentation>("CombatPresentation")?.CancelBasicAttack();
         if(++_sequence==0)++_sequence;
         _network.SendEmote(new(_sequence,gesture)); _window.Close();
     }

@@ -15,13 +15,13 @@ public sealed class ContentCatalogTests
     public void ShippedContentLoadsAndReferencesResolve()
     {
         var catalog = Load();
-        Assert.Equal(4, catalog.BalanceVersion);
-        Assert.Equal(4, catalog.Weapons.Count);
+        Assert.Equal(5, catalog.BalanceVersion);
+        Assert.Equal(5, catalog.Weapons.Count);
         Assert.Equal(17, catalog.Abilities.Count);
         var actor = catalog.Creatures["test_adventurer"];
         Assert.True(catalog.Weapons.ContainsKey(actor.WeaponId));
         Assert.All(actor.AbilityIds, id => Assert.True(catalog.Abilities.ContainsKey(id)));
-        Assert.Equal(101, new StatCalculator(catalog.Balance).Calculate(actor).MaxHealth, 8);
+        Assert.Equal(110, new StatCalculator(catalog.Balance).Calculate(actor).MaxHealth, 8);
     }
 
     [Theory]
@@ -133,7 +133,7 @@ public sealed class ContentCatalogTests
         var json = JsonNode.Parse(File.ReadAllText(DataPath))!;
         json["creatures"]![0]!["modifiers"] = new JsonObject
         {
-            ["physicalDefense"] = -100, ["maxHealth"] = -1000, ["maxMana"] = -100
+            ["physicalDefense"] = -100, ["maxHealth"] = -1000, ["maxMana"] = -200
         };
         var catalog = ContentCatalog.Parse(Encoding.UTF8.GetBytes(json.ToJsonString()));
         var stats = new StatCalculator(catalog.Balance).Calculate(catalog.Creatures["test_adventurer"]);

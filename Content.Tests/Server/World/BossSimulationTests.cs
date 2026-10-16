@@ -23,7 +23,7 @@ public sealed class BossSimulationTests
         {
             World = new(Options.Create(new MovementOptions()), Options.Create(new InterestOptions()),
                 Options.Create(navigation ?? new NavigationOptions()), catalog ?? ContentCatalogTests.Load(),
-                boss: Options.Create(options ?? new BossOptions { Actor = new NpcOptions { Enabled = true, DefinitionId = "test_boss", X = -3, Z = 0 } }));
+                boss: Options.Create(options ?? new BossOptions { Actor = new NpcOptions { Enabled = true, DefinitionId = "test_boss", X = -3, Z = 0 } }), hitRoll: () => 0, criticalRoll: () => 1);
             Player = AddPlayer(42, 1);
         }
         public ServerPlayer AddPlayer(int connection, ulong id)
@@ -157,7 +157,7 @@ public sealed class BossSimulationTests
     {
         Assert.Throws<ArgumentException>(() => new Fixture(new BossOptions { Actor = new NpcOptions { Enabled = true }, AreaAbilityId = "missing" }));
         var json = JsonNode.Parse(File.ReadAllText(ContentCatalogTests.DataPath))!;
-        json["abilities"]![3]!["castSeconds"] = 100;
+        json["abilities"]![3]!["action"]!["preparation"]!["seconds"] = 100;
         var catalog = ContentCatalog.Parse(Encoding.UTF8.GetBytes(json.ToJsonString()));
         Assert.Throws<ArgumentException>(() => new Fixture(catalog: catalog));
     }

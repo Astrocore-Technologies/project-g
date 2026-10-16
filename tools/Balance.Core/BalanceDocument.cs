@@ -41,9 +41,9 @@ public sealed partial class BalanceDocument
     public IReadOnlyList<BalanceEntry> Entries()
     {
         var result = new List<BalanceEntry>();
-        foreach (var key in new[] { "balance", "progression", "defense", "swordsman" })
+        foreach (var key in new[] { "balance", "progression", "defense", "control", "lifecycle", "swordsman" })
             if (Root[key] is JsonObject) result.Add(new(key, key));
-        foreach (var key in new[] { "weapons", "abilities", "creatures", "items", "professions" })
+        foreach (var key in new[] { "weapons", "abilities", "effects", "creatures", "items", "professions" })
             if (Root[key] is JsonArray list)
                 for (var i = 0; i < list.Count; i++) result.Add(new($"{key}/{i}", $"{key} / {list[i]!["id"]}"));
         return result;
@@ -65,12 +65,16 @@ public sealed partial class BalanceDocument
                 }
                 // Missing weights/modifiers are server defaults of zero, editable without rewriting untouched fields.
                 IEnumerable<string> optional = current.StartsWith("balance/", StringComparison.Ordinal)
-                    ? ["strength", "agility", "vitality", "intelligence", "dexterity", "luck"]
+                    ? ["strength", "agility", "vitality", "intelligence", "dexterity", "luck", "wisdom"]
                     : current.EndsWith("/modifiers", StringComparison.Ordinal)
                         ? typeof(Content.Server.Stats.DerivedStatModifiers).GetProperties().Select(p => JsonNamingPolicy.CamelCase.ConvertName(p.Name))
                         : [];
                 foreach (var key in optional) if (!obj.ContainsKey(key)) result.Add(new(current + "/" + key, 0));
+                if(current.StartsWith("abilities/",StringComparison.Ordinal) && current.Count(c=>c=='/')==1 && !obj.ContainsKey("maxCharges"))
+                    result.Add(new(current+"/maxCharges",1));
             }
+            else if(node is JsonArray array)
+                for(var i=0;i<array.Count;i++) Visit(array[i],current+"/"+i);
             else if (node is JsonValue value && value.TryGetValue<double>(out var number)) result.Add(new(current, number));
         }
         Visit(Node(path), path); return result;

@@ -17,15 +17,7 @@ public sealed partial class InventorySimulation
     { if(!_actors.TryGetValue(id,out var actor)) return true; foreach(var item in actor.Items) if(item.Saved.EquippedSlot==EquipmentSlot.Weapon && item.Saved.Condition?.Current==0) return false; return true; }
     public void Wear(AttackEvent action)
     {
-        if(action.Damage<=0 || !_actors.TryGetValue(action.AttackerId,out var actor) || actor.LastWearSequence==action.Sequence) return;
-        actor.LastWearSequence=action.Sequence;
-        foreach(var item in actor.Items) if(item.Saved.EquippedSlot==EquipmentSlot.Weapon && item.Saved.Condition is { Current:>0 } state)
-        {
-            if(state.Revision==long.MaxValue) throw new InvalidOperationException("Item revision exhausted.");
-            item.Saved=item.Saved with { Condition=state with { Current=Math.Max(0,state.Current-item.Definition.Condition!.WearPerHit),Revision=state.Revision+1 } };
-            if(item.Saved.Condition.Current==0) RefreshStats(action.AttackerId);
-            _dirty.Add(action.AttackerId); break;
-        }
+        if(action.Damage>0)QueueWear(action.AttackerId,action.ExecutionId);
     }
     public ItemConditionState ConditionState(NetworkEntityId id,uint tick) => new(id,tick,_actors[id].Maintenance?.LastOperation ?? 0,
         _actors[id].Items.Where(i=>i.Saved.Condition is not null).Select(i=>new ItemConditionEntry(i.Handle,(ushort)i.Saved.Condition!.Current,(ushort)i.Saved.Condition.Maximum,i.Saved.Condition.Revision)).ToArray());

@@ -25,12 +25,12 @@ public partial class Main
         { var chosen = n; presets.AddChild(Button($"Ур. {n} · STR", () => { SetPreset(chosen, false); ShowPage(); })); }
         presets.AddChild(Button("Ур. 30 · DEX", () => { SetPreset(30, true); ShowPage(); }));
         var stats = new GridContainer { Columns = 4 }; build.AddChild(stats);
-        var values = new[] { _build.Stats.Strength, _build.Stats.Agility, _build.Stats.Vitality, _build.Stats.Intelligence, _build.Stats.Dexterity, _build.Stats.Luck };
-        var boxes = new SpinBox[6]; string[] names = ["STR", "AGI", "VIT", "INT", "DEX", "LUK"];
-        for (var i = 0; i < 6; i++)
+        var values = new[] { _build.Stats.Strength, _build.Stats.Agility, _build.Stats.Vitality, _build.Stats.Intelligence, _build.Stats.Dexterity, _build.Stats.Luck, _build.Stats.Wisdom };
+        var boxes = new SpinBox[7]; string[] names = ["STR", "AGI", "VIT", "INT", "DEX", "LUK", "WIS"];
+        for (var i = 0; i < 7; i++)
         {
             stats.AddChild(Text(names[i])); boxes[i] = Number(0, 100000, values[i]); stats.AddChild(boxes[i]);
-            boxes[i].ValueChanged += _ => { if (boxes.Any(b => b is null)) return; _build = _build with { Stats = new(boxes[0].Value, boxes[1].Value, boxes[2].Value, boxes[3].Value, boxes[4].Value, boxes[5].Value) }; UpdatePreview(); };
+            boxes[i].ValueChanged += _ => { if (boxes.Any(b => b is null)) return; _build = _build with { Stats = new(boxes[0].Value, boxes[1].Value, boxes[2].Value, boxes[3].Value, boxes[4].Value, boxes[5].Value, boxes[6].Value) }; UpdatePreview(); };
         }
         var professions = new List<(ushort Id, string Name)> { (0, "Без профессии") };
         professions.AddRange(catalog.Professions.Select(p => (p.Id, p.Name)));
@@ -77,7 +77,7 @@ public partial class Main
         var catalog = _document.Catalog; var level = Math.Min(requestedLevel, catalog.Progression.LevelCap);
         var stats = catalog.Creatures["test_adventurer"].Stats;
         var points = catalog.Progression.InitialStatPoints + (level - 1) * catalog.Progression.StatPointsPerLevel;
-        stats = new(stats.Strength + (dexterity ? 0 : points), stats.Agility, stats.Vitality, stats.Intelligence, stats.Dexterity + (dexterity ? points : 0), stats.Luck);
+        stats = new(stats.Strength + (dexterity ? 0 : points), stats.Agility, stats.Vitality, stats.Intelligence, stats.Dexterity + (dexterity ? points : 0), stats.Luck, stats.Wisdom);
         _build = _build with { Level = level, Stats = stats }; UpdatePreview();
     }
 

@@ -9,4 +9,5 @@ public sealed class AbilityInterestView
     internal HashSet<ulong> Current { get; } = new();
     internal List<ulong> Removed { get; } = new();
     public List<AbilityEffectState> Changes { get; } = new();
+    public List<AbilityEffectState> Sustained {get;}=new();
 }
