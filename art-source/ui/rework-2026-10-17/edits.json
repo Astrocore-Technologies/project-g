@@ -1,0 +1,20 @@
+{
+  "generator": "Built-in image_gen",
+  "edits": [
+    {
+      "key": "hud",
+      "path": "D:/projects/project-g/art-source/ui/rework-2026-10-17/01-hud.png",
+      "prompt": "Edit the supplied Project G HUD concept precisely. Preserve absolutely all composition, scenery, portrait, minimap center arrow, skill icons, panel shapes, typography style and colors. Correct only the navigation key hints bottom right: under the six icons from LEFT to RIGHT the text must be exactly \"I\", \"K\", \"L\", \"G\", \"M\", \"Esc\". These are the actual game shortcuts; do not rearrange the icons. On the bottom XP line change \"Ур. 28\" to \"Ур. 1\" and the XP numeric text to \"30 / 100\". On the top left change health numbers to \"200 / 200\", mana numbers to \"100 / 100\", stamina numbers to \"100 / 100\", all three fills full. No other changes. Do not add any notices, new buttons or labels."
+    },
+    {
+      "key": "inventory",
+      "path": "D:/projects/project-g/art-source/ui/rework-2026-10-17/03-inventory.png",
+      "prompt": "Edit this exact inventory concept with surgical text corrections only. Preserve the entire character, all 30 grid squares, every item icon, all layout, background, lighting, colors, art and panels unchanged. There are 18 occupied item grid slots: change the count below the grid from \"15 / 30\" to exactly \"18 / 30\". In the bottom hint row replace the malformed word after Shift+mouse with the correct Russian \"Разделить\". Do not change any other text or any other part of the image."
+    },
+    {
+      "key": "screens",
+      "path": "D:/projects/project-g/art-source/ui/rework-2026-10-17/04-other-screens.png",
+      "prompt": "Edit only the subtitle in the BOTTOM LEFT \"Эхо\" panel of this four-panel UI concept sheet. Preserve the whole sheet pixel composition, every map, journal, guild panel, all icons, their text, the title \"Эхо\", the central star emblem, the sentence \"У вас пока нет Эхо\", and the three empty slot cards. Replace the two small explanatory lines below \"У вас пока нет Эхо\" with ONE centered neutral line, exactly \"Полученные Эхо появятся в коллекции.\" Remove the previous sentences about echoes of memories and automatic acquisition. Do not add acquisition methods, buttons, currencies, heroes, portraits, or new text. Absolutely no other modifications."
+    }
+  ]
+}

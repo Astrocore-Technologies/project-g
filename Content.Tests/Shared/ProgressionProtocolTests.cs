@@ -17,7 +17,11 @@ public sealed class ProgressionProtocolTests
         bytes[^1]=2;Assert.False(NetworkProtocol.TryReadProgressionState(Body(bytes),out _));
         Assert.Throws<ArgumentException>(()=>NetworkProtocol.Write(state with {Skills=[state.Skills[0] with {Slot=1}]}));
         var maximum=state with {Skills=Enumerable.Range(1,NetworkConstants.MaxLearnedSkills).Select(i=>new SkillProgress((ushort)i,1,0,2,0,false,true)).ToArray()};
-        Assert.Equal(360,NetworkProtocol.Write(maximum).Length); // 86-byte body header + 16 * 17 + 2-byte packet header.
+        var packet=NetworkProtocol.Write(maximum).CopyData();
+        Assert.Equal(1176,packet.Length); // 86-byte body header + 64 * 17 + 2-byte packet header.
+        Assert.InRange(packet.Length,1,NetworkConstants.MaxGamePacketBytes);
+        Check(packet,r=>NetworkProtocol.TryReadProgressionState(r,out _));
+        Assert.Throws<ArgumentException>(()=>NetworkProtocol.Write(maximum with {Skills=[..maximum.Skills,new(65,1,0,2,0,false,true)]}));
     }
     [Fact]
     public void MessagesRoundTripRejectEveryTruncationAndTrailingData()

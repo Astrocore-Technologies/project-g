@@ -5,6 +5,18 @@ namespace ProjectG.Gameplay;
 
 public partial class PlayerController
 {
+    private bool TryCursorDirection(out NumericsVector2 point, Vector2? screenPoint = null)
+    {
+        point = default;
+        var camera = GetViewport().GetCamera3D(); if (camera is null) return false;
+        var mouse = screenPoint ?? GetViewport().GetMousePosition();
+        var origin = camera.ProjectRayOrigin(mouse); var ray = camera.ProjectRayNormal(mouse);
+        if (Mathf.Abs(ray.Y) < .0001f) return false;
+        var distance = (_predictedHeight - origin.Y) / ray.Y;
+        if (distance <= 0) return false;
+        var hit = origin + ray * distance;
+        point = new(hit.X, hit.Z); return true;
+    }
     internal ProjectG.Combat.CombatAimBody? CombatAimBody {get;set;}
 
     public bool TryCursorCombatPoint(out NumericsVector2 point,out float height,Vector2? screenPoint=null)

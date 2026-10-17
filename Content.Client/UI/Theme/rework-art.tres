@@ -1,0 +1,107 @@
+[gd_resource type="Resource" script_class="UiArtCatalog" format=3]
+[ext_resource type="Script" path="res://Scripts/UI/Assets/UiArtCatalog.cs" id="1"]
+[ext_resource type="Script" path="res://Scripts/UI/Assets/UiArtEntry.cs" id="2"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/Rework/painted-icons.png" id="3"]
+
+[sub_resource type="AtlasTexture" id="Art0"]
+atlas = ExtResource("3")
+region = Rect2(0, 0, 418, 418)
+filter_clip = true
+
+[sub_resource type="Resource" id="Entry0"]
+script = ExtResource("2")
+Key = "skill.1"
+Texture = SubResource("Art0")
+Attribution = "Generated for Project G with built-in image_gen; art-source/ui/rework-2026-10-17/runtime-assets.json"
+
+[sub_resource type="AtlasTexture" id="Art1"]
+atlas = ExtResource("3")
+region = Rect2(418, 0, 418, 418)
+filter_clip = true
+
+[sub_resource type="Resource" id="Entry1"]
+script = ExtResource("2")
+Key = "skill.2"
+Texture = SubResource("Art1")
+Attribution = "Generated for Project G with built-in image_gen; art-source/ui/rework-2026-10-17/runtime-assets.json"
+
+[sub_resource type="AtlasTexture" id="Art2"]
+atlas = ExtResource("3")
+region = Rect2(836, 0, 418, 418)
+filter_clip = true
+
+[sub_resource type="Resource" id="Entry2"]
+script = ExtResource("2")
+Key = "skill.3"
+Texture = SubResource("Art2")
+Attribution = "Generated for Project G with built-in image_gen; art-source/ui/rework-2026-10-17/runtime-assets.json"
+
+[sub_resource type="AtlasTexture" id="Art3"]
+atlas = ExtResource("3")
+region = Rect2(0, 418, 418, 418)
+filter_clip = true
+
+[sub_resource type="Resource" id="Entry3"]
+script = ExtResource("2")
+Key = "equipment.weapon"
+Texture = SubResource("Art3")
+Attribution = "Generated for Project G with built-in image_gen; art-source/ui/rework-2026-10-17/runtime-assets.json"
+
+[sub_resource type="AtlasTexture" id="Art4"]
+atlas = ExtResource("3")
+region = Rect2(418, 418, 418, 418)
+filter_clip = true
+
+[sub_resource type="Resource" id="Entry4"]
+script = ExtResource("2")
+Key = "equipment.armor"
+Texture = SubResource("Art4")
+Attribution = "Generated for Project G with built-in image_gen; art-source/ui/rework-2026-10-17/runtime-assets.json"
+
+[sub_resource type="AtlasTexture" id="Art5"]
+atlas = ExtResource("3")
+region = Rect2(836, 418, 418, 418)
+filter_clip = true
+
+[sub_resource type="Resource" id="Entry5"]
+script = ExtResource("2")
+Key = "icon.shield"
+Texture = SubResource("Art5")
+Attribution = "Generated for Project G with built-in image_gen; art-source/ui/rework-2026-10-17/runtime-assets.json"
+
+[sub_resource type="AtlasTexture" id="Art6"]
+atlas = ExtResource("3")
+region = Rect2(0, 836, 418, 418)
+filter_clip = true
+
+[sub_resource type="Resource" id="Entry6"]
+script = ExtResource("2")
+Key = "icon.ore"
+Texture = SubResource("Art6")
+Attribution = "Generated for Project G with built-in image_gen; art-source/ui/rework-2026-10-17/runtime-assets.json"
+
+[sub_resource type="AtlasTexture" id="Art7"]
+atlas = ExtResource("3")
+region = Rect2(418, 836, 418, 418)
+filter_clip = true
+
+[sub_resource type="Resource" id="Entry7"]
+script = ExtResource("2")
+Key = "icon.herb"
+Texture = SubResource("Art7")
+Attribution = "Generated for Project G with built-in image_gen; art-source/ui/rework-2026-10-17/runtime-assets.json"
+
+[sub_resource type="AtlasTexture" id="Art8"]
+atlas = ExtResource("3")
+region = Rect2(836, 836, 418, 418)
+filter_clip = true
+
+[sub_resource type="Resource" id="Entry8"]
+script = ExtResource("2")
+Key = "icon.star"
+Texture = SubResource("Art8")
+Attribution = "Generated for Project G with built-in image_gen; art-source/ui/rework-2026-10-17/runtime-assets.json"
+
+[resource]
+script = ExtResource("1")
+Entries = Array[ExtResource("2")]([SubResource("Entry0"), SubResource("Entry1"), SubResource("Entry2"), SubResource("Entry3"), SubResource("Entry4"), SubResource("Entry5"), SubResource("Entry6"), SubResource("Entry7"), SubResource("Entry8")])

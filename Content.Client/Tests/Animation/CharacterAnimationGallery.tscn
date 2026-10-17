@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://camgtyq8n0n7p"]
 
-[ext_resource type="Script" uid="uid://cfde0vuvbnyuv" path="res://Scripts/_NC/Animation/CharacterAnimationGallery.cs" id="1_pkotw"]
+[ext_resource type="Script" uid="uid://cfde0vuvbnyuv" path="res://Tests/Animation/CharacterAnimationGallery.cs" id="1_pkotw"]
 
 [node name="CharacterAnimationGallery" type="Node3D" unique_id=438721412]
 script = ExtResource("1_pkotw")

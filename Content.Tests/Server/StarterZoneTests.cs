@@ -19,7 +19,7 @@ public sealed class StarterZoneTests
     internal static int Count(ExplorationState state) => state.Cells.Sum(b=>System.Numerics.BitOperations.PopCount((uint)b));
     internal static void Walk(ServerWorld w,int connection,Vector2 target,uint seq=1)
     {
-        Assert.True(w.TryApplyMove(connection,new(seq,0,target)));
+        Assert.True(w.TryApplyMove(connection,new(seq,0,target,InputOrder:w.GetPlayer(connection).CancelledNavigationOrder+seq+1)));
         var player=w.Players.Single(p=>p.ConnectionId==connection);
         // Discovery assertions require a completed route, including the detour around this fixture's wall.
         for(var tick=0;tick<600 && player.Motion.IsMoving;tick++)w.Simulate(.05f);

@@ -55,7 +55,7 @@ public sealed class CombatProtocolTests
     public void CommandOnlyCarriesDirectionAndInputModeNeverTargetOriginOrDamage()
     {
         var command = Sample(15).CopyData();
-        Assert.Equal(23, command.Length);
+        Assert.Equal(27, command.Length);
         var forged = new byte[command.Length + 8];
         command.CopyTo(forged, 0);
         Assert.False(NetworkProtocol.TryReadAttackCommand(new NetDataReader(forged, 2, forged.Length), out _));
@@ -95,7 +95,7 @@ public sealed class CombatProtocolTests
     {
         var value = new AttackCommand(4, uint.MaxValue, Vector2.UnitY, mode);
         var bytes = NetworkProtocol.Write(value).CopyData();
-        Assert.Equal(23, bytes.Length);
+        Assert.Equal(27, bytes.Length);
         Assert.True(NetworkProtocol.TryReadAttackCommand(new NetDataReader(bytes, 2, bytes.Length), out var parsed));
         Assert.Equal(value, parsed);
         bytes[18] = 255;

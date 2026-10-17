@@ -100,7 +100,7 @@ public sealed class EchoTests
     public void FollowsWithoutTeleportingThenSleepsAndDisconnectRemovesActor()
     {
         var world = World(); var player = world.AddPlayer(1, new(1), WithEcho(world)); var echoId = Summon(world,1);
-        Assert.True(world.TryApplyMove(1, new(1, 0, new(6, 4))));
+        Assert.True(world.TryApplyMove(1, new(1, 0, new(6, 4),InputOrder:2)));
         for (var i = 0; i < 180; i++)
         {
             var before = world.Echoes!.TryGet(echoId, out var echo) ? echo.Motion.Position : throw new Exception();
@@ -197,7 +197,7 @@ public sealed class EchoTests
         var player = world.AddPlayer(1, new(1), saved); var id = Summon(world,1);
         Assert.True(global::Content.Tests.Server.EchoTests.Signature(world,1, new(1, 0, 1, new(1.5f, 0)))); Step(world);
         Assert.Equal(EchoCommandOutcome.Blocked, world.Echoes!.Results[player.EntityId].Outcome);
-        Assert.True(world.TryApplyMove(1, new(1, 0, new(6, 0))));
+        Assert.True(world.TryApplyMove(1, new(1, 0, new(6, 0),InputOrder:2)));
         var detour = false;
         for (var i = 0; i < 260; i++)
         {

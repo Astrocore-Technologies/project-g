@@ -80,13 +80,13 @@ public static partial class NetworkProtocol
     }
     public static NetDataWriter Write(EchoSummonCommand value)
     {
-        if(value.Sequence==0||value.Handle==0)throw new ArgumentException("Invalid Echo summon command.");
-        var writer=CreateWriter(NetworkMessageType.EchoSummonCommand);writer.Put(value.Sequence);writer.Put(value.Handle);return writer;
+        if(value.Sequence==0||value.Handle==0||value.InputOrder==0)throw new ArgumentException("Invalid Echo summon command.");
+        var writer=CreateWriter(NetworkMessageType.EchoSummonCommand);writer.Put(value.Sequence);writer.Put(value.Handle);writer.Put(value.InputOrder);return writer;
     }
     public static bool TryReadEchoSummonCommand(NetDataReader reader,out EchoSummonCommand value)
     {
-        value=default;if(reader.AvailableBytes!=12||!reader.TryGetUInt(out var sequence)||sequence==0||!reader.TryGetULong(out var handle)||handle==0)return false;
-        value=new(sequence,handle);return true;
+        value=default;if(reader.AvailableBytes!=16||!reader.TryGetUInt(out var sequence)||sequence==0||!reader.TryGetULong(out var handle)||handle==0||!reader.TryGetUInt(out var inputOrder)||inputOrder==0)return false;
+        value=new(sequence,handle,inputOrder);return true;
     }
     public static NetDataWriter Write(EchoSummonResult value)
     {

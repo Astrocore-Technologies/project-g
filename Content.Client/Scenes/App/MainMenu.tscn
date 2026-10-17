@@ -2,7 +2,13 @@
 
 [ext_resource type="Script" uid="uid://d36ku1okaxyid" path="res://Scripts/App/MainMenu.cs" id="1"]
 [ext_resource type="PackedScene" uid="uid://dmxklxo60o5gn" path="res://Scenes/World.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://UI/Screens/MainMenuView.tscn" id="3"]
 
 [node name="MainMenu" type="Node" unique_id=1525681846]
 script = ExtResource("1")
 WorldScene = ExtResource("2")
+
+[node name="MenuCanvas" type="CanvasLayer" parent="."]
+layer = 200
+
+[node name="MainMenuView" parent="MenuCanvas" instance=ExtResource("3")]

@@ -26,7 +26,7 @@ public partial class NetworkClient
         LatestCombatJournalIndex=null;
         LatestControlState=null;
         Navigation = null; LatestServerTick = 0;
-        LatestWorldNode = null; LatestStarterZone = null; LatestPvpZone = null; LatestDefense = null;
+        LatestWorldNode = null; LatestExploration = null; LatestStarterZone = null; LatestPvpZone = null; LatestDefense = null;
         QuestNpcs.Clear(); LatestQuestJournal=null;
         CanDevelopmentRevive = false;
         // Listeners detach old presentation synchronously, before the next packet in this poll.

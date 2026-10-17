@@ -10,21 +10,8 @@ public static class UiComposition
         ("journal","Журнал","nav.quests","L"), ("map","Карта мира","nav.map","M")];
     public static VBoxContainer Page(UiWindow window,string active)
     {
-        var row=new HBoxContainer { SizeFlagsVertical=Control.SizeFlags.ExpandFill }; window.Body.AddChild(row);
-        var side=new VBoxContainer { CustomMinimumSize=new(154,0) }; row.AddChild(side);
-        foreach(var screen in Screens)
-        {
-            var button=GameUi.Button(screen.Label,()=>GameUi.Navigate(screen.Id));
-            button.CustomMinimumSize=new(0,38); button.Alignment=HorizontalAlignment.Left;
-            button.TooltipText=screen.Label+" · "+screen.Key;
-            button.Icon=UiAssets.Texture(screen.Icon); button.ExpandIcon=true; button.AddThemeConstantOverride("icon_max_width",20);
-            button.Disabled=screen.Id==active;
-            if(button.Disabled) { if(UiAssets.Skin.TabSelected is {} selected) button.AddThemeStyleboxOverride("disabled",selected); button.AddThemeColorOverride("font_disabled_color",UiAssets.Skin.Ink); }
-            side.AddChild(button);
-        }
-        side.AddChild(new Control { SizeFlagsVertical=Control.SizeFlags.ExpandFill });
-        side.AddChild(GameUi.Text("Esc · закрыть",12));
-        var body=new VBoxContainer { SizeFlagsHorizontal=Control.SizeFlags.ExpandFill }; row.AddChild(body); return body;
+        var body=new VBoxContainer { SizeFlagsHorizontal=Control.SizeFlags.ExpandFill,SizeFlagsVertical=Control.SizeFlags.ExpandFill };
+        window.Body.AddChild(body); return body;
     }
     public static VBoxContainer Card(Node parent, float width=0)
     {

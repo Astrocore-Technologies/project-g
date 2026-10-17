@@ -7,7 +7,7 @@ public static partial class NetworkProtocol
 {
     public static NetDataWriter Write(AttackCommand message)
     {
-        if (message.Sequence == 0 || !BasicAttackShape.IsValidDirection3D(message.Direction,message.DirectionY) || !Enum.IsDefined(message.Mode))
+        if (message.Sequence == 0 || message.InputOrder == 0 || !BasicAttackShape.IsValidDirection3D(message.Direction,message.DirectionY) || !Enum.IsDefined(message.Mode))
             throw new ArgumentException("Invalid attack intention.");
         var writer = CreateWriter(NetworkMessageType.AttackCommand);
         writer.Put(message.Sequence);
@@ -15,18 +15,19 @@ public static partial class NetworkProtocol
         WriteVector2(writer, message.Direction);
         writer.Put((byte)message.Mode);
         writer.Put(message.DirectionY);
+        writer.Put(message.InputOrder);
         return writer;
     }
 
     public static bool TryReadAttackCommand(NetDataReader reader, out AttackCommand message)
     {
         message = default;
-        if (reader.AvailableBytes != 21 || !reader.TryGetUInt(out var sequence) || sequence == 0 ||
+        if (reader.AvailableBytes != 25 || !reader.TryGetUInt(out var sequence) || sequence == 0 ||
             !reader.TryGetUInt(out var tick) || !TryReadVector2(reader, out var direction) ||
-            !reader.TryGetByte(out var mode) || !reader.TryGetFloat(out var directionY) ||
+            !reader.TryGetByte(out var mode) || !reader.TryGetFloat(out var directionY) || !reader.TryGetUInt(out var inputOrder) || inputOrder == 0 ||
             !BasicAttackShape.IsValidDirection3D(direction,directionY) || !Enum.IsDefined((BasicAttackMode)mode))
             return false;
-        message = new(sequence, tick, direction, (BasicAttackMode)mode,directionY);
+        message = new(sequence, tick, direction, (BasicAttackMode)mode,directionY,inputOrder);
         return true;
     }
 

@@ -31,6 +31,8 @@ builder.Services
         "Server port must be between 1 and 65535.")
     .Validate(options => options.TickRate is >= 1 and <= 120,
         "Server tick rate must be between 1 and 120.")
+    .Validate(options => options.MovementSnapshotRate is >= 1 and <= 120,
+        "Movement snapshot rate must be between 1 and 120.")
     .Validate(options => options.NetworkPollIntervalMilliseconds is >= 1 and <= 100,
         "Network poll interval must be between 1 and 100 milliseconds.")
     .Validate(options => !string.IsNullOrWhiteSpace(options.ConnectionKey),
@@ -110,10 +112,19 @@ var balanceBuild = builder.Configuration["Balance:BuildPath"];
 var balanceRegions = builder.Configuration["Balance:RegionsPath"];
 if ((balanceContent is not null || balanceBuild is not null || balanceRegions is not null) && !builder.Environment.IsDevelopment())
     throw new InvalidOperationException("Local balance overrides require Development.");
-var catalog = ContentCatalog.LoadFile(balanceContent ?? Path.Combine(AppContext.BaseDirectory, "Data", "prototype.json"));
+var contentPath = balanceContent ?? Path.Combine(AppContext.BaseDirectory, "Data", "prototype.json");
+Content.Server.Development.CombatTestSetup? combatTest = null;
+ContentCatalog catalog;
+// Explicit balance/smoke overrides retain their own isolated fixtures.
+if (builder.Environment.IsDevelopment() && builder.Configuration.GetValue<bool>("CombatTest:Enabled") &&
+    balanceContent is null && balanceBuild is null && balanceRegions is null)
+    (catalog, combatTest) = Content.Server.Development.CombatTestSetup.Load(contentPath,
+        Path.Combine(AppContext.BaseDirectory, "Data", "Development", "combat-test.json"));
+else catalog = ContentCatalog.LoadFile(contentPath);
 builder.Services.AddSingleton(catalog);
 var regionalWorlds = Content.Server.Regions.RegionalWorlds.Load(
     balanceRegions ?? Path.Combine(AppContext.BaseDirectory, "Data", "regions.json"), builder.Configuration, catalog);
+if (combatTest is not null) regionalWorlds.StartingWorld.ConfigureCombatTestArena(combatTest);
 if (balanceBuild is not null)
 {
     var presetBytes = File.ReadAllBytes(balanceBuild);

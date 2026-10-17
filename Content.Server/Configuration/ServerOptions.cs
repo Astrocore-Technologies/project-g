@@ -8,6 +8,7 @@ public sealed class ServerOptions
 
     public int Port { get; init; } = NetworkConstants.Port;
     public int TickRate { get; init; } = NetworkConstants.ServerTickRate;
+    public int MovementSnapshotRate { get; init; } = NetworkConstants.MovementSnapshotRate;
     public int NetworkPollIntervalMilliseconds { get; init; } = 10;
 
     // Application discriminator for LiteNetLib, not an authentication secret.

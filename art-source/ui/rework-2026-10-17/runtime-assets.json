@@ -1,0 +1,19 @@
+{
+  "generator": "OpenAI image_gen",
+  "date": "2026-10-17",
+  "authorization": "User explicitly allowed generation of UI assets.",
+  "assets": [
+    {
+      "path": "Content.Client/Assets/UI/Icons/Rework/painted-icons.png",
+      "generatedSource": "exec-5c795637-abc9-420b-87d0-9ee040f6d2f5.png",
+      "prompt": "Use case: game texture sprite atlas. Create a SQUARE 1536x1536 production game UI icon ATLAS for Project G, exactly THREE columns and THREE rows of NINE square cells, each exactly one third width and height, no gutters, no margins, no grid lines or frames, NO TEXT, no numbers, no labels, no logos. Each cell has identical opaque very dark desaturated teal #10282F background. Each icon occupies central 70 percent of its own cell and stays completely within that cell with clear padding for crop. Style: sophisticated hand-painted anime 3D fantasy game inventory and ability icons, beautifully readable at 64 pixels, painterly edges and strong silhouette, restrained lighting and vivid functional colors, warm gold metals and cool shadows, same detail and lighting across all nine. Exact cell order left to right, top to bottom: row1 col1 a brilliant blue magical projectile comet with a white core and cyan spiral trail; row1 col2 a gold magical circular area-of-effect burst with a bright central spark viewed diagonally overhead; row1 col3 a pale silver blue human silhouette dashing forward with two broad blue motion streaks, clear humanoid readable; row2 col1 one plain iron longsword with brown leather handle displayed diagonally bottom-left to top-right, well-painted steel; row2 col2 brown practical leather traveling chest armor with navy scarf and gold buckles, no mannequin face; row2 col3 a round wooden shield with steel rim and simple central boss; row3 col1 a cluster of three rough iron ore stones with metallic gray facets; row3 col2 a small bundle of green healing herbs with ivory blossoms tied with cord; row3 col3 an elegant ivory and muted gold four-point fantasy star emblem, no jewelry. This is a tightly controlled texture atlas, every cell exactly same square size, no item spans cells. Do not draw UI panels, character portraits, screenshots or collage borders. No glow crossing the cell boundary. Output square.",
+      "usage": "3x3 painted UI atlas, nine equal 418px cells; identifiers and numerical game state remain controls."
+    },
+    {
+      "path": "Content.Client/Assets/UI/Portraits/traveler-fullbody.png",
+      "generatedSource": "exec-8511ae92-0dcb-4ad3-8061-19ee3a543d74.png",
+      "prompt": "Extract and reconstruct ONLY the full-body illustrated young adult male traveler shown on the LEFT of this approved Project G character-screen reference, preserving his identity, tousled brown hair, face, navy scarf, long practical cream-and-navy travel coat with brown leather straps, trousers and boots, relaxed neutral three-quarter standing pose looking slightly right. This will be a 2D CHARACTER PORTRAIT illustration inside game UI, NOT a replacement world model. Full head and boots comfortably inside canvas with some padding. Refined hand-painted anime 3D fantasy game portrait, same rendering and warm soft light as reference. Isolate the character on genuinely TRANSPARENT background. Remove absolutely ALL interface, text, item slots, numbers, gold lines, stone plinth, ground, plants, scenery, shadows cast on ground, border and title. Exactly one whole character, no props outside his worn outfit, no weapon held. Portrait canvas around 768x1152 or similar tall aspect. Alpha outside character must be transparent, not teal, not checkerboard and not white. Match the illustrated person in the attached reference closely.",
+      "usage": "Editable UI character illustration; does not replace the world avatar or represent equipped items."
+    }
+  ]
+}

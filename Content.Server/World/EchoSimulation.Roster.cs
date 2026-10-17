@@ -51,7 +51,7 @@ public sealed partial class EchoSimulation
         state.SummonSequence=command.Sequence;state.SummonRequestTick=tick;
         if(!state.Handles.TryGetValue(command.Handle,out var entry))
         {_summonResults[owner]=new(command.Sequence,tick,command.Handle,EchoSummonOutcome.InvalidEcho,0);return false;}
-        if(!QueueSummon(owner,entry.Saved.InstanceId,command.Sequence,tick))return false;
+        if(!QueueSummon(owner,entry.Saved.InstanceId,command.Sequence,tick,command.InputOrder))return false;
         _summonRequests[owner]=(command.Sequence,command.Handle);return true;
     }
     private void CollectSummonResults(uint tick)

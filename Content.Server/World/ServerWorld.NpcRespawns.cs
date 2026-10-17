@@ -25,23 +25,23 @@ public sealed partial class ServerWorld
 
     private void InitializeNpcRespawns()
     {
-        Register(Npc, "npc", CombatEntityKind.Monster);
-        Register(Boss, "boss", CombatEntityKind.Boss);
-        if (_npcSpawns.Count != 0) {Combat!.Defeated += OnNpcDefeated;Combat.CorpseExpired+=RetireExpiredNpcCorpse;}
+        RegisterNpcSpawn(Npc, "npc", CombatEntityKind.Monster);
+        RegisterNpcSpawn(Boss, "boss", CombatEntityKind.Boss);
+        if (Combat is not null) {Combat.Defeated += OnNpcDefeated;Combat.CorpseExpired+=RetireExpiredNpcCorpse;}
+    }
 
-        void Register(NpcSimulation? actor, string fallback, CombatEntityKind kind)
-        {
-            if (actor is null) return;
-            var options = actor.Options;
-            if (options.SpawnId is null) throw new InvalidDataException("Missing NPC spawn identity.");
-            var key = options.SpawnId.Length == 0 ? fallback : options.SpawnId;
-            if (!SavedNpcRespawn.ValidId(key) || options.RespawnSeconds is < 0 or > 86400 || _npcSpawns.ContainsKey(key))
-                throw new InvalidDataException("Invalid or duplicate NPC spawn settings.");
-            var spawn = new NpcSpawn(key, actor, kind);
-            _npcSpawns.Add(key, spawn);
-            _npcSpawnActors.Add(actor.Id, spawn);
-            _npcActors.Add(actor.Id,actor);
-        }
+    private void RegisterNpcSpawn(NpcSimulation? actor, string fallback, CombatEntityKind kind)
+    {
+        if (actor is null) return;
+        var options = actor.Options;
+        if (options.SpawnId is null) throw new InvalidDataException("Missing NPC spawn identity.");
+        var key = options.SpawnId.Length == 0 ? fallback : options.SpawnId;
+        if (!SavedNpcRespawn.ValidId(key) || options.RespawnSeconds is < 0 or > 86400 || _npcSpawns.ContainsKey(key))
+            throw new InvalidDataException("Invalid or duplicate NPC spawn settings.");
+        var spawn = new NpcSpawn(key, actor, kind);
+        _npcSpawns.Add(key, spawn);
+        _npcSpawnActors.Add(actor.Id, spawn);
+        _npcActors.Add(actor.Id,actor);
     }
 
     private void OnNpcDefeated(NetworkEntityId id)

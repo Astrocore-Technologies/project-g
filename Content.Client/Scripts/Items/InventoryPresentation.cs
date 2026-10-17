@@ -10,6 +10,8 @@ public partial class InventoryPresentation : CanvasLayer
     private NetworkClient _network=null!;
     private UiWindow _window=null!;
     private GridContainer _grid=null!;
+    private UiCharacterDisplay _display=null!;
+    public void SetCharacter(PackedScene appearance,Texture2D? portrait) => _display.SetCharacter(appearance,portrait);
     private Label _status=null!, _name=null!, _stats=null!, _condition=null!, _count=null!;
     private Button _equip=null!, _revive=null!;
     private UiIconSlot _selectedIcon=null!;
@@ -28,62 +30,55 @@ public partial class InventoryPresentation : CanvasLayer
     {
         _network=network; _owner=owner; Layer=30; network.ItemConditionReceived+=Condition; network.EconomyStateReceived+=Economy; network.CraftStateReceived+=Materials;
         _window=new UiWindow { ToggleKey=Key.I }; AddChild(_window); _window.Build("Инвентарь",new(1180,656)); _window.CloseRequested+=_window.Close;
-        var page=UiComposition.Page(_window,"inventory");
-        var search=new LineEdit { PlaceholderText="Поиск по названию…",ClearButtonEnabled=true }; page.AddChild(search);
-        search.TextChanged+=value=> { _search=value; Rebuild(); };
-        var categories=new HBoxContainer(); page.AddChild(categories);
-        string[] names=["Все","Оружие","Броня","Щиты","Материалы"];
-        var categoryGroup=new ButtonGroup();
-        for(var i=0;i<names.Length;i++) { var index=i; var button=GameUi.Button(names[i],()=> { _category=index; Rebuild(); }); button.ToggleMode=true; button.ButtonGroup=categoryGroup; button.ButtonPressed=i==0; if(UiAssets.Skin.TabSelected is {} selected) button.AddThemeStyleboxOverride("pressed",selected); button.AddThemeColorOverride("font_pressed_color",UiAssets.Skin.Ink); categories.AddChild(button); }
-        _count=GameUi.Text("Экипировка",14); page.AddChild(_count);
-        var columns=new HBoxContainer { SizeFlagsVertical=Control.SizeFlags.ExpandFill }; page.AddChild(columns);
-        var scroll=new ScrollContainer { SizeFlagsHorizontal=Control.SizeFlags.ExpandFill,HorizontalScrollMode=ScrollContainer.ScrollMode.Disabled }; columns.AddChild(scroll);
-        _grid=new GridContainer { Columns=4,SizeFlagsHorizontal=Control.SizeFlags.ExpandFill }; scroll.AddChild(_grid);
-        var detail=new PanelContainer { CustomMinimumSize=new(300,0),SizeFlagsHorizontal=Control.SizeFlags.ExpandFill }; columns.AddChild(detail); var body=new VBoxContainer(); detail.AddChild(body);
-        _selectedIcon=new UiIconSlot { Disabled=true,CustomMinimumSize=new(72,72),SizeFlagsHorizontal=Control.SizeFlags.ShrinkBegin }; body.AddChild(_selectedIcon);
-        _name=GameUi.Text("Выберите предмет",20); _name.AutowrapMode=TextServer.AutowrapMode.WordSmart; body.AddChild(_name);
-        _stats=GameUi.Text(""); body.AddChild(_stats); _condition=GameUi.Text("",14); _condition.AutowrapMode=TextServer.AutowrapMode.WordSmart; body.AddChild(_condition);
-        _comparison=UiComposition.Paragraph(body,"",14);
-        var space=new Control { SizeFlagsVertical=Control.SizeFlags.ExpandFill }; body.AddChild(space);
-        _equip=GameUi.Button("Надеть",Request); _equip.Disabled=true; body.AddChild(_equip);
-        _coins=GameUi.Text("Монеты: —",14); page.AddChild(_coins);
-        _status=GameUi.Text("Ожидание сервера…",14); _status.AutowrapMode=TextServer.AutowrapMode.WordSmart; page.AddChild(_status);
-        _revive=GameUi.Button("Оживить (Development)",RequestRevive); _revive.Visible=network.CanDevelopmentRevive; _revive.Disabled=true; page.AddChild(_revive);
+        var view=GD.Load<PackedScene>("res://UI/Screens/InventoryView.tscn").Instantiate<Control>(); _window.Body.AddChild(view);
+        _display=view.GetNode<UiCharacterDisplay>("%Display");
+        var search=view.GetNode<LineEdit>("%Search"); search.TextChanged+=value=> { _search=value; Rebuild(); };
+        var group=new ButtonGroup();
+        for(var i=0;i<5;i++)
+        {
+            var index=i; var button=view.GetNode<Button>("%Filter"+i); button.ToggleMode=true; button.ButtonGroup=group; button.ButtonPressed=i==0;
+            button.Pressed+=()=> { _category=index; Rebuild(); };
+        }
+        _grid=view.GetNode<GridContainer>("%Items"); _count=view.GetNode<Label>("%Count");
+        _selectedIcon=view.GetNode<UiIconSlot>("%SelectedIcon"); _name=view.GetNode<Label>("%ItemName");
+        _stats=view.GetNode<Label>("%Stats"); _condition=view.GetNode<Label>("%Condition"); _comparison=view.GetNode<Label>("%Comparison");
+        _equip=view.GetNode<Button>("%Equip"); _equip.Pressed+=Request;
+        _coins=view.GetNode<Label>("%Coins"); _status=view.GetNode<Label>("%Status");
+        _revive=view.GetNode<Button>("%Revive"); _revive.Pressed+=RequestRevive; _revive.Visible=network.CanDevelopmentRevive; _revive.Disabled=true;
     }
     public void Apply(InventoryState state)
     {
-        if(state.EntityId!=_owner) return; _state=state; Rebuild();
+        if(state.EntityId!=_owner) return; _state=state; _display.ApplyEquipment(state); Rebuild();
     }
     private void Rebuild()
     {
         var state=_state; if(state.Items is null) return;
         foreach(var child in _grid.GetChildren()) { _grid.RemoveChild(child); child.QueueFree(); }
-        _count.Text=$"Снаряжение: {state.Items.Count} / {NetworkConstants.MaxInventoryItems} · Материалы хранятся отдельно";
+        _count.Text=$"Снаряжение: {state.Items.Count} / {NetworkConstants.MaxInventoryItems}";
         if(!state.Items.Any(item=>item.Handle==_selected)) _selected=state.Items.Count>0?state.Items[0].Handle:0;
         var visible=state.Items.Where(item=>item.Name.Contains(_search,StringComparison.OrdinalIgnoreCase) && (_category==0 || _category<4 && (int)item.Slot==_category)).ToArray();
         foreach(var item in visible)
         {
-            var cell=new VBoxContainer { SizeFlagsHorizontal=Control.SizeFlags.ExpandFill,CustomMinimumSize=new(68,104) }; _grid.AddChild(cell);
-            var icon=new UiIconSlot { CustomMinimumSize=new(84,84),ToggleMode=true,ButtonPressed=item.Handle==_selected,SizeFlagsHorizontal=Control.SizeFlags.ShrinkCenter }; cell.AddChild(icon);
+            var cell=GD.Load<PackedScene>("res://UI/Components/InventorySlot.tscn").Instantiate<VBoxContainer>(); _grid.AddChild(cell);
+            var icon=cell.GetNode<UiIconSlot>("Icon"); icon.ButtonPressed=item.Handle==_selected;
             icon.Bind(UiAssets.EquipmentKey(item.Slot),item.Name,item.Equipped?"✓":"");
             icon.Pressed+=()=> { _materialSelected=0; _selected=item.Handle; Apply(_state); };
-            var label=GameUi.Text(item.Name,12); label.CustomMinimumSize=new(64,0); label.AutowrapMode=TextServer.AutowrapMode.WordSmart; cell.AddChild(label);
+            cell.GetNode<Label>("Caption").Text=item.Name;
         }
         var materialCount=0;
         if(_category is 0 or 4) foreach(var material in _materials.Materials??Array.Empty<MaterialAmount>())
         {
             var name=MaterialName(material.Id); if(!name.Contains(_search,StringComparison.OrdinalIgnoreCase)) continue; materialCount++;
-            var cell=new VBoxContainer { SizeFlagsHorizontal=Control.SizeFlags.ExpandFill,CustomMinimumSize=new(68,104) }; _grid.AddChild(cell);
-            var icon=new UiIconSlot { CustomMinimumSize=new(84,84),ToggleMode=true,ButtonPressed=_materialSelected==material.Id,SizeFlagsHorizontal=Control.SizeFlags.ShrinkCenter }; cell.AddChild(icon);
+            var cell=GD.Load<PackedScene>("res://UI/Components/InventorySlot.tscn").Instantiate<VBoxContainer>(); _grid.AddChild(cell);
+            var icon=cell.GetNode<UiIconSlot>("Icon"); icon.ButtonPressed=_materialSelected==material.Id;
             icon.Bind("icon.leaf",name,material.Quantity.ToString()); var id=material.Id; icon.Pressed+=()=> { _materialSelected=id; Rebuild(); };
-            var label=GameUi.Text(name,12); label.CustomMinimumSize=new(64,0); label.AutowrapMode=TextServer.AutowrapMode.WordSmart; cell.AddChild(label);
+            cell.GetNode<Label>("Caption").Text=name;
         }
         if(visible.Length+materialCount==0) _grid.AddChild(GameUi.Text(state.Items.Count==0?"Здесь пока пусто":"Ничего не найдено",14));
         if(_search.Length==0 && _category==0) for(var i=state.Items.Count;i<NetworkConstants.MaxInventoryItems;i++)
         {
-            var cell=new VBoxContainer { CustomMinimumSize=new(68,104),SizeFlagsHorizontal=Control.SizeFlags.ExpandFill }; _grid.AddChild(cell);
-            var empty=new PanelContainer { CustomMinimumSize=new(84,84),SizeFlagsHorizontal=Control.SizeFlags.ShrinkCenter,TooltipText="Свободное место для снаряжения" };
-            if(UiAssets.Skin.SlotNormal is {} style) empty.AddThemeStyleboxOverride("panel",style); cell.AddChild(empty);
+            var cell=GD.Load<PackedScene>("res://UI/Components/InventorySlot.tscn").Instantiate<VBoxContainer>(); _grid.AddChild(cell);
+            var empty=cell.GetNode<UiIconSlot>("Icon"); empty.Disabled=true; empty.Bind("","Свободное место для снаряжения");
         }
         RefreshDetail(); _status.Text=_waiting?"Ожидание подтверждения…":"";
     }

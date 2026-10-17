@@ -12,8 +12,11 @@ public partial class MainMenuSmoke : Node
     {
         try
         {
+            System.IO.Directory.CreateDirectory(ProjectSettings.GlobalizePath("res://../.artifacts/ui-scenes"));
             var live = OS.GetCmdlineUserArgs().Contains("--live");
             var menu = GD.Load<PackedScene>("res://Scenes/App/MainMenu.tscn").Instantiate<MainMenu>();
+            menu.GetNode<ProjectG.UI.ClientSettingsPanel>("MenuCanvas/MainMenuView/%Settings").SettingsPath =
+                "res://../.artifacts/ui-scenes/session-smoke-settings.cfg";
             AddChild(menu);
             await Frame();
             if (menu.IsConnecting || menu.IsInWorld || menu.GetChildren().OfType<WorldController>().Any())

@@ -20,6 +20,8 @@ public sealed partial class CombatSimulation
     internal event Action<NetworkEntityId>? InterruptRequested;
     internal event Action<NetworkEntityId,Content.Shared.Combat.ActionCapability>? CapabilityInterruptRequested;
     internal event Action<NetworkEntityId,Content.Shared.Combat.CombatActionCategory>? OrdinaryActionAccepted;
+    internal event Action<NetworkEntityId,uint>? NavigationActionStarted;
+    internal void NotifyNavigationAction(NetworkEntityId id, uint inputOrder) => NavigationActionStarted?.Invoke(id, inputOrder);
     internal event Action<NetworkEntityId>? SwordWindowsChanged;
     internal bool HasSword(NetworkEntityId id) => SwordEquipped?.Invoke(id) == true && WeaponUsable?.Invoke(id) != false;
     internal bool IsSwordsman(NetworkEntityId id) => _swords.TryGetValue(id, out var s) && s.Profession && HasSword(id);

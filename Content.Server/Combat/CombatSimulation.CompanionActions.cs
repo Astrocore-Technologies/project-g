@@ -5,7 +5,10 @@ using Content.Shared.Network;
 
 namespace Content.Server.Combat;
 
-internal readonly record struct CompanionSummonCommand(uint Sequence, Guid Instance);
+internal readonly record struct CompanionSummonCommand(uint Sequence, Guid Instance,uint InputOrder=0)
+{
+    public uint InputOrder {get;init;}=InputOrder==0?Sequence:InputOrder;
+}
 internal enum CompanionSummonOutcome : byte
 { Accepted, Buffered, Completed, Cancelled, Interrupted, InvalidState, InvalidEcho, ActiveLimit, AlreadyActive, NoMana, Unavailable }
 internal readonly record struct CompanionSummonResult(uint Sequence,uint Tick,CompanionSummonOutcome Outcome,ulong Execution=0);
@@ -64,6 +67,7 @@ public sealed partial class CombatSimulation
         {SetSummonResult(id,command,tick,CompanionSummonOutcome.Unavailable);return InputDisposition.Rejected;}
         StopContinuousBasic(id);PlayerAction?.Invoke(id);
         OrdinaryActionAccepted?.Invoke(id,CombatActionCategory.Companion);
+        NotifyNavigationAction(id,command.InputOrder);
         var action=new ActionInstance(AllocateExecution(),id,command.Sequence,"echo_summon",profile.Action,
             profile.Action.Durations(_calculator,actor.Stats),_time);
         actor.Action=action;_summons.Add(id,new(command,action));_defenseDirty.Add(id);

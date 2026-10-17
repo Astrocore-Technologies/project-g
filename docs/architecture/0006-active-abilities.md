@@ -174,8 +174,12 @@ under upper-body actions. SwordAttackAnimation retains sequence/effect de-duplic
 server windup/contact phases, rejection, interruption and timeout behavior. The
 render skeleton never applies root motion to the authoritative navigation body.
 
-New code lives under each project's `_NC/Animation` directory (client under
-`Scripts/_NC/Animation`). Artist sources and generation scripts are under
+After the 2026-10-17 folder cleanup, client presentation lives in `Scripts/Animation`
+and `Scripts/Actors`, with gallery and smoke scripts beside their scenes in `Tests`.
+Server partials live beside their owners in `Combat` and `World`; public messages
+and serialization live in `Content.Shared/Network`. Avatar tests live in
+`Content.Tests/Shared/Network` and `Content.Tests/Server`.
+Artist sources and generation scripts are under
 `art-source/characters/male-base`; original static sources remain available.
 
 ### Protocol 31

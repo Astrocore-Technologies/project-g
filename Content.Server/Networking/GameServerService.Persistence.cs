@@ -138,7 +138,7 @@ public sealed partial class GameServerService
             if (intentions.Craft is { } craft) world.TryQueueCraft(connection,craft);
             if (intentions.Node is { } node) world.TryQueueWorldNode(connection,node);
             if (intentions.NodeSecond is { } nodeSecond) world.TryQueueWorldNode(connection,nodeSecond);
-            if (intentions.Move is { } move) world.TryApplyMove(connection, move);
+            if (intentions.Move is { } move) world.ApplyReceivedMove(connection, move);
             if (intentions.Emote is { } emote) world.TryQueueEmote(connection,emote);
             if (intentions.Quest is { } quest) world.TryQueueQuest(connection,quest);
             if(intentions.Journal is {} journal)world.TryQueueJournalRequest(connection,journal);

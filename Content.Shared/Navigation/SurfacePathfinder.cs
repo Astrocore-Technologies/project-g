@@ -69,8 +69,9 @@ public sealed class SurfacePathfinder
     private readonly SurfaceNavigation _mesh;
     private readonly SurfacePathSearch _search;
     private readonly List<int> _route = [];
+    private int _expanded;
     public SurfaceGraph Graph { get; }
-    public int Expanded => _search.Expanded;
+    public int Expanded => _expanded;
 
     public SurfacePathfinder(SurfaceNavigation mesh)
     {
@@ -82,9 +83,21 @@ public sealed class SurfacePathfinder
     public SearchStatus Find(Vector3 start, Vector3 goal, string revision, List<Vector3> output, int budget = 20_000)
     {
         output.Clear();
+        _expanded=0;
         if (revision != _mesh.Revision) return SearchStatus.StaleRevision;
+        if (budget <= 0) return SearchStatus.InvalidPoint;
         if (!_mesh.TryLocate(start, .35f, out var from) || !_mesh.TryLocate(goal, .35f, out var to)) return SearchStatus.InvalidPoint;
+        // A free road must not bend toward triangle-edge midpoints. Trace the actual connected
+        // surface first, retaining every height crossing so slopes and floors stay authoritative.
+        output.Add(from.Position);
+        if (_mesh.Trace(from, to, crossings: output))
+        {
+            output.Add(to.Position);
+            if (CanFollowDirectRoute(output)) return SearchStatus.Success;
+        }
+        output.Clear();
         var status = _search.Find(from.Triangle, to.Triangle, budget, _route, blocked: _mesh.Blocked);
+        _expanded=_search.Expanded;
         if (status != SearchStatus.Success) return status;
         output.Add(from.Position);
         for (var i = 1; i < _route.Count; i++)
@@ -93,7 +106,24 @@ public sealed class SurfacePathfinder
                 if (link.To == _route[i]) { output.Add(link.Portal); break; }
         }
         output.Add(to.Position);
-        // Portal midpoints retain every slope boundary. Production funnel/smoothing is intentionally deferred.
+        // Obstructed routes still retain their portals; the direct trace never cuts a blocked face or a gap.
         return status;
+    }
+
+    private bool CanFollowDirectRoute(List<Vector3> route)
+    {
+        // Millimetre-quantized exports can contain very thin, steep stitching faces.
+        // Their rounded line/edge intersection is unsuitable as a movement waypoint;
+        // retain the established portal route there instead of letting a shortcut stall.
+        if (!_mesh.TryLocate(route[0],.35f,out var previous)) return false;
+        for (var i=1;i<route.Count;i++)
+        {
+            var delta=route[i]-route[i-1];
+            var horizontal=Math.Sqrt((double)delta.X*delta.X+(double)delta.Z*delta.Z);
+            if (Math.Abs(delta.Y)>horizontal+.001 || !_mesh.TryLocate(route[i],.35f,out var next) ||
+                !_mesh.Trace(previous,next)) return false;
+            previous=next;
+        }
+        return true;
     }
 }

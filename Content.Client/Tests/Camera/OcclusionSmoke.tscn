@@ -1,0 +1,61 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://Tests/Camera/OcclusionSmoke.cs" id="1"]
+[ext_resource type="Material" path="res://Assets/World/Linvel/Beech/Revision2/VisualStyle/Materials/PaintedProps.tres" id="2"]
+
+[sub_resource type="StandardMaterial3D" id="WallMaterial"]
+shading_mode = 0
+albedo_color = Color(0.15, 0.4, 0.85, 1)
+[sub_resource type="StandardMaterial3D" id="PlayerMaterial"]
+shading_mode = 0
+albedo_color = Color(1, 0.1, 0.05, 1)
+[sub_resource type="BoxMesh" id="WallMesh"]
+size = Vector3(4, 5, 0.5)
+[sub_resource type="BoxShape3D" id="WallShape"]
+size = Vector3(4, 5, 0.5)
+[sub_resource type="BoxMesh" id="RoofMesh"]
+material = SubResource("WallMaterial")
+size = Vector3(5, 0.3, 5)
+[sub_resource type="CapsuleMesh" id="PlayerMesh"]
+radius = 0.35
+height = 1.7
+[sub_resource type="BoxMesh" id="PaintedMesh"]
+size = Vector3(0.6, 0.6, 0.3)
+[sub_resource type="BoxMesh" id="BeamMesh"]
+size = Vector3(0.2, 0.05, 0.05)
+
+[node name="OcclusionSmoke" type="Node3D"]
+script = ExtResource("1")
+[node name="Camera" type="Camera3D" parent="."]
+position = Vector3(0, 14.28148, 10)
+rotation_degrees = Vector3(-55, 0, 0)
+current = true
+[node name="Player" type="Node3D" parent="."]
+[node name="Body" type="MeshInstance3D" parent="Player"]
+position = Vector3(0, 0.85, 0)
+mesh = SubResource("PlayerMesh")
+material_override = SubResource("PlayerMaterial")
+[node name="Region" type="Node3D" parent="."]
+[node name="Wall" type="MeshInstance3D" parent="Region" groups=["camera_fade"]]
+position = Vector3(0, 3.5, 3)
+mesh = SubResource("WallMesh")
+material_override = SubResource("WallMaterial")
+[node name="Body" type="StaticBody3D" parent="Region/Wall"]
+collision_layer = 4
+[node name="Collision" type="CollisionShape3D" parent="Region/Wall/Body"]
+shape = SubResource("WallShape")
+[node name="Roof" type="MeshInstance3D" parent="Region" groups=["camera_roof"]]
+position = Vector3(0, 3, 0)
+mesh = SubResource("RoofMesh")
+[node name="Neighbour" type="MeshInstance3D" parent="Region" groups=["camera_fade"]]
+position = Vector3(8, 3.5, 3)
+mesh = SubResource("WallMesh")
+material_override = SubResource("WallMaterial")
+[node name="Painted" type="MeshInstance3D" parent="Region" groups=["forest_crown"]]
+position = Vector3(0, 7, 5)
+mesh = SubResource("PaintedMesh")
+material_override = ExtResource("2")
+[node name="Beam" type="MeshInstance3D" parent="Region" groups=["camera_fade"]]
+position = Vector3(0, 0.85, 0)
+mesh = SubResource("BeamMesh")
+material_override = SubResource("WallMaterial")

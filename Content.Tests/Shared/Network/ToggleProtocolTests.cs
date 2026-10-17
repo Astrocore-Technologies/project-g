@@ -40,9 +40,9 @@ public sealed class ToggleProtocolTests
     [Fact]public void DesiredDeactivationHasAnExplicitBoundedIntentAndCannotBeForgedWithAnUnknownMode()
     {
         var command=new AbilityCommand(1,2,3,Vector2.UnitX,Intent:AbilityIntent.Deactivate);var bytes=NetworkProtocol.Write(command).CopyData();
-        Assert.Equal(33,bytes.Length);Assert.True(NetworkProtocol.TryReadAbilityCommand(Body(bytes),out var parsed));Assert.Equal(command,parsed);
+        Assert.Equal(37,bytes.Length);Assert.True(NetworkProtocol.TryReadAbilityCommand(Body(bytes),out var parsed));Assert.Equal(command,parsed);
         for(var count=2;count<bytes.Length;count++)Assert.False(NetworkProtocol.TryReadAbilityCommand(new(bytes,2,count),out _));
-        Assert.False(NetworkProtocol.TryReadAbilityCommand(Body([..bytes,0]),out _));bytes[^1]=255;Assert.False(NetworkProtocol.TryReadAbilityCommand(Body(bytes),out _));
+        Assert.False(NetworkProtocol.TryReadAbilityCommand(Body([..bytes,0]),out _));bytes[^5]=255;Assert.False(NetworkProtocol.TryReadAbilityCommand(Body(bytes),out _));
         Assert.Throws<ArgumentException>(()=>NetworkProtocol.Write(command with {Intent=(AbilityIntent)255}));
     }
 

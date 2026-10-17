@@ -23,67 +23,72 @@ public partial class PlayerHud : CanvasLayer
     private bool _alive = true;
     private double _health;
     private NetworkEntityId _owner;
-    public void Initialize(NetworkEntityId owner, Action character)
+    private Button _portrait = null!;
+    private TextureRect _portraitArt = null!;
+    private Action? _openCharacter;
+    public void Initialize(NetworkEntityId owner, Action character, Texture2D? portrait = null)
     {
-        _owner = owner; Layer = 3;
-        var root = _root = new Control { Theme = GameUi.CreateTheme(), MouseFilter = Control.MouseFilterEnum.Ignore };
-        AddChild(root); root.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        InitializeControls(root);
-        var portraitPanel = new PanelContainer { AnchorLeft=.5f,AnchorRight=.5f,AnchorTop=1,AnchorBottom=1,OffsetLeft=-328,OffsetRight=328,OffsetTop=-290,OffsetBottom=-124 }; root.AddChild(portraitPanel);
-        var body = new VBoxContainer(); body.AddThemeConstantOverride("separation",3); portraitPanel.AddChild(body);
-        var header = new HBoxContainer(); body.AddChild(header);
-        var portrait = GameUi.Button("◇",character); portrait.FocusMode=Control.FocusModeEnum.None; portrait.CustomMinimumSize = new(36,32); portrait.TooltipText = "Персонаж · K"; header.AddChild(portrait);
-        if(UiAssets.Texture("nav.character") is {} portraitIcon) { portrait.Text=""; portrait.Icon=portraitIcon; portrait.ExpandIcon=true; portrait.AddThemeConstantOverride("icon_max_width",24); }
-        _level = GameUi.Text("Путешественник",18); _level.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill; header.AddChild(_level);
-        _combatText=GameUi.Text("",12);_combatText.Name="CombatStatus";_combatText.Modulate=new Color("efaa82");header.AddChild(_combatText);
-        _combatText.TooltipText="В бою нельзя менять экипировку и панель навыков, использовать еду, взаимодействовать с NPC, переходить в другой регион или выходить обычным способом.";
-        var open = GameUi.Button("K",character); open.FocusMode=Control.FocusModeEnum.None; header.AddChild(open);
-        (_hp,_hpText) = Resource(body,"HP",UiAssets.Skin.Health,22,UiAssets.Skin.HealthFill);
-        (_mana,_manaText) = Resource(body,"Мана",UiAssets.Skin.Mana,22,UiAssets.Skin.ManaFill);
-        (_stamina,_staminaText) = Resource(body,"Выносливость",UiAssets.Skin.Stamina,16,UiAssets.Skin.StaminaFill);
-        (_xp,_xpText) = Resource(body,"Опыт",new("b8a168"),6,UiAssets.Skin.ExperienceFill); _xpText.AddThemeFontSizeOverride("font_size",12);
-        _defenseText=GameUi.Text("Tab · блок   Shift · парирование",12); body.AddChild(_defenseText);
-        var bar = new HBoxContainer { AnchorLeft=.5f, AnchorRight=.5f, AnchorTop=1, AnchorBottom=1, OffsetLeft=-350, OffsetRight=350, OffsetTop=-118, OffsetBottom=-16 };
-        root.AddChild(bar);
-        string[] keys = ["Q","W","E","R","A","S","D","F","Space"];
-        for (var i=0;i<9;i++)
+        _owner = owner;
+        _openCharacter = character;
+        Layer = 3;
+        _root = GD.Load<PackedScene>("res://UI/Screens/PlayerHudView.tscn").Instantiate<Control>();
+        AddChild(_root);
+        var resources = _root.GetNode<Control>("PlayerResources");
+        _portrait = resources.GetNode<Button>("%Portrait");
+        _portraitArt = resources.GetNode<TextureRect>("%Art");
+        SetPortrait(portrait);
+        _portrait.Pressed += OpenCharacter;
+        _level = resources.GetNode<Label>("%Level");
+        _combatText = _root.GetNode<Label>("%CombatStatus");
+        _hp = resources.GetNode<ProgressBar>("%Health");
+        _hpText = resources.GetNode<Label>("%HealthText");
+        _mana = resources.GetNode<ProgressBar>("%Mana");
+        _manaText = resources.GetNode<Label>("%ManaText");
+        _stamina = resources.GetNode<ProgressBar>("%Stamina");
+        _staminaText = resources.GetNode<Label>("%StaminaText");
+        _xp = _root.GetNode<ProgressBar>("%Experience");
+        _xpText = _root.GetNode<Label>("%ExperienceText");
+        _defenseText = _root.GetNode<Label>("%DefenseText");
+        InitializeControls(_root);
+        string[] keys = ["Q", "W", "E", "R", "A", "S", "D", "F", "Space"];
+        for (var i = 0; i < _slots.Length; i++)
         {
-            var panel = new PanelContainer { CustomMinimumSize = new(68,100), MouseFilter = Control.MouseFilterEnum.Stop };
-            if (i == 8) { var spacer = new Control { CustomMinimumSize = new(8,0) }; bar.AddChild(spacer); }
-            bar.AddChild(panel); _slots[i] = panel;
-            var column = new VBoxContainer(); panel.AddChild(column); column.AddThemeConstantOverride("separation",2);
-            _slotArt[i] = new TextureRect { CustomMinimumSize=new(26,26), SizeFlagsHorizontal=Control.SizeFlags.ShrinkCenter, ExpandMode=TextureRect.ExpandModeEnum.IgnoreSize, StretchMode=TextureRect.StretchModeEnum.KeepAspectCentered, MouseFilter=Control.MouseFilterEnum.Ignore }; column.AddChild(_slotArt[i]);
-            var key = GameUi.Text(keys[i],14); key.Modulate = GameUi.Accent; column.AddChild(key);
-            _slotNames[i] = GameUi.Text("—",12); _slotNames[i].CustomMinimumSize = new(48,0); _slotNames[i].TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis; column.AddChild(_slotNames[i]);
-            _slotTimers[i] = GameUi.Text("",12); column.AddChild(_slotTimers[i]);
+            var slot = _root.GetNode<PanelContainer>($"Hotbar/Skill{i}");
+            _slots[i] = slot;
+            _slotArt[i] = slot.GetNode<TextureRect>("Content/Icon");
+            _slotNames[i] = slot.GetNode<Label>("Content/SkillName");
+            _slotTimers[i] = slot.GetNode<Label>("Content/Timer");
+            slot.GetNode<Label>("Content/Key").Text = keys[i];
         }
-        GameUi.CompactHud(portraitPanel); GameUi.CompactHud(bar);
     }
-    private static (ProgressBar,Label) Resource(VBoxContainer body,string name,Color color,float height,StyleBox? fill=null)
+
+    public void SetPortrait(Texture2D? portrait) => _portraitArt.Texture = portrait;
+    private void OpenCharacter() => _openCharacter?.Invoke();
+    public override void _ExitTree()
     {
-        var row=new Control { CustomMinimumSize=new(0,Math.Max(18,height)) }; body.AddChild(row);
-        var bar=new ProgressBar { ShowPercentage=false,MouseFilter=Control.MouseFilterEnum.Ignore }; row.AddChild(bar); bar.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        bar.AddThemeStyleboxOverride("background",UiAssets.Skin.GaugeBackground??GameUi.Box(new("19242b"),0)); bar.AddThemeStyleboxOverride("fill",fill??GameUi.Box(color,0));
-        var text=GameUi.Text(name,12); text.HorizontalAlignment=HorizontalAlignment.Center; text.VerticalAlignment=VerticalAlignment.Center;
-        row.AddChild(text); text.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect); return(bar,text);
+        if (_portrait is not null) _portrait.Pressed -= OpenCharacter;
+        _openCharacter = null;
     }
     private static void Value(ProgressBar bar, double value, double max) { bar.MaxValue = Math.Max(1,max); bar.Value = Math.Clamp(value,0,bar.MaxValue); }
     public void Health(double health, double max)
-    { _health=health;_alive = health>0; _hpText.Text = $"HP  {health:0} / {max:0}"+(_alive ? "" : " · Вы повержены"); Value(_hp,health,max); }
+    { _health=health;_alive = health>0; _hpText.Text = $"{health:0} / {max:0}"; _hp.TooltipText="Здоровье: "+_hpText.Text+(_alive ? "" : " · Вы повержены"); Value(_hp,health,max); }
     public void Apply(DefenseState state)
     {
         if (state.OwnerId!=_owner) return;
         _defense=state; _defenseReceived=Time.GetTicksMsec()/1000d;
-        _staminaText.Text=$"Выносливость  {state.Stamina:0} / {state.MaxStamina:0}";
+        _staminaText.Text=$"{state.Stamina:0} / {state.MaxStamina:0}";
+        _stamina.TooltipText="Выносливость: "+_staminaText.Text;
         Value(_stamina,state.Stamina,state.MaxStamina);
         _defenseText.TooltipText=$"Блок урона: {state.BlockDamage*100:0.#}%\nПарирование: {state.ParryCost:0} выносливости\nРывок: {state.DodgeCost:0} выносливости\nSpace при падении: Quick Recover, {state.QuickRecoverCost:0} выносливости, до {state.QuickRecoverRange:0.#} м. Удерживать — прицел, отпустить — перекат.";
     }
     public void Apply(AbilityLoadout loadout)
-    { if (loadout.EntityId != _owner) return; _loadout = loadout; _received = Time.GetTicksMsec()/1000d; _manaText.Text = $"Мана  {loadout.Mana:0} / {loadout.MaxMana:0}"; Value(_mana,loadout.Mana,loadout.MaxMana); UpdateSlots(); }
+    { if (loadout.EntityId != _owner) return; _loadout = loadout; _received = Time.GetTicksMsec()/1000d; _manaText.Text = $"{loadout.Mana:0} / {loadout.MaxMana:0}"; _mana.TooltipText="Мана: "+_manaText.Text; Value(_mana,loadout.Mana,loadout.MaxMana); UpdateSlots(); }
     public void Apply(ProgressionState state)
     {
         _level.Text = $"Путешественник · {state.Level}"; _level.TooltipText = $"Свободных очков: {state.StatPoints} · K — распределить";
+        _portrait.TooltipText=_level.Text+"\n"+_level.TooltipText;
         _xpText.Text = state.NextExperience == 0 ? "Максимальный уровень" : $"Опыт  {state.Experience} / {state.NextExperience}   ·   Очки: {state.StatPoints}";
+        _xp.TooltipText=_xpText.Text;
         Value(_xp,state.NextExperience == 0 ? 1 : state.Experience,state.NextExperience == 0 ? 1 : state.NextExperience);
         Array.Clear(_bar); foreach (var skill in state.Skills) if (skill.Slot>0) _bar[skill.Slot-1] = skill.Id; UpdateSlots();
     }
@@ -91,12 +96,14 @@ public partial class PlayerHud : CanvasLayer
     private void UpdateSlots()
     {
         var inCombat=Math.Max(0,_defense.InCombatRemaining-(Time.GetTicksMsec()/1000d-_defenseReceived));
+        _combatText.Visible=inCombat>0;
         _combatText.Text=inCombat>0 ? $"В БОЮ · {inCombat:0.0} с" : "";
         var parry=Math.Max(0,_defense.ParryCooldown-(Time.GetTicksMsec()/1000d-_defenseReceived));
         _defenseText.Text=(_defense.Blocking ? "Tab · БЛОК" : "Tab · блок")+(parry>0 ? $"   Shift · {parry:0.0} с" : "   Shift · парирование");
         var guardBreak=Math.Max(0,_defense.GuardBreakRemaining-(Time.GetTicksMsec()/1000d-_defenseReceived));
         if (guardBreak>0) _defenseText.Text=$"Блок пробит · {guardBreak:0.0} с"+(parry>0 ? $"   Shift · {parry:0.0} с" : "   Shift · парирование");
         var quick=Math.Max(0,_defense.QuickRecoverCooldown-(Time.GetTicksMsec()/1000d-_defenseReceived));
+        _defenseText.Visible=inCombat>0 || _defense.Blocking || parry>0 || guardBreak>0 || quick>0;
         if(quick>0) _defenseText.Text+=$"   Подъём · {quick:0.0} с";
         if (_loadout.Abilities is null) return;
         var elapsed = Time.GetTicksMsec()/1000d-_received;
@@ -104,7 +111,7 @@ public partial class PlayerHud : CanvasLayer
         {
             AbilityProfile? found = null;
             foreach (var profile in _loadout.Abilities) if (i==8 ? profile.Form==AbilityForm.Dash : profile.Id==_bar[i]) { found=profile; break; }
-            if (found is not { } skill) { _slotArt[i].Texture=null; _shownArt[i]=0; _slotNames[i].Text="—"; _slotTimers[i].Text="Пусто"; _slots[i].TooltipText="Назначьте навык в окне K"; continue; }
+            if (found is not { } skill) { _slotArt[i].Texture=null; _shownArt[i]=0; _slotNames[i].Text=""; _slotTimers[i].Text=""; _slots[i].TooltipText="Назначьте навык в окне K"; continue; }
             if (_shownArt[i]!=skill.Id) { _shownArt[i]=skill.Id; _slotArt[i].Texture=UiAssets.Texture(UiAssets.SkillKey(skill.Id),skill.Id is >=20 and <=30 ? "equipment.weapon" : null); }
             var cooldown = Math.Max(0,skill.ReadyInSeconds-elapsed);
             var exhausted=_defense.Stamina<skill.StaminaCost;
@@ -155,6 +162,7 @@ public partial class PlayerHud : CanvasLayer
             if (skill.Availability!=AbilityAvailability.Ready && _alive && cooldown<=0 && skill.ToggleState==Content.Shared.Combat.ToggleState.Off)
             { _slotTimers[i].Text=skill.Availability switch {AbilityAvailability.NeedsSword=>"Нужен меч",AbilityAvailability.NeedsWeapon=>"Нужно оружие",_=>"Парируй"}; _slotTimers[i].Modulate=new Color("a9aeb7"); }
             if (exhausted && _alive && cooldown<=0 && skill.ToggleState==Content.Shared.Combat.ToggleState.Off) { _slotTimers[i].Text="Нет сил"; _slotTimers[i].Modulate=new Color("a9aeb7"); }
+            if(_slotTimers[i].Text=="Готово") _slotTimers[i].Text="";
         }
     }
 

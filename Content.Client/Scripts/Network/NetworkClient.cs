@@ -10,6 +10,13 @@ namespace ProjectG.Networking;
 
 public partial class NetworkClient : Node
 {
+    private uint _inputOrder;
+    internal event Action<MoveCommand>? MovementSent;
+    internal uint NextInputOrder()
+    {
+        if (++_inputOrder == 0) ++_inputOrder;
+        return _inputOrder;
+    }
     [Export]
     public string DevelopmentIdentityProfile { get; set; } = "default";
     private string _identityPath = "";
@@ -122,6 +129,7 @@ public partial class NetworkClient : Node
     public void SendCraft(CraftCommand command) { if(_handshakeComplete) SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered); }
     public StarterZoneState? LatestStarterZone { get; private set; }
     public event Action<ExplorationState>? ExplorationReceived;
+    public ExplorationState? LatestExploration { get; private set; }
     public WorldNodeState? LatestWorldNode { get; private set; }
     public event Action<WorldNodeState>? WorldNodeReceived;
     public event Action<WorldNodeResult>? WorldNodeResultReceived;
@@ -148,7 +156,7 @@ public partial class NetworkClient : Node
     public event Action<QuestJournal>? QuestJournalReceived;
     public void SendQuest(QuestCommand command) { if(_handshakeComplete) SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered); }
     public void SendDefense(DefenseCommand command)
-    { if (_handshakeComplete) SendGame(NetworkProtocol.Write(command with {ObservedServerTick=LatestServerTick}),command.Action==DefenseAction.Block ? DeliveryMethod.Unreliable : DeliveryMethod.ReliableOrdered); }
+    { if (_handshakeComplete) SendGame(NetworkProtocol.Write(command with {ObservedServerTick=LatestServerTick,InputOrder=NextInputOrder()}),command.Action==DefenseAction.Block ? DeliveryMethod.Unreliable : DeliveryMethod.ReliableOrdered); }
     public void SendProgression(ProgressionCommand command)
     { if (_handshakeComplete) SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered); }
     public event Action<EchoSpawn>? EchoSpawned;
@@ -163,7 +171,7 @@ public partial class NetworkClient : Node
     public void SendEchoRoster(EchoRosterRequest command)
     {if(_handshakeComplete)SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);}
     public void SendEchoSummon(EchoSummonCommand command)
-    {if(_handshakeComplete)SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);}
+    {if(_handshakeComplete)SendGame(NetworkProtocol.Write(command with {InputOrder=NextInputOrder()}),DeliveryMethod.ReliableOrdered);}
     public void SendEchoRecall(EchoRecallCommand command)
     {if(_handshakeComplete)SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);}
     public void SendEchoSummonControl(EchoSummonControlCommand command)
@@ -177,6 +185,16 @@ public partial class NetworkClient : Node
     }
     public void SendEchoControl(EchoSignatureControlCommand command)
     {if(_handshakeComplete)SendGame(NetworkProtocol.Write(command),command.Kind==EchoSignatureControlKind.Aim?DeliveryMethod.Unreliable:DeliveryMethod.ReliableOrdered);}
+
+    // Can be refreshed during a development run after the large regional baseline has loaded.
+    internal void ApplyNetworkSimulation()
+    {
+        _client.SimulateLatency = SimulateNetworkConditions;
+        _client.SimulationMinLatency = Math.Clamp(SimulatedMinLatencyMs,0,500);
+        _client.SimulationMaxLatency = Math.Clamp(SimulatedMaxLatencyMs,_client.SimulationMinLatency,500);
+        _client.SimulatePacketLoss = SimulateNetworkConditions && SimulatedPacketLossPercent > 0;
+        _client.SimulationPacketLossChance = Math.Clamp(SimulatedPacketLossPercent,0,100);
+    }
 
     public override void _Ready()
     {
@@ -211,14 +229,7 @@ public partial class NetworkClient : Node
         _listener.NetworkReceiveEvent += OnNetworkReceive;
         _listener.NetworkErrorEvent += OnNetworkError;
 
-        if (SimulateNetworkConditions)
-        {
-            _client.SimulateLatency = true;
-            _client.SimulationMinLatency = SimulatedMinLatencyMs;
-            _client.SimulationMaxLatency = Math.Max(SimulatedMinLatencyMs, SimulatedMaxLatencyMs);
-            _client.SimulatePacketLoss = SimulatedPacketLossPercent > 0;
-            _client.SimulationPacketLossChance = SimulatedPacketLossPercent;
-        }
+        ApplyNetworkSimulation();
 
         if (!_client.Start())
         {
@@ -231,7 +242,11 @@ public partial class NetworkClient : Node
     public override void _Process(double delta) => _client?.PollEvents();
 
     public void ConnectToServer()
+        => ConnectToServerAt(NetworkConstants.Port);
+
+    public void ConnectToServerAt(int port)
     {
+        if(port is <1 or >ushort.MaxValue) throw new ArgumentOutOfRangeException(nameof(port));
         LastConnectionError = "";
         if (!_identityUsable || _client is null || !_client.IsRunning)
         {
@@ -242,7 +257,6 @@ public partial class NetworkClient : Node
             return;
 
         GD.Print("Connecting to server...");
-        var port = NetworkConstants.Port;
         foreach (var argument in OS.GetCmdlineUserArgs())
             if (argument.StartsWith("--server-port=", StringComparison.Ordinal) &&
                 int.TryParse(argument[14..], out var configured) && configured is > 0 and <= ushort.MaxValue) port = configured;
@@ -251,10 +265,12 @@ public partial class NetworkClient : Node
 
     public void SendMove(MoveCommand command)
     {
-        if (!_handshakeComplete || _serverPeer is null)
+        if (!_handshakeComplete || _serverPeer is null || !RegionActive)
             return;
 
-        SendGame(NetworkProtocol.Write(command), DeliveryMethod.Sequenced);
+        SendGame(NetworkProtocol.Write(command), command.Kind == MovementCommandKind.Cursor
+            ? DeliveryMethod.Sequenced : DeliveryMethod.ReliableOrdered);
+        MovementSent?.Invoke(command);
     }
 
     public void RejectRegionContent()
@@ -267,13 +283,13 @@ public partial class NetworkClient : Node
     public void SendAttack(AttackCommand command)
     {
         if (_handshakeComplete && _serverPeer is not null)
-            SendGame(NetworkProtocol.Write(command), DeliveryMethod.ReliableOrdered);
+            SendGame(NetworkProtocol.Write(command with { InputOrder=NextInputOrder() }), DeliveryMethod.ReliableOrdered);
     }
 
     public void SendAbility(AbilityCommand command)
     {
         if (_handshakeComplete && _serverPeer is not null)
-            SendGame(NetworkProtocol.Write(command), DeliveryMethod.ReliableOrdered);
+            SendGame(NetworkProtocol.Write(command with { InputOrder=NextInputOrder() }), DeliveryMethod.ReliableOrdered);
     }
     public void SendBasicControl(BasicControlCommand command)
     {
@@ -355,7 +371,7 @@ public partial class NetworkClient : Node
         LatestCombatJournalIndex=null;
         LatestControlState=null;
         CanDevelopmentRevive = false;
-        Navigation = null; LatestWorldNode=null; LatestStarterZone=null; LatestPvpZone=null; LatestDefense=null; CraftRecipes.Clear(); ResourceNodes.Clear(); QuestNpcs.Clear(); LatestQuestJournal=null;
+        Navigation = null; LatestExploration=null; LatestWorldNode=null; LatestStarterZone=null; LatestPvpZone=null; LatestDefense=null; CraftRecipes.Clear(); ResourceNodes.Clear(); QuestNpcs.Clear(); LatestQuestJournal=null;
         LatestServerTick = 0;
         if (TryReadDisconnectRejection(disconnectInfo, out var rejection))
         {
@@ -507,7 +523,8 @@ public partial class NetworkClient : Node
                     else DisconnectMalformed(peer);
                     break;
                 case NetworkMessageType.ExplorationState:
-                    if (_handshakeComplete && NetworkProtocol.TryReadExplorationState(reader,out var exploration) && Navigation is { } grid && exploration.Width==grid.Width && exploration.Height==grid.Height) ExplorationReceived?.Invoke(exploration);
+                    if (_handshakeComplete && NetworkProtocol.TryReadExplorationState(reader,out var exploration) && Navigation is { } grid && exploration.Width==grid.Width && exploration.Height==grid.Height)
+                    { LatestExploration=exploration; ExplorationReceived?.Invoke(exploration); }
                     else DisconnectMalformed(peer);
                     break;
                 case NetworkMessageType.WorldNodeState:

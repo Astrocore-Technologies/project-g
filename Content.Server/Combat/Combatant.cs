@@ -92,6 +92,7 @@ public sealed class Combatant
     internal float SlowFraction { get; set; }
     public uint LastAbilitySequence { get; internal set; }
     internal uint LastSequence { get; set; }
+    internal uint LastNavigationOrder { get; set; }
     internal uint LastBasicControlSequence {get;set;}
     internal uint? LastBasicControlTick {get;set;}
     internal uint? LastRequestTick { get; set; }

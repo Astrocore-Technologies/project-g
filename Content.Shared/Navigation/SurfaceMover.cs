@@ -20,6 +20,7 @@ internal sealed class SurfaceMover
     public Vector3 DashDestination { get; private set; }
     public float DashSpeed { get; private set; }
     public bool Moving => DashSpeed > 0 || waypoint < route.Count;
+    internal void PlaceDirect(Vector3 position) { Position = position; Target = position; }
 
     internal NavigationMotionSegment CurrentSegment(float multiplier)
     {
@@ -45,7 +46,8 @@ internal sealed class SurfaceMover
         if (target == Target) return true;
         if (search.Find(Position, target, grid.Surface!.Revision, candidate) != SearchStatus.Success) return false;
         if (DashSpeed > 0) return true;
-        Target = candidate[^1]; (route, candidate) = (candidate, route); waypoint = 1;
+        Target = candidate[^1]; (route, candidate) = (candidate, route);
+        waypoint = Vector3.DistanceSquared(Position, Target) < .00000001f ? route.Count : 1;
         return true;
     }
 
@@ -57,7 +59,9 @@ internal sealed class SurfaceMover
         Position = located.Position;
         if (search.Find(Position, target, grid.Surface.Revision, candidate) != SearchStatus.Success)
         { Position = previous; return false; }
-        Target = candidate[^1]; (route, candidate) = (candidate, route); waypoint = 1; DashSpeed = 0;
+        Target = candidate[^1]; (route, candidate) = (candidate, route);
+        waypoint = Vector3.DistanceSquared(Position, Target) < .00000001f ? route.Count : 1;
+        DashSpeed = 0;
         return true;
     }
 

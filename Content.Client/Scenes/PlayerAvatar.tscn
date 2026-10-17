@@ -3,14 +3,25 @@
 [ext_resource type="Script" uid="uid://cbm0l7xsdox8g" path="res://Scripts/PlayerController.cs" id="1_player"]
 [ext_resource type="PackedScene" uid="uid://cw826teiol84h" path="res://Scenes/Actors/Primitives/PlayerFigure.tscn" id="2_jgndg"]
 [ext_resource type="PackedScene" path="res://Scenes/Actors/SwordAttackRig.tscn" id="2_sword"]
+[ext_resource type="Script" path="res://Scripts/Camera/GameplayCamera.cs" id="4_camera"]
+[ext_resource type="Script" path="res://Scripts/Regions/OcclusionPresentation.cs" id="7_occlusion"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Hud/traveler-portrait-front.png" id="5_portrait"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Portraits/traveler-fullbody.png" id="6_portrait"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape_player"]
 
 [node name="PlayerAvatar" type="CharacterBody3D" unique_id=277870252]
 script = ExtResource("1_player")
 AppearanceScene = ExtResource("2_jgndg")
+HudPortrait = ExtResource("5_portrait")
+CharacterPortrait = ExtResource("6_portrait")
 
 [node name="Visual" type="Node3D" parent="." unique_id=2104267776]
+
+[node name="Occlusion" type="Node" parent="."]
+script = ExtResource("7_occlusion")
+UpdateInterval = 0.05
+ActorClearance = 0.35
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=2019698980]
 shape = SubResource("CapsuleShape_player")
@@ -19,7 +30,12 @@ shape = SubResource("CapsuleShape_player")
 BodyPath = NodePath("../Visual")
 
 [node name="CameraRig" type="Node3D" parent="." unique_id=1701059270]
+script = ExtResource("4_camera")
+PitchDegrees = 55.0
+StandardDistance = 33.941124
+
+[node name="AudioListener3D" type="AudioListener3D" parent="CameraRig"]
 
 [node name="Camera3D" type="Camera3D" parent="CameraRig" unique_id=8237628]
-transform = Transform3D(1, 0, 0, 0, 0.70710677, 0.70710677, 0, -0.70710677, 0.70710677, 0, 24, 24)
+transform = Transform3D(1, 0, 0, 0, 0.57357645, 0.81915206, 0, -0.81915206, 0.57357645, 0, 27.80305, 19.46783)
 fov = 50.0

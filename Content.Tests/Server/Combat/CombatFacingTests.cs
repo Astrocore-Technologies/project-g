@@ -41,7 +41,7 @@ public sealed class CombatFacingTests
         var (world,player)=Fight();var actor=world.Combat!.Get(player.EntityId);
         Assert.True(world.TryQueueAttack(42,new(1,0,Vector2.UnitX)));Assert.Equal(Vector2.UnitY,actor.Facing);
         world.Simulate(.0625f);Assert.Equal(Vector2.UnitX,actor.Facing);
-        Assert.True(world.TryApplyMove(42,new(1,world.Tick,player.Position+Vector2.UnitY*4)));
+        Assert.True(world.TryApplyMove(42,new(1,world.Tick,player.Position+Vector2.UnitY*4,InputOrder:2)));
         world.Simulate(.201f);Assert.Equal(CombatActionPhase.Active,actor.Action!.Phase);Assert.Equal(Vector2.UnitX,actor.Facing);
         Assert.False(world.Combat.FaceIntent(player.EntityId,-Vector2.UnitY));
         world.Simulate(.1f);Assert.Equal(CombatActionPhase.Recovery,actor.Action.Phase);Assert.Equal(Vector2.UnitY,actor.Facing);
@@ -64,7 +64,7 @@ public sealed class CombatFacingTests
     {
         var (world,player)=Fight();var actor=world.Combat!.Get(player.EntityId);actor.ProfessionAllowsUnarmedBlock=true;
         Assert.True(world.TryQueueDefense(42,new(1,defense,-Vector2.UnitX)));world.Simulate(.0625f);
-        Assert.True(world.TryApplyMove(42,new(1,world.Tick,player.Position+Vector2.UnitY*4)));
+        Assert.True(world.TryApplyMove(42,new(1,world.Tick,player.Position+Vector2.UnitY*4,InputOrder:2)));
         world.Simulate(.0625f);Assert.Equal(-Vector2.UnitX,actor.Facing);
         if(defense==DefenseAction.Block)
         {Assert.True(world.TryQueueDefense(42,new(2,DefenseAction.Release,-Vector2.UnitX)));world.Simulate(.0625f);}
@@ -80,6 +80,33 @@ public sealed class CombatFacingTests
         Assert.Equal(Vector2.UnitX,actor.Facing);
         Assert.True(world.TryQueueAbilityControl(42,new(1,1,world.Tick,AbilityControlKind.Aim,player.Position-Vector2.UnitY)));
         world.Simulate(.0625f);Assert.Equal(turn?-Vector2.UnitY:Vector2.UnitX,actor.Facing);
+    }
+
+    [Fact]
+    public void HeldBlockKeepsActivationDirectionAcrossHeartbeatsAndBackwardsWalking()
+    {
+        var (world,player)=Fight();var combat=world.Combat!;var actor=combat.Get(player.EntityId);
+        actor.ProfessionAllowsUnarmedBlock=true;
+        Assert.True(world.TryQueueDefense(42,new(1,DefenseAction.Block,Vector2.UnitY)));world.Simulate(.05f);
+        Assert.True(world.TryApplyMove(42,new(1,world.Tick,player.Position-Vector2.UnitY*3,InputOrder:2)));
+        var before=player.Position;
+        for(uint sequence=2;sequence<8;sequence++)
+        {
+            // A client sending a new cursor direction cannot steer an already active block.
+            Assert.True(world.TryQueueDefense(42,new(sequence,DefenseAction.Block,-Vector2.UnitY)));
+            world.Simulate(.1f);
+            Assert.True(combat.DefenseState(player.EntityId,world.Tick).Blocking);
+            Assert.Equal(Vector2.UnitY,combat.DefenseState(player.EntityId,world.Tick).Direction);
+            Assert.Equal(Vector2.UnitY,actor.Facing);
+            Assert.False(combat.FaceIntent(player.EntityId,Vector2.UnitX));
+        }
+        Assert.True(player.Position.Y<before.Y);
+        Assert.True(world.TryQueueDefense(42,new(8,DefenseAction.Release,Vector2.UnitY)));world.Simulate(.05f);
+        Assert.False(combat.DefenseState(player.EntityId,world.Tick).Blocking);
+        world.Simulate(.05f);
+        Assert.Equal(-Vector2.UnitY,actor.Facing);
+        Assert.True(world.TryQueueDefense(42,new(9,DefenseAction.Block,Vector2.UnitX)));world.Simulate(.05f);
+        Assert.Equal(Vector2.UnitX,actor.Facing);
     }
 
     [Fact]public async Task SqliteAndRegionTransferRetainOrientationAndLegacySavesUseTheExistingDefault()

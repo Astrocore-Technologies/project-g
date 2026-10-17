@@ -9,7 +9,7 @@ namespace Content.Shared.Network;
 /// </summary>
 public static partial class NetworkProtocol
 {
-    private const int EntitySnapshotBytes = sizeof(ulong) + 10 * sizeof(float) + 2 * sizeof(uint) + 9;
+    private const int EntitySnapshotBytes = sizeof(ulong) + 10 * sizeof(float) + 4 * sizeof(uint) + 9;
 
     /// <summary>Unreliable messages cannot fragment; respect the peer's current transport payload budget.</summary>
     public static int SnapshotCapacity(int payloadBudget) => payloadBudget <= 7 ? 0 : Math.Clamp(
@@ -83,11 +83,12 @@ public static partial class NetworkProtocol
 
     public static NetDataWriter Write(MoveCommand message)
     {
+        if (message.Sequence == 0 || message.InputOrder == 0 || !Enum.IsDefined(message.Kind)) throw new ArgumentException("Invalid movement input.");
         var writer = CreateWriter(NetworkMessageType.MoveCommand);
         writer.Put(message.Sequence);
         writer.Put(message.ClientTick);
         WriteVector2(writer, message.Target);
-        WriteHeight(writer, message.TargetHeight); writer.Put(message.GeometryHash);
+        WriteHeight(writer, message.TargetHeight); writer.Put(message.GeometryHash); writer.Put((byte)message.Kind); writer.Put(message.InputOrder);
         return writer;
     }
 
@@ -122,7 +123,8 @@ public static partial class NetworkProtocol
                 !float.IsFinite(entity.Position.Y) ||
                 !float.IsFinite(entity.Target.X) || !float.IsFinite(entity.Target.Y) ||
                 !float.IsFinite(entity.DashDestination.X) || !float.IsFinite(entity.DashDestination.Y) ||
-                !float.IsFinite(entity.DashSpeed) || entity.DashSpeed < 0 || !ValidControl(entity.AirOffset,entity.Control,entity.ControlRemaining))
+                !float.IsFinite(entity.DashSpeed) || entity.DashSpeed < 0 || entity.RunningIntent && !entity.DirectCursor ||
+                !ValidControl(entity.AirOffset,entity.Control,entity.ControlRemaining))
                 throw new ArgumentOutOfRangeException(nameof(entities));
             writer.Put(entity.EntityId.Value);
             WriteVector2(writer, entity.Position);
@@ -132,7 +134,9 @@ public static partial class NetworkProtocol
             WriteVector2(writer, entity.DashDestination);
             writer.Put(entity.DashSpeed);
             WriteHeight(writer, entity.Height); WriteHeight(writer, entity.TargetHeight); WriteHeight(writer, entity.DashHeight);
-            writer.Put(entity.AirOffset); writer.Put((byte)entity.Control); writer.Put(entity.ControlRemaining);
+            writer.Put(entity.AirOffset); writer.Put((byte)((byte)entity.Control | (entity.DirectCursor ? 128 : 0) | (entity.RunningIntent ? 64 : 0))); writer.Put(entity.ControlRemaining);
+            writer.Put(entity.CancelledNavigationOrder);
+            writer.Put(entity.ProcessedClientTick);
         }
     }
 
@@ -266,13 +270,14 @@ public static partial class NetworkProtocol
         if (!reader.TryGetUInt(out var sequence) ||
             !reader.TryGetUInt(out var clientTick) ||
             !TryReadVector2(reader, out var target) || !ReadHeight(reader, out var height) || !reader.TryGetULong(out var geometryHash) ||
-            sequence == 0 ||
+            !reader.TryGetByte(out var kind) || !Enum.IsDefined((MovementCommandKind)kind) ||
+            !reader.TryGetUInt(out var inputOrder) || inputOrder == 0 || sequence == 0 ||
             reader.AvailableBytes != 0)
         {
             return false;
         }
 
-        message = new MoveCommand(sequence, clientTick, target, height, geometryHash);
+        message = new MoveCommand(sequence, clientTick, target, height, geometryHash, inputOrder, (MovementCommandKind)kind);
         return true;
     }
 
@@ -301,7 +306,9 @@ public static partial class NetworkProtocol
                 !reader.TryGetFloat(out var dashSpeed) || !float.IsFinite(dashSpeed) || dashSpeed < 0 ||
                 !ReadHeight(reader, out var height) || !ReadHeight(reader, out var targetHeight) || !ReadHeight(reader, out var dashHeight) || !reader.TryGetFloat(out var air) ||
                 !reader.TryGetByte(out var control) || !reader.TryGetFloat(out var remaining) ||
-                !ValidControl(air,(CombatControlPhase)control,remaining))
+                !ValidControl(air,(CombatControlPhase)(control & 63),remaining) || (control & 64) != 0 && (control & 128) == 0 ||
+                !reader.TryGetUInt(out var cancelledOrder) ||
+                !reader.TryGetUInt(out var processedClientTick))
             {
                 return false;
             }
@@ -310,7 +317,8 @@ public static partial class NetworkProtocol
                 new NetworkEntityId(entityId),
                 position,
                 sequence,
-                target, abilitySequence, dashDestination, dashSpeed, height, targetHeight, dashHeight, air, (CombatControlPhase)control, remaining);
+                target, abilitySequence, dashDestination, dashSpeed, height, targetHeight, dashHeight, air, (CombatControlPhase)(control & 63), remaining, cancelledOrder, processedClientTick,
+                (control & 128) != 0, (control & 64) != 0);
         }
 
         if (reader.AvailableBytes != 0)

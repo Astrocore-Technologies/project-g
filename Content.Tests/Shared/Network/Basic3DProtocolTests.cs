@@ -37,7 +37,7 @@ public sealed class Basic3DProtocolTests
         _=>throw new ArgumentOutOfRangeException(nameof(type))
     };
 
-    [Theory][InlineData(15,23)][InlineData(17,91)][InlineData(18,85)][InlineData(109,106)][InlineData(110,31)]
+    [Theory][InlineData(15,27)][InlineData(17,91)][InlineData(18,85)][InlineData(109,106)][InlineData(110,31)]
     public void FullThreeDimensionalValuesRoundTripWithExactBoundedLayouts(int type,int bytes)
     {
         var value=Sample(type);var packet=Write(value).CopyData();Assert.Equal(bytes,packet.Length);
@@ -49,7 +49,7 @@ public sealed class Basic3DProtocolTests
     [Theory][InlineData(15)][InlineData(17)][InlineData(109)][InlineData(110)]
     public void InvalidPitchCannotEnterFromTheWire(int type)
     {
-        var packet=Write(Sample(type)).CopyData();var tail=type switch{17=>18,109=>13,_=>4};
+        var packet=Write(Sample(type)).CopyData();var tail=type switch{15=>8,17=>18,109=>13,_=>4};
         foreach(var value in new[]{float.NaN,float.PositiveInfinity,2f})
         {
             BitConverter.GetBytes(value).CopyTo(packet,packet.Length-tail);

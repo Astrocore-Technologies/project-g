@@ -1,0 +1,173 @@
+[gd_scene format=3 uid="uid://cegnaamxcq63b"]
+
+[ext_resource type="Theme" path="res://UI/Theme/rework-theme.tres" id="1_b42xt"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/bag.svg" id="Nav_Inventory"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/person.svg" id="Nav_Character"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/scroll.svg" id="Nav_Journal"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/guild.svg" id="Nav_Guild"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/map.svg" id="Nav_Map"]
+
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/menu.svg" id="Nav_Menu"]
+
+[node name="HudNavigation" type="Control" unique_id=922608896]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+theme = ExtResource("1_b42xt")
+
+[node name="Shortcuts" type="HBoxContainer" parent="." unique_id=1923175957]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -306.0
+offset_top = -72.0
+offset_right = -24.0
+offset_bottom = -20.0
+theme_override_constants/separation = 5
+
+[node name="InventoryCell" type="VBoxContainer" parent="Shortcuts" unique_id=1757756251]
+custom_minimum_size = Vector2(42, 0)
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="Inventory" type="Button" parent="Shortcuts/InventoryCell" unique_id=135520515]
+icon = ExtResource("Nav_Inventory")
+unique_name_in_owner = true
+custom_minimum_size = Vector2(38, 34)
+layout_mode = 2
+focus_mode = 0
+theme_type_variation = &"HudNavButton"
+theme_override_constants/icon_max_width = 25
+expand_icon = true
+
+[node name="Key" type="Label" parent="Shortcuts/InventoryCell" unique_id=562416431]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "I"
+horizontal_alignment = 1
+
+[node name="CharacterCell" type="VBoxContainer" parent="Shortcuts" unique_id=343983216]
+custom_minimum_size = Vector2(42, 0)
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="Character" type="Button" parent="Shortcuts/CharacterCell" unique_id=1012052508]
+icon = ExtResource("Nav_Character")
+unique_name_in_owner = true
+custom_minimum_size = Vector2(38, 34)
+layout_mode = 2
+focus_mode = 0
+theme_type_variation = &"HudNavButton"
+theme_override_constants/icon_max_width = 25
+expand_icon = true
+
+[node name="Key" type="Label" parent="Shortcuts/CharacterCell" unique_id=34568916]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "K"
+horizontal_alignment = 1
+
+[node name="JournalCell" type="VBoxContainer" parent="Shortcuts" unique_id=2056109953]
+custom_minimum_size = Vector2(42, 0)
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="Journal" type="Button" parent="Shortcuts/JournalCell" unique_id=215487492]
+icon = ExtResource("Nav_Journal")
+unique_name_in_owner = true
+custom_minimum_size = Vector2(38, 34)
+layout_mode = 2
+focus_mode = 0
+theme_type_variation = &"HudNavButton"
+theme_override_constants/icon_max_width = 25
+expand_icon = true
+
+[node name="Key" type="Label" parent="Shortcuts/JournalCell" unique_id=357496905]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "L"
+horizontal_alignment = 1
+
+[node name="GuildCell" type="VBoxContainer" parent="Shortcuts" unique_id=590941606]
+custom_minimum_size = Vector2(42, 0)
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="Guild" type="Button" parent="Shortcuts/GuildCell" unique_id=410298123]
+icon = ExtResource("Nav_Guild")
+unique_name_in_owner = true
+custom_minimum_size = Vector2(38, 34)
+layout_mode = 2
+focus_mode = 0
+theme_type_variation = &"HudNavButton"
+theme_override_constants/icon_max_width = 25
+expand_icon = true
+
+[node name="Key" type="Label" parent="Shortcuts/GuildCell" unique_id=44264483]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "G"
+horizontal_alignment = 1
+
+[node name="MapCell" type="VBoxContainer" parent="Shortcuts" unique_id=743377045]
+custom_minimum_size = Vector2(42, 0)
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="Map" type="Button" parent="Shortcuts/MapCell" unique_id=1487905874]
+icon = ExtResource("Nav_Map")
+unique_name_in_owner = true
+custom_minimum_size = Vector2(38, 34)
+layout_mode = 2
+focus_mode = 0
+theme_type_variation = &"HudNavButton"
+theme_override_constants/icon_max_width = 25
+expand_icon = true
+
+[node name="Key" type="Label" parent="Shortcuts/MapCell" unique_id=1128135105]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "M"
+horizontal_alignment = 1
+
+[node name="MenuCell" type="VBoxContainer" parent="Shortcuts" unique_id=652818729]
+custom_minimum_size = Vector2(42, 0)
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="Menu" type="Button" parent="Shortcuts/MenuCell" unique_id=2122040980]
+icon = ExtResource("Nav_Menu")
+unique_name_in_owner = true
+custom_minimum_size = Vector2(38, 34)
+layout_mode = 2
+focus_mode = 0
+theme_type_variation = &"HudNavButton"
+theme_override_constants/icon_max_width = 25
+expand_icon = true
+
+[node name="Key" type="Label" parent="Shortcuts/MenuCell" unique_id=773772731]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Esc"
+horizontal_alignment = 1
+
+[node name="Notice" type="Button" parent="." unique_id=1892870737]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -190.0
+offset_top = 24.0
+offset_right = 190.0
+offset_bottom = 66.0
+focus_mode = 0

@@ -14,8 +14,7 @@ public partial class PvpPresentation:CanvasLayer
     public void Initialize(NetworkClient network,PlayerController player)
     {
         _network=network;_player=player;Layer=8;
-        _hud=new(){Position=new Vector2(16,208),Text="PvP / смерть — V",MouseFilter=Control.MouseFilterEnum.Ignore};AddChild(_hud); _hud.AddThemeFontSizeOverride("font_size",13); _hud.AddThemeConstantOverride("outline_size",4); _hud.AddThemeColorOverride("font_outline_color",new Color(0,0,0,.8f));
-        GameUi.CompactHud(_hud);
+        _hud=GD.Load<PackedScene>("res://UI/Components/PvpStatus.tscn").Instantiate<Label>();AddChild(_hud);
         _panel=new UiWindow { ToggleKey=Key.V }; AddChild(_panel); _panel.Build("PvP, репутация и смерть",new(960,600)); _panel.CloseRequested+=_panel.Close;
         var body=UiComposition.Scroll(_panel.Body);
         _details=new(){AutowrapMode=TextServer.AutowrapMode.WordSmart};body.AddChild(_details);
@@ -43,9 +42,9 @@ public partial class PvpPresentation:CanvasLayer
         if(_clock<_refresh)return;_refresh=_clock+.2;var elapsed=_clock-_received;
         var combat=Math.Max(0,_state.CombatSeconds-elapsed);var respawn=Math.Max(0,_state.RespawnSeconds-elapsed);
         var channel=Math.Max(0,_channel.RemainingSeconds-(_clock-_channelAt));var mode=_state.Mode switch{PvpMode.Voluntary=>"PvP",PvpMode.Criminal=>"Нападение на мирных",_=>"Мирный"};
-        _hud.Text=(_state.Dead?"Вы погибли":mode)+" | тег "+Math.Ceiling(combat)+" с | V"+(channel>0?"\nПодбор: "+channel.ToString("0.0")+" с":"");
+        _hud.Text=(_state.Dead?"Вы погибли · V":_state.Mode!=PvpMode.Peaceful?mode+" · V":"")+(combat>0?(_state.Mode==PvpMode.Peaceful&&!_state.Dead?"Боевой тег · ":" · тег ")+Math.Ceiling(combat)+" с":"")+(channel>0?(_state.Dead||_state.Mode!=PvpMode.Peaceful||combat>0?"\n":"")+"Подбор · "+channel.ToString("0.0")+" с":"");
         _details.Text="Репутация: "+_state.Reputation+" | PK: "+_state.Pk+"\n"+(_state.Dead?"Смерть "+(_state.PvpDeath?"PvP":"PvE")+". Потеря EXP: "+_state.ExperienceLost+". Возрождение через "+Math.Ceiling(respawn)+" с.\n"+(_state.Dropped?"Экипированный предмет выпал в мир.":_state.DropSkipped?"Лимит лута: предмет остался у вас.":"Вещи не выпали."):mode+". Боевой тег: "+Math.Ceiling(combat)+" с.");
         var busy=_pending is not null||_state.OwnerId!=_player.EntityId;_peace.Disabled=busy||_state.Dead||combat>0;_voluntary.Disabled=busy||_state.Dead;_criminal.Disabled=busy||_state.Dead||!_ack.ButtonPressed;_respawn.Disabled=busy||!_state.Dead||respawn>0;
-        _hud.Visible=!GameUi.GameplayModalOpen;
+        _hud.Visible=!GameUi.GameplayModalOpen && (_state.Dead || _state.Mode!=PvpMode.Peaceful || combat>0 || channel>0);
     }
 }

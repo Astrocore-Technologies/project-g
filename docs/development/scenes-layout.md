@@ -30,6 +30,31 @@
 
 ## Проверка
 
+Уточнение 2026-10-17: скрипты стендов перенесены из временных папок рядом со
+сценами в `Tests/Actors`, `Tests/Animation` и `Tests/Combat`. Игровые визуальные
+контракты и фигуры находятся в `Scripts/Actors`, а анимация и эффекты — в
+`Scripts/Animation`. Файлы `.uid` перенесены вместе со скриптами с сохранением UID.
+Пути самих сцен не изменены. Серверные partial-классы размещены в `Combat` и
+`World`, общие сетевые контракты — в `Content.Shared/Network`, xUnit-тесты — в
+`Content.Tests/Server` и `Content.Tests/Shared/Network`.
+
+Проверка переноса 2026-10-17:
+
+- `dotnet build Game.slnx --no-restore -m:1`: 0 ошибок; 5 предупреждений NU1903/NU1900.
+- Целевые `AvatarProtocolTests`, `AvatarSimulationTests`, `ProgressionAndManaTests`
+  и `RegionExportTests` (включая `DevelopmentRegionExportTests`): 30/30.
+- Godot headless: `Tests/Actors/CapsuleActorSmoke.tscn` и
+  `Tests/Animation/CharacterAnimationGallery.tscn -- --smoke` — успешно.
+- Проверены 1476 внешних путей в 61 scene/resource-файле; отсутствующих нет.
+  Все 15 `.uid` и содержимое перенесённых игровых скриптов сохранены.
+- `dotnet Content.Server/bin/Debug/net10.0/Content.Server.dll --validate-content`
+  останавливается на устаревшем экспорте поверхностей Линвеля. Сцены регионов и
+  исходники рельефа при переносе не менялись; сохранённые хеши уже расходятся с
+  текущими исходниками. Экспорт не перегенерирован в рамках очистки каталогов.
+
+Логи, TRX и карта переносов — `.artifacts/nc-cleanup/`.
+Проверки ниже относятся к очистке 2026-10-11.
+
 - `dotnet build Game.slnx --no-restore -m:1`: 0 ошибок; прежние 3 предупреждения NuGet (SQLitePCLRaw 2.1.11 и недоступный audit BalanceStudio).
 - Штатный `tools/Export-Regions.ps1 -NoBuild` с Godot .NET console: `REGION_EXPORT_PUBLISHED`. Сравнение Regions до/после: геометрия, anchors и bindings полностью совпали.
 - `dotnet test Content.Tests/Content.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~RegionExportTests`: 19/19.

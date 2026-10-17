@@ -1,0 +1,1388 @@
+{
+  "abilities": [
+    {
+      "id": "qa_channel",
+      "networkId": 600,
+      "kind": "GroundArea",
+      "groundVolume": {
+        "shape": "Cylinder",
+        "height": 2,
+        "requiresConnectedSurface": false
+      },
+      "power": 0,
+      "magicAttackScale": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 2,
+      "range": 12,
+      "radius": 2,
+      "speed": 0,
+      "action": {
+        "form": "Channel",
+        "category": "Skill",
+        "capabilities": "Magical",
+        "preparation": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge"
+        },
+        "active": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge",
+          "canTurn": true,
+          "movementMultiplier": 0
+        }
+      },
+      "contactDisposition": "Support",
+      "effects": [
+        {
+          "operation": "Heal",
+          "trigger": "Contact",
+          "target": "HitTarget",
+          "power": {
+            "flat": 8
+          }
+        }
+      ],
+      "channel": {
+        "maximumSeconds": null,
+        "intervalSeconds": 0.5,
+        "intervalSpeed": "None",
+        "pulseAtStart": false,
+        "manaPerSecond": 2,
+        "staminaPerSecond": 0,
+        "cooldownStart": "Completion",
+        "damageCalculation": "Dynamic"
+      }
+    },
+    {
+      "id": "qa_charged",
+      "networkId": 601,
+      "kind": "Projectile",
+      "projectileLaunchHeight": 1,
+      "power": 15,
+      "manaCost": 5,
+      "cooldownSeconds": 4,
+      "range": 10,
+      "radius": 0.3,
+      "speed": 8,
+      "magicAttackScale": 1,
+      "action": {
+        "form": "Charged",
+        "category": "Skill",
+        "preparation": {
+          "seconds": 0,
+          "canTurn": true,
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge"
+        },
+        "capabilities": "Magical"
+      },
+      "maxCharges": 1,
+      "charge": {
+        "fullSeconds": 2,
+        "speed": "None",
+        "atFull": "Hold",
+        "startPower": 0.5,
+        "fullPower": 2
+      }
+    },
+    {
+      "id": "qa_hold",
+      "networkId": 602,
+      "kind": "GroundArea",
+      "groundVolume": {
+        "shape": "Cylinder",
+        "height": 2,
+        "requiresConnectedSurface": false
+      },
+      "power": 0,
+      "magicAttackScale": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 2,
+      "range": 12,
+      "radius": 2,
+      "speed": 0,
+      "action": {
+        "form": "Hold",
+        "category": "Skill",
+        "capabilities": "Magical",
+        "preparation": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge"
+        },
+        "active": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge",
+          "canTurn": true,
+          "movementMultiplier": 0
+        }
+      },
+      "contactDisposition": "Support",
+      "effects": [
+        {
+          "operation": "Heal",
+          "trigger": "Contact",
+          "target": "HitTarget",
+          "power": {
+            "flat": 8
+          }
+        }
+      ],
+      "channel": {
+        "maximumSeconds": null,
+        "intervalSeconds": 0.5,
+        "intervalSpeed": "None",
+        "pulseAtStart": false,
+        "manaPerSecond": 2,
+        "staminaPerSecond": 0,
+        "cooldownStart": "Completion",
+        "damageCalculation": "Dynamic"
+      }
+    },
+    {
+      "id": "qa_toggle",
+      "networkId": 603,
+      "kind": "GroundArea",
+      "groundVolume": {
+        "shape": "Cylinder",
+        "height": 2,
+        "requiresConnectedSurface": false
+      },
+      "power": 0,
+      "magicAttackScale": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 2,
+      "range": 12,
+      "radius": 2,
+      "speed": 0,
+      "action": {
+        "form": "Toggle",
+        "category": "Skill",
+        "capabilities": "Magical",
+        "preparation": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge"
+        },
+        "active": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge",
+          "canTurn": true,
+          "movementMultiplier": 1
+        }
+      },
+      "contactDisposition": "Support",
+      "effects": [
+        {
+          "operation": "Heal",
+          "trigger": "Contact",
+          "target": "HitTarget",
+          "power": {
+            "flat": 8
+          }
+        }
+      ],
+      "channel": {
+        "maximumSeconds": null,
+        "intervalSeconds": 0.5,
+        "intervalSpeed": "None",
+        "pulseAtStart": false,
+        "manaPerSecond": 2,
+        "staminaPerSecond": 0,
+        "cooldownStart": "Completion",
+        "damageCalculation": "Dynamic"
+      },
+      "toggle": {
+        "occupiesAction": false,
+        "stopOn": "None"
+      }
+    },
+    {
+      "id": "qa_passive",
+      "networkId": 604,
+      "kind": "Passive",
+      "power": 0,
+      "magicAttackScale": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 0,
+      "range": 0,
+      "radius": 0,
+      "speed": 0,
+      "action": {
+        "form": "Passive",
+        "category": "Skill"
+      },
+      "passive": {
+        "modifiers": {
+          "magicDefense": 2
+        }
+      }
+    },
+    {
+      "id": "qa_heal",
+      "networkId": 605,
+      "kind": "GroundArea",
+      "groundVolume": {
+        "shape": "Cylinder",
+        "height": 2,
+        "requiresConnectedSurface": false
+      },
+      "power": 0,
+      "magicAttackScale": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 2,
+      "range": 12,
+      "radius": 2,
+      "speed": 0,
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "capabilities": "Magical",
+        "preparation": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge"
+        },
+        "active": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge",
+          "canTurn": true
+        }
+      },
+      "contactDisposition": "Support",
+      "effects": [
+        {
+          "operation": "Heal",
+          "trigger": "Contact",
+          "target": "HitTarget",
+          "power": {
+            "flat": 100
+          }
+        }
+      ]
+    },
+    {
+      "id": "qa_shield",
+      "networkId": 606,
+      "kind": "GroundArea",
+      "groundVolume": {
+        "shape": "Cylinder",
+        "height": 2,
+        "requiresConnectedSurface": false
+      },
+      "power": 0,
+      "magicAttackScale": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 2,
+      "range": 12,
+      "radius": 2,
+      "speed": 0,
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "capabilities": "Magical",
+        "preparation": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge"
+        },
+        "active": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge",
+          "canTurn": true
+        }
+      },
+      "contactDisposition": "Support",
+      "effects": [
+        {
+          "operation": "Timed",
+          "effectId": "qa_shield_effect",
+          "trigger": "Contact",
+          "target": "HitTarget"
+        }
+      ]
+    },
+    {
+      "id": "qa_hot",
+      "networkId": 607,
+      "kind": "GroundArea",
+      "groundVolume": {
+        "shape": "Cylinder",
+        "height": 2,
+        "requiresConnectedSurface": false
+      },
+      "power": 0,
+      "magicAttackScale": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 2,
+      "range": 12,
+      "radius": 2,
+      "speed": 0,
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "capabilities": "Magical",
+        "preparation": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge"
+        },
+        "active": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge",
+          "canTurn": true
+        }
+      },
+      "contactDisposition": "Support",
+      "effects": [
+        {
+          "operation": "Timed",
+          "effectId": "qa_hot_effect",
+          "trigger": "Contact",
+          "target": "HitTarget"
+        }
+      ]
+    },
+    {
+      "id": "qa_dot",
+      "networkId": 608,
+      "kind": "GroundArea",
+      "groundVolume": {
+        "shape": "Cylinder",
+        "height": 2,
+        "requiresConnectedSurface": false
+      },
+      "power": 0,
+      "magicAttackScale": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 2,
+      "range": 12,
+      "radius": 2,
+      "speed": 0,
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "capabilities": "Magical",
+        "preparation": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge"
+        },
+        "active": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge",
+          "canTurn": true
+        }
+      },
+      "effects": [
+        {
+          "operation": "Timed",
+          "effectId": "qa_dot_effect",
+          "trigger": "Contact",
+          "target": "HitTarget"
+        }
+      ]
+    },
+    {
+      "id": "qa_cleanse",
+      "networkId": 609,
+      "kind": "GroundArea",
+      "groundVolume": {
+        "shape": "Cylinder",
+        "height": 2,
+        "requiresConnectedSurface": false
+      },
+      "power": 0,
+      "magicAttackScale": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 2,
+      "range": 12,
+      "radius": 2,
+      "speed": 0,
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "capabilities": "Magical",
+        "preparation": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge"
+        },
+        "active": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge",
+          "canTurn": true
+        }
+      },
+      "contactDisposition": "Support",
+      "effects": [
+        {
+          "operation": "Cleanse",
+          "trigger": "Contact",
+          "target": "HitTarget",
+          "removal": {
+            "timed": true,
+            "controls": [
+              "Stun",
+              "Root",
+              "Slow",
+              "Silence",
+              "Disarm",
+              "Knockback",
+              "Knockdown",
+              "Fear",
+              "Sleep",
+              "Blind",
+              "Taunt",
+              "Pull",
+              "Freeze",
+              "Knockup"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "qa_dispel",
+      "networkId": 610,
+      "kind": "GroundArea",
+      "groundVolume": {
+        "shape": "Cylinder",
+        "height": 2,
+        "requiresConnectedSurface": false
+      },
+      "power": 0,
+      "magicAttackScale": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 2,
+      "range": 12,
+      "radius": 2,
+      "speed": 0,
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "capabilities": "Magical",
+        "preparation": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge"
+        },
+        "active": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge",
+          "canTurn": true
+        }
+      },
+      "effects": [
+        {
+          "operation": "Dispel",
+          "trigger": "Contact",
+          "target": "HitTarget",
+          "removal": {
+            "timed": true,
+            "controls": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "qa_resurrect",
+      "networkId": 611,
+      "kind": "GroundArea",
+      "groundVolume": {
+        "shape": "Cylinder",
+        "height": 2,
+        "requiresConnectedSurface": false
+      },
+      "power": 0,
+      "magicAttackScale": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 2,
+      "range": 12,
+      "radius": 2,
+      "speed": 0,
+      "action": {
+        "form": "Cast",
+        "category": "Skill",
+        "capabilities": "Magical",
+        "preparation": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge",
+          "seconds": 2,
+          "movementMultiplier": 0
+        },
+        "active": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge",
+          "canTurn": true
+        }
+      },
+      "contactDisposition": "Support",
+      "effects": [
+        {
+          "operation": "Resurrect",
+          "trigger": "Contact",
+          "target": "HitTarget",
+          "power": {
+            "flat": 50
+          }
+        }
+      ]
+    },
+    {
+      "id": "qa_procs",
+      "networkId": 612,
+      "kind": "GroundArea",
+      "groundVolume": {
+        "shape": "Cylinder",
+        "height": 2,
+        "requiresConnectedSurface": false
+      },
+      "power": 0,
+      "magicAttackScale": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 2,
+      "range": 12,
+      "radius": 2,
+      "speed": 0,
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "capabilities": "Magical",
+        "preparation": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge"
+        },
+        "active": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge",
+          "canTurn": true
+        }
+      },
+      "contactDisposition": "Support",
+      "effects": [
+        {
+          "operation": "Timed",
+          "trigger": "Activated",
+          "target": "Self",
+          "effectId": "qa_procs_effect"
+        }
+      ]
+    },
+    {
+      "id": "qa_reset",
+      "networkId": 613,
+      "kind": "GroundArea",
+      "groundVolume": {
+        "shape": "Cylinder",
+        "height": 2,
+        "requiresConnectedSurface": false
+      },
+      "power": 0,
+      "magicAttackScale": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 2,
+      "range": 12,
+      "radius": 2,
+      "speed": 0,
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "capabilities": "Magical",
+        "preparation": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge"
+        },
+        "active": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge",
+          "canTurn": true
+        }
+      },
+      "contactDisposition": "Support",
+      "effects": [
+        {
+          "operation": "CooldownReset",
+          "trigger": "Activated",
+          "target": "Self",
+          "resetSkillId": "test_projectile"
+        }
+      ]
+    },
+    {
+      "id": "qa_hp_cast",
+      "networkId": 614,
+      "kind": "Projectile",
+      "projectileLaunchHeight": 1,
+      "power": 15,
+      "manaCost": 5,
+      "cooldownSeconds": 4,
+      "range": 10,
+      "radius": 0.3,
+      "speed": 8,
+      "magicAttackScale": 1,
+      "action": {
+        "form": "Cast",
+        "category": "Skill",
+        "preparation": {
+          "seconds": 1,
+          "canTurn": true,
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge"
+        },
+        "capabilities": "Magical"
+      },
+      "maxCharges": 1,
+      "healthCost": 10
+    },
+    {
+      "id": "qa_cc_stun",
+      "networkId": 620,
+      "kind": "GroundArea",
+      "groundVolume": {
+        "shape": "Cylinder",
+        "height": 2,
+        "requiresConnectedSurface": false
+      },
+      "power": 0,
+      "magicAttackScale": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 2,
+      "range": 12,
+      "radius": 2,
+      "speed": 0,
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "capabilities": "Magical",
+        "preparation": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge"
+        },
+        "active": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge",
+          "canTurn": true
+        }
+      },
+      "effects": [
+        {
+          "operation": "Control",
+          "trigger": "Contact",
+          "target": "HitTarget",
+          "control": {
+            "kind": "Stun",
+            "durationSeconds": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "qa_cc_root",
+      "networkId": 621,
+      "kind": "GroundArea",
+      "groundVolume": {
+        "shape": "Cylinder",
+        "height": 2,
+        "requiresConnectedSurface": false
+      },
+      "power": 0,
+      "magicAttackScale": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 2,
+      "range": 12,
+      "radius": 2,
+      "speed": 0,
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "capabilities": "Magical",
+        "preparation": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge"
+        },
+        "active": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge",
+          "canTurn": true
+        }
+      },
+      "effects": [
+        {
+          "operation": "Control",
+          "trigger": "Contact",
+          "target": "HitTarget",
+          "control": {
+            "kind": "Root",
+            "durationSeconds": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "qa_cc_slow",
+      "networkId": 622,
+      "kind": "GroundArea",
+      "groundVolume": {
+        "shape": "Cylinder",
+        "height": 2,
+        "requiresConnectedSurface": false
+      },
+      "power": 0,
+      "magicAttackScale": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 2,
+      "range": 12,
+      "radius": 2,
+      "speed": 0,
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "capabilities": "Magical",
+        "preparation": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge"
+        },
+        "active": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge",
+          "canTurn": true
+        }
+      },
+      "effects": [
+        {
+          "operation": "Control",
+          "trigger": "Contact",
+          "target": "HitTarget",
+          "control": {
+            "kind": "Slow",
+            "durationSeconds": 2,
+            "strength": 0.3
+          }
+        }
+      ]
+    },
+    {
+      "id": "qa_cc_silence",
+      "networkId": 623,
+      "kind": "GroundArea",
+      "groundVolume": {
+        "shape": "Cylinder",
+        "height": 2,
+        "requiresConnectedSurface": false
+      },
+      "power": 0,
+      "magicAttackScale": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 2,
+      "range": 12,
+      "radius": 2,
+      "speed": 0,
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "capabilities": "Magical",
+        "preparation": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge"
+        },
+        "active": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge",
+          "canTurn": true
+        }
+      },
+      "effects": [
+        {
+          "operation": "Control",
+          "trigger": "Contact",
+          "target": "HitTarget",
+          "control": {
+            "kind": "Silence",
+            "durationSeconds": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "qa_cc_disarm",
+      "networkId": 624,
+      "kind": "GroundArea",
+      "groundVolume": {
+        "shape": "Cylinder",
+        "height": 2,
+        "requiresConnectedSurface": false
+      },
+      "power": 0,
+      "magicAttackScale": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 2,
+      "range": 12,
+      "radius": 2,
+      "speed": 0,
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "capabilities": "Magical",
+        "preparation": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge"
+        },
+        "active": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge",
+          "canTurn": true
+        }
+      },
+      "effects": [
+        {
+          "operation": "Control",
+          "trigger": "Contact",
+          "target": "HitTarget",
+          "control": {
+            "kind": "Disarm",
+            "durationSeconds": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "qa_cc_knockback",
+      "networkId": 625,
+      "kind": "GroundArea",
+      "groundVolume": {
+        "shape": "Cylinder",
+        "height": 2,
+        "requiresConnectedSurface": false
+      },
+      "power": 0,
+      "magicAttackScale": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 2,
+      "range": 12,
+      "radius": 2,
+      "speed": 0,
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "capabilities": "Magical",
+        "preparation": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge"
+        },
+        "active": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge",
+          "canTurn": true
+        }
+      },
+      "effects": [
+        {
+          "operation": "Control",
+          "trigger": "Contact",
+          "target": "HitTarget",
+          "control": {
+            "kind": "Knockback",
+            "distance": 3,
+            "speed": 6,
+            "origin": "Source"
+          }
+        }
+      ]
+    },
+    {
+      "id": "qa_cc_knockdown",
+      "networkId": 626,
+      "kind": "GroundArea",
+      "groundVolume": {
+        "shape": "Cylinder",
+        "height": 2,
+        "requiresConnectedSurface": false
+      },
+      "power": 0,
+      "magicAttackScale": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 2,
+      "range": 12,
+      "radius": 2,
+      "speed": 0,
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "capabilities": "Magical",
+        "preparation": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge"
+        },
+        "active": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge",
+          "canTurn": true
+        }
+      },
+      "effects": [
+        {
+          "operation": "Control",
+          "trigger": "Contact",
+          "target": "HitTarget",
+          "control": {
+            "kind": "Knockdown",
+            "durationSeconds": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "qa_cc_fear",
+      "networkId": 627,
+      "kind": "GroundArea",
+      "groundVolume": {
+        "shape": "Cylinder",
+        "height": 2,
+        "requiresConnectedSurface": false
+      },
+      "power": 0,
+      "magicAttackScale": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 2,
+      "range": 12,
+      "radius": 2,
+      "speed": 0,
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "capabilities": "Magical",
+        "preparation": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge"
+        },
+        "active": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge",
+          "canTurn": true
+        }
+      },
+      "effects": [
+        {
+          "operation": "Control",
+          "trigger": "Contact",
+          "target": "HitTarget",
+          "control": {
+            "kind": "Fear",
+            "durationSeconds": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "qa_cc_sleep",
+      "networkId": 628,
+      "kind": "GroundArea",
+      "groundVolume": {
+        "shape": "Cylinder",
+        "height": 2,
+        "requiresConnectedSurface": false
+      },
+      "power": 0,
+      "magicAttackScale": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 2,
+      "range": 12,
+      "radius": 2,
+      "speed": 0,
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "capabilities": "Magical",
+        "preparation": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge"
+        },
+        "active": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge",
+          "canTurn": true
+        }
+      },
+      "effects": [
+        {
+          "operation": "Control",
+          "trigger": "Contact",
+          "target": "HitTarget",
+          "control": {
+            "kind": "Sleep",
+            "durationSeconds": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "qa_cc_blind",
+      "networkId": 629,
+      "kind": "GroundArea",
+      "groundVolume": {
+        "shape": "Cylinder",
+        "height": 2,
+        "requiresConnectedSurface": false
+      },
+      "power": 0,
+      "magicAttackScale": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 2,
+      "range": 12,
+      "radius": 2,
+      "speed": 0,
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "capabilities": "Magical",
+        "preparation": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge"
+        },
+        "active": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge",
+          "canTurn": true
+        }
+      },
+      "effects": [
+        {
+          "operation": "Control",
+          "trigger": "Contact",
+          "target": "HitTarget",
+          "control": {
+            "kind": "Blind",
+            "durationSeconds": 2,
+            "strength": 50
+          }
+        }
+      ]
+    },
+    {
+      "id": "qa_cc_taunt",
+      "networkId": 630,
+      "kind": "GroundArea",
+      "groundVolume": {
+        "shape": "Cylinder",
+        "height": 2,
+        "requiresConnectedSurface": false
+      },
+      "power": 0,
+      "magicAttackScale": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 2,
+      "range": 12,
+      "radius": 2,
+      "speed": 0,
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "capabilities": "Magical",
+        "preparation": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge"
+        },
+        "active": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge",
+          "canTurn": true
+        }
+      },
+      "effects": [
+        {
+          "operation": "Control",
+          "trigger": "Contact",
+          "target": "HitTarget",
+          "control": {
+            "kind": "Taunt",
+            "durationSeconds": 2,
+            "strength": 0.3
+          }
+        }
+      ]
+    },
+    {
+      "id": "qa_cc_pull",
+      "networkId": 631,
+      "kind": "GroundArea",
+      "groundVolume": {
+        "shape": "Cylinder",
+        "height": 2,
+        "requiresConnectedSurface": false
+      },
+      "power": 0,
+      "magicAttackScale": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 2,
+      "range": 12,
+      "radius": 2,
+      "speed": 0,
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "capabilities": "Magical",
+        "preparation": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge"
+        },
+        "active": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge",
+          "canTurn": true
+        }
+      },
+      "effects": [
+        {
+          "operation": "Control",
+          "trigger": "Contact",
+          "target": "HitTarget",
+          "control": {
+            "kind": "Pull",
+            "distance": 3,
+            "speed": 6,
+            "origin": "Source"
+          }
+        }
+      ]
+    },
+    {
+      "id": "qa_cc_freeze",
+      "networkId": 632,
+      "kind": "GroundArea",
+      "groundVolume": {
+        "shape": "Cylinder",
+        "height": 2,
+        "requiresConnectedSurface": false
+      },
+      "power": 0,
+      "magicAttackScale": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 2,
+      "range": 12,
+      "radius": 2,
+      "speed": 0,
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "capabilities": "Magical",
+        "preparation": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge"
+        },
+        "active": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge",
+          "canTurn": true
+        }
+      },
+      "effects": [
+        {
+          "operation": "Control",
+          "trigger": "Contact",
+          "target": "HitTarget",
+          "control": {
+            "kind": "Freeze",
+            "durationSeconds": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "qa_cc_knockup",
+      "networkId": 633,
+      "kind": "GroundArea",
+      "groundVolume": {
+        "shape": "Cylinder",
+        "height": 2,
+        "requiresConnectedSurface": false
+      },
+      "power": 0,
+      "magicAttackScale": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 2,
+      "range": 12,
+      "radius": 2,
+      "speed": 0,
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "capabilities": "Magical",
+        "preparation": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge"
+        },
+        "active": {
+          "cancel": "Voluntary, Skill, Block, Parry, Dodge",
+          "canTurn": true
+        }
+      },
+      "effects": [
+        {
+          "operation": "Control",
+          "trigger": "Contact",
+          "target": "HitTarget",
+          "control": {
+            "kind": "Knockup",
+            "durationSeconds": 0.6,
+            "height": 2,
+            "downSeconds": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "qa_restore",
+      "networkId": 615,
+      "kind": "GroundArea",
+      "groundVolume": {
+        "shape": "Cylinder",
+        "height": 2,
+        "requiresConnectedSurface": false
+      },
+      "power": 0,
+      "magicAttackScale": 0,
+      "manaCost": 0,
+      "cooldownSeconds": 5,
+      "range": 12,
+      "radius": 2,
+      "speed": 0,
+      "contactDisposition": "Support",
+      "action": {
+        "form": "Instant",
+        "category": "Skill",
+        "capabilities": "Magical"
+      },
+      "effects": [
+        {
+          "operation": "Timed",
+          "effectId": "qa_restore_effect",
+          "trigger": "Activated",
+          "target": "Self"
+        }
+      ]
+    }
+  ],
+  "effects": [
+    {
+      "id": "qa_shield_effect",
+      "durationSeconds": 10,
+      "disposition": "Beneficial",
+      "dispellable": true,
+      "shield": {
+        "power": {
+          "flat": 60
+        }
+      }
+    },
+    {
+      "id": "qa_hot_effect",
+      "durationSeconds": 6,
+      "disposition": "Beneficial",
+      "dispellable": true,
+      "periodic": {
+        "kind": "Healing",
+        "intervalSeconds": 1,
+        "power": {
+          "flat": 8
+        }
+      }
+    },
+    {
+      "id": "qa_dot_effect",
+      "durationSeconds": 6,
+      "disposition": "Harmful",
+      "cleansable": true,
+      "periodic": {
+        "kind": "Damage",
+        "intervalSeconds": 1,
+        "power": {
+          "flat": 8
+        },
+        "damageFamily": "Physical"
+      }
+    },
+    {
+      "id": "qa_procs_effect",
+      "durationSeconds": 20,
+      "disposition": "Beneficial",
+      "dispellable": true,
+      "lifeSteal": {
+        "fraction": 0.3,
+        "direct": true,
+        "periodic": true
+      },
+      "manaSteal": {
+        "fraction": 0.2,
+        "direct": true,
+        "periodic": true
+      },
+      "reflection": {
+        "fraction": 0.2,
+        "direct": true,
+        "periodic": true
+      }
+    },
+    {
+      "id": "qa_restore_effect",
+      "durationSeconds": 5,
+      "disposition": "Beneficial",
+      "modifiers": {
+        "healthRecovery": 100,
+        "manaRecovery": 100,
+        "staminaRecovery": 100
+      }
+    }
+  ],
+  "items": [
+    {
+      "id": "qa_bow",
+      "name": "Учебный лук",
+      "slot": "Weapon",
+      "weaponId": "training_bow"
+    },
+    {
+      "id": "qa_staff",
+      "name": "Учебный посох",
+      "slot": "Weapon",
+      "weaponId": "training_staff"
+    }
+  ],
+  "creatures": [
+    {
+      "id": "qa_control_target",
+      "avoidance": {
+        "radius": 0.4,
+        "lateralFraction": 0,
+        "horizonSeconds": 0.1
+      },
+      "modifiers": {
+        "maxStamina": 0,
+        "staminaRecovery": 0
+      },
+      "threat": {
+        "damagePerHp": 1,
+        "healingPerHp": 0.5
+      },
+      "hurtbox": {
+        "shape": "Capsule",
+        "height": 2,
+        "radius": 0.4
+      },
+      "stats": {
+        "strength": 0,
+        "agility": 0,
+        "vitality": 0,
+        "intelligence": 0,
+        "dexterity": 0,
+        "luck": 0,
+        "wisdom": 0
+      },
+      "baseHealth": 10000,
+      "baseMana": 100,
+      "baseHealthRecovery": 100,
+      "baseManaRecovery": 0,
+      "weaponId": "training_sword",
+      "abilityIds": [],
+      "canBleed": true,
+      "canBeStunned": true
+    }
+  ],
+  "setup": {
+    "kit": [
+      "crafted_crossing_blade",
+      "qa_bow",
+      "qa_staff",
+      "training_daggers_item",
+      "training_twohand_item",
+      "training_shield",
+      "test_armor_item",
+      "echo_restoration_seal"
+    ],
+    "bar": [
+      "test_projectile",
+      "test_ground_area",
+      "qa_charged",
+      "qa_channel",
+      "qa_heal",
+      "qa_shield",
+      "sword_thrust",
+      "qa_cc_stun"
+    ],
+    "actors": [
+      {
+        "key": "qa-target-a",
+        "profile": "qa_control_target",
+        "x": -415,
+        "z": 324,
+        "passive": true
+      },
+      {
+        "key": "qa-target-b",
+        "profile": "qa_control_target",
+        "x": -413.5,
+        "z": 324,
+        "passive": true
+      },
+      {
+        "key": "qa-target-c",
+        "profile": "qa_control_target",
+        "x": -414.25,
+        "z": 326,
+        "passive": true
+      },
+      {
+        "key": "qa-melee",
+        "profile": "test_creature",
+        "x": -403,
+        "z": 315
+      },
+      {
+        "key": "qa-boss",
+        "profile": "test_boss",
+        "x": -393,
+        "z": 300,
+        "boss": true
+      }
+    ]
+  }
+}

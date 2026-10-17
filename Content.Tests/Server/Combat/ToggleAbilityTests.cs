@@ -133,7 +133,7 @@ public sealed class ToggleAbilityTests
     [Fact]public void AcceptedMovementUsesTheAuthoredToggleStopWithoutChangingOtherActionOwnership()
     {
         var f=new ChannelingTests.Fight(Document(stops:"Movement"));f.Cast();
-        Assert.True(f.World.TryApplyMove(42,new(1,0,f.Actor.Position+Vector2.UnitX)));
+        Assert.True(f.World.TryApplyMove(42,new(1,0,f.Actor.Position+Vector2.UnitX,InputOrder:2)));
         Assert.Equal(ToggleState.Off,f.Skill.ToggleState);Assert.Equal(0,f.Skill.PendingEndCharges);Assert.Null(f.Actor.Action);
     }
 

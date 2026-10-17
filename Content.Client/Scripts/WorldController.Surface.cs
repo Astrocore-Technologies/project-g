@@ -34,6 +34,7 @@ public partial class WorldController
             if (_surfaceTerrain is not null)
                 _surfaceTerrain.ProcessMode = ProcessModeEnum.Disabled;
             _surfaceRegion = scene; AddChild(scene);
+            ProjectG.UI.UiMapLayers.IncludeScenery(scene);
             GetNode<Node3D>("Ground").Hide(); GetNode<CollisionShape3D>("Ground/CollisionShape3D").Disabled = true;
             GetNode<DirectionalLight3D>("DirectionalLight3D").Hide();
             _contentReady = true;

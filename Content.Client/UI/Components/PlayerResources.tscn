@@ -1,0 +1,196 @@
+[gd_scene format=3]
+[ext_resource type="Theme" path="res://UI/Theme/player-resources.tres" id="1"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Hud/resource-plate.svg" id="2"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Hud/portrait-rim.svg" id="4"]
+[ext_resource type="Shader" path="res://Assets/UI/Hud/portrait-circle.gdshader" id="5"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Hud/portrait-mask.svg" id="Mask"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Hud/traveler-portrait-front.png" id="Portrait"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Hud/health-mark.svg" id="HealthIcon"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Hud/mana-mark.svg" id="ManaIcon"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Hud/stamina-mark.svg" id="StaminaIcon"]
+[sub_resource type="ShaderMaterial" id="PortraitMask"]
+shader = ExtResource("5")
+shader_parameter/mask_texture = ExtResource("Mask")
+[node name="PlayerResources" type="Control"]
+custom_minimum_size = Vector2(468, 124)
+layout_mode = 0
+offset_right = 468.0
+offset_bottom = 124.0
+mouse_filter = 2
+theme = ExtResource("1")
+[node name="HealthPlate" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 90.0
+offset_top = 16.0
+offset_right = 468.0
+offset_bottom = 46.0
+mouse_filter = 2
+texture = ExtResource("2")
+expand_mode = 1
+[node name="ManaPlate" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 90.0
+offset_top = 46.0
+offset_right = 468.0
+offset_bottom = 76.0
+mouse_filter = 2
+texture = ExtResource("2")
+expand_mode = 1
+[node name="StaminaPlate" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 90.0
+offset_top = 76.0
+offset_right = 468.0
+offset_bottom = 106.0
+mouse_filter = 2
+texture = ExtResource("2")
+expand_mode = 1
+[node name="Portrait" type="Button" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_right = 120.0
+offset_bottom = 124.0
+focus_mode = 0
+tooltip_text = "Персонаж · K"
+[node name="Art" type="TextureRect" parent="Portrait"]
+unique_name_in_owner = true
+material = SubResource("PortraitMask")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("Portrait")
+expand_mode = 1
+stretch_mode = 6
+[node name="PortraitRim" type="TextureRect" parent="."]
+layout_mode = 0
+offset_right = 120.0
+offset_bottom = 124.0
+mouse_filter = 2
+texture = ExtResource("4")
+expand_mode = 1
+[node name="HealthIcon" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 125.0
+offset_top = 22.0
+offset_right = 143.0
+offset_bottom = 40.0
+mouse_filter = 2
+texture = ExtResource("HealthIcon")
+expand_mode = 1
+stretch_mode = 5
+[node name="HealthLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 150.0
+offset_top = 19.0
+offset_right = 238.0
+offset_bottom = 43.0
+mouse_filter = 2
+text = "Здоровье"
+vertical_alignment = 1
+[node name="Health" type="ProgressBar" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 246.0
+offset_top = 26.0
+offset_right = 378.0
+offset_bottom = 36.0
+mouse_filter = 2
+theme_type_variation = &"HealthBar"
+show_percentage = false
+[node name="HealthText" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 386.0
+offset_top = 19.0
+offset_right = 454.0
+offset_bottom = 43.0
+mouse_filter = 2
+text = "— / —"
+horizontal_alignment = 2
+vertical_alignment = 1
+[node name="ManaIcon" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 125.0
+offset_top = 52.0
+offset_right = 143.0
+offset_bottom = 70.0
+mouse_filter = 2
+texture = ExtResource("ManaIcon")
+expand_mode = 1
+stretch_mode = 5
+[node name="ManaLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 150.0
+offset_top = 49.0
+offset_right = 238.0
+offset_bottom = 73.0
+mouse_filter = 2
+text = "Мана"
+vertical_alignment = 1
+[node name="Mana" type="ProgressBar" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 246.0
+offset_top = 56.0
+offset_right = 378.0
+offset_bottom = 66.0
+mouse_filter = 2
+theme_type_variation = &"ManaBar"
+show_percentage = false
+[node name="ManaText" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 386.0
+offset_top = 49.0
+offset_right = 454.0
+offset_bottom = 73.0
+mouse_filter = 2
+text = "— / —"
+horizontal_alignment = 2
+vertical_alignment = 1
+[node name="StaminaIcon" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 125.0
+offset_top = 82.0
+offset_right = 143.0
+offset_bottom = 100.0
+mouse_filter = 2
+texture = ExtResource("StaminaIcon")
+expand_mode = 1
+stretch_mode = 5
+[node name="StaminaLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 150.0
+offset_top = 79.0
+offset_right = 238.0
+offset_bottom = 103.0
+mouse_filter = 2
+text = "Выносливость"
+vertical_alignment = 1
+[node name="Stamina" type="ProgressBar" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 246.0
+offset_top = 86.0
+offset_right = 378.0
+offset_bottom = 96.0
+mouse_filter = 2
+theme_type_variation = &"StaminaBar"
+show_percentage = false
+[node name="StaminaText" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 386.0
+offset_top = 79.0
+offset_right = 454.0
+offset_bottom = 103.0
+mouse_filter = 2
+text = "— / —"
+horizontal_alignment = 2
+vertical_alignment = 1
+[node name="Level" type="Label" parent="."]
+unique_name_in_owner = true
+visible = false
+mouse_filter = 2

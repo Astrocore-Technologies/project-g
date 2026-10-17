@@ -88,8 +88,10 @@ public sealed partial class ServerWorld
             Combat.MotionBoundary=NextCombatMotionBoundary;Combat.MotionFor=CurrentCombatMotion;
             Combat.ResolveWorldContacts=ResolveNpcContacts;
             Combat.FacingChanged=MarkPersistent;
+            Combat.NavigationActionStarted += CancelNavigationForAction;
             Combat.JournalVisibility=(observer,subject)=>Combat.TryGet(observer,out var a) && Combat.TryGet(subject,out var b) &&
-                Vector2.DistanceSquared(a.Position,b.Position)<=_interest.Radius*_interest.Radius;
+                Vector2.DistanceSquared(a.Position,b.Position)<=_interest.Radius*_interest.Radius &&
+                (!_playersByEntity.ContainsKey(subject) || observer==subject || Navigation.ClearAttack(a.Foot,b.Foot));
             Combat.Revived+=ActorRevived;
             Combat.CorpseExpired+=id=>Echoes?.OwnerCorpseRemoved(id);
             Combat.SupportPermission=(source,target)=>Social is not null && _pvpIdentities.TryGetValue(Combat.PrincipalActor(source),out var author) &&
@@ -241,7 +243,12 @@ public sealed partial class ServerWorld
     public CharacterState CreateInitialCharacter()
     {
         if (_developmentBalanceCharacter is { } fixture)
-            return fixture with { Inventory = fixture.Inventory! with { Items = fixture.Inventory.Items.Select(i => i with { InstanceId = Guid.NewGuid() }).ToArray() } };
+            return fixture with
+            {
+                Inventory = fixture.Inventory! with { Items = fixture.Inventory.Items.Select(i => i with { InstanceId = Guid.NewGuid() }).ToArray() },
+                Echoes = fixture.Echoes is { } echoes ? echoes with { Active = echoes.Active.Select(e => e with { InstanceId = Guid.NewGuid() }).ToArray() } : null,
+                OwnedEchoes = fixture.OwnedEchoes?.Select(e => e with { InstanceId = Guid.NewGuid() }).ToArray()
+            };
         var definition = _playerDefinition ?? throw new InvalidOperationException("Persistence requires player content.");
         if (!TryResolveSpawn(_spawn, out var spawn, out var spawnHeight))
             throw new InvalidOperationException("Region has no spawn.");
@@ -322,33 +329,44 @@ public sealed partial class ServerWorld
             !MovementSimulation.IsSequenceNewer(command.Sequence, player.LastProcessedSequence) ||
             (Combat is not null && Combat.Get(player.EntityId).Health <= 0) ||
             !player.Loaded || command.GeometryHash != Navigation.SurfaceHash || !float.IsFinite(command.TargetHeight) ||
-            !MovementSimulation.IsValidTarget(command.Target, _movement))
+            !Enum.IsDefined(command.Kind) || !MovementSimulation.IsValidTarget(command.Target, _movement))
         {
             return false;
         }
 
-        if (Navigation.Surface is { } surface)
+        if (command.Kind == MovementCommandKind.Stop)
+            command = command with { Target = player.Position, TargetHeight = player.Height };
+        var cursor = command.Kind is MovementCommandKind.Cursor or MovementCommandKind.CursorStart;
+        if (cursor) command = command with { TargetHeight = player.Height };
+        if (!cursor && Navigation.Surface is { } surface)
         {
             if (!surface.TryLocate(new(command.Target.X,command.TargetHeight,command.Target.Y),.35f,out var goal)) return false;
             command=command with { TargetHeight=goal.Position.Y };
         }
+        if (!AcceptNavigationOrder(player, command)) return false;
         Abilities?.CancelRecovery(player.EntityId);
         if (Combat?.IsRooted(player.EntityId) == true) return false;
-        if (command.Target != player.Target || command.TargetHeight != player.Motion.TargetHeight)
+        if (command.Target != player.Target || command.TargetHeight != player.Motion.TargetHeight || cursor != player.Motion.IsCursor)
         {
             if (player.Motion.IsDashing)
             {
                 player.LastProcessedSequence = command.Sequence;
+                player.LastMovementClientTick = command.ClientTick;
+                player.LastMovementServerTick = Tick;
                 return true;
             }
             // Repeated intentions are cheap; a flood cannot trigger unbounded A* searches.
             if (player.LastPathRequestTick == Tick)
                 return false;
             player.LastPathRequestTick = Tick;
-            if (!player.Motion.TrySetTarget(command.Target, command.TargetHeight))
+            if (!(cursor ? player.Motion.TrySetCursor(command.Target) : player.Motion.TrySetTarget(command.Target, command.TargetHeight)))
                 return false;
         }
         player.LastProcessedSequence = command.Sequence;
+        player.LastMovementClientTick = command.ClientTick;
+        player.LastMovementServerTick = Tick;
+        if (command.InputOrder != player.NavigationOrder) Combat?.NotifyNavigationInput(player.EntityId, command.InputOrder);
+        player.NavigationOrder = command.InputOrder;
         if (player.Motion.IsMoving)
         {
             Abilities?.NotifySustainAction(player.EntityId,Content.Shared.Combat.ToggleStopTriggers.Movement);
@@ -406,7 +424,7 @@ public sealed partial class ServerWorld
 
     public void UpdateAbilityInterest(int connectionId, InterestView entities, AbilityInterestView effects) =>
         Abilities?.UpdateInterest(effects, entities.Entities, _playersByConnection[connectionId].Position,
-            _interest.Radius, _interest.ExitRadius, Tick);
+            _interest.Radius, _interest.ExitRadius, Tick, Navigation, _playersByConnection[connectionId].Height);
 
     public bool IsPlayer(NetworkEntityId id) => _playersByEntity.ContainsKey(id);
 
@@ -488,13 +506,14 @@ public sealed partial class ServerWorld
         foreach(var connectionId in _movingPlayers)
         {
             var player=_playersByConnection[connectionId];
-            _persistenceDirty.Add(connectionId);
             if(Combat is not null && Combat.Get(player.EntityId).Health<=0)player.Motion.Reset(player.Position,player.Position);
             var previousPosition=player.Position;
+            var previousHeight=player.Height;
             var ordinary=!player.Motion.IsDashing && Combat?.IsFleeing(player.EntityId)!=true;
             player.Motion.Step((float)(delta*PlayerMovementMultiplier(player)));
             _spatial.Move(player.EntityId,player.Position);Combat?.Move(player.EntityId,player.Position,player.Height);
-            if(ordinary)Combat?.FaceMovement(player.EntityId,player.Position-previousPosition);
+            if (previousPosition != player.Position || previousHeight != player.Height) _persistenceDirty.Add(connectionId);
+            if(ordinary)Combat?.FaceMovement(player.EntityId,player.Motion.IsCursor ? player.Target-player.Position : player.Position-previousPosition);
             VisitDiscoveries(player);RevealStarterArea(player,player.Position!=previousPosition);Echoes?.Wake(player.EntityId);
             if(!player.Motion.IsMoving)_stoppedPlayers.Add(connectionId);
         }
@@ -552,6 +571,13 @@ public sealed partial class ServerWorld
             if (!view.Visible.Contains(id) &&
                 Vector2.DistanceSquared(observer.Position, position) > squaredEnterRadius)
                 continue;
+            // AOI hysteresis never keeps a player visible through opaque geometry.
+            // Self remains present; camera fading has no authority over this decision.
+            if (!CanObserveActor(observer, id))
+            {
+                if (view.Visible.Remove(id)) view.LeftIds.Add(id);
+                continue;
+            }
             if (view.Visible.Add(id))
                 view.EnteredIds.Add(id);
             if (player is null)
@@ -571,7 +597,20 @@ public sealed partial class ServerWorld
                 player.Target,
                 Combat?.Get(player.EntityId).LastAbilitySequence ?? 0,
                 player.Motion.IsDashing ? player.Motion.DashDestination : default,
-                player.Motion.DashSpeed, player.Height, player.Motion.TargetHeight, player.Motion.DashHeight)));
+                player.Motion.DashSpeed, player.Height, player.Motion.TargetHeight, player.Motion.DashHeight,
+                CancelledNavigationOrder: player.CancelledNavigationOrder,
+                ProcessedClientTick: ProcessedMovementTick(player), DirectCursor: player.Motion.IsCursor,
+                RunningIntent: player.Motion.IsCursor && player.Motion.IsMoving && PlayerMovementMultiplier(player) > 0)));
         }
+    }
+
+    private bool CanObserveActor(ServerPlayer observer, NetworkEntityId id)
+    {
+        if (id == observer.EntityId) return true;
+        if (_playersByEntity.TryGetValue(id, out var player))
+            return Navigation.ClearAttack(observer.Foot, player.Foot);
+        if (Echoes?.TryGet(id, out var echo) == true)
+            return Navigation.ClearAttack(observer.Foot, echo.Motion.Foot);
+        return true;
     }
 }

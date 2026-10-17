@@ -9,6 +9,7 @@ namespace ProjectG.Tests.UI;
 /// <summary>Real client/server UI smoke. Uses a separate identity and server passed on the command line.</summary>
 public partial class PlayerHudSmoke : Node
 {
+    [Export] public bool UseReviewServer { get; set; }
     private int _previews;
     private ProgressionState _state;
     public override async void _Ready()
@@ -34,15 +35,28 @@ public partial class PlayerHudSmoke : Node
             if (OS.GetCmdlineUserArgs().Contains("--format-only"))
             { GD.Print("STAT_PERCENTAGES_OK: positive, negative, zero, rounding, fractions, probability and absolute values."); GetTree().Quit(); return; }
             GetWindow().Mode=Window.ModeEnum.Windowed; await Frames(2); GetWindow().Size=new(1280,720); await Frames(3);
-            var world=GD.Load<PackedScene>("res://Scenes/World.tscn").Instantiate<WorldController>(); world.AutoConnect=false; AddChild(world);
+            var world=GD.Load<PackedScene>("res://Scenes/World.tscn").Instantiate<WorldController>(); world.AutoConnect=false;
             var network=world.GetNode<NetworkClient>("NetworkClient");
+            var reviewPort=0;
+            if(UseReviewServer)
+            {
+                using var config=System.Text.Json.JsonDocument.Parse(Godot.FileAccess.GetFileAsString("res://../.artifacts/ui-redesign/live.json"));
+                reviewPort=config.RootElement.GetProperty("port").GetInt32(); network.DevelopmentIdentityProfile="ui-hud-"+Guid.NewGuid().ToString("N")[..12];
+            }
+            AddChild(world);
             network.ProgressionReceived += state=>_state=state;
             network.StatPreviewReceived += _=>_previews++;
-            network.ConnectToServer(); await Wait(()=>_state.Stats is not null);
+            if(reviewPort>0) network.ConnectToServerAt(reviewPort); else network.ConnectToServer(); await Wait(()=>_state.Stats is not null);
             var character=world.GetChildren().OfType<ProgressionPresentation>().Single();
             var hud=world.GetChildren().OfType<PlayerHud>().Single();
             await ToSignal(GetTree().CreateTimer(.7),SceneTreeTimer.SignalName.Timeout);
             if (hud.FindChildren("*","ProgressBar",true,false).Count!=4) throw new Exception("Missing resource bars.");
+            var avatar=world.GetChildren().OfType<PlayerController>()
+                .Single(p=>network.KnownPlayers[p.EntityId].PlayerId==network.LocalPlayerId);
+            var portrait=(Button)hud.FindChild("Portrait",true,false);
+            var portraitArt=portrait.GetNode<TextureRect>("Art");
+            if (portraitArt.Texture!=avatar.HudPortrait || portrait.Icon is not null)
+                throw new Exception("HUD must display the local character portrait, without a generic person icon.");
             if (OS.GetCmdlineUserArgs().Contains("--solo"))
             {
                 if (world.GetChildren().OfType<ProjectG.Echoes.EchoPresentation>().Any()) throw new Exception("Unacquired Echo was spawned.");
@@ -60,7 +74,8 @@ public partial class PlayerHudSmoke : Node
                 GD.Print("SOLO_START_OK: no companion, hidden empty HUD, no Echo tutorial, empty collection remains accessible.");
             }
             await Capture("hud-1280");
-            character.Toggle(); await Wait(()=>_previews>0); await Frames(3);
+            await Click(portrait); await Wait(()=>_previews>0); await Frames(3);
+            character.FindChildren("*","TabContainer",true,false).OfType<TabContainer>().Single().CurrentTab=1; await Frames(3);
             var buttons=character.FindChildren("*","Button",true,false).Cast<Button>().ToArray();
             var plus=buttons.Where(b=>b.Text=="+").ToArray();
             var apply=buttons.Single(b=>b.Text=="Применить");
@@ -71,6 +86,7 @@ public partial class PlayerHudSmoke : Node
             if (_state.StatPoints!=original.StatPoints || !_state.Stats.SequenceEqual(original.Stats)) throw new Exception("Draft mutated state.");
             await Frames(3); await Capture("character-preview-1280");
             count=_previews; await Click(cancel); await Wait(()=>_previews>count);
+            await Frames(3); // Let the refreshed controls finish layout before the next physical click.
             if (!apply.Disabled || _state.StatPoints!=original.StatPoints) throw new Exception("Cancel failed.");
             count=_previews; await Click(plus[4]); await Wait(()=>_previews>count && !apply.Disabled);
             await Click(apply);
@@ -78,7 +94,7 @@ public partial class PlayerHudSmoke : Node
             if (_state.Stats[4]!=original.Stats[4]+1 || _state.Stats[3]!=original.Stats[3]) throw new Exception("Batch applied wrong stats.");
             character.Toggle(); GetWindow().Size=new(1920,1080); await Frames(5); await Capture("hud-1920");
             world.QueueFree(); await Frames(2);
-            GD.Print("PLAYER_HUD_OK: resources, draft preview, cancellation, atomic apply, resize, cleanup."); GetTree().Quit();
+            GD.Print("PLAYER_HUD_OK: character portrait/click, resources, draft preview, cancellation, atomic apply, resize, cleanup."); GetTree().Quit();
         }
         catch(Exception error) { GD.PushError(error.ToString()); GetTree().Quit(1); }
     }

@@ -20,12 +20,12 @@ public partial class UiWindow : Control
     public void Build(string title="",Vector2? preferred=null)
     {
         if(_panel is not null) { if(title.Length!=0) Title.Text=title; if(preferred is {} size) _preferred=size; Layout(); return; }
-        _preferred=preferred ?? _preferred; Name="UiWindow"; Visible=false; MouseFilter=MouseFilterEnum.Stop; Theme=GameUi.CreatePaperTheme();
+        _preferred=preferred ?? _preferred; Name="UiWindow"; Visible=false; MouseFilter=MouseFilterEnum.Stop; Theme=GameUi.CreateTheme();
         SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
-        var shade=new ColorRect { Color=new(0.06f,0.09f,0.12f,.42f),MouseFilter=MouseFilterEnum.Ignore }; AddChild(shade); shade.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
-        _panel=new PanelContainer(); AddChild(_panel); Body=new VBoxContainer(); _panel.AddChild(Body);
-        Header=new HBoxContainer(); Body.AddChild(Header); Title=GameUi.Text(title,24); Title.SizeFlagsHorizontal=SizeFlags.ExpandFill; Header.AddChild(Title);
-        _close=GameUi.Button("×",()=>CloseRequested?.Invoke()); _close.TooltipText="Закрыть · Esc"; _close.CustomMinimumSize=new(40,40); Header.AddChild(_close);
+        var shell=GD.Load<PackedScene>("res://UI/Components/WindowShell.tscn").Instantiate<Control>(); AddChild(shell);
+        _panel=shell.GetNode<PanelContainer>("%Frame"); Body=shell.GetNode<VBoxContainer>("%Body");
+        Header=shell.GetNode<HBoxContainer>("%Header"); Title=shell.GetNode<Label>("%Title"); Title.Text=title;
+        _close=shell.GetNode<Button>("%Close"); _close.Pressed+=OnClose;
         Resized+=QueueLayout; _panel.MinimumSizeChanged+=QueueLayout; _panel.Resized+=QueueLayout; QueueLayout();
     }
     public bool Open()
@@ -34,6 +34,7 @@ public partial class UiWindow : Control
         _previousFocus=GetViewport().GuiGetFocusOwner(); Show(); GameUi.RegisterModal(this); Layout(); _close.GrabFocus(); Opened?.Invoke(); return true;
     }
     public void RequestClose() => CloseRequested?.Invoke();
+    private void OnClose() => CloseRequested?.Invoke();
     public void Close()
     {
         if(!Visible) return; Hide(); GameUi.UnregisterModal(this);
@@ -45,7 +46,8 @@ public partial class UiWindow : Control
     public void Layout()
     {
         if(_panel is null || !IsInsideTree()) return;
-        var screen=GetViewportRect().Size; _panel.Size=new(Mathf.Min(_preferred.X,screen.X-32),Mathf.Min(_preferred.Y,screen.Y-32)); _panel.Position=(screen-_panel.Size)/2;
+        var screen=GetViewportRect().Size; var scale=Mathf.Clamp(Mathf.Min(screen.X/1280f,screen.Y/720f),1,1.4f);
+        _panel.Size=new(Mathf.Min(_preferred.X*scale,screen.X-48),Mathf.Min(_preferred.Y*scale,screen.Y-48)); _panel.Position=(screen-_panel.Size)/2;
     }
     public override void _Input(InputEvent ev)
     {
@@ -60,5 +62,5 @@ public partial class UiWindow : Control
         // Key-up still reaches held-defense cleanup.
         if(Visible && ev is InputEventKey { Pressed:true }) GetViewport().SetInputAsHandled();
     }
-    public override void _ExitTree() { GameUi.UnregisterModal(this); Resized-=QueueLayout; if(_panel is not null) { _panel.MinimumSizeChanged-=QueueLayout; _panel.Resized-=QueueLayout; } }
+    public override void _ExitTree() { GameUi.UnregisterModal(this); Resized-=QueueLayout; if(_close is not null) _close.Pressed-=OnClose; if(_panel is not null) { _panel.MinimumSizeChanged-=QueueLayout; _panel.Resized-=QueueLayout; } }
 }

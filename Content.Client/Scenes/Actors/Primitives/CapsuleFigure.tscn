@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://7d4eqm6yrf0a"]
 
-[ext_resource type="Script" uid="uid://h2scsig7wel4" path="res://Scripts/_NC/Actors/CapsuleActorVisual.cs" id="1_47pw7"]
+[ext_resource type="Script" uid="uid://h2scsig7wel4" path="res://Scripts/Actors/CapsuleActorVisual.cs" id="1_47pw7"]
 [ext_resource type="AnimationLibrary" uid="uid://slu0itf2tyxf" path="res://Scenes/Actors/Primitives/CapsuleAnimations.tres" id="2_fqvww"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_fqvww"]

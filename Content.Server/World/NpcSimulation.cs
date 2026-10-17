@@ -89,7 +89,7 @@ public sealed class NpcSimulation
     private NetworkEntityId _beforeTaunt;
     private bool _tauntForced;
 
-    internal bool CanDecide=>_combat.Get(Id).Health>0 && !Motion.IsDashing && !_combat.IsFleeing(Id) &&
+    internal bool CanDecide=>!_options.DevelopmentPassive && _combat.Get(Id).Health>0 && !Motion.IsDashing && !_combat.IsFleeing(Id) &&
         !_combat.IsActionLocked(Id) && Behavior!=NpcBehavior.Windup;
     internal double DecisionIn=>!CanDecide ? double.PositiveInfinity :
         _waitingForAttack && _combat.Get(Id).ReadyAt>_combat.Time

@@ -23,6 +23,16 @@ public sealed partial class CombatSimulation
 
     internal bool HasContinuousBasic(NetworkEntityId id) => _continuousBasic.ContainsKey(id);
     internal void StopContinuousBasic(NetworkEntityId id) => _continuousBasic.Remove(id);
+    internal void NotifyNavigationInput(NetworkEntityId id, uint order)
+    {
+        var actor = _actors[id];
+        actor.LastNavigationOrder = order;
+        if (_continuousBasic.TryGetValue(id, out var held) && !MovementSimulation.IsSequenceNewer(held.Command.InputOrder, order))
+            StopContinuousBasic(id);
+    }
+    private static bool StaleContinuousInput(Combatant actor, AttackCommand command) =>
+        command.Mode is BasicAttackMode.BeginContinuous or BasicAttackMode.UpdateContinuous &&
+        actor.LastNavigationOrder != 0 && !MovementSimulation.IsSequenceNewer(command.InputOrder, actor.LastNavigationOrder);
     internal void SuppressBasicThisTick(NetworkEntityId id) => _suppressedBasicInputs.Add(id);
 
     internal ulong AllocateExecution()
@@ -46,6 +56,8 @@ public sealed partial class CombatSimulation
         // deliberate swing, but cannot leave a repeating input behind.
         if (command.Mode == BasicAttackMode.EndContinuous)
         { StopContinuousBasic(id); return true; }
+        if (StaleContinuousInput(actor, command))
+        { _results[id] = new(command.Sequence, serverTick, AttackOutcome.InvalidState); return false; }
         if (!DeliveringReceivedInput && actor.LastRequestTick == serverTick)
         {
             _results[id] = new(command.Sequence, serverTick, AttackOutcome.RateLimited);
@@ -75,6 +87,8 @@ public sealed partial class CombatSimulation
     private InputDisposition ExecuteBasicInput(NetworkEntityId id, AttackCommand command, uint tick)
     {
         var actor = _actors[id];
+        if (StaleContinuousInput(actor, command))
+        { _results[id] = new(command.Sequence, tick, AttackOutcome.InvalidState); return InputDisposition.Rejected; }
         if (actor.Health <= 0 || !actor.Active || !AllowsCompanionAction(id,0) || IsStunned(id) || actor.Control != CombatControlPhase.None ||
             BlocksAction(id, actor.Weapon.Capabilities) || _defense.TryGetValue(id, out var defense) && !defense.Connected)
         { _results[id] = new(command.Sequence, tick, AttackOutcome.InvalidState); StopContinuousBasic(id); return InputDisposition.Rejected; }

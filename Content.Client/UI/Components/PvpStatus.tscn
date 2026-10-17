@@ -1,0 +1,15 @@
+[gd_scene format=3]
+[ext_resource type="Theme" path="res://UI/Theme/rework-theme.tres" id="1"]
+[node name="PvpStatus" type="Label"]
+visible = false
+offset_left = 24.0
+offset_top = 148.0
+offset_right = 468.0
+offset_bottom = 172.0
+mouse_filter = 2
+theme = ExtResource("1")
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.92, 0.82, 0.61, 1)
+theme_override_colors/font_shadow_color = Color(0.02, 0.04, 0.05, 0.8)
+theme_override_constants/shadow_offset_y = 1
+tooltip_text = "V — PvP, репутация и возрождение"

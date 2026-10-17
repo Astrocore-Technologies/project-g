@@ -1,0 +1,7 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://Tests/UI/UiScenePreview.cs" id="1"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Hud/traveler-portrait-front.png" id="2"]
+[node name="HudPreview" type="Node"]
+script = ExtResource("1")
+ShowHud = true
+PreviewPortrait = ExtResource("2")

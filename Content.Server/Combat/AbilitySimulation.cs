@@ -345,15 +345,25 @@ public sealed partial class AbilitySimulation
     }
 
     public void UpdateInterest(AbilityInterestView view, IReadOnlyCollection<NetworkEntityId> visibleActors,
-        Vector2 observer, float enterRadius, float exitRadius, uint tick)
+        Vector2 observer, float enterRadius, float exitRadius, uint tick,
+        NavigationGrid? visibility = null, float observerHeight = 0)
     {
         view.Changes.Clear();view.Sustained.Clear(); view.Current.Clear(); view.Removed.Clear();
-        foreach (var state in _states)
+        foreach (var original in _states)
         {
+            var state = original;
             // Released projectiles have their own spatial relevance, including after their source leaves the AOI/world.
             if (state.Phase!=AbilityPhase.Flying && !visibleActors.Contains(state.ActorId)) continue;
             var radius = view.Visible.ContainsKey(state.EffectId) ? exitRadius : enterRadius;
             if (Vector2.DistanceSquared(observer, state.Position) > radius * radius) continue;
+            if (state.Phase == AbilityPhase.Flying && visibility is not null)
+            {
+                if (visibility.TryVisibilityObstacle(new(observer.X, observerHeight + 1, observer.Y),
+                    new(state.Position.X, state.Height, state.Position.Y), out _)) continue;
+                // A visible, already released projectile does not disclose the hidden caster's origin.
+                if (!visibleActors.Contains(state.ActorId))
+                    state = state with { Origin = state.Position, OriginHeight = state.Height };
+            }
             view.Current.Add(state.EffectId);
             if (!view.Visible.TryGetValue(state.EffectId, out var previous) || previous.Phase != state.Phase)
             {
@@ -480,6 +490,7 @@ public sealed partial class AbilitySimulation
         }
         _combat.StopContinuousBasic(id);
         NotifySustainAction(id,profile.Form==AbilityForm.Dash?Content.Shared.Combat.ToggleStopTriggers.Defense:Content.Shared.Combat.ToggleStopTriggers.Skill);
+        _combat.NotifyNavigationAction(id, command.InputOrder);
         if(profile.Form!=AbilityForm.Dash)_combat.PlayerAction?.Invoke(id);
         var effect = new AbilityEffect
         {

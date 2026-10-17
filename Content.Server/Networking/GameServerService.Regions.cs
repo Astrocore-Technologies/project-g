@@ -101,7 +101,7 @@ public sealed partial class GameServerService
         var view = new InterestView { BridgeNavigationSent = world.HasWorldNode && (world.PublicWorldNode().Consequences & 1) != 0 };
         _views[peer.Id] = view;
         socialSent.Remove(peer.Id); socialPresenceSent.Remove(peer.Id);
-        if (_regions is null) SendInterest(peer, view);
+        if (_regions is null) SendInterest(peer, view, sendMovement: true);
     }
 
     private bool BeginTravel()
@@ -113,6 +113,7 @@ public sealed partial class GameServerService
             if(_departed.Contains(connection))continue;
             if (!_regions.TryBeginTravel(connection, (IRegionalCharacterStore)_characters!, _worldLeases, _socialSession!)) continue;
             _intentions.Remove(connection);
+            _movementInputs.Remove(connection);
             _receivedCombat.Remove(connection);
             _views.Remove(connection); // Ignore intentions until destination bootstrap has been published.
             return true;
@@ -124,6 +125,7 @@ public sealed partial class GameServerService
     {
         if (_regions?.TryCompleteTravel(out var arrival) != true) return;
         _intentions.Remove(arrival!.Connection);
+        _movementInputs.Remove(arrival.Connection);
         _receivedCombat.Remove(arrival.Connection);
         if (_peers.TryGetValue(arrival.Connection, out var peer)) SendRegionBootstrap(peer);
         BroadcastSnapshot();

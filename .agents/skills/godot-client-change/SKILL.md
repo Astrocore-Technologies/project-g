@@ -5,6 +5,9 @@ description: Изменения Godot scenes, input, camera, UI, rendering, pred
 
 # Godot Client Change
 
+## UI scenes
+Для UI/UX, HUD, меню, окон и переиспользуемых UI-компонентов также используй `../godot-ui-scenes/SKILL.md`. Постоянную иерархию и layout храни в редактируемой рабочей `.tscn`; C# связывает данные, состояния и действия. Эту же сцену используй в игре и автономном preview.
+
 ## Client boundaries
 Client может читать input, predict presentation, interpolate remote entities, animate/render/UI и показывать server-confirmed state.
 

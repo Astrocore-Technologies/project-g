@@ -118,15 +118,19 @@ Hidden professions и world secrets — ключевой столп игры.
 
 Особенно важные уже принятые non-default правила:
 - RMB click-to-move;
-- LMB manual basic attack;
-- no auto basic attack;
-- action combat + soft targeting;
+- Manual/Continuous Basic Attack по GDD 01: ручное направление, без автоматического поиска цели или приближения;
+- no full auto combat; на PC нет Aim Assist/soft targeting;
+- action combat;
 - ~8 active skills;
 - до 3 Echo;
 - no mandatory Holy Trinity;
 - no fast travel;
 - no personal main story;
 - single logical shard без gameplay layers.
+
+Текущая задача Movement & Controls — только PC по `docs/design/movement-controls/gdd-02.md`;
+Mobile input, joystick, Mobile HUD и Mobile Aim Assist исключены пользователем.
+Godot Mobile renderer остаётся выбранным renderer для PC.
 
 Если правило не определено — предложи варианты или используй явно помеченное временное prototype assumption. Не закрепляй его в архитектуре как постоянное решение.
 
@@ -152,6 +156,7 @@ Hidden professions и world secrets — ключевой столп игры.
 - Network resources корректно останавливаются в `_ExitTree`.
 - Не передавай Godot objects между потоками.
 - `.tscn` и `project.godot` меняй минимально.
+- UI/UX, HUD, меню и окна создавай как редактируемые `.tscn`-сцены: постоянная иерархия и компоновка хранятся в сцене, C# связывает данные и действия. В игре и автономном preview используй одну рабочую сцену. Для таких задач применяй `$godot-ui-scenes`.
 - `.uid`/imported generated files не редактируй вручную без необходимости.
 - Учитывай high-angle readability и Mobile renderer.
 
@@ -209,6 +214,7 @@ Base content definitions хранятся отдельно от mutable persiste
 - `$network-protocol-change` — изменение wire protocol/messages.
 - `$server-simulation` — authoritative movement/combat/AI/world simulation.
 - `$godot-client-change` — Godot scenes/input/prediction/UI.
+- `$godot-ui-scenes` — UI/UX, HUD, меню и окна через редактируемые `.tscn`, общие компоненты и автономный preview.
 - `$code-change-verification` — проверка перед handoff.
 - `$architecture-decision` — фундаментальные архитектурные изменения.
 

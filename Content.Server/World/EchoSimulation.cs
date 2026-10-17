@@ -127,8 +127,8 @@ public sealed partial class EchoSimulation
         return CompanionSummonOutcome.ActiveLimit;
     }
 
-    internal bool QueueSummon(NetworkEntityId owner,Guid instance,uint sequence,uint tick)
-        =>_owners.ContainsKey(owner) && _combat.QueueSummon(owner,new(sequence,instance),tick);
+    internal bool QueueSummon(NetworkEntityId owner,Guid instance,uint sequence,uint tick,uint inputOrder=0)
+        =>_owners.ContainsKey(owner) && _combat.QueueSummon(owner,new(sequence,instance,inputOrder),tick);
 
     private void ActivateSummon(NetworkEntityId owner,Guid instance)
     {

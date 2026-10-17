@@ -197,11 +197,7 @@ public partial class AbilityPresentation : Node3D
         if (form == AbilityForm.Dash && !delayed && !_player.PredictDash(_sequence, direction, dashDistance, profile.Speed)) return;
         _combat ??= _player.GetNodeOrNull<CombatPresentation>("CombatPresentation");
         _combat?.CancelBasicAttack();
-        if (form!=AbilityForm.Dash && profile.Area.Stationary)
-        {
-            // Combat state can arrive after the player spawn; resolve once when the first stationary skill is used.
-            _player.StopMovement();
-        }
+        // Navigation is cancelled by the accepted server action, not by a preview or a rejected request.
         _pending = _sequence; _pendingAt = Now(); _pendingBuffered=false; _feedback = "";
         _pendingSustainSkill=profile.ExecutionForm is Content.Shared.Combat.CombatActionForm.Channel or Content.Shared.Combat.CombatActionForm.Hold or Content.Shared.Combat.CombatActionForm.Toggle?profile.Id:(ushort)0;
         _pendingSustainCharges=profile.Charges;

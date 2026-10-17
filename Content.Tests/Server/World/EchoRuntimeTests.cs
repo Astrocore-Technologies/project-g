@@ -96,8 +96,8 @@ public sealed class EchoRuntimeTests
         w.Combat.ApplyEquipment(durableTarget.Id,(durableTarget.BaseDerivedStats with {MaxHealth=10000,HealthRecovery=0},durableTarget.Weapon,durableTarget.AttackInterval));
         durableTarget.Health=10000;
         w.Echoes!.Alert(p.EntityId,w.TrainingTargetId);Step(w,5);Assert.True(w.Echoes.TryGet(body,out var echo));Assert.Equal(w.TrainingTargetId,echo.Target);
-        Assert.True(w.TryApplyMove(1,new(1,w.Tick,new(6,2))));Step(w,110);Assert.False(echo.Target.IsValid);
-        Assert.True(w.TryApplyMove(1,new(2,w.Tick,new(-7,2))));var hit=false;
+        Assert.True(w.TryApplyMove(1,new(1,w.Tick,new(6,2),InputOrder:2)));Step(w,110);Assert.False(echo.Target.IsValid);
+        Assert.True(w.TryApplyMove(1,new(2,w.Tick,new(-7,2),InputOrder:3)));var hit=false;
         for(var i=0;i<110;i++){Step(w);hit|=w.Combat!.Events.Any(e=>e.AttackerId==body);}
         Assert.False(hit);Assert.False(echo.Target.IsValid);
         w.Echoes.Alert(p.EntityId,w.TrainingTargetId);Step(w,6);Assert.Equal(w.TrainingTargetId,echo.Target);

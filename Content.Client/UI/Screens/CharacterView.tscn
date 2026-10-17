@@ -1,0 +1,506 @@
+[gd_scene format=3]
+[ext_resource type="Theme" path="res://UI/Theme/rework-theme.tres" id="EditorTheme"]
+[ext_resource type="PackedScene" path="res://UI/Components/CharacterDisplay.tscn" id="1"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/sword.svg" id="Stat_sword"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/feather.svg" id="Stat_feather"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/heart.svg" id="Stat_heart"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/book.svg" id="Stat_book"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/compass.svg" id="Stat_compass"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/star.svg" id="Stat_star"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/gem.svg" id="Stat_gem"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/potion.svg" id="Stat_potion"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/shield.svg" id="Stat_shield"]
+[node name="CharacterView" type="VBoxContainer"]
+theme = ExtResource("EditorTheme")
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="Points" type="Label" parent="."]
+unique_name_in_owner = true
+theme_type_variation = &"Muted"
+[node name="Tabs" type="TabContainer" parent="."]
+unique_name_in_owner = true
+size_flags_vertical = 3
+[node name="Облик и снаряжение" type="HBoxContainer" parent="Tabs"]
+layout_mode = 2
+theme_override_constants/separation = 32
+[node name="Display" parent="Tabs/Облик и снаряжение" instance=ExtResource("1")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.5
+[node name="Summary" type="VBoxContainer" parent="Tabs/Облик и снаряжение"]
+custom_minimum_size = Vector2(350, 0)
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.9
+[node name="Title" type="Label" parent="Tabs/Облик и снаряжение/Summary"]
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 22
+text = "Характеристики"
+[node name="Stats" type="GridContainer" parent="Tabs/Облик и снаряжение/Summary"]
+columns = 3
+theme_override_constants/h_separation = 32
+theme_override_constants/v_separation = 12
+
+[node name="Icon0" type="TextureRect" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+custom_minimum_size = Vector2(20, 20)
+size_flags_vertical = 4
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+modulate = Color(0.85, 0.84, 0.71, 1)
+texture = ExtResource("Stat_sword")
+
+[node name="Name0" type="Label" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+size_flags_horizontal = 3
+text = "Сила"
+[node name="Summary0" type="Label" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+unique_name_in_owner = true
+horizontal_alignment = 2
+text = "—"
+
+[node name="Icon1" type="TextureRect" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+custom_minimum_size = Vector2(20, 20)
+size_flags_vertical = 4
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+modulate = Color(0.85, 0.84, 0.71, 1)
+texture = ExtResource("Stat_feather")
+
+[node name="Name1" type="Label" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+size_flags_horizontal = 3
+text = "Ловкость"
+[node name="Summary1" type="Label" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+unique_name_in_owner = true
+horizontal_alignment = 2
+text = "—"
+
+[node name="Icon2" type="TextureRect" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+custom_minimum_size = Vector2(20, 20)
+size_flags_vertical = 4
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+modulate = Color(0.85, 0.84, 0.71, 1)
+texture = ExtResource("Stat_heart")
+
+[node name="Name2" type="Label" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+size_flags_horizontal = 3
+text = "Живучесть"
+[node name="Summary2" type="Label" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+unique_name_in_owner = true
+horizontal_alignment = 2
+text = "—"
+
+[node name="Icon3" type="TextureRect" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+custom_minimum_size = Vector2(20, 20)
+size_flags_vertical = 4
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+modulate = Color(0.85, 0.84, 0.71, 1)
+texture = ExtResource("Stat_book")
+
+[node name="Name3" type="Label" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+size_flags_horizontal = 3
+text = "Интеллект"
+[node name="Summary3" type="Label" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+unique_name_in_owner = true
+horizontal_alignment = 2
+text = "—"
+
+[node name="Icon4" type="TextureRect" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+custom_minimum_size = Vector2(20, 20)
+size_flags_vertical = 4
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+modulate = Color(0.85, 0.84, 0.71, 1)
+texture = ExtResource("Stat_compass")
+
+[node name="Name4" type="Label" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+size_flags_horizontal = 3
+text = "Сноровка"
+[node name="Summary4" type="Label" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+unique_name_in_owner = true
+horizontal_alignment = 2
+text = "—"
+
+[node name="Icon5" type="TextureRect" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+custom_minimum_size = Vector2(20, 20)
+size_flags_vertical = 4
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+modulate = Color(0.85, 0.84, 0.71, 1)
+texture = ExtResource("Stat_star")
+
+[node name="Name5" type="Label" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+size_flags_horizontal = 3
+text = "Удача"
+[node name="Summary5" type="Label" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+unique_name_in_owner = true
+horizontal_alignment = 2
+text = "—"
+
+[node name="Icon6" type="TextureRect" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+custom_minimum_size = Vector2(20, 20)
+size_flags_vertical = 4
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+modulate = Color(0.85, 0.84, 0.71, 1)
+texture = ExtResource("Stat_gem")
+
+[node name="Name6" type="Label" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+size_flags_horizontal = 3
+text = "Мудрость"
+[node name="Summary6" type="Label" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+unique_name_in_owner = true
+horizontal_alignment = 2
+text = "—"
+
+[node name="Icon7" type="TextureRect" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+custom_minimum_size = Vector2(20, 20)
+size_flags_vertical = 4
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+modulate = Color(0.85, 0.84, 0.71, 1)
+texture = ExtResource("Stat_heart")
+
+[node name="Name7" type="Label" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+size_flags_horizontal = 3
+text = "Здоровье"
+[node name="Summary7" type="Label" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+unique_name_in_owner = true
+horizontal_alignment = 2
+text = "—"
+
+[node name="Icon8" type="TextureRect" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+custom_minimum_size = Vector2(20, 20)
+size_flags_vertical = 4
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+modulate = Color(0.85, 0.84, 0.71, 1)
+texture = ExtResource("Stat_potion")
+
+[node name="Name8" type="Label" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+size_flags_horizontal = 3
+text = "Мана"
+[node name="Summary8" type="Label" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+unique_name_in_owner = true
+horizontal_alignment = 2
+text = "—"
+
+[node name="Icon9" type="TextureRect" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+custom_minimum_size = Vector2(20, 20)
+size_flags_vertical = 4
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+modulate = Color(0.85, 0.84, 0.71, 1)
+texture = ExtResource("Stat_shield")
+
+[node name="Name9" type="Label" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+size_flags_horizontal = 3
+text = "Физ. защита"
+[node name="Summary9" type="Label" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+unique_name_in_owner = true
+horizontal_alignment = 2
+text = "—"
+
+[node name="Icon10" type="TextureRect" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+custom_minimum_size = Vector2(20, 20)
+size_flags_vertical = 4
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+modulate = Color(0.61, 0.77, 0.9, 1)
+texture = ExtResource("Stat_shield")
+
+[node name="Name10" type="Label" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+size_flags_horizontal = 3
+text = "Маг. защита"
+[node name="Summary10" type="Label" parent="Tabs/Облик и снаряжение/Summary/Stats"]
+unique_name_in_owner = true
+horizontal_alignment = 2
+text = "—"
+
+[node name="Space" type="Control" parent="Tabs/Облик и снаряжение/Summary"]
+size_flags_vertical = 3
+[node name="Allocate" type="Button" parent="Tabs/Облик и снаряжение/Summary"]
+unique_name_in_owner = true
+text = "Распределить очки"
+[node name="Характеристики" type="VBoxContainer" parent="Tabs"]
+[node name="Columns" type="HBoxContainer" parent="Tabs/Характеристики"]
+size_flags_vertical = 3
+theme_override_constants/separation = 32
+[node name="Primary" type="VBoxContainer" parent="Tabs/Характеристики/Columns"]
+size_flags_horizontal = 3
+[node name="Title" type="Label" parent="Tabs/Характеристики/Columns/Primary"]
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 20
+text = "Основные"
+
+[node name="Row0" type="HBoxContainer" parent="Tabs/Характеристики/Columns/Primary"]
+custom_minimum_size = Vector2(0, 40)
+[node name="Stat0" type="Label" parent="Tabs/Характеристики/Columns/Primary/Row0"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+[node name="Minus0" type="Button" parent="Tabs/Характеристики/Columns/Primary/Row0"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(34, 34)
+text = "−"
+[node name="Plus0" type="Button" parent="Tabs/Характеристики/Columns/Primary/Row0"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(34, 34)
+text = "+"
+
+[node name="Row1" type="HBoxContainer" parent="Tabs/Характеристики/Columns/Primary"]
+custom_minimum_size = Vector2(0, 40)
+[node name="Stat1" type="Label" parent="Tabs/Характеристики/Columns/Primary/Row1"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+[node name="Minus1" type="Button" parent="Tabs/Характеристики/Columns/Primary/Row1"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(34, 34)
+text = "−"
+[node name="Plus1" type="Button" parent="Tabs/Характеристики/Columns/Primary/Row1"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(34, 34)
+text = "+"
+
+[node name="Row2" type="HBoxContainer" parent="Tabs/Характеристики/Columns/Primary"]
+custom_minimum_size = Vector2(0, 40)
+[node name="Stat2" type="Label" parent="Tabs/Характеристики/Columns/Primary/Row2"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+[node name="Minus2" type="Button" parent="Tabs/Характеристики/Columns/Primary/Row2"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(34, 34)
+text = "−"
+[node name="Plus2" type="Button" parent="Tabs/Характеристики/Columns/Primary/Row2"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(34, 34)
+text = "+"
+
+[node name="Row3" type="HBoxContainer" parent="Tabs/Характеристики/Columns/Primary"]
+custom_minimum_size = Vector2(0, 40)
+[node name="Stat3" type="Label" parent="Tabs/Характеристики/Columns/Primary/Row3"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+[node name="Minus3" type="Button" parent="Tabs/Характеристики/Columns/Primary/Row3"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(34, 34)
+text = "−"
+[node name="Plus3" type="Button" parent="Tabs/Характеристики/Columns/Primary/Row3"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(34, 34)
+text = "+"
+
+[node name="Row4" type="HBoxContainer" parent="Tabs/Характеристики/Columns/Primary"]
+custom_minimum_size = Vector2(0, 40)
+[node name="Stat4" type="Label" parent="Tabs/Характеристики/Columns/Primary/Row4"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+[node name="Minus4" type="Button" parent="Tabs/Характеристики/Columns/Primary/Row4"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(34, 34)
+text = "−"
+[node name="Plus4" type="Button" parent="Tabs/Характеристики/Columns/Primary/Row4"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(34, 34)
+text = "+"
+
+[node name="Row5" type="HBoxContainer" parent="Tabs/Характеристики/Columns/Primary"]
+custom_minimum_size = Vector2(0, 40)
+[node name="Stat5" type="Label" parent="Tabs/Характеристики/Columns/Primary/Row5"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+[node name="Minus5" type="Button" parent="Tabs/Характеристики/Columns/Primary/Row5"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(34, 34)
+text = "−"
+[node name="Plus5" type="Button" parent="Tabs/Характеристики/Columns/Primary/Row5"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(34, 34)
+text = "+"
+
+[node name="Row6" type="HBoxContainer" parent="Tabs/Характеристики/Columns/Primary"]
+custom_minimum_size = Vector2(0, 40)
+[node name="Stat6" type="Label" parent="Tabs/Характеристики/Columns/Primary/Row6"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+[node name="Minus6" type="Button" parent="Tabs/Характеристики/Columns/Primary/Row6"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(34, 34)
+text = "−"
+[node name="Plus6" type="Button" parent="Tabs/Характеристики/Columns/Primary/Row6"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(34, 34)
+text = "+"
+
+[node name="Details" type="ScrollContainer" parent="Tabs/Характеристики/Columns"]
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.1
+horizontal_scroll_mode = 0
+[node name="Derived" type="VBoxContainer" parent="Tabs/Характеристики/Columns/Details"]
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+[node name="Title" type="Label" parent="Tabs/Характеристики/Columns/Details/Derived"]
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 20
+text = "Боевые показатели"
+
+[node name="Derived0" type="Label" parent="Tabs/Характеристики/Columns/Details/Derived"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 14
+
+[node name="Derived1" type="Label" parent="Tabs/Характеристики/Columns/Details/Derived"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 14
+
+[node name="Derived2" type="Label" parent="Tabs/Характеристики/Columns/Details/Derived"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 14
+
+[node name="Derived3" type="Label" parent="Tabs/Характеристики/Columns/Details/Derived"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 14
+
+[node name="Derived4" type="Label" parent="Tabs/Характеристики/Columns/Details/Derived"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 14
+
+[node name="Derived5" type="Label" parent="Tabs/Характеристики/Columns/Details/Derived"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 14
+
+[node name="Derived6" type="Label" parent="Tabs/Характеристики/Columns/Details/Derived"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 14
+
+[node name="Derived7" type="Label" parent="Tabs/Характеристики/Columns/Details/Derived"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 14
+
+[node name="Derived8" type="Label" parent="Tabs/Характеристики/Columns/Details/Derived"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 14
+
+[node name="Derived9" type="Label" parent="Tabs/Характеристики/Columns/Details/Derived"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 14
+
+[node name="Derived10" type="Label" parent="Tabs/Характеристики/Columns/Details/Derived"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 14
+
+[node name="Derived11" type="Label" parent="Tabs/Характеристики/Columns/Details/Derived"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 14
+
+[node name="Derived12" type="Label" parent="Tabs/Характеристики/Columns/Details/Derived"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 14
+
+[node name="Derived13" type="Label" parent="Tabs/Характеристики/Columns/Details/Derived"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 14
+
+[node name="Derived14" type="Label" parent="Tabs/Характеристики/Columns/Details/Derived"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 14
+
+[node name="Derived15" type="Label" parent="Tabs/Характеристики/Columns/Details/Derived"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 14
+
+[node name="Derived16" type="Label" parent="Tabs/Характеристики/Columns/Details/Derived"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 14
+
+[node name="Derived17" type="Label" parent="Tabs/Характеристики/Columns/Details/Derived"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 14
+
+[node name="Derived18" type="Label" parent="Tabs/Характеристики/Columns/Details/Derived"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 14
+
+[node name="Derived19" type="Label" parent="Tabs/Характеристики/Columns/Details/Derived"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 14
+
+[node name="Derived20" type="Label" parent="Tabs/Характеристики/Columns/Details/Derived"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 14
+
+[node name="Derived21" type="Label" parent="Tabs/Характеристики/Columns/Details/Derived"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 14
+
+[node name="Derived22" type="Label" parent="Tabs/Характеристики/Columns/Details/Derived"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 14
+
+[node name="Derived23" type="Label" parent="Tabs/Характеристики/Columns/Details/Derived"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 14
+
+[node name="Feedback" type="Label" parent="Tabs/Характеристики"]
+unique_name_in_owner = true
+autowrap_mode = 3
+theme_type_variation = &"Muted"
+[node name="DraftActions" type="HBoxContainer" parent="Tabs/Характеристики"]
+unique_name_in_owner = true
+visible = false
+[node name="Cancel" type="Button" parent="Tabs/Характеристики/DraftActions"]
+unique_name_in_owner = true
+text = "Отменить распределение"
+[node name="Apply" type="Button" parent="Tabs/Характеристики/DraftActions"]
+unique_name_in_owner = true
+text = "Применить"
+[node name="Навыки" type="HBoxContainer" parent="Tabs"]
+theme_override_constants/separation = 32
+[node name="List" type="ScrollContainer" parent="Tabs/Навыки"]
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.4
+horizontal_scroll_mode = 0
+[node name="Skills" type="GridContainer" parent="Tabs/Навыки/List"]
+unique_name_in_owner = true
+columns = 3
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 16
+[node name="Detail" type="VBoxContainer" parent="Tabs/Навыки"]
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(300, 0)
+[node name="SkillTitle" type="Label" parent="Tabs/Навыки/Detail"]
+unique_name_in_owner = true
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 24
+autowrap_mode = 3
+text = "Известные навыки"
+[node name="SkillDescription" type="Label" parent="Tabs/Навыки/Detail"]
+unique_name_in_owner = true
+size_flags_vertical = 3
+autowrap_mode = 3
+theme_override_font_sizes/font_size = 15
+[node name="SkillSlot" type="OptionButton" parent="Tabs/Навыки/Detail"]
+unique_name_in_owner = true
+[node name="SkillAction" type="Button" parent="Tabs/Навыки/Detail"]
+unique_name_in_owner = true
+text = "Назначить"
+[node name="Профессия" type="VBoxContainer" parent="Tabs"]
+[node name="Heading" type="Label" parent="Tabs/Профессия"]
+theme_type_variation = &"Heading"
+text = "Путь персонажа"
+[node name="Description" type="Label" parent="Tabs/Профессия"]
+autowrap_mode = 3
+text = "Здесь доступны только уже открытые сведения о профессии."
+[node name="Profession" type="Button" parent="Tabs/Профессия"]
+unique_name_in_owner = true
+text = "Открыть профессию · P"

@@ -1,0 +1,54 @@
+[gd_scene format=3]
+[ext_resource type="Theme" path="res://UI/Theme/rework-theme.tres" id="EditorTheme"]
+[node name="ProfessionView" type="VBoxContainer"]
+theme = ExtResource("EditorTheme")
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="Current" type="Label" parent="."]
+unique_name_in_owner = true
+theme_type_variation = &"Heading"
+text = "Сведения загружаются…"
+[node name="Feedback" type="Label" parent="."]
+unique_name_in_owner = true
+theme_type_variation = &"Muted"
+autowrap_mode = 3
+[node name="Scroll" type="ScrollContainer" parent="."]
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+[node name="Details" type="VBoxContainer" parent="Scroll"]
+size_flags_horizontal = 3
+theme_override_constants/separation = 20
+[node name="Training" type="Label" parent="Scroll/Details"]
+unique_name_in_owner = true
+autowrap_mode = 3
+[node name="KnownDetails" type="Label" parent="Scroll/Details"]
+unique_name_in_owner = true
+autowrap_mode = 3
+text = "Новые сведения о профессиях откроются по мере пути."
+[node name="Offer" type="VBoxContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+[node name="OfferName" type="Label" parent="Offer"]
+unique_name_in_owner = true
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 22
+autowrap_mode = 3
+[node name="Prepare" type="Button" parent="Offer"]
+unique_name_in_owner = true
+text = "Рассмотреть переход"
+[node name="Confirmation" type="VBoxContainer" parent="Offer"]
+unique_name_in_owner = true
+visible = false
+[node name="Warning" type="Label" parent="Offer/Confirmation"]
+unique_name_in_owner = true
+autowrap_mode = 3
+[node name="Acknowledge" type="CheckBox" parent="Offer/Confirmation"]
+unique_name_in_owner = true
+text = "Я понимаю необратимость перехода"
+[node name="Confirm" type="Button" parent="Offer/Confirmation"]
+unique_name_in_owner = true
+text = "Подтвердить необратимый переход"
+disabled = true
+[node name="Cancel" type="Button" parent="Offer/Confirmation"]
+unique_name_in_owner = true
+text = "Отмена"

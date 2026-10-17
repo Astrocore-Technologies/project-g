@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3]
 
 [ext_resource type="PackedScene" path="res://Assets/Characters/MaleBase/male-animated.glb" id="1_rig"]
-[ext_resource type="Script" path="res://Scripts/_NC/Animation/CharacterAnimator.cs" id="2_script"]
+[ext_resource type="Script" path="res://Scripts/Animation/CharacterAnimator.cs" id="2_script"]
 
 [node name="MaleCharacter" type="Node3D"]
 script = ExtResource("2_script")

@@ -15,6 +15,7 @@ public partial class EchoControls : CanvasLayer
     private VBoxContainer _list=null!;
     private Label _name=null!,_details=null!,_readiness=null!;
     private Control _hud=null!;
+    private Control _empty=null!,_owned=null!;
     private readonly Dictionary<byte,(EchoSpawn State,Mesh Mesh,Material? Material)> _known=new();
     private EchoLoadout _loadout;
     private byte _selected=1;
@@ -31,7 +32,7 @@ public partial class EchoControls : CanvasLayer
     {
         _network=network; _owner=owner; Layer=22;
         var root=new Control { Theme=GameUi.CreateTheme(),MouseFilter=Control.MouseFilterEnum.Ignore }; AddChild(root); root.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        var panel=new VBoxContainer { Name="CompanionHud",Visible=false,AnchorLeft=1,AnchorRight=1,OffsetLeft=-172,OffsetRight=-16,OffsetTop=136 }; root.AddChild(panel); _hud=panel;
+        var panel=new VBoxContainer { Name="CompanionHud",Visible=false,AnchorLeft=1,AnchorRight=1,OffsetLeft=-172,OffsetRight=-24,OffsetTop=300 }; root.AddChild(panel); _hud=panel;
         for(var i=0;i<_buttons.Length;i++)
         {
             var slot=(byte)(i+1); var button=new Button { Visible=false,CustomMinimumSize=new(144,62),FocusMode=Control.FocusModeEnum.None,Icon=UiAssets.Texture("icon.star"),ExpandIcon=true };
@@ -39,19 +40,11 @@ public partial class EchoControls : CanvasLayer
         }
         _status=UiComposition.Paragraph(panel,"T / Y / U — способности\nF3 — Эхо Прошлого",12); _status.AddThemeConstantOverride("outline_size",4); _status.AddThemeColorOverride("font_outline_color",new Color(0,0,0,.8f));
         _window=new UiWindow { ToggleKey=Key.F3 }; root.AddChild(_window); _window.Build("Эхо Прошлого",new(1180,656)); _window.CloseRequested+=_window.Close;
-        var page=UiComposition.Page(_window,"echo");
-        var columns=new HBoxContainer { SizeFlagsVertical=Control.SizeFlags.ExpandFill }; page.AddChild(columns);
-        _list=new VBoxContainer { CustomMinimumSize=new(130,0) }; columns.AddChild(_list);
-        var model=UiComposition.Card(columns,280); _preview=new UiModelPreview { CustomMinimumSize=new(240,280),SizeFlagsVertical=Control.SizeFlags.ExpandFill }; model.AddChild(_preview);
-        UiComposition.Paragraph(model,"ЛКМ — поворот · колесо — масштаб",12);
-        var detail=UiComposition.Card(columns,310); _name=UiComposition.Paragraph(detail,"Спутники",26);
-        _readiness=UiComposition.Paragraph(detail,"",14);
-        _details=UiComposition.Paragraph(detail,"",17); _details.SizeFlagsVertical=Control.SizeFlags.ExpandFill;
-        var tabs=new HBoxContainer(); detail.AddChild(tabs);
-        tabs.AddChild(GameUi.Button("Обзор",Render));
-        tabs.AddChild(GameUi.Button("Память",()=>_details.Text="Воспоминания этого Эхо пока не открыты."));
-        tabs.AddChild(GameUi.Button("Связь",()=>_details.Text="Сведения об отношениях с этим Эхо пока недоступны."));
-        detail.AddChild(GameUi.Button("Вернуться к приключению",_window.Close));
+        var view=GD.Load<PackedScene>("res://UI/Screens/EchoView.tscn").Instantiate<Control>(); _window.Body.AddChild(view);
+        _empty=view.GetNode<Control>("%Empty"); _owned=view.GetNode<Control>("%Owned");
+        view.GetNode<TextureRect>("%Emblem").Texture=UiAssets.Texture("icon.star");
+        _list=view.GetNode<VBoxContainer>("%List"); _preview=view.GetNode<UiModelPreview>("%Preview");
+        _name=view.GetNode<Label>("%EchoName"); _readiness=view.GetNode<Label>("%Readiness"); _details=view.GetNode<Label>("%Details");
         _network.EchoRosterReceived+=ApplyRoster;_network.EchoSummonReceived+=ApplySummon;_network.EchoRecallReceived+=ApplyRecall;
         _network.EchoRestoreReceived+=ApplyRestore;
         InitializeSignatureInput();
@@ -64,6 +57,8 @@ public partial class EchoControls : CanvasLayer
     { foreach(var key in _known.Where(p=>p.Value.State.EntityId==id).Select(p=>p.Key).ToArray()) _known.Remove(key);ForgetSignature(id); Render(); }
     private void Render()
     {
+        var hasOwned=_roster is {} knownRoster ? knownRoster.Total>0 : _known.Count>0;
+        _empty.Visible=!hasOwned; _owned.Visible=hasOwned;
         foreach(var child in _list.GetChildren()) { _list.RemoveChild(child); child.QueueFree(); }
         if(RenderRoster())return;
         foreach(var entry in _known.OrderBy(p=>p.Key)) { var slot=entry.Key; _list.AddChild(GameUi.Button(entry.Value.State.Name,()=> { _selected=slot; Render(); })); }

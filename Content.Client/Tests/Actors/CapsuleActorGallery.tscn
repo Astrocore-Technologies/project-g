@@ -1,8 +1,8 @@
 [gd_scene format=3 uid="uid://x3mt8axdld4l"]
 
-[ext_resource type="Script" uid="uid://cp5lic36e3con" path="res://Scripts/_NC/Actors/CapsuleActorGallery.cs" id="1_f4cvf"]
+[ext_resource type="Script" uid="uid://cp5lic36e3con" path="res://Tests/Actors/CapsuleActorGallery.cs" id="1_f4cvf"]
 [ext_resource type="PackedScene" uid="uid://cw826teiol84h" path="res://Scenes/Actors/Primitives/PlayerFigure.tscn" id="2_787gq"]
-[ext_resource type="Script" uid="uid://h2scsig7wel4" path="res://Scripts/_NC/Actors/CapsuleActorVisual.cs" id="3_1qtr6"]
+[ext_resource type="Script" uid="uid://h2scsig7wel4" path="res://Scripts/Actors/CapsuleActorVisual.cs" id="3_1qtr6"]
 [ext_resource type="PackedScene" uid="uid://d4dwfk6qie46c" path="res://Scenes/Actors/Primitives/ResidentFigure.tscn" id="4_pabuw"]
 [ext_resource type="PackedScene" uid="uid://d18snt6h8ax2g" path="res://Scenes/Actors/Primitives/TrainerFigure.tscn" id="5_h0btx"]
 [ext_resource type="PackedScene" uid="uid://b82vqk8qp8lke" path="res://Scenes/Actors/Primitives/GuideFigure.tscn" id="6_b7eor"]
@@ -10,7 +10,7 @@
 [ext_resource type="PackedScene" uid="uid://bwysm6rmkbje4" path="res://Scenes/Actors/Primitives/MonsterFigure.tscn" id="8_q73hj"]
 [ext_resource type="PackedScene" uid="uid://ctiw22g6dv6jx" path="res://Scenes/Actors/Primitives/BossFigure.tscn" id="9_2oucs"]
 [ext_resource type="PackedScene" uid="uid://cmjh3ic1djewx" path="res://Scenes/Actors/TrainingDummy.tscn" id="10_64q6v"]
-[ext_resource type="Script" uid="uid://c6eslp7smri02" path="res://Scripts/_NC/Actors/DummyReaction.cs" id="11_wyvv3"]
+[ext_resource type="Script" uid="uid://c6eslp7smri02" path="res://Scripts/Actors/DummyReaction.cs" id="11_wyvv3"]
 
 [sub_resource type="Environment" id="Environment_r84qo"]
 background_mode = 1

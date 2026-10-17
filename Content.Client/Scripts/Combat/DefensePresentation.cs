@@ -26,6 +26,7 @@ public partial class DefensePresentation : Node
     public AbilityAreaVisual RecoveryArea => _quickArea;
     private double _heartbeat, _parryUntil;
     private V2 _facing = V2.UnitY;
+    private V2 _blockFacing = V2.UnitY;
     private MeshInstance3D _guard = null!;
     private readonly StandardMaterial3D _material = new() { ShadingMode=BaseMaterial3D.ShadingModeEnum.Unshaded, Transparency=BaseMaterial3D.TransparencyEnum.Alpha, CullMode=BaseMaterial3D.CullModeEnum.Disabled };
     public void Initialize(PlayerController player, NetworkClient network, PlayerHud hud)
@@ -75,13 +76,16 @@ public partial class DefensePresentation : Node
         _player.DefenseHeld=true;
         GetViewport().SetInputAsHandled();
     }
-    private void Send(DefenseAction action)
+    private void Send(DefenseAction action, bool captureAim = true)
     {
         _lastAction=action;
-        if (_player.TryCursorGround(out var point))
+        if (captureAim && action!=DefenseAction.Release && _player.TryCursorGround(out var point))
         { var offset=point-_player.PredictedPosition; if (offset.LengthSquared()>.000001f) _facing=V2.Normalize(offset); }
+        if (action==DefenseAction.Block && captureAim) _blockFacing=_facing;
+        var direction=action==DefenseAction.Block || action==DefenseAction.Parry && _held ? _blockFacing : _facing;
+        _facing=direction;
         if (++_sequence==0) ++_sequence;
-        _network.SendDefense(new(_sequence,action,_facing)); _heartbeat=Now()+.15;
+        _network.SendDefense(new(_sequence,action,direction)); _heartbeat=Now()+.15;
     }
     private void Release() { _held=false; Send(DefenseAction.Release); }
     public override void _Process(double delta)
@@ -93,7 +97,7 @@ public partial class DefensePresentation : Node
             else ShowQuick();
         }
         if (_held && (!Input.IsPhysicalKeyPressed(Key.Tab) || !_player.IsAlive || !GetWindow().HasFocus() || GameUi.GameplayModalOpen)) Release();
-        if (_held && !_player.IsDashing && Now()>=_heartbeat) Send(DefenseAction.Block);
+        if (_held && !_player.IsDashing && Now()>=_heartbeat) Send(DefenseAction.Block,captureAim:false);
         _player.DefenseHeld=!_player.IsDashing && (_held && !_blockDenied || Now()<_parryUntil);
         _guard.Visible=_player.DefenseHeld && _player.IsAlive;
         _guard.Rotation=new(0,Mathf.Atan2(_facing.X,_facing.Y),0);

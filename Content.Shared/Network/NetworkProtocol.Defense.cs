@@ -3,17 +3,17 @@ using LiteNetLib.Utils;
 namespace Content.Shared.Network;
 public static partial class NetworkProtocol
 {
-    public static bool ValidDefenseCommand(DefenseCommand c) => c.Sequence!=0 && Enum.IsDefined(c.Action) && BasicAttackShape.IsValidDirection(c.Direction);
+    public static bool ValidDefenseCommand(DefenseCommand c) => c.Sequence!=0 && c.InputOrder!=0 && Enum.IsDefined(c.Action) && BasicAttackShape.IsValidDirection(c.Direction);
     public static NetDataWriter Write(DefenseCommand c)
     {
         if (!ValidDefenseCommand(c)) throw new ArgumentException("Invalid defense command.");
-        var w=CreateWriter(NetworkMessageType.DefenseCommand); w.Put(c.Sequence); w.Put((byte)c.Action); WriteVector2(w,c.Direction);w.Put(c.ObservedServerTick); return w;
+        var w=CreateWriter(NetworkMessageType.DefenseCommand); w.Put(c.Sequence); w.Put((byte)c.Action); WriteVector2(w,c.Direction);w.Put(c.ObservedServerTick); w.Put(c.InputOrder); return w;
     }
     public static bool TryReadDefenseCommand(NetDataReader r,out DefenseCommand c)
     {
         c=default;
-        if (r.AvailableBytes!=17 || !r.TryGetUInt(out var seq) || !r.TryGetByte(out var action) || !TryReadVector2(r,out var direction)||!r.TryGetUInt(out var observed)) return false;
-        var value=new DefenseCommand(seq,(DefenseAction)action,direction,observed); if (!ValidDefenseCommand(value)) return false; c=value; return true;
+        if (r.AvailableBytes!=21 || !r.TryGetUInt(out var seq) || !r.TryGetByte(out var action) || !TryReadVector2(r,out var direction)||!r.TryGetUInt(out var observed) || !r.TryGetUInt(out var inputOrder) || inputOrder == 0) return false;
+        var value=new DefenseCommand(seq,(DefenseAction)action,direction,observed,inputOrder); if (!ValidDefenseCommand(value)) return false; c=value; return true;
     }
     private static bool ValidDefense(DefenseState s) => s.OwnerId.IsValid && Enum.IsDefined(s.Outcome) &&
         double.IsFinite(s.Stamina) && s.Stamina>=0 && double.IsFinite(s.MaxStamina) && s.MaxStamina>=0 && s.Stamina<=s.MaxStamina &&

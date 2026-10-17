@@ -405,6 +405,7 @@ public sealed class NetworkMovementIntegrationTests
         private readonly Dictionary<uint, HashSet<NetworkEntityId>> _snapshotCoverage = new();
         private NetPeer? _peer;
         private PlayerId _playerId;
+        private readonly System.Diagnostics.Stopwatch _movementClock = new();
 
         public Dictionary<NetworkEntityId, PlayerSpawn> Spawns { get; } = new();
         public Dictionary<NetworkEntityId,QuestNpcSpawn> QuestNpcs {get;}=new();
@@ -496,6 +497,7 @@ public sealed class NetworkMovementIntegrationTests
         public void Ready(ulong hash) => SendGame(NetworkProtocol.Write(new RegionLoadState(NetworkMessageType.RegionReady,hash)),DeliveryMethod.ReliableOrdered);
         public NavigationGrid? Navigation { get; private set; }
         public string Token { get; private set; } = "";
+        public ServerWelcome? Welcome { get; private set; }
         public ServerReject? Rejection { get; private set; }
         public PlayerId PlayerId => _playerId;
         public IReadOnlyDictionary<NetworkEntityId, EntitySnapshot> States => _states;
@@ -504,6 +506,8 @@ public sealed class NetworkMovementIntegrationTests
         public List<RegionEnter> Entries { get; } = new();
         public int DroppedRegionPackets { get; private set; }
         public int LargestPacket { get; private set; }
+        public Action<int>? PacketObserved { get; set; }
+        public Action<WorldSnapshot>? SnapshotObserved { get; set; }
 
         public void SendGame(LiteNetLib.Utils.NetDataWriter payload, DeliveryMethod method, ulong? epoch = null)
         {
@@ -528,6 +532,7 @@ public sealed class NetworkMovementIntegrationTests
             };
             listener.PeerConnectedEvent += peer =>
             {
+                _movementClock.Restart();
                 _peer = peer;
                 peer.Send(NetworkProtocol.Write(new ClientHello(
                     NetworkConstants.ProtocolVersion, "two-client-test", token)), DeliveryMethod.ReliableOrdered);
@@ -548,6 +553,7 @@ public sealed class NetworkMovementIntegrationTests
                 try
                 {
                     LargestPacket = Math.Max(LargestPacket, reader.AvailableBytes);
+                    PacketObserved?.Invoke(reader.AvailableBytes);
                     Assert.InRange(reader.AvailableBytes, 2, NetworkConstants.MaxGamePacketBytes);
                     Assert.True(NetworkProtocol.TryReadMessageType(reader, out var type));
                     if (type == NetworkMessageType.RegionEnter)
@@ -697,6 +703,7 @@ public sealed class NetworkMovementIntegrationTests
                             break;
                         case NetworkMessageType.ServerWelcome:
                             Assert.True(NetworkProtocol.TryReadServerWelcome(reader, out var welcome));
+                            Welcome = welcome;
                             _playerId = welcome.PlayerId;
                             Token = welcome.DevelopmentToken.Length == 0 ? token : welcome.DevelopmentToken;
                             break;
@@ -812,6 +819,7 @@ public sealed class NetworkMovementIntegrationTests
                             break;
                         case NetworkMessageType.WorldSnapshot:
                             Assert.True(NetworkProtocol.TryReadWorldSnapshot(reader, out var snapshot));
+                            SnapshotObserved?.Invoke(snapshot);
                             // Independently delayed chunks need not be the latest tick simultaneously.
                             if (!_snapshotCoverage.TryGetValue(snapshot.ServerTick, out var coverage))
                             {
@@ -860,8 +868,9 @@ public sealed class NetworkMovementIntegrationTests
         public bool HasSnapshot(NetworkEntityId id) => _states.ContainsKey(id);
         public bool HasFullSnapshotAtOneTick(int count) =>
             _states.Count == count && _snapshotCoverage.Values.Any(ids => ids.Count == count);
-        public void Move(uint sequence, Vector2 target, float height = 0) => SendGame(
-            NetworkProtocol.Write(new MoveCommand(sequence, sequence, target, height, Navigation?.SurfaceHash ?? 0)), DeliveryMethod.Sequenced);
+        public void Move(uint sequence, Vector2 target, float height = 0, MovementCommandKind kind = MovementCommandKind.Destination) => SendGame(
+            NetworkProtocol.Write(new MoveCommand(sequence, unchecked((uint)(_movementClock.Elapsed.TotalSeconds * (Welcome?.TickRate ?? NetworkConstants.ServerTickRate))), target, height, Navigation?.SurfaceHash ?? 0, Kind: kind)),
+            kind == MovementCommandKind.Cursor ? DeliveryMethod.Sequenced : DeliveryMethod.ReliableOrdered);
         public void Attack(uint sequence, Vector2 direction, BasicAttackMode mode=BasicAttackMode.Manual) => SendGame(
             NetworkProtocol.Write(new AttackCommand(sequence, _ticks.GetValueOrDefault(Spawns.Values.FirstOrDefault(spawn=>spawn.PlayerId==_playerId).EntityId), direction, mode)), DeliveryMethod.ReliableOrdered);
         public void Ability(uint sequence, ushort id, Vector2 aim) => SendGame(

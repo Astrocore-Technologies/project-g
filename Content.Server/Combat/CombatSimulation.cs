@@ -89,7 +89,7 @@ public sealed partial class CombatSimulation
         if(direct)DirectlyDamaged?.Invoke(target);
         if (_actors[target].Health <= 0) CompleteDeath(target,source,unknownSource);
     }
-    internal void ResetSession(NetworkEntityId id){StopContinuousBasic(id);ResetSummonSession(id);var a=_actors[id];a.LastAbilitySequence=0;a.LastRequestTick=null;a.LastBasicControlTick=null;_basicControls.Remove(id);Inputs.Clear(id);_results.Remove(id);if(_defense.TryGetValue(id,out var d)){d.Sequence=0;d.RequestTick=null;SetDefenseConnected(id,true);}}
+    internal void ResetSession(NetworkEntityId id){StopContinuousBasic(id);ResetSummonSession(id);var a=_actors[id];a.LastNavigationOrder=0;a.LastAbilitySequence=0;a.LastRequestTick=null;a.LastBasicControlTick=null;_basicControls.Remove(id);Inputs.Clear(id);_results.Remove(id);if(_defense.TryGetValue(id,out var d)){d.Sequence=0;d.RequestTick=null;SetDefenseConnected(id,true);}}
     internal void Respawn(NetworkEntityId id)
     {
         var actor=_actors[id];ClearControl(id);RefreshControlModifiers(actor);
@@ -268,7 +268,11 @@ public sealed partial class CombatSimulation
     private void Resolve(Combatant actor, AttackCommand command, uint tick,ulong execution=0,WeaponDefinition? weapon=null,
         bool notifyAction=true,bool endWeapon=true)
     {
-        if(notifyAction)OrdinaryActionAccepted?.Invoke(actor.Id,Content.Shared.Combat.CombatActionCategory.BasicAttack);
+        if(notifyAction)
+        {
+            OrdinaryActionAccepted?.Invoke(actor.Id,Content.Shared.Combat.CombatActionCategory.BasicAttack);
+            NotifyNavigationAction(actor.Id,command.InputOrder);
+        }
         weapon??=actor.Weapon;
         var startsExecution=execution==0;
         if(startsExecution){SettleWeaponBoundary(actor.Id);execution=AllocateExecution();}

@@ -5,6 +5,8 @@ public sealed class NpcOptions
 {
     public const string SectionName = "Npc";
     public bool Enabled { get; init; }
+    // Local QA target: combat and forced motion run, autonomous attacks do not.
+    public bool DevelopmentPassive { get; init; }
     public string DefinitionId { get; init; } = "test_creature";
     public string SpawnId { get; init; } = "";
     // Zero disables automatic respawn. Shipped spawn definitions supply their own balance.

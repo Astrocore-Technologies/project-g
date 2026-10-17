@@ -140,7 +140,7 @@ public sealed partial class CombatSimulation
             var a=_defense[id]; var actor=_actors[id]; a.Outcome=DefenseOutcome.Accepted; _defenseDirty.Add(id);
             if (c.Action==DefenseAction.Release) { a.GuardUntil=0; return InputDisposition.Executed; }
             if (c.Action==DefenseAction.QuickRecover)
-            { a.Outcome=QuickRecover(id,c); return a.Outcome==DefenseOutcome.Accepted ? InputDisposition.Executed : InputDisposition.Rejected; }
+            { a.Outcome=QuickRecover(id,c); if(a.Outcome==DefenseOutcome.Accepted)NotifyNavigationAction(id,c.InputOrder); return a.Outcome==DefenseOutcome.Accepted ? InputDisposition.Executed : InputDisposition.Rejected; }
             var permission=c.Action==DefenseAction.Parry ? ActionCancelPermission.Parry : ActionCancelPermission.Block;
             var canCancel=actor.Action?.CanCancel(permission)==true;
             if (actor.Health<=0 || !actor.Active || IsStunned(id) || actor.Control!=CombatControlPhase.None || !a.Connected)
@@ -159,9 +159,13 @@ public sealed partial class CombatSimulation
                 SetRecovery(id,0);
                 return ExecuteDefenseInput(id,c,tick);
             }
-            a.Facing=Vector2.Normalize(c.Direction);FaceIntent(id,a.Facing); _defenseActive.Add(id);
+            // A held guard owns its original orientation. Heartbeats renew its lease,
+            // including while walking backwards; cursor motion cannot rotate an active guard.
+            if (a.GuardUntil<=_time) a.Facing=Vector2.Normalize(c.Direction);
+            FaceIntent(id,a.Facing); _defenseActive.Add(id);
             StopContinuousBasic(id);
             OrdinaryActionAccepted?.Invoke(id,c.Action==DefenseAction.Parry?Content.Shared.Combat.CombatActionCategory.Parry:Content.Shared.Combat.CombatActionCategory.Block);
+            if(c.Action==DefenseAction.Parry || a.GuardUntil<=_time)NotifyNavigationAction(id,c.InputOrder);
             if (c.Action==DefenseAction.Block) { a.GuardLeaseUntil=_time+b.GuardLeaseSeconds;a.GuardUntil=Math.Min(a.GuardLeaseUntil,blockUntil); }
             else { Spend(id,a,b.ParryCost); a.ParryUntil=_time+b.ParryWindow; a.ParryReadyAt=_time+b.ParryCooldown; PlayerAction?.Invoke(id); }
             return InputDisposition.Executed;

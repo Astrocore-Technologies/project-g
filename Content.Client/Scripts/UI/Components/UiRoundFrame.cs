@@ -20,10 +20,3 @@ public partial class UiRoundFrame : Control
     public override void _Draw()
     { if(UiAssets.Skin.MinimapFrame is null) DrawArc(Size/2,Mathf.Min(Size.X,Size.Y)/2-2,0,Mathf.Tau,96,UiAssets.Skin.Gold,3,true); }
 }
-
-public partial class UiCircleClip : Control
-{
-    public UiCircleClip() { ClipChildren=ClipChildrenMode.Only; }
-    public override void _Notification(int what) { if(what==NotificationResized) QueueRedraw(); }
-    public override void _Draw() => DrawCircle(Size/2,Mathf.Min(Size.X,Size.Y)/2,Colors.White);
-}

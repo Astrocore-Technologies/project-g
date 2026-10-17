@@ -203,7 +203,7 @@ GroundItems?.CancelChannel(p.EntityId,Tick);_pvpPending.Remove(connection);if(_p
         Combat?.SetDefenseConnected(p.EntityId,newConnection>=0);
         ResetQuestSession(p.EntityId);
         if(_persistentActors.Remove(oldConnection,out var identity))_persistentActors[newConnection]=identity;
-        if(newConnection>=0){p.LastProcessedSequence=0;p.LastPathRequestTick=null;Combat?.ResetSession(p.EntityId);Abilities?.ResetSession(p.EntityId);Inventory?.ResetSession(p.EntityId);Echoes?.ResetSession(p.EntityId);GroundItems?.RemovePlayer(p.EntityId);_progressionSequences.Remove(p.EntityId);_professionSequences.Remove(p.EntityId);_tradeRequests.Remove(oldConnection);}
+        if(newConnection>=0){p.LastProcessedSequence=0;p.LastPathRequestTick=null;p.NavigationOrder=0;p.CancelledNavigationOrder=0;Combat?.ResetSession(p.EntityId);Abilities?.ResetSession(p.EntityId);Inventory?.ResetSession(p.EntityId);Echoes?.ResetSession(p.EntityId);GroundItems?.RemovePlayer(p.EntityId);_progressionSequences.Remove(p.EntityId);_professionSequences.Remove(p.EntityId);_tradeRequests.Remove(oldConnection);}
         if(_movingPlayers.Remove(oldConnection))_movingPlayers.Add(newConnection);_persistenceDirty.Remove(oldConnection);_pvpRequests.Remove(oldConnection);_pvpPending.Remove(oldConnection);MarkPersistent(p.EntityId);
     }
 }

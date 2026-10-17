@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://cmjh3ic1djewx"]
 
-[ext_resource type="Script" uid="uid://c6eslp7smri02" path="res://Scripts/_NC/Actors/DummyReaction.cs" id="1_2c11n"]
+[ext_resource type="Script" uid="uid://c6eslp7smri02" path="res://Scripts/Actors/DummyReaction.cs" id="1_2c11n"]
 
 [sub_resource type="StandardMaterial3D" id="Wood"]
 albedo_color = Color(0.38, 0.23, 0.12, 1)

@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://d4lnsbvc0mc1a"]
+
+[ext_resource type="Script" uid="uid://biuan1h0ie2t2" path="res://Tests/UI/UiReworkLive.cs" id="1"]
+
+[node name="UiReworkLive" type="Node" unique_id=1221704684]
+script = ExtResource("1")

@@ -30,6 +30,9 @@ public sealed partial class GameServerService : BackgroundService
     private readonly NetDataWriter _snapshotWriter = new();
     private readonly NetManager _server;
     private readonly bool _developmentRevive;
+    private readonly Dictionary<int, MovementInputWindow> _movementInputs = new();
+    private readonly SnapshotSchedule _snapshotSchedule;
+    private bool _movementSnapshotDue;
     private readonly Content.Server.WorldStory.LiveDmInbox? _liveDm;
 
     public GameServerService(
@@ -48,6 +51,10 @@ public sealed partial class GameServerService : BackgroundService
         _liveDm=liveDm;
         _socialOptions=social?.Value??new();if(!_socialOptions.IsValid())throw new ArgumentException("Invalid social budgets.");
         _options = options.Value;
+        if (_options.TickRate is < 1 or > 120 || _options.MovementSnapshotRate is < 1 or > 120)
+            throw new ArgumentException("Invalid simulation/snapshot rate.");
+        _snapshotSchedule = new(_options.TickRate, _options.MovementSnapshotRate);
+        _movementMetricPort = new("server.port", _options.Port);
         _handshakes = handshakes;
         _world = world;
         _characters = characters;
@@ -114,8 +121,11 @@ public sealed partial class GameServerService : BackgroundService
                     ApplyBufferedIntentions();
                     ApplyReceivedCombatInputs();
                     if(_liveDm?.TryTake(out var dm)==true) _world.ApplyLiveDm(dm);
+                    var simulationStarted = Stopwatch.GetTimestamp();
                     if (_regions is null) _world.Simulate(fixedDelta);
                     else _regions.Simulate(fixedDelta);
+                    RecordSimulationDuration(simulationStarted);
+                    _movementSnapshotDue |= _snapshotSchedule.Advance();
                     if(_characters is null)_world.ItemWear.Commit(_world.ItemWear.Capture());
                     CollectLogoutResults();
                     CloseDepartedPlayers();
@@ -172,6 +182,7 @@ public sealed partial class GameServerService : BackgroundService
         var playerId = _handshakes.RemoveConnection(peer.Id);
         _intentions.Remove(peer.Id);
         _receivedCombat.Remove(peer.Id);
+        _movementInputs.Remove(peer.Id);
         _disconnected.Add(peer.Id);
         socialSent.Remove(peer.Id); socialPresenceSent.Remove(peer.Id);
 
@@ -269,8 +280,13 @@ public sealed partial class GameServerService : BackgroundService
             if (messageType == NetworkMessageType.MoveCommand &&
                 NetworkProtocol.TryReadMoveCommand(reader, out var command))
             {
-                if (_characters is null) world.TryApplyMove(peer.Id, command);
-                else BufferIntentions(peer.Id).Move = command;
+                var expectedDelivery = command.Kind == MovementCommandKind.Cursor ? DeliveryMethod.Sequenced : DeliveryMethod.ReliableOrdered;
+                if (deliveryMethod != expectedDelivery) return;
+                var owner = world.GetPlayer(peer.Id).EntityId;
+                if (!_movementInputs.TryGetValue(peer.Id, out var window) || window.Owner != owner)
+                    _movementInputs[peer.Id] = window = new(owner, _options.TickRate);
+                if (!window.Accept(command, Environment.TickCount64)) return;
+                BufferIntentions(peer.Id).Move = command;
                 return;
             }
             if (messageType == NetworkMessageType.InventoryCommand && deliveryMethod == DeliveryMethod.ReliableOrdered &&
@@ -406,7 +422,9 @@ public sealed partial class GameServerService : BackgroundService
         var welcome = new ServerWelcome(
             playerId,
             checked((ushort) _options.TickRate),
-            DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), session?.IssuedToken ?? "");
+            // A retained disconnected session still holds its first issued credential.
+            // Rejoining clients already own it and must not receive a second issuance.
+            DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), hello.DevelopmentToken.Length == 0 ? session?.IssuedToken ?? "" : "");
 
         peer.Send(NetworkProtocol.Write(welcome), DeliveryMethod.ReliableOrdered);
         SendRegionBootstrap(peer);
@@ -424,8 +442,9 @@ public sealed partial class GameServerService : BackgroundService
         foreach (var (connectionId, peer) in _peers)
         {
             if (_views.TryGetValue(connectionId, out var view))
-                SendInterest(peer, view);
+                SendInterest(peer, view, _movementSnapshotDue);
         }
+        _movementSnapshotDue = false;
         foreach (var world in _worlds)
         {
             world.Combat?.ClearResults();
@@ -451,7 +470,7 @@ public sealed partial class GameServerService : BackgroundService
         _world.Social?.Changed.Clear();
     }
 
-    private void SendInterest(NetPeer peer, InterestView view)
+    private void SendInterest(NetPeer peer, InterestView view, bool sendMovement)
     {
         if (_loading.TryGetValue(peer.Id, out var load))
         {
@@ -660,7 +679,7 @@ public sealed partial class GameServerService : BackgroundService
                 if ((world.IsPlayer(id) || world.TryGetNpcActor(id,out _)) && (view.Entered.Contains(id) || world.Tick % 2 == 0))
                     SendGame(peer, NetworkProtocol.Write(world.Avatar(id)), DeliveryMethod.Unreliable);
         if (chunkCapacity == 0) throw new InvalidOperationException("Peer MTU cannot hold an entity snapshot.");
-        for (var offset = 0; offset < view.Snapshots.Count; offset += chunkCapacity)
+        for (var offset = 0; (sendMovement || view.Entered.Count != 0) && offset < view.Snapshots.Count; offset += chunkCapacity)
         {
             var count = Math.Min(chunkCapacity, view.Snapshots.Count - offset);
             NetworkProtocol.WriteWorldSnapshot(_snapshotWriter, world.Tick, view.Snapshots, offset, count);

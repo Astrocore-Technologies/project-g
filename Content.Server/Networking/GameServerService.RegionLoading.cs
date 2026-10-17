@@ -16,7 +16,7 @@ public sealed partial class GameServerService
         if (load.Stage == 0 && type == NetworkMessageType.RegionReady)
         {
             _loading[peer.Id] = (1, load.Deadline);
-            SendInterest(peer, _views[peer.Id]);
+            SendInterest(peer, _views[peer.Id], sendMovement: true);
             SendGame(peer, NetworkProtocol.Write(new RegionLoadState(NetworkMessageType.RegionBaseline, world.GeometryHash)), DeliveryMethod.ReliableOrdered);
         }
         else if (load.Stage == 1 && type == NetworkMessageType.RegionApplied)

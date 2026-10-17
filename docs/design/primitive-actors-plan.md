@@ -37,7 +37,7 @@
 
 ### 1. Одна фигура и независимый от скелета визуальный контракт
 
-Создать базовую визуальную сцену и небольшой общий контракт для внешнего вида: состояние, движение, атака, попадание, смерть и сброс. Новые C#-файлы разместить в `Content.Client/Scripts/_NC/Actors/`; визуальные сцены — в `Content.Client/Scenes/Actors/Primitives/`.
+Создать базовую визуальную сцену и небольшой общий контракт для внешнего вида: состояние, движение, атака, попадание, смерть и сброс. C#-файлы находятся в `Content.Client/Scripts/Actors/`; визуальные сцены — в `Content.Client/Scenes/Actors/Primitives/`, скрипты стендов — рядом со сценами в `Content.Client/Tests/Actors/`.
 
 Убрать требование конкретного `CharacterAnimator` из `PlayerController` и привязки `SwordAttackAnimation`. Существующий скелетный аниматор оставить доступным как альтернативный визуал; не переносить его работу с костями в аниматор фигур. Прежние модели и исходники сохранить.
 
@@ -87,7 +87,7 @@
 | Область | Планируемые изменения |
 | --- | --- |
 | Игрок | `Scenes/PlayerAvatar.tscn`, `Scripts/PlayerController.cs`, вызовы визуала в `Scripts/WorldController.cs` |
-| Анимации | Новые `_NC/Actors` классы, `Scripts/Combat/SwordAttackAnimation.cs`, `Scripts/_NC/Animation/CharacterFeedback.cs`; адаптация старого аниматора к общему контракту |
+| Анимации | Классы `Scripts/Actors`, `Scripts/Combat/SwordAttackAnimation.cs`, `Scripts/Animation/CharacterFeedback.cs`; адаптация старого аниматора к общему контракту |
 | Мобы | `Scripts/Combat/NpcPresentation.cs`, визуальные события/состояния в `WorldController` и `CombatPresentation` |
 | Мирные NPC | `Scripts/Quests/QuestPresentation.cs`, `Scripts/StarterZone/StarterZonePresentation.cs`, `Scripts/WorldStory/WorldNodePresentation.cs`, `Scenes/Actors/Primitives/TrainerFigure.tscn` |
 | Превью/проверки | Использование `UiModelPreview`, новые сцены стенда, адаптация `AvatarLiveSmoke`, проверка новой ветки в `SwordAnimationSmoke` |

@@ -24,6 +24,7 @@ public sealed partial class CombatSimulation
     private void StartBasic(Combatant actor,AttackCommand command,uint tick)
     {
         OrdinaryActionAccepted?.Invoke(actor.Id,CombatActionCategory.BasicAttack);
+        NotifyNavigationAction(actor.Id, command.InputOrder);
         SettleWeaponBoundary(actor.Id);
         FaceIntent(actor.Id,command.Direction);
         var interval=actor.AttackInterval;

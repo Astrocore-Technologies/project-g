@@ -1,0 +1,9 @@
+{
+  "date": "2026-10-17",
+  "generator": "OpenAI built-in image_gen",
+  "asset": "Content.Client/Assets/UI/Hud/traveler-portrait-front.png",
+  "generatedSource": "exec-63f9ecda-7f3e-4c7d-b903-89dbc8519258.png",
+  "reference": "User-supplied approved HUD crop codex-clipboard-90f183a8-5ab8-4d34-aa15-d227859c0562.png",
+  "prompt": "Create a production game HUD portrait texture for Project G using the attached image as the identity and art-style reference, specifically the young adult male traveler in the LEFT medallion. Reconstruct a clean, high-quality square close-up bust portrait of that same brown-haired anime fantasy traveler, head facing almost front, eyes meeting the viewer, gentle confident neutral expression, tousled brown hair, navy scarf, cream-and-navy travel coat. Preserve the reference facial features and hand-painted anime game rendering. Compose head and shoulders centrally, forehead and whole hair comfortably inside canvas, face big and readable at 96 pixels. Background is a quiet muted smoky blue teal gradient with subtle painterly texture. Output ONLY the portrait illustration, no border, no frame, no medallion, no interface, no text, no symbols, no scenery, no bars, no numbers. This square texture will be masked by a separately editable decorative frame in Godot. Do not use a side profile, do not look away, do not add gold accessories. Square canvas.",
+  "ui": "Editable Godot scene, vector borders and resource symbols; labels and numeric values remain controls, updated from server state."
+}

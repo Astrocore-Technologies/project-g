@@ -107,7 +107,7 @@ public sealed class GameServerServiceTests
             var target = new Vector2(spawn.Position.X + 5f, spawn.Position.Y);
             serverPeer!.Send(
                 NetworkProtocol.Write(new MoveCommand(1, 1, target)),
-                DeliveryMethod.Sequenced);
+                DeliveryMethod.ReliableOrdered);
 
             await PollUntilAsync(client, () => movedSource.Task.IsCompleted, timeout.Token);
             var moved = await movedSource.Task;

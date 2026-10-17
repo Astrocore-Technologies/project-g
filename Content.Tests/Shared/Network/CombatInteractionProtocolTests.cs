@@ -18,7 +18,7 @@ public sealed class CombatInteractionProtocolTests
             .Select(i=>actor with {EntityId=new((ulong)i)}).ToArray())).CopyData();
         Assert.True(bytes.Length<=1200);
         Assert.True(NetworkProtocol.TryReadWorldSnapshot(Reader(bytes),out var state)); Assert.Equal(actor,state.Entities[0]);
-        Assert.Equal(18,NetworkProtocol.SnapshotCapacity(1200));
+        Assert.Equal(16,NetworkProtocol.SnapshotCapacity(1200));
     }
     [Fact]
     public void QuickRecoverAndRecoveryParametersRoundTrip()

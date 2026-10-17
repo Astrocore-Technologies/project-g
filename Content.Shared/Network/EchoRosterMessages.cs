@@ -10,7 +10,10 @@ public readonly record struct EchoRosterEntry(ulong Handle,string Name,EchoAvail
     NetworkEntityId EntityId,double Health,double Mana,double Stamina,uint ActionSequence=0,ulong Execution=0,ulong DeathId=0,EchoRefusal Refusal=EchoRefusal.None);
 public readonly record struct EchoRosterPage(NetworkEntityId OwnerId,uint ServerTick,uint Sequence,uint Page,uint Total,
     IReadOnlyList<EchoRosterEntry> Entries,byte RestorationCost=1);
-public readonly record struct EchoSummonCommand(uint Sequence,ulong Handle);
+public readonly record struct EchoSummonCommand(uint Sequence,ulong Handle,uint InputOrder=0)
+{
+    public uint InputOrder {get;init;}=InputOrder==0?Sequence:InputOrder;
+}
 public readonly record struct EchoSummonResult(uint Sequence,uint ServerTick,ulong Handle,EchoSummonOutcome Outcome,ulong Execution);
 public enum EchoRecallOutcome : byte { Completed,InvalidEcho,InvalidState,InCombat }
 public readonly record struct EchoRecallCommand(uint Sequence,ulong Handle);

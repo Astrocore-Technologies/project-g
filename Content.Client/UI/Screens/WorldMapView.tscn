@@ -1,0 +1,77 @@
+[gd_scene format=3]
+[ext_resource type="Theme" path="res://UI/Theme/rework-theme.tres" id="EditorTheme"]
+[ext_resource type="Script" path="res://Scripts/StarterZone/StarterMap.cs" id="1"]
+[node name="WorldMapView" type="HBoxContainer"]
+theme = ExtResource("EditorTheme")
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 24
+[node name="MapArea" type="VBoxContainer" parent="."]
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 3.2
+[node name="Map" type="Control" parent="MapArea"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(360, 320)
+size_flags_vertical = 3
+clip_contents = true
+script = ExtResource("1")
+[node name="Tools" type="HBoxContainer" parent="MapArea"]
+[node name="ZoomOut" type="Button" parent="MapArea/Tools"]
+unique_name_in_owner = true
+text = "−"
+[node name="ZoomIn" type="Button" parent="MapArea/Tools"]
+unique_name_in_owner = true
+text = "+"
+[node name="Overview" type="Button" parent="MapArea/Tools"]
+unique_name_in_owner = true
+text = "Обзор области"
+[node name="Center" type="Button" parent="MapArea/Tools"]
+unique_name_in_owner = true
+text = "К персонажу"
+[node name="Legend" type="VBoxContainer" parent="."]
+custom_minimum_size = Vector2(220, 0)
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.8
+[node name="Region" type="Label" parent="Legend"]
+unique_name_in_owner = true
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 22
+autowrap_mode = 3
+[node name="ShowPlaces" type="CheckBox" parent="Legend"]
+unique_name_in_owner = true
+text = "Известные места"
+button_pressed = true
+[node name="Detail" type="Label" parent="Legend"]
+unique_name_in_owner = true
+autowrap_mode = 3
+theme_type_variation = &"Muted"
+text = "Показаны только исследованные территории."
+[node name="List" type="ScrollContainer" parent="Legend"]
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+[node name="Places" type="VBoxContainer" parent="Legend/List"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+[node name="PinText" type="Label" parent="Legend"]
+unique_name_in_owner = true
+autowrap_mode = 3
+theme_type_variation = &"Muted"
+text = "ЛКМ — отметка\nПКМ — перемещение\nКолесо — масштаб"
+[node name="ClearPin" type="Button" parent="Legend"]
+unique_name_in_owner = true
+text = "Убрать отметку"
+
+[node name="Terrain" type="SubViewport" parent="."]
+unique_name_in_owner = true
+size = Vector2i(512, 512)
+handle_input_locally = false
+gui_disable_input = true
+render_target_update_mode = 0
+positional_shadow_atlas_size = 0
+[node name="Camera" type="Camera3D" parent="Terrain"]
+unique_name_in_owner = true
+rotation = Vector3(-1.5707963, 0, 0)
+projection = 1
+size = 512.0
+current = true
+far = 1024.0

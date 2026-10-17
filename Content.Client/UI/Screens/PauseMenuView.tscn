@@ -1,0 +1,116 @@
+[gd_scene format=3]
+[ext_resource type="Theme" path="res://UI/Theme/rework-theme.tres" id="EditorTheme"]
+[node name="PauseMenuView" type="VBoxContainer"]
+theme = ExtResource("EditorTheme")
+size_flags_vertical = 3
+size_flags_horizontal = 3
+[node name="Scroll" type="ScrollContainer" parent="."]
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+[node name="Content" type="VBoxContainer" parent="Scroll"]
+size_flags_horizontal = 3
+[node name="Main" type="GridContainer" parent="Scroll/Content"]
+columns = 2
+
+[node name="Route_character" type="Button" parent="Scroll/Content/Main"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+text = "Персонаж · K"
+
+[node name="Route_inventory" type="Button" parent="Scroll/Content/Main"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+text = "Инвентарь · I"
+
+[node name="Route_echo" type="Button" parent="Scroll/Content/Main"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+text = "Эхо Прошлого · F3"
+
+[node name="Route_guild" type="Button" parent="Scroll/Content/Main"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+text = "Гильдия авантюристов · G"
+
+[node name="Route_map" type="Button" parent="Scroll/Content/Main"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+text = "Карта мира · M"
+
+[node name="Route_journal" type="Button" parent="Scroll/Content/Main"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+text = "Журнал · L"
+
+[node name="ToggleMore" type="Button" parent="Scroll/Content"]
+unique_name_in_owner = true
+text = "Другие действия"
+theme_type_variation = &"QuietButton"
+[node name="More" type="GridContainer" parent="Scroll/Content"]
+unique_name_in_owner = true
+visible = false
+columns = 2
+
+[node name="Route_combat" type="Button" parent="Scroll/Content/More"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+text = "Бой и разбор смерти"
+
+[node name="Route_profession" type="Button" parent="Scroll/Content/More"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+text = "Профессия · P"
+
+[node name="Route_craft" type="Button" parent="Scroll/Content/More"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+text = "Ремесло и ремонт · C"
+
+[node name="Route_trade" type="Button" parent="Scroll/Content/More"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+text = "Обмен · B"
+
+[node name="Route_market" type="Button" parent="Scroll/Content/More"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+text = "Кузница и рынок · J"
+
+[node name="Route_party" type="Button" parent="Scroll/Content/More"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+text = "Группа · N"
+
+[node name="Route_clan" type="Button" parent="Scroll/Content/More"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+text = "Гильдия игроков · O"
+
+[node name="Route_pvp" type="Button" parent="Scroll/Content/More"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+text = "PvP и возрождение · V"
+
+[node name="Route_keeper" type="Button" parent="Scroll/Content/More"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+text = "Хранитель · H"
+
+[node name="Route_guide" type="Button" parent="Scroll/Content/More"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+text = "Управление · F1"
+
+[node name="Live" type="Label" parent="."]
+text = "Мир продолжает жить, пока открыто меню."
+theme_type_variation = &"Muted"
+[node name="Continue" type="Button" parent="."]
+unique_name_in_owner = true
+text = "Продолжить приключение"
+[node name="LogoutStatus" type="Label" parent="."]
+unique_name_in_owner = true
+theme_type_variation = &"Muted"
+autowrap_mode = 3
+[node name="LogoutButton" type="Button" parent="."]
+unique_name_in_owner = true
+text = "Выйти в главное меню"

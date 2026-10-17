@@ -8,6 +8,7 @@ using Content.Server.Stats;
 using Content.Server.World;
 using Content.Shared.Combat;
 using Content.Shared.Network;
+using Content.Shared.Navigation;
 using Content.Tests.Server.Data;
 using Microsoft.Extensions.Options;
 using Xunit;
@@ -163,6 +164,28 @@ public sealed class ProjectileSnapshotTests
         var state=Assert.Single(interest.Changes);Assert.Equal(AbilityPhase.Flying,state.Phase);Assert.Equal(f.Source.EntityId,state.ActorId);
         f.Impact();f.World.Abilities.UpdateInterest(interest,[f.Target.EntityId],f.Target.Position,10,12,f.World.Tick);
         Assert.Equal(AbilityPhase.Finished,Assert.Single(interest.Changes).Phase);
+    }
+
+    [Fact]
+    public void VisibleProjectileDoesNotRevealHiddenCastOriginAndLosLossFinishesItsPresentation()
+    {
+        var f=new Fight();f.Cast();f.Step();var abilities=f.World.Abilities!;
+        var original=Assert.Single(abilities.ActiveStates);
+        var interest=new AbilityInterestView();
+        abilities.UpdateInterest(interest,[f.Target.EntityId],f.Target.Position,10,12,f.World.Tick,f.World.Navigation);
+        var revealed=Assert.Single(interest.Changes);
+        Assert.Equal(AbilityPhase.Flying,revealed.Phase);
+        Assert.Equal(revealed.Position,revealed.Origin);Assert.Equal(revealed.Height,revealed.OriginHeight);
+        Assert.NotEqual(original.Origin,revealed.Origin);
+        Assert.NotEmpty(NetworkProtocol.Write(revealed).CopyData());
+        var cells=new byte[900];cells[15*30+9]=1;
+        var blocked=new NavigationGrid(new(new(-15,-15),1,.45f,30,30,cells));
+        abilities.UpdateInterest(interest,[f.Target.EntityId],f.Target.Position,10,12,f.World.Tick,blocked);
+        Assert.Equal(AbilityPhase.Finished,Assert.Single(interest.Changes).Phase);
+        abilities.UpdateInterest(interest,[f.Target.EntityId],f.Target.Position,10,12,f.World.Tick,blocked);
+        Assert.Empty(interest.Changes);
+        abilities.UpdateInterest(interest,[f.Target.EntityId],f.Target.Position,10,12,f.World.Tick,f.World.Navigation);
+        Assert.Equal(AbilityPhase.Flying,Assert.Single(interest.Changes).Phase);
     }
 
     [Fact]public void AProjectileIsNotWithdrawnByCancelOfItsAlreadyCompletedStartup()

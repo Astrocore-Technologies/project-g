@@ -41,19 +41,19 @@ public static partial class NetworkProtocol
 
     public static NetDataWriter Write(AbilityCommand value)
     {
-        if (value.Sequence == 0 || value.AbilityId == 0 || !Enum.IsDefined(value.Intent) || !Finite(value.Aim) || !float.IsFinite(value.DashDistance) || value.DashDistance is < 0 or > 100 || !float.IsFinite(value.DirectionY) || MathF.Abs(value.DirectionY)>1) throw new ArgumentException("Invalid ability intent.");
+        if (value.Sequence == 0 || value.InputOrder == 0 || value.AbilityId == 0 || !Enum.IsDefined(value.Intent) || !Finite(value.Aim) || !float.IsFinite(value.DashDistance) || value.DashDistance is < 0 or > 100 || !float.IsFinite(value.DirectionY) || MathF.Abs(value.DirectionY)>1) throw new ArgumentException("Invalid ability intent.");
         var writer = CreateWriter(NetworkMessageType.AbilityCommand);
-        writer.Put(value.Sequence); writer.Put(value.ObservedServerTick); writer.Put(value.AbilityId); WriteVector2(writer, value.Aim); writer.Put(value.DashDistance); WriteHeight(writer, value.AimHeight); WriteHeight(writer, value.DirectionY);writer.Put((byte)value.Intent);
+        writer.Put(value.Sequence); writer.Put(value.ObservedServerTick); writer.Put(value.AbilityId); WriteVector2(writer, value.Aim); writer.Put(value.DashDistance); WriteHeight(writer, value.AimHeight); WriteHeight(writer, value.DirectionY);writer.Put((byte)value.Intent); writer.Put(value.InputOrder);
         return writer;
     }
 
     public static bool TryReadAbilityCommand(NetDataReader reader, out AbilityCommand value)
     {
         value = default;
-        if (reader.AvailableBytes != 31 || !reader.TryGetUInt(out var sequence) || sequence == 0 ||
+        if (reader.AvailableBytes != 35 || !reader.TryGetUInt(out var sequence) || sequence == 0 ||
             !reader.TryGetUInt(out var tick) || !reader.TryGetUShort(out var id) || id == 0 || !TryReadVector2(reader, out var aim) ||
-            !reader.TryGetFloat(out var distance) || !float.IsFinite(distance) || distance is < 0 or > 100 || !ReadHeight(reader, out var height) || !ReadHeight(reader, out var dy) || MathF.Abs(dy) > 1 || !reader.TryGetByte(out var intent) || !Enum.IsDefined((AbilityIntent)intent)) return false;
-        value = new(sequence, tick, id, aim, distance, height, dy,(AbilityIntent)intent); return true;
+            !reader.TryGetFloat(out var distance) || !float.IsFinite(distance) || distance is < 0 or > 100 || !ReadHeight(reader, out var height) || !ReadHeight(reader, out var dy) || MathF.Abs(dy) > 1 || !reader.TryGetByte(out var intent) || !Enum.IsDefined((AbilityIntent)intent) || !reader.TryGetUInt(out var inputOrder) || inputOrder == 0) return false;
+        value = new(sequence, tick, id, aim, distance, height, dy,(AbilityIntent)intent,inputOrder); return true;
     }
 
     public static NetDataWriter Write(AbilityResult value)

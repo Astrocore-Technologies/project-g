@@ -4452,6 +4452,37 @@ shape = SubResource("BoxShape3D_ujakm")
 
 [node name="RouteMarkers" type="Node3D" parent="." unique_id=161449785]
 
+[node name="CombatTest" type="Node3D" parent="RouteMarkers"]
+
+[node name="Instructions" type="Label3D" parent="RouteMarkers/CombatTest"]
+position = Vector3(-425, 21.8, 328)
+billboard = 1
+font_size = 48
+pixel_size = 0.005
+outline_size = 8
+text = "БОЕВАЯ ПЛОЩАДКА · GDD 01\nI — оружие   K — навыки   F3 — Эхо\nЛКМ — удар · ПКМ — движение · Space — Dodge\nМанекены → · Противник ↗ · Босс дальше по тропе"
+
+[node name="ControlTargets" type="Label3D" parent="RouteMarkers/CombatTest"]
+position = Vector3(-414.25, 22.8, 324)
+billboard = 1
+font_size = 40
+pixel_size = 0.005
+text = "AoE / КОНТРОЛЬ / ACR\nТри цели · без ответных атак"
+
+[node name="MeleeEnemy" type="Label3D" parent="RouteMarkers/CombatTest"]
+position = Vector3(-403, 24, 315)
+billboard = 1
+font_size = 40
+pixel_size = 0.005
+text = "ПРОТИВНИК\nBlock · Parry · Dodge"
+
+[node name="Boss" type="Label3D" parent="RouteMarkers/CombatTest"]
+position = Vector3(-393, 25, 300)
+billboard = 1
+font_size = 40
+pixel_size = 0.005
+text = "БОСС\nЗамахи · область · Threat"
+
 [node name="Main" type="Node3D" parent="RouteMarkers" unique_id=1370508435]
 
 [node name="Point00" type="Marker3D" parent="RouteMarkers/Main" unique_id=1766172958 groups=["linvel_main_route"]]

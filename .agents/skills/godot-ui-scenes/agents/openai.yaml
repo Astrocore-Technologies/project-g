@@ -1,0 +1,3 @@
+interface:
+  display_name: "Godot UI Scenes"
+  short_description: "Редактируемые UI и меню Project G через Godot-сцены"

@@ -10,7 +10,15 @@ public partial class ProgressionPresentation : CanvasLayer
     private NetworkClient _network = null!;
     private UiWindow _window=null!;
     private Control _overlay = null!;
-    private VBoxContainer _skills = null!;
+    private GridContainer _skills = null!;
+    private UiCharacterDisplay _display=null!;
+    private TabContainer _tabs=null!;
+    private Control _draftActions=null!;
+    private readonly Label[] _summary=new Label[11];
+    private Label _skillTitle=null!,_skillDescription=null!;
+    private OptionButton _skillSlot=null!;
+    private Button _skillAction=null!;
+    private ushort _selectedSkill;
     private Label _points = null!, _feedback = null!;
     private readonly Label[] _stats = new Label[7], _derived = new Label[NetworkConstants.CharacterStatCount];
     private readonly Button[] _plus = new Button[7], _minus = new Button[7];
@@ -23,9 +31,8 @@ public partial class ProgressionPresentation : CanvasLayer
     private int _version, _sentVersion, _previewVersion = -1;
     private bool _alive = true, _needsPreview;
     private double _sentAt, _previewAfter;
-    private UiModelPreview _modelPreview=null!;
     // NC: a visual-only scene includes the body, face and hair without gameplay nodes.
-    public void SetPreviewVisual(PackedScene appearance) => _modelPreview.SetVisual(appearance);
+    public void SetPreviewVisual(PackedScene appearance,Texture2D? portrait=null) => _display.SetCharacter(appearance,portrait);
     private static readonly string[] Keys = ["Q","W","E","R","A","S","D","F"];
     private static readonly string[] StatNames = ["STR · Сила","AGI · Ловкость","VIT · Живучесть","INT · Интеллект","DEX · Сноровка","LUK · Удача","WIS · Мудрость"];
     private static readonly string[] Descriptions = [
@@ -44,39 +51,26 @@ public partial class ProgressionPresentation : CanvasLayer
         _network.ItemConditionReceived += ConditionChanged;
         _window=new UiWindow { ToggleKey=Key.K }; AddChild(_window); _window.Build("Персонаж",new(1180,656)); _overlay=_window;
         _window.CloseRequested+=()=> { _window.Close(); GameUi.CharacterWindowOpen=false; };
-        var body=UiComposition.Page(_window,"character");
-        _points = GameUi.Text(""); body.AddChild(_points);
-        var content=new HBoxContainer { SizeFlagsVertical=Control.SizeFlags.ExpandFill }; body.AddChild(content);
-        var appearance=UiComposition.Card(content,270);
-        appearance.AddChild(GameUi.Text("Облик персонажа",20));
-        _modelPreview=new UiModelPreview { SizeFlagsVertical=Control.SizeFlags.ExpandFill,CustomMinimumSize=new(240,240) }; appearance.AddChild(_modelPreview);
-        UiComposition.Paragraph(appearance,"ЛКМ — поворот · колесо — масштаб",12);
-        appearance.AddChild(GameUi.Button("Экипировка · I",()=>GameUi.Navigate("inventory")));
-        appearance.AddChild(GameUi.Button("Профессия · P",()=>GameUi.Navigate("profession")));
-        var tabs=new TabContainer { SizeFlagsHorizontal=Control.SizeFlags.ExpandFill }; content.AddChild(tabs);
-        var scroll=new ScrollContainer { Name="Характеристики",HorizontalScrollMode=ScrollContainer.ScrollMode.Disabled }; tabs.AddChild(scroll);
-        var columns=new VBoxContainer { SizeFlagsHorizontal=Control.SizeFlags.ExpandFill }; scroll.AddChild(columns);
-        var primary = new VBoxContainer { CustomMinimumSize = new(330,0) }; columns.AddChild(primary);
-        primary.AddChild(GameUi.Text("БАЗОВЫЕ ХАРАКТЕРИСТИКИ",14));
-        for (var i=0; i<7; i++)
+        var view=GD.Load<PackedScene>("res://UI/Screens/CharacterView.tscn").Instantiate<Control>(); _window.Body.AddChild(view);
+        _display=view.GetNode<UiCharacterDisplay>("%Display"); _tabs=view.GetNode<TabContainer>("%Tabs");
+        _points=view.GetNode<Label>("%Points"); _feedback=view.GetNode<Label>("%Feedback");
+        _draftActions=view.GetNode<Control>("%DraftActions");
+        for(var i=0;i<_summary.Length;i++) _summary[i]=view.GetNode<Label>("%Summary"+i);
+        for(var i=0;i<7;i++)
         {
-            var index = i; var row = new HBoxContainer { TooltipText = Descriptions[i] }; primary.AddChild(row);
-            _stats[i] = GameUi.Text(""); _stats[i].SizeFlagsHorizontal = Control.SizeFlags.ExpandFill; row.AddChild(_stats[i]);
-            _minus[i] = GameUi.Button("−",()=>Change(index,-1)); _minus[i].CustomMinimumSize = new(34,34); row.AddChild(_minus[i]);
-            _plus[i] = GameUi.Button("+",()=>Change(index,1)); _plus[i].CustomMinimumSize = new(34,34); row.AddChild(_plus[i]);
+            var index=i; _stats[i]=view.GetNode<Label>("%Stat"+i); _stats[i].TooltipText=Descriptions[i];
+            _plus[i]=view.GetNode<Button>("%Plus"+i); _minus[i]=view.GetNode<Button>("%Minus"+i);
+            _plus[i].Pressed+=()=>Change(index,1); _minus[i].Pressed+=()=>Change(index,-1);
         }
-        var hint = GameUi.Text("Подсказки — при наведении на стат.\n\nЧерновик учитывает экипировку.\nОчки тратятся только по «Применить».",14);
-        hint.AutowrapMode = TextServer.AutowrapMode.WordSmart; primary.AddChild(hint);
-        var details = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill }; columns.AddChild(details);
-        details.AddThemeConstantOverride("separation",2);
-        details.AddChild(GameUi.Text("СЕЙЧАС → ПОСЛЕ ПРИМЕНЕНИЯ",14));
-        for (var i=0;i<_derived.Length;i++) { _derived[i] = GameUi.Text(DerivedNames[i]+": —",14); details.AddChild(_derived[i]); }
-        var skillScroll = new ScrollContainer { Name = "Навыки" }; tabs.AddChild(skillScroll);
-        _skills = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill }; skillScroll.AddChild(_skills);
-        _feedback = GameUi.Text("",14); body.AddChild(_feedback);
-        var footer = new HBoxContainer(); body.AddChild(footer);
-        _cancel = GameUi.Button("Отменить распределение",Cancel); footer.AddChild(_cancel);
-        _apply = GameUi.Button("Применить",()=>Send(ProgressionAction.AllocateStats)); footer.AddChild(_apply);
+        for(var i=0;i<_derived.Length;i++) _derived[i]=view.GetNode<Label>("%Derived"+i);
+        _skills=view.GetNode<GridContainer>("%Skills"); _skillTitle=view.GetNode<Label>("%SkillTitle"); _skillDescription=view.GetNode<Label>("%SkillDescription");
+        _skillSlot=view.GetNode<OptionButton>("%SkillSlot"); _skillSlot.AddItem("Снять"); foreach(var key in Keys) _skillSlot.AddItem(key);
+        _skillAction=view.GetNode<Button>("%SkillAction"); _skillAction.Pressed+=ActivateSkill;
+        _cancel=view.GetNode<Button>("%Cancel"); _cancel.Pressed+=Cancel;
+        _apply=view.GetNode<Button>("%Apply"); _apply.Pressed+=()=>Send(ProgressionAction.AllocateStats);
+        view.GetNode<Button>("%Allocate").Pressed+=()=>_tabs.CurrentTab=1;
+        view.GetNode<Button>("%Profession").Pressed+=()=>GameUi.Navigate("profession");
+        _tabs.TabChanged+=_=>Refresh();
         Refresh(); Layout();
     }
     public override void _ExitTree()
@@ -89,7 +83,7 @@ public partial class ProgressionPresentation : CanvasLayer
         Invalidate(); RebuildSkills(); Refresh();
     }
     public void ApplyAlive(bool alive) { _alive = alive; Refresh(); }
-    private void EquipmentChanged(InventoryState value) { if (value.EntityId == _state.OwnerId) Invalidate(); }
+    private void EquipmentChanged(InventoryState value) { if (value.EntityId == _state.OwnerId || !_state.OwnerId.IsValid) { _display.ApplyEquipment(value); Invalidate(); } }
     private void ConditionChanged(ItemConditionState value) { if (value.OwnerId == _state.OwnerId) Invalidate(); }
     public void Result(ProgressionResult result)
     {
@@ -144,13 +138,17 @@ public partial class ProgressionPresentation : CanvasLayer
     {
         if (_points is null) return;
         var total = _draft.Sum(); var busy = _pending != 0 && _pendingAction != ProgressionAction.PreviewStats;
-        _points.Text = $"Уровень {_state.Level}  ·  Свободно: {_state.StatPoints-total}  ·  В черновике: {total}";
+        _points.Text = $"Путешественник · Уровень {_state.Level}"+(_tabs.CurrentTab==1?$"    Доступно очков: {_state.StatPoints-total}"+(total>0?$" · Выбрано: {total}":""):"");
+        _draftActions.Visible=total>0;
         for (var i=0;i<7;i++)
         {
             _stats[i].Text = $"{StatNames[i]}  {(_state.Stats is null ? 0 : _state.Stats[i]):0}"+(_draft[i]>0 ? $" → {_state.Stats![i]+_draft[i]:0}" : "");
             _plus[i].Disabled = busy || !_alive || total >= _state.StatPoints; _minus[i].Disabled = busy || !_alive || _draft[i] == 0;
+            _summary[i].Text=(_state.Stats is null?0:_state.Stats[i]).ToString("0");
         }
         _apply.Disabled = !_alive || _pending != 0 || total == 0 || _previewVersion != _version; _cancel.Disabled = busy || total == 0;
+        int[] summaryIndices=[7,8,5,6];
+        for(var i=0;i<summaryIndices.Length;i++) _summary[7+i].Text=_preview is {} p?Format(summaryIndices[i],p.Current[summaryIndices[i]]):"—";
         for (var i=0;i<_derived.Length;i++)
         {
             var current = _preview is { } p ? Format(i,p.Current[i]) : "—";
@@ -168,22 +166,36 @@ public partial class ProgressionPresentation : CanvasLayer
     }
     private void RebuildSkills()
     {
-        if (_skills is null || _state.Skills is null) return;
-        foreach (var node in _skills.GetChildren()) { _skills.RemoveChild(node); node.QueueFree(); }
-        _skills.AddChild(GameUi.Text("8 ячеек навыков · рывок Space — отдельно"));
-        foreach (var skill in _state.Skills.OrderByDescending(s => s.Id is >=20 and <=30))
+        if(_skills is null || _state.Skills is null) return;
+        foreach(var child in _skills.GetChildren()) { _skills.RemoveChild(child); child.QueueFree(); }
+        if(!_state.Skills.Any(s=>s.Id==_selectedSkill)) _selectedSkill=_state.Skills.FirstOrDefault().Id;
+        var scene=GD.Load<PackedScene>("res://UI/Components/SkillCard.tscn");
+        foreach(var skill in _state.Skills)
         {
-            var row = new VBoxContainer(); _skills.AddChild(row);
-            var name = GameUi.Text(GameUi.SkillName(skill.Id)+(skill.Level == 0 ? " · не изучен" : $" · ур. {skill.Level} · освоение {skill.Practice}/{skill.NextPractice}"));
-            name.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill; name.AutowrapMode=TextServer.AutowrapMode.WordSmart; row.AddChild(name);
-            if (skill.Id is >= 20 and <= 30) UiComposition.Paragraph(row,"Требуется меч · " + SwordsmanUi.Description(skill.Id),14);
-            if (skill.Id == 3) { row.AddChild(GameUi.Text("Space")); continue; }
-            if (skill.Level == 0)
-            { var learn = GameUi.Button("Изучить",()=>Send(ProgressionAction.LearnSkill,skill.Id)); learn.Disabled = !skill.Learnable || _pending != 0 || !_alive; row.AddChild(learn); continue; }
-            if(skill.IsPassive){row.AddChild(GameUi.Text("Пассивный · действует при выполнении условий · ячейка не нужна"));continue;}
-            var choices = new OptionButton(); choices.AddItem("Снять"); foreach (var key in Keys) choices.AddItem(key); choices.Select(skill.Slot); row.AddChild(choices); choices.Disabled = _pending != 0 || !_alive;
-            var assign = GameUi.Button("Назначить",()=>Send(ProgressionAction.AssignSlot,skill.Id,(byte)choices.Selected)); assign.Disabled = _pending != 0 || !_alive; row.AddChild(assign);
+            var card=scene.Instantiate<VBoxContainer>(); _skills.AddChild(card);
+            var icon=card.GetNode<UiIconSlot>("Icon"); icon.ToggleMode=true; icon.ButtonPressed=skill.Id==_selectedSkill;
+            icon.Bind(UiAssets.SkillKey(skill.Id),GameUi.SkillName(skill.Id),"",skill.Id is >=20 and <=30?"equipment.weapon":"icon.star");
+            icon.Pressed+=()=> { _selectedSkill=skill.Id; RebuildSkills(); };
+            card.GetNode<Label>("Title").Text=GameUi.SkillName(skill.Id);
+            card.GetNode<Label>("State").Text=skill.Level==0?"Не изучен":skill.Id==3?"Space":skill.IsPassive?"Пассивный":(skill.Slot>0?Keys[skill.Slot-1]+" · ":"")+"Ур. "+skill.Level;
         }
+        var selected=_state.Skills.FirstOrDefault(s=>s.Id==_selectedSkill);
+        _skillTitle.Text=selected.Id==0?"Нет известных навыков":GameUi.SkillName(selected.Id);
+        _skillDescription.Text=selected.Id==0?"Новые сведения появятся по мере приключений.":
+            (selected.Id is >=20 and <=30?SwordsmanUi.Description(selected.Id)+"\n\n":"")+
+            (selected.Level==0?"Навык ещё не изучен.":$"Уровень {selected.Level}\nОсвоение: {selected.Practice} / {selected.NextPractice}")+
+            (selected.IsPassive?"\n\nПассивный навык. Ячейка не нужна.":selected.Id==3?"\n\nРывок назначен на Space.":"");
+        _skillSlot.Visible=selected.Id!=0 && selected.Level>0 && !selected.IsPassive && selected.Id!=3;
+        _skillSlot.Select(Math.Clamp((int)selected.Slot,0,8)); _skillSlot.Disabled=_pending!=0 || !_alive;
+        _skillAction.Visible=selected.Id!=0 && !selected.IsPassive && selected.Id!=3;
+        _skillAction.Text=selected.Level==0?"Изучить":"Назначить";
+        _skillAction.Disabled=_pending!=0 || !_alive || selected.Level==0 && !selected.Learnable;
+    }
+    private void ActivateSkill()
+    {
+        var skill=_state.Skills?.FirstOrDefault(s=>s.Id==_selectedSkill)??default;
+        if(skill.Id==0) return;
+        Send(skill.Level==0?ProgressionAction.LearnSkill:ProgressionAction.AssignSlot,skill.Id,(byte)_skillSlot.Selected);
     }
     private static double Now() => Time.GetTicksMsec()/1000d;
 }

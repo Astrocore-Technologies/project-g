@@ -1,0 +1,67 @@
+[gd_scene format=3]
+[node name="RecordBrowser" type="VBoxContainer"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="Filters" type="HBoxContainer" parent="."]
+unique_name_in_owner = true
+[node name="Filter0" type="Button" parent="Filters"]
+unique_name_in_owner = true
+theme_type_variation = &"QuietButton"
+text = "Активные"
+[node name="Filter1" type="Button" parent="Filters"]
+unique_name_in_owner = true
+theme_type_variation = &"QuietButton"
+text = "Завершённые"
+[node name="Filter2" type="Button" parent="Filters"]
+unique_name_in_owner = true
+theme_type_variation = &"QuietButton"
+text = "Слухи"
+[node name="Columns" type="HBoxContainer" parent="."]
+size_flags_vertical = 3
+theme_override_constants/separation = 28
+[node name="List" type="ScrollContainer" parent="Columns"]
+custom_minimum_size = Vector2(260, 0)
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.8
+horizontal_scroll_mode = 0
+[node name="Entries" type="VBoxContainer" parent="Columns/List"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+[node name="Divider" type="VSeparator" parent="Columns"]
+[node name="Detail" type="VBoxContainer" parent="Columns"]
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 2
+[node name="RecordTitle" type="Label" parent="Columns/Detail"]
+unique_name_in_owner = true
+theme_type_variation = &"Heading"
+text = "Поручения"
+autowrap_mode = 3
+[node name="Scroll" type="ScrollContainer" parent="Columns/Detail"]
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+[node name="RecordText" type="Label" parent="Columns/Detail/Scroll"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+autowrap_mode = 3
+theme_override_font_sizes/font_size = 17
+[node name="Reward" type="Label" parent="Columns/Detail"]
+unique_name_in_owner = true
+theme_override_colors/font_color = Color(0.85, 0.75, 0.52, 1)
+autowrap_mode = 3
+[node name="Actions" type="HBoxContainer" parent="Columns/Detail"]
+[node name="PrimaryAction" type="Button" parent="Columns/Detail/Actions"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+text = "Отслеживать"
+[node name="SecondaryAction" type="Button" parent="Columns/Detail/Actions"]
+unique_name_in_owner = true
+text = "Открыть карту"
+[node name="Status" type="Label" parent="."]
+unique_name_in_owner = true
+theme_type_variation = &"Muted"
+autowrap_mode = 3
+[node name="Hint" type="Label" parent="."]
+unique_name_in_owner = true
+visible = false
+theme_type_variation = &"Muted"
+autowrap_mode = 3

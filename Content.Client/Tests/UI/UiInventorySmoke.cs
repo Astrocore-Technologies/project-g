@@ -8,14 +8,22 @@ namespace ProjectG.Tests.UI;
 
 public partial class UiInventorySmoke : Node
 {
+    [Export] public bool UseReviewServer { get; set; }
     public override async void _Ready()
     {
         try
         {
             GetWindow().Mode=Window.ModeEnum.Windowed; GetWindow().Size=new(1280,720);
-            var world=GD.Load<PackedScene>("res://Scenes/World.tscn").Instantiate<WorldController>(); world.AutoConnect=false; AddChild(world);
+            var world=GD.Load<PackedScene>("res://Scenes/World.tscn").Instantiate<WorldController>(); world.AutoConnect=false;
             var network=world.GetNode<NetworkClient>("NetworkClient"); InventoryState state=default;
-            network.InventoryReceived+=value=>state=value; network.ConnectToServer();
+            var reviewPort=0;
+            if(UseReviewServer)
+            {
+                using var config=System.Text.Json.JsonDocument.Parse(Godot.FileAccess.GetFileAsString("res://../.artifacts/ui-redesign/live.json"));
+                reviewPort=config.RootElement.GetProperty("port").GetInt32(); network.DevelopmentIdentityProfile="ui-bag-"+Guid.NewGuid().ToString("N")[..12];
+            }
+            AddChild(world); network.InventoryReceived+=value=>state=value;
+            if(reviewPort>0) network.ConnectToServerAt(reviewPort); else network.ConnectToServer();
             await Wait(()=>state.Items is { Count:>0 }); await Frames(5);
             var inventory=world.GetChildren().OfType<InventoryPresentation>().Single(); inventory.Toggle(); await Frames(5);
             if(!GameUi.GameplayModalOpen) throw new Exception("Inventory input lock missing.");

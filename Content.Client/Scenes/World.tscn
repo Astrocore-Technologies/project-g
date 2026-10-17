@@ -33,3 +33,4 @@ transform = Transform3D(0.8660254, 0.43301272, -0.24999999, 0, 0.49999997, 0.866
 
 [node name="NetworkClient" type="Node" parent="."]
 script = ExtResource("3_network")
+DevelopmentIdentityProfile = "combat01-beech"

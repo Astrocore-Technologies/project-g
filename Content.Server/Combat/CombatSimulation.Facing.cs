@@ -13,6 +13,7 @@ public sealed partial class CombatSimulation
     {
         if(!_actors.TryGetValue(id,out var actor) || actor.Health<=0 || !actor.Active || IsStunned(id) ||
             actor.Control!=CombatControlPhase.None || actor.Action is {Finished:false,CanTurn:false} || !TryFacing(direction,out var facing))return false;
+        if(_defense.TryGetValue(id,out var guard) && guard.GuardUntil>_time && Vector2.DistanceSquared(facing,guard.Facing)>1e-10f)return false;
         if(actor.Facing!=facing){actor.Facing=facing;FacingChanged?.Invoke(id);}
         return true;
     }

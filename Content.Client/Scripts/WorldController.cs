@@ -165,7 +165,8 @@ public partial class WorldController : Node3D
         {
             _localEntityId = spawn.EntityId;
             AssignSurfaceCamera();
-            if (_surfaceRegion is not null) { var occlusion = new ProjectG.Regions.ForestOcclusion(); player.AddChild(occlusion); occlusion.Initialize(player,_surfaceRegion); }
+            if (_surfaceRegion is not null)
+                player.GetNode<ProjectG.Regions.OcclusionPresentation>("Occlusion").Initialize(player, _surfaceRegion);
             if(_network.LatestPvpZone is {} pvpZone){_social=new();AddChild(_social);_social.Initialize(_network,player);_pvp=new();AddChild(_pvp);_pvp.Initialize(_network,player);DrawSafeZone(pvpZone);}
             if(_network.CraftRecipes.Count!=0) { _crafting=new(); AddChild(_crafting); _crafting.Initialize(_network,player); _trade=new(); AddChild(_trade); _trade.Initialize(_network,player); _economy=new(); AddChild(_economy); _economy.Initialize(_network,player); }
             if (_network.LatestStarterZone is { } zone) { _starter=new(); AddChild(_starter); _starter.Initialize(_network,player,zone,_authoredRegion is null && _surfaceRegion is null); }
@@ -173,11 +174,12 @@ public partial class WorldController : Node3D
             player.AddChild(_abilities);
             _abilities.Initialize(player, _network);
             _inventory = new InventoryPresentation(); AddChild(_inventory); _inventory.Initialize(_network,_localEntityId);
+            _inventory.SetCharacter(player.AppearanceScene,player.CharacterPortrait);
             _echoControls = new(); AddChild(_echoControls); _echoControls.Initialize(_network,_localEntityId);
             _progression = new(); AddChild(_progression); _progression.Initialize(_network);
             // NC: preview the same modular appearance used by the world avatar.
-            _progression.SetPreviewVisual(player.AppearanceScene);
-            _hud = new(); AddChild(_hud); _hud.Initialize(_localEntityId,()=>_progression?.Toggle());
+            _progression.SetPreviewVisual(player.AppearanceScene,player.CharacterPortrait);
+            _hud = new(); AddChild(_hud); _hud.Initialize(_localEntityId,()=>_progression?.Toggle(),player.HudPortrait);
             if(_network.LatestControlState is {} controls)_hud.Apply(controls);
             _lifePresentation=new();AddChild(_lifePresentation);_lifePresentation.Initialize(_network,_localEntityId);
             _combatJournal=new();AddChild(_combatJournal);_combatJournal.Initialize(_network,_localEntityId);

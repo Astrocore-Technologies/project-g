@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://cpul811eg6nu4"]
 
-[ext_resource type="Script" uid="uid://brb0jpjeeh3g3" path="res://Scripts/_NC/Actors/CapsuleActorSmoke.cs" id="1_08uc7"]
+[ext_resource type="Script" uid="uid://brb0jpjeeh3g3" path="res://Tests/Actors/CapsuleActorSmoke.cs" id="1_08uc7"]
 
 [node name="CapsuleActorSmoke" type="Node3D" unique_id=903715910]
 script = ExtResource("1_08uc7")

@@ -12,7 +12,6 @@ var offset := Vector3(0,24,24)
 var overview := false
 var selected := 1
 var draw_ranges: Dictionary = {}
-var focus_materials: Array[ShaderMaterial] = []
 var terrain: Terrain3D
 var canopy_readability: Node
 var route_text := ""
@@ -33,18 +32,13 @@ func _ready() -> void:
 	camera.make_current()
 	terrain.set_camera(camera)
 	terrain.set_physics_process(true)
-	# Packed scenes may embed material copies; update every actual instance.
-	for visual in $BeechValley.find_children("*", "GeometryInstance3D", true, false):
-		if visual.material_override is ShaderMaterial:
-			var material: ShaderMaterial = visual.material_override
-			if not focus_materials.has(material): focus_materials.append(material)
 	var profile: Dictionary=JSON.parse_string(FileAccess.get_file_as_string("res://Assets/World/Linvel/Beech/Revision2/layout.json"))
 	var seconds: int=roundi(profile.walking_seconds)
 	route_text="%.3f км / %d:%02d"%[profile.route_metres/1000.0,seconds/60,seconds%60]
 	figure = get_node_or_null(figure_path)
-	canopy_readability = load("res://Scripts/Regions/CanopyReadability.gd").new()
+	canopy_readability = load("res://Scripts/Regions/OcclusionPresentation.cs").new()
 	add_child(canopy_readability)
-	canopy_readability.initialize(figure,$BeechValley)
+	canopy_readability.Initialize(figure,$BeechValley)
 	for p in $BeechValley/Places.get_children():
 		if p.has_node("Center"):
 			places.append(p)
@@ -121,11 +115,9 @@ func _unhandled_input(event: InputEvent) -> void:
 				show_overview()
 
 func _process(delta: float) -> void:
-	canopy_readability.set_enabled(not overview)
+	canopy_readability.SetEnabled(not overview)
 	if measuring:
 		performance_samples.append({"frame_ms":delta*1000.0,"cpu_ms":RenderingServer.viewport_get_measured_render_time_cpu(get_viewport().get_viewport_rid()),"gpu_ms":RenderingServer.viewport_get_measured_render_time_gpu(get_viewport().get_viewport_rid()),"memory_mib":Performance.get_monitor(Performance.MEMORY_STATIC)/1048576.0,"video_mib":Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED)/1048576.0,"draw_calls":Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME),"primitives":Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME)})
-	if figure != null:
-		for material in focus_materials: material.set_shader_parameter("focus_world", Vector3.ONE*-10000 if overview else figure.global_position)
 	if overview:
 		return
 	var motion := Vector3(float(Input.is_physical_key_pressed(KEY_RIGHT))-float(Input.is_physical_key_pressed(KEY_LEFT)),0,float(Input.is_physical_key_pressed(KEY_DOWN))-float(Input.is_physical_key_pressed(KEY_UP)))

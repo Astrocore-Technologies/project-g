@@ -15,13 +15,8 @@ public partial class PlayerHud
 
     private void InitializeControls(Control root)
     {
-        _controlPanel=new PanelContainer {Name="ControlStatusPanel",AnchorLeft=1,AnchorRight=1,
-            OffsetLeft=-324,OffsetRight=-16,OffsetTop=80,OffsetBottom=360,Visible=false};
-        root.AddChild(_controlPanel);
-        var column=new VBoxContainer();_controlPanel.AddChild(column);column.AddChild(GameUi.Text("Контроль",18));
-        var scroll=new ScrollContainer {SizeFlagsVertical=Control.SizeFlags.ExpandFill,
-            HorizontalScrollMode=ScrollContainer.ScrollMode.Disabled};column.AddChild(scroll);
-        var rows=new VBoxContainer {SizeFlagsHorizontal=Control.SizeFlags.ExpandFill};scroll.AddChild(rows);
+        _controlPanel=root.GetNode<PanelContainer>("ControlStatusPanel");
+        var rows=_controlPanel.GetNode<VBoxContainer>("Content/Scroll/Rows");
         for(var i=0;i<_controlRows.Length;i++)
         {
             var label=GameUi.Text("",14);label.Name=$"ControlStatus_{(CrowdControlKind)i}";

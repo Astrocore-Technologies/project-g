@@ -16,7 +16,7 @@ public sealed class SwordTrainingTests
     internal static void Step(ServerWorld w, int count=1) { for(var i=0;i<count;i++) w.Simulate(.05f); }
     private static void Move(ServerWorld w,Vector2 target,uint sequence)
     {
-        Assert.True(w.TryApplyMove(42,new(sequence,0,target)));
+        Assert.True(w.TryApplyMove(42,new(sequence,0,target,InputOrder:w.GetPlayer(42).CancelledNavigationOrder+sequence+1)));
         for(var i=0;i<1000 && w.GetPlayer(42).Motion.IsMoving;i++) Step(w);
         Assert.InRange(Vector2.Distance(w.GetPlayer(42).Position,target),0,.11f);
     }

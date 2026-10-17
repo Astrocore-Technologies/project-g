@@ -22,6 +22,13 @@ public static class UiAssets
                 if (errors.Length != 0) GD.PushError("UI art catalog: " + string.Join("; ",errors));
                 else foreach (var entry in catalog.Entries) entries.Add(entry.Key,entry);
             }
+            var rework=GD.Load<UiArtCatalog>("res://UI/Theme/rework-art.tres");
+            if(rework is not null)
+            {
+                var errors=rework.Validate();
+                if(errors.Length!=0) GD.PushError("UI rework catalog: "+string.Join("; ",errors));
+                else foreach(var entry in rework.Entries) entries[entry.Key]=entry;
+            }
             return _entries = entries;
         }
     }

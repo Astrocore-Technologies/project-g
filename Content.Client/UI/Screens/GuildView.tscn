@@ -1,0 +1,12 @@
+[gd_scene format=3]
+[ext_resource type="Theme" path="res://UI/Theme/rework-theme.tres" id="EditorTheme"]
+[ext_resource type="PackedScene" path="res://UI/Components/RecordBrowser.tscn" id="1"]
+[node name="GuildView" instance=ExtResource("1")]
+theme = ExtResource("EditorTheme")
+[node name="Filters" parent="." index="0"]
+visible = false
+[node name="PrimaryAction" parent="Columns/Detail/Actions" index="0"]
+text = "Открыть журнал"
+[node name="Hint" parent="." index="3"]
+visible = true
+text = "Подробности поручения — у собеседника в мире."
