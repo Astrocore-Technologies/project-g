@@ -1,9 +1,9 @@
 using System.Numerics;
 namespace Content.Shared.Network;
 public enum DefenseAction : byte { Block, Release, Parry, QuickRecover }
-public enum DefenseOutcome : byte { Accepted, InvalidState, NoStamina, Cooldown, RateLimited, GuardBroken, NeedsWeapon }
-public enum GuardImpact : byte { None, Blocked, Parried, GuardBroken }
-public readonly record struct DefenseCommand(uint Sequence, DefenseAction Action, Vector2 Direction);
+public enum DefenseOutcome : byte { Accepted, InvalidState, NoStamina, Cooldown, RateLimited, GuardBroken, NeedsWeapon, Buffered }
+public enum GuardImpact : byte { None, Blocked, Parried, GuardBroken, Dodged }
+public readonly record struct DefenseCommand(uint Sequence, DefenseAction Action, Vector2 Direction,uint ObservedServerTick=0);
 public readonly record struct DefenseState(NetworkEntityId OwnerId, uint ServerTick, uint Sequence, DefenseOutcome Outcome,
     double Stamina, double MaxStamina, double BlockDamage, double ParryRemaining, double ParryCooldown,
     double DodgeCost, double ParryCost, bool Blocking, float MovementMultiplier, Vector2 Direction,

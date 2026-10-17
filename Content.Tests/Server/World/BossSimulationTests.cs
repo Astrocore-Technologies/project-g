@@ -19,6 +19,7 @@ public sealed class BossSimulationTests
         public NpcSimulation Boss => World.Boss!;
         public ServerPlayer Player { get; }
         public List<AttackEvent> Events { get; } = new();
+        public List<AbilityHit> Hits {get;}=new();
         public Fixture(BossOptions? options = null, ContentCatalog? catalog = null, NavigationOptions? navigation = null)
         {
             World = new(Options.Create(new MovementOptions()), Options.Create(new InterestOptions()),
@@ -34,7 +35,7 @@ public sealed class BossSimulationTests
             World.Combat.ApplyEquipment(player.EntityId, (actor.Stats with { HealthRecovery = 0 }, actor.Weapon, actor.AttackInterval));
             return player;
         }
-        public void Step() { World.Simulate(0.05f); Events.AddRange(World.Combat!.Events); }
+        public void Step() { World.Simulate(0.05f); Events.AddRange(World.Combat!.Events);Hits.AddRange(World.Abilities!.Hits); }
         public void Wait(Func<bool> predicate)
         {
             for (var i = 0; i < 400 && !predicate(); i++) Step();
@@ -55,12 +56,13 @@ public sealed class BossSimulationTests
         for (var i = 0; i < 10; i++) { f.Step(); Assert.Equal(hp, f.Health); Assert.Equal(area.Center, f.Boss.Area!.Value.Center); }
         f.Wait(() => f.Boss.Area is { Phase: NpcAreaPhase.Impact });
         Assert.True(f.Health < hp);
-        Assert.Single(f.Events, value => value.AttackerId == f.Boss.Id && value.Sequence == area.Sequence);
-        var remaining = f.Health;
-        for (var i = 0; i < 20; i++) f.Step();
-        Assert.Equal(remaining, f.Health);
+        Assert.Single(f.Hits,value=>value.ActorId==f.Boss.Id&&value.TargetId==f.Player.EntityId);
+        var nextBasic=false;
+        for (var i = 0; i < 20; i++)
+        {f.Step();nextBasic|=f.Boss.Telegraph is {RemainingSeconds:>0} cone&&cone.Sequence>area.Sequence;}
+        Assert.Single(f.Hits,value=>value.ActorId==f.Boss.Id&&value.TargetId==f.Player.EntityId);
         Assert.Equal(NpcAreaPhase.Finished, f.Boss.Area!.Value.Phase);
-        f.Wait(() => f.Boss.Telegraph is { RemainingSeconds: > 0 } cone && cone.Sequence > area.Sequence);
+        Assert.True(nextBasic);
     }
 
     [Fact]
@@ -86,7 +88,7 @@ public sealed class BossSimulationTests
         var health = f.Health; var otherHealth = f.World.Combat!.Get(second.EntityId).Health;
         var bossHealth = f.World.Combat.Get(f.Boss.Id).Health;
         f.Wait(() => f.Boss.Area is { Phase: NpcAreaPhase.Impact });
-        var hits = f.Events.Where(value => value.Sequence == area.Sequence && value.AttackerId == f.Boss.Id).ToArray();
+        var hits = f.Hits.Where(value => value.ActorId == f.Boss.Id).ToArray();
         Assert.Equal(2, hits.Length);
         Assert.Equal(2, hits.Select(value => value.TargetId).Distinct().Count());
         Assert.Equal(health - f.Health, otherHealth - f.World.Combat.Get(second.EntityId).Health, 8);
@@ -106,6 +108,7 @@ public sealed class BossSimulationTests
         for (var i = 0; i < 60; i++) f.Step();
         Assert.Equal(NpcAreaPhase.Finished, f.Boss.Area!.Value.Phase);
         Assert.DoesNotContain(f.Events, action => action.AttackerId == f.Boss.Id && action.Sequence == seq);
+        Assert.DoesNotContain(f.Hits,action=>action.ActorId==f.Boss.Id);
         if (!disconnect) { Assert.Equal(hp, f.Health); Assert.Equal(NpcBehavior.Defeated, f.Boss.Behavior); }
         else Assert.Equal(f.Boss.Home, f.Boss.Motion.Position);
     }
@@ -118,6 +121,7 @@ public sealed class BossSimulationTests
         var json = JsonNode.Parse(File.ReadAllText(ContentCatalogTests.DataPath))!;
         var stats = json["creatures"]![0]!["stats"]!.AsObject();
         foreach (var key in stats.Select(pair => pair.Key).ToArray()) stats[key] = 10;
+        stats["vitality"]=100;
         var f = new Fixture(catalog: ContentCatalog.Parse(Encoding.UTF8.GetBytes(json.ToJsonString())));
         var hp = f.World.Combat!.Get(f.Boss.Id).Stats.MaxHealth;
         if (together) f.AddPlayer(43, 2);
@@ -137,7 +141,9 @@ public sealed class BossSimulationTests
     [Fact]
     public void AreaDamageRequiresLineOfSightToEachPlayer()
     {
-        var catalog = ContentCatalogTests.Load(); var spatial = new SpatialIndex(8);
+        var data=JsonNode.Parse(File.ReadAllText(ContentCatalogTests.DataPath))!;
+        data["abilities"]![3]!["radius"]=10;
+        var catalog=ContentCatalog.Parse(Encoding.UTF8.GetBytes(data.ToJsonString()));var spatial = new SpatialIndex(8);
         var grid = new NavigationOptions
         {
             BlockedAreas = new() { new BlockedAreaOptions { X = 14, Z = 10, Width = 2, Height = 10 } }
@@ -145,10 +151,14 @@ public sealed class BossSimulationTests
         var combat = new Content.Server.Combat.CombatSimulation(catalog, spatial, grid, new CombatOptions(), 20, 8);
         combat.Add(new(1), new(-2, 0), CombatEntityKind.Boss, "test_boss"); spatial.Add(new(1), new(-2, 0));
         combat.Add(new(2), new(1.5f, 0), CombatEntityKind.Player); spatial.Add(new(2), new(1.5f, 0));
-        var ability = ContentCatalogTests.Load().Abilities["boss_ground_area"] with { Radius = 10 };
+        var abilities=new Content.Server.Combat.AbilitySimulation(catalog,combat,spatial,grid,new CombatOptions(),8,(_,_,_)=>false);
+        abilities.AddActor(new(1),catalog.Creatures["test_boss"]);
+        var ability = catalog.Abilities["boss_ground_area"];
         combat.Simulate(0.05f, 1);
         Assert.True(combat.ExecuteNpcArea(new(1), 1, new(-2, 0), ability, 1));
+        combat.Simulate(2,2);
         Assert.Empty(combat.Events);
+        Assert.Empty(abilities.Hits);
         Assert.Equal(combat.Get(new(2)).Stats.MaxHealth, combat.Get(new(2)).Health);
     }
 

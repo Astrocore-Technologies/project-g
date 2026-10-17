@@ -38,14 +38,14 @@ public static partial class NetworkProtocol
         foreach (var stat in value.Projected) w.Put(stat);
         return w;
     }
-    private static bool ValidDisplayStats(double[] values) => values is { Length: 22 } && values.All(double.IsFinite);
+    private static bool ValidDisplayStats(double[] values) => values is { Length: NetworkConstants.CharacterStatCount } && values.All(double.IsFinite);
     public static bool TryReadStatPreview(NetDataReader r, out StatPreview value)
     {
         value = default;
-        if (r.AvailableBytes != 360 || !r.TryGetUInt(out var seq) || seq == 0 || !r.TryGetUInt(out var tick)) return false;
-        var current = new double[22]; var projected = new double[22];
-        for (var i = 0; i < 22; i++) if (!r.TryGetDouble(out current[i]) || !double.IsFinite(current[i])) return false;
-        for (var i = 0; i < 22; i++) if (!r.TryGetDouble(out projected[i]) || !double.IsFinite(projected[i])) return false;
+        if (r.AvailableBytes != 8 + NetworkConstants.CharacterStatCount * 16 || !r.TryGetUInt(out var seq) || seq == 0 || !r.TryGetUInt(out var tick)) return false;
+        var current = new double[NetworkConstants.CharacterStatCount]; var projected = new double[NetworkConstants.CharacterStatCount];
+        for (var i = 0; i < current.Length; i++) if (!r.TryGetDouble(out current[i]) || !double.IsFinite(current[i])) return false;
+        for (var i = 0; i < projected.Length; i++) if (!r.TryGetDouble(out projected[i]) || !double.IsFinite(projected[i])) return false;
         value = new(seq,tick,current,projected); return true;
     }
     public static NetDataWriter Write(ProgressionResult c)

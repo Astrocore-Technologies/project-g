@@ -39,7 +39,7 @@ public sealed class ChargeProtocolTests
             1=>Profile with {Id=(ushort)i},
             _=>Profile with {Id=(ushort)i,Form=AbilityForm.GroundArea,ExecutionForm=CombatActionForm.Channel,ChargeSeconds=0,ChargeCanTurn=false,ChannelManaPerSecond=3}
         }).ToArray();
-        var bytes=NetworkProtocol.Write(new AbilityLoadout(new(1),2,4,140,slots)).CopyData();Assert.Equal(35+3*(98+108+122),bytes.Length);
+        var bytes=NetworkProtocol.Write(new AbilityLoadout(new(1),2,4,140,slots)).CopyData();Assert.Equal(38+3*(102+112+127),bytes.Length);
         Assert.True(bytes.Length+NetworkProtocol.RegionEnvelopeBytes<=NetworkConstants.MaxGamePacketBytes);
         Assert.True(NetworkProtocol.TryReadAbilityLoadout(Body(bytes),out var result));Assert.Equal(slots,result.Abilities);
         for(var count=2;count<bytes.Length;count++)Assert.False(NetworkProtocol.TryReadAbilityLoadout(new(bytes,2,count),out _));
@@ -80,7 +80,7 @@ public sealed class ChargeProtocolTests
         var profiles=Enumerable.Range(1,9).Select(i=>Profile with {Id=(ushort)i,Form=AbilityForm.GroundArea,ExecutionForm=CombatActionForm.Hold,
             ChargeSeconds=0,ChargeCanTurn=false,ChannelManaPerSecond=3,ChannelStaminaPerSecond=2,SustainCanTurn=true,Charges=0,PendingEndCharges=1}).ToArray();
         var bytes=NetworkProtocol.Write(new AbilityLoadout(new(1),1,4,140,profiles)).CopyData();
-        Assert.Equal(35+9*123,bytes.Length);Assert.True(bytes.Length+NetworkProtocol.RegionEnvelopeBytes<=NetworkConstants.MaxGamePacketBytes);
+        Assert.Equal(38+9*128,bytes.Length);Assert.True(bytes.Length+NetworkProtocol.RegionEnvelopeBytes<=NetworkConstants.MaxGamePacketBytes);
         Assert.True(NetworkProtocol.TryReadAbilityLoadout(Body(bytes),out var parsed));Assert.Equal(profiles,parsed.Abilities);
         for(var length=2;length<bytes.Length;length++)Assert.False(NetworkProtocol.TryReadAbilityLoadout(new(bytes,2,length),out _));
         Assert.False(NetworkProtocol.TryReadAbilityLoadout(Body([..bytes,0]),out _));bytes[^1]=2;

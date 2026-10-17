@@ -4,6 +4,8 @@ namespace Content.Server.Data;
 
 public sealed record ControlResistance
 {
+    [System.Text.Json.Serialization.JsonIgnore]
+    internal bool IsEmpty=>Immunities.Length==0&&Types.Count==0&&Categories.Count==0;
     public CrowdControlKind[] Immunities { get; init; } = [];
     public Dictionary<CrowdControlKind,double> Types { get; init; } = new();
     public Dictionary<ControlCategory,double> Categories { get; init; } = new();

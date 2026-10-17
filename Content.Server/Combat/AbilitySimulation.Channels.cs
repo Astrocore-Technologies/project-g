@@ -19,16 +19,37 @@ public sealed partial class AbilitySimulation
             var horizon=Math.Min(_time,channel.NextEventAt);
             var step=channel.Advance(horizon,actor.Mana,_combat.AvailableStamina(effect.ActorId));
             actor.Mana=Math.Max(0,actor.Mana-step.Mana);if(step.Stamina>0)_combat.SpendStamina(effect.ActorId,step.Stamina);
-            if(step.Mana>0){_dirty.Add(effect.ActorId);RefreshManaRecovery(effect.ActorId);}
+            if(step.Mana>0)
+            {
+                _combat.RecordJournal(effect.ActorId,effect.ActorId,Content.Shared.Combat.CombatJournalKind.ManaSpent,step.Mana,skill:effect.Profile.Id);
+                _dirty.Add(effect.ActorId);RefreshManaRecovery(effect.ActorId);
+            }
             effect.Remaining=(float)(channel.Remaining ?? 0);
             for(var i=0;i<step.Pulses;i++)
             {
                 if(caster.Health<=0 || effect.Action!.Finished)break;
-                if(Vector3.DistanceSquared(caster.Foot,effect.Foot)>effect.Profile.Range*effect.Profile.Range || !_grid.ClearAttack(caster.Foot,effect.Foot))continue;
+                if(effect.Profile.Form==AbilityForm.GroundArea && (Vector3.DistanceSquared(caster.Foot,effect.Foot)>effect.Profile.Range*effect.Profile.Range || !_grid.ClearAttack(caster.Foot,effect.Foot)))continue;
                 var pulse=effect;pulse.Id=_combat.AllocateExecution();pulse.Action=null;pulse.Channel=null;
-                if(effect.Profile.Form==AbilityForm.Recovery)ResolveTechnique(pulse,tick);else HitArea(pulse,tick);
+                if(effect.Profile.Form==AbilityForm.Projectile)
+                {
+                    if(_effects.Count>=_options.MaxAbilityEffects)
+                    {
+                        _results[effect.ActorId]=new(effect.Sequence,tick,AbilityOutcome.Capacity);
+                        StopEffectAction(effect,ActionStopReason.Policy,Content.Shared.Combat.ActionCancelPermission.None);
+                        effect.Phase=AbilityPhase.Finished;return;
+                    }
+                    pulse.Origin=pulse.Position=caster.Position;pulse.OriginHeight=pulse.Height=caster.Foot.Y+pulse.Profile.ProjectileLaunchHeight;
+                    pulse.Phase=AbilityPhase.Flying;
+                    pulse.HitSnapshot??=_combat.CaptureDirectHit(effect.ActorId,SpellPower(effect));
+                    pulse.ReleasedSource=_combat.CaptureReleasedSource(effect.ActorId,ContactSkillPower(effect));
+                    RetainChannelProjectile(pulse);
+                    ReleaseProjectile(ref pulse,tick);
+                    if(pulse.Phase==AbilityPhase.Finished)FinishEffectWeaponUse(pulse);else _effects.Add(pulse);
+                }
+                else if(effect.Profile.Form is AbilityForm.Recovery or AbilityForm.Melee)ResolveTechnique(pulse,tick);
+                else HitArea(pulse,tick);
                 if(IsBackgroundToggle(effect) && (effect.Definition.Action.Capabilities&Content.Shared.Combat.ActionCapability.Weapon)!=0)
-                    _combat.SettleWeaponBoundary(effect.ActorId);
+                    _combat.SettleWeaponPulseBoundary(effect.ActorId);
             }
             if(caster.Health<=0 || effect.Action!.Finished){effect.Phase=AbilityPhase.Finished;return;}
             if(step.Finished)

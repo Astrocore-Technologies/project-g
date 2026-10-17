@@ -8,6 +8,19 @@ public partial class Main
 {
     private readonly List<(int Level, Label Total, Label Damage)> _levelResults = [];
 
+    private void ShowHealthPrice(VBoxContainer parent)
+    {
+        var path=_page.RootPath;var node=_document.Read(path)!;
+        if(node["kind"]?.GetValue<string>()==nameof(AbilityKind.Passive))return;
+        var card=Card(parent,"Оплата здоровьем","Цена HP обходит защиту и щиты. Cast/Charged: отмена — 0%, вражеский срыв — до 50%, активация — 100%.",
+            ()=>Run(()=>{_document.ResetPaths([path+"/healthCost",path+"/allowFatalHealthCost"]);Changed(true);}));
+        var cost=new LineEdit{Text=(node["healthCost"]?.GetValue<double>()??0).ToString("R",System.Globalization.CultureInfo.InvariantCulture),Name="SkillHealthCost"};
+        card.AddChild(cost);
+        var fatal=new CheckBox{Text="Явно разрешить смерть от цены HP",ButtonPressed=node["allowFatalHealthCost"]?.GetValue<bool>()??false,Name="SkillFatalHealthPrice"};
+        card.AddChild(fatal);
+        card.AddChild(Button("Применить цену HP",()=>Run(()=>{_document.ConfigureHealthPrice(path,ParseNumber(cost.Text),fatal.ButtonPressed);Changed(true);})));
+    }
+
     private void ShowSkillCurve(VBoxContainer parent)
     {
         _levelResults.Clear(); var path = _page.RootPath; var curve = _document.SkillCurve(path);

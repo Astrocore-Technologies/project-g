@@ -1,7 +1,25 @@
 namespace Content.Server.Persistence;
 
-public interface ICharacterStore
+public interface ICharacterStore : ICombatCheckpointStore
 {
+    Task ICombatCheckpointStore.SaveCombatCheckpointAsync(IReadOnlyList<CharacterSave> changes,IReadOnlyList<WorldNodeSave> worlds,
+        SocialSave? social,IReadOnlyList<ItemWearChange> wear,CancellationToken token)
+    {
+        // Legacy adapters may persist a debit carried by a full inventory/escrow image.
+        // Detached/offline writes require the explicit ledger implementation.
+        foreach(var write in wear)
+        {
+            var represented=changes.Any(c=>c.State.Inventory?.Items.Any(i=>i.InstanceId==write.ItemId&&i.Condition?.AppliedWeaponWear>=write.Total)==true)||
+                worlds.Any(w=>(w.State.DeathLoot?.Any(l=>l.Item.InstanceId==write.ItemId&&l.Item.Condition?.AppliedWeaponWear>=write.Total)==true)||
+                    (w.State.Market?.Listings.Any(l=>l.Item.InstanceId==write.ItemId&&l.Item.Condition?.AppliedWeaponWear>=write.Total)==true));
+            if(!represented)throw new NotSupportedException("This adapter cannot persist detached item wear.");
+        }
+        if(this is IRegionalCharacterStore regional)return regional.SaveRegionalCheckpointAsync(changes,worlds,social,token);
+        if(worlds.Count>1)throw new NotSupportedException("Regional storage required.");
+        if(social is not null)return (this as ISocialStore??throw new NotSupportedException("Social storage required."))
+            .SaveSocialCheckpointAsync(changes,worlds.SingleOrDefault(),social,token);
+        return SaveWithWorldAsync(changes,worlds.SingleOrDefault(),token);
+    }
     Task<WorldNodeSession> OpenWorldAsync(string key,SavedWorldNode initial,CancellationToken token) => throw new NotSupportedException("World ownership required.");
     Task SaveWithWorldAsync(IReadOnlyList<CharacterSave> changes,WorldNodeSave? world,CancellationToken token) => world is null ? SaveAsync(changes,token) : throw new NotSupportedException("Atomic world save required.");
     Task InitializeAsync(CancellationToken cancellationToken);

@@ -15,7 +15,7 @@ public sealed class ChannelProtocolTests
     {
         var profiles=Enumerable.Range(1,9).Select(i=>Profile with {Id=(ushort)i}).ToArray();
         var packet=NetworkProtocol.Write(new AbilityLoadout(new(1),2,4,140,profiles));
-        Assert.Equal(35+9*122,packet.Length);Assert.True(packet.Length+NetworkProtocol.RegionEnvelopeBytes<=NetworkConstants.MaxGamePacketBytes);
+        Assert.Equal(38+9*127,packet.Length);Assert.True(packet.Length+NetworkProtocol.RegionEnvelopeBytes<=NetworkConstants.MaxGamePacketBytes);
         Assert.True(NetworkProtocol.TryReadAbilityLoadout(Body(packet),out var parsed));Assert.Equal(profiles,parsed.Abilities);
         var bytes=packet.CopyData();for(var size=2;size<bytes.Length;size++)Assert.False(NetworkProtocol.TryReadAbilityLoadout(new(bytes,2,size),out _));
         Assert.False(NetworkProtocol.TryReadAbilityLoadout(new([..bytes,0],2,bytes.Length+1),out _));
@@ -37,7 +37,7 @@ public sealed class ChannelProtocolTests
     public void ChannelLifecycleUsesTheBoundedExistingEffectMessage(AbilityPhase phase)
     {
         var state=new AbilityEffectState(1,new(2),3,4,5,AbilityForm.GroundArea,phase,default,default,System.Numerics.Vector2.UnitX,.5f,0,0);
-        var packet=NetworkProtocol.Write(state);Assert.Equal(92,packet.Length);
+        var packet=NetworkProtocol.Write(state);Assert.Equal(96,packet.Length);
         Assert.True(NetworkProtocol.TryReadAbilityEffectState(Body(packet),out var parsed));Assert.Equal(state,parsed);
     }
 }

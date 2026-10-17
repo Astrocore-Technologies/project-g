@@ -225,6 +225,8 @@ public sealed class NetworkMovementIntegrationTests
         var port = GetFreePort();
         var world = new ServerWorld(Options.Create(new MovementOptions()), Options.Create(new InterestOptions()),
             catalog: ContentCatalogTests.Load(), combat: Options.Create(new CombatOptions { TargetX = -7, TargetZ = 1 }), hitRoll: () => 0, criticalRoll: () => 1);
+        var target=world.Combat!.Get(world.TrainingTargetId);
+        world.Combat.ApplyEquipment(target.Id,(target.BaseDerivedStats with {HealthRecovery=0},target.Weapon,target.AttackInterval));
         using var server = CreateServer(port, world);
         await server.StartAsync(CancellationToken.None);
         using var first = new TestClient(port);
@@ -352,18 +354,18 @@ public sealed class NetworkMovementIntegrationTests
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
         try
         {
-            await PollUntilAsync(first, second, () => first.Areas.Any(value => value.Phase == NpcAreaPhase.Impact) &&
-                second.Areas.Any(value => value.Phase == NpcAreaPhase.Impact), timeout.Token);
-            var impact = first.Areas.First(value => value.Phase == NpcAreaPhase.Impact);
-            await PollUntilAsync(first, second, () => first.Attacks.Count(value => value.AttackerId == world.Boss!.Id && value.Sequence == impact.Sequence) == 2 &&
-                second.Attacks.Count(value => value.AttackerId == world.Boss!.Id && value.Sequence == impact.Sequence) == 2, timeout.Token);
-            var hits = first.Attacks.Where(value => value.AttackerId == world.Boss!.Id && value.Sequence == impact.Sequence).ToArray();
-            foreach (var hit in hits) Assert.Contains(hit, second.Attacks);
+            await PollUntilAsync(first, second, () => first.Effects.Any(value => value.ActorId==world.Boss!.Id&&value.Phase == AbilityPhase.Impact) &&
+                second.Effects.Any(value => value.ActorId==world.Boss!.Id&&value.Phase == AbilityPhase.Impact), timeout.Token);
+            var impact = first.Effects.First(value => value.ActorId==world.Boss!.Id&&value.Phase == AbilityPhase.Impact);
+            await PollUntilAsync(first, second, () => first.AbilityHits.Count(value => value.ActorId == world.Boss!.Id && value.EffectId == impact.EffectId) == 2 &&
+                second.AbilityHits.Count(value => value.ActorId == world.Boss!.Id && value.EffectId == impact.EffectId) == 2, timeout.Token);
+            var hits = first.AbilityHits.Where(value => value.ActorId == world.Boss!.Id && value.EffectId == impact.EffectId).ToArray();
+            foreach (var hit in hits) Assert.Contains(hit, second.AbilityHits);
             Assert.Contains(first.Windups, value => value.ActorId == world.Boss!.Id && value.RemainingSeconds > 0);
             Assert.Contains(second.Windups, value => value.ActorId == world.Boss!.Id && value.RemainingSeconds > 0);
-            var telegraph = first.Areas.First(value => value.Phase == NpcAreaPhase.Telegraph && value.Sequence == impact.Sequence);
-            Assert.Contains(telegraph, second.Areas);
-            Assert.Equal(telegraph.Center, impact.Center);
+            var telegraph = first.Effects.First(value => value.Phase == AbilityPhase.Telegraph && value.EffectId == impact.EffectId);
+            Assert.Contains(second.Effects,value=>value.EffectId==telegraph.EffectId&&value.Phase==AbilityPhase.Telegraph&&value.Position==telegraph.Position);
+            Assert.Equal(telegraph.Position, impact.Position);
             Assert.Equal(242, first.CombatStates[world.Boss!.Id].MaxHealth, 8);
             Assert.Empty(first.Results); Assert.Empty(second.Results);
             Assert.True(first.HasSnapshot(world.Boss.Id)); Assert.True(second.HasSnapshot(world.Boss.Id));
@@ -455,8 +457,14 @@ public sealed class NetworkMovementIntegrationTests
         public Dictionary<NetworkEntityId, EchoLoadout> EchoLoadouts { get; } = new();
         public List<EchoAction> EchoActions { get; } = new();
         public List<EchoSignatureResult> EchoResults { get; } = new();
+        public Dictionary<NetworkEntityId,EchoRosterPage> EchoRosters {get;}=new();
+        public List<EchoSummonResult> EchoSummonResults {get;}=new();
+        public List<EchoRestoreResult> EchoRestoreResults {get;}=new();
         public Dictionary<NetworkEntityId, CombatState> CombatStates { get; } = new();
         public List<AttackEvent> Attacks { get; } = new();
+        public List<BasicActionState> BasicActions {get;}=new();
+        public Dictionary<NetworkEntityId,AvatarState> Avatars {get;}=new();
+        public Dictionary<NetworkEntityId,BasicInputState> BasicInputs {get;}=new();
         public List<AttackResult> Results { get; } = new();
         public List<LogoutResult> LogoutResults {get;}=new();
         public Dictionary<NetworkEntityId,ActorLifeState> Lives {get;}=new();
@@ -464,10 +472,13 @@ public sealed class NetworkMovementIntegrationTests
         public void Respawn(uint sequence,ulong death)=>SendGame(NetworkProtocol.Write(new RespawnCommand(sequence,death)),DeliveryMethod.ReliableOrdered);
         public void Logout(uint sequence=1)=>SendGame(NetworkProtocol.Write(new LogoutCommand(sequence)),DeliveryMethod.ReliableOrdered);
         public Dictionary<NetworkEntityId, AbilityLoadout> Loadouts { get; } = new();
+        private readonly Dictionary<NetworkEntityId,AbilityLoadoutAssembly> _loadoutParts=new();
         public List<AbilityResult> AbilityResults { get; } = new();
         public List<AbilityEffectState> Effects { get; } = new();
         public List<AbilityHit> AbilityHits { get; } = new();
         public List<CombatFeedback> Feedback {get;}=new();
+        public List<ControlFeedback> ControlFeedback {get;}=new();
+        public List<ControlState> ControlStates {get;}=new();
         public List<CombatJournalIndex> JournalIndices {get;}=new();
         public List<CombatJournalChunk> JournalChunks {get;}=new();
         public List<CombatJournalResult> JournalResults {get;}=new();
@@ -544,7 +555,7 @@ public sealed class NetworkMovementIntegrationTests
                         Assert.True(NetworkProtocol.TryReadRegionEnter(reader, out var entry));
                         Assert.True(entry.Epoch > (Region?.Epoch ?? 0));
                         Region = entry; Entries.Add(entry); Active=false; _surfaceAssembly=new();
-                        Spawns.Clear(); CombatStates.Clear(); Echoes.Clear(); EchoLoadouts.Clear();
+                        Spawns.Clear(); CombatStates.Clear(); BasicInputs.Clear(); Echoes.Clear(); EchoLoadouts.Clear();
                         Inventories.Clear(); Loadouts.Clear(); Navigation = null; WorldNode = null;
                         SocialRosters.Clear(); SocialInvitations.Clear(); PartyPresences.Clear();
                         Recipes.Clear(); Resources.Clear(); GroundItems.Clear();
@@ -648,6 +659,16 @@ public sealed class NetworkMovementIntegrationTests
                             Assert.True(NetworkProtocol.TryReadQuestJournal(reader,out var questJournal)); Assert.Equal(LocalSpawn.EntityId,questJournal.OwnerId); QuestJournals[questJournal.OwnerId]=questJournal; break;
                         case NetworkMessageType.DefenseState:
                             Assert.True(NetworkProtocol.TryReadDefenseState(reader,out var defense)); Defenses[defense.OwnerId]=defense; break;
+                        case NetworkMessageType.BasicActionState:
+                            Assert.True(NetworkProtocol.TryReadBasicActionState(reader,out var basic));BasicActions.Add(basic);break;
+                        case NetworkMessageType.AvatarState:
+                            Assert.True(NetworkProtocol.TryReadAvatarState(reader,out var avatar));
+                            if(!Avatars.TryGetValue(avatar.EntityId,out var priorAvatar) || avatar.ServerTick==priorAvatar.ServerTick ||
+                                Content.Shared.Movement.MovementSimulation.IsSequenceNewer(avatar.ServerTick,priorAvatar.ServerTick))Avatars[avatar.EntityId]=avatar;
+                            break;
+                        case NetworkMessageType.BasicInputState:
+                            Assert.True(NetworkProtocol.TryReadBasicInputState(reader,out var basicInput));
+                            Assert.Equal(LocalSpawn.EntityId,basicInput.ActorId);BasicInputs[basicInput.ActorId]=basicInput;break;
                         case NetworkMessageType.ProgressionState:
                             Assert.True(NetworkProtocol.TryReadProgressionState(reader,out var progression)); Assert.Equal(LocalSpawn.EntityId,progression.OwnerId); Progressions[progression.OwnerId] = progression; break;
                         case NetworkMessageType.ProgressionResult:
@@ -660,6 +681,13 @@ public sealed class NetworkMovementIntegrationTests
                             Assert.True(NetworkProtocol.TryReadEchoLoadout(reader, out var echoLoadout));
                             Assert.Equal(LocalSpawn.EntityId, echoLoadout.OwnerId); EchoLoadouts[echoLoadout.OwnerId] = echoLoadout;
                             break;
+                        case NetworkMessageType.EchoRosterPage:
+                            Assert.True(NetworkProtocol.TryReadEchoRosterPage(reader,out var echoRoster));
+                            Assert.Equal(LocalSpawn.EntityId,echoRoster.OwnerId);EchoRosters[echoRoster.OwnerId]=echoRoster;break;
+                        case NetworkMessageType.EchoSummonResult:
+                            Assert.True(NetworkProtocol.TryReadEchoSummonResult(reader,out var echoSummon));EchoSummonResults.Add(echoSummon);break;
+                        case NetworkMessageType.EchoRestoreResult:
+                            Assert.True(NetworkProtocol.TryReadEchoRestoreResult(reader,out var echoRestore));EchoRestoreResults.Add(echoRestore);break;
                         case NetworkMessageType.EchoAction:
                             Assert.True(NetworkProtocol.TryReadEchoAction(reader, out var echoAction)); EchoActions.Add(echoAction);
                             if (echoAction.TargetId.IsValid) CombatStates[echoAction.TargetId] = CombatStates[echoAction.TargetId] with { Health = echoAction.TargetHealth };
@@ -716,8 +744,10 @@ public sealed class NetworkMovementIntegrationTests
                             break;
                         case NetworkMessageType.AbilityLoadout:
                             Assert.True(NetworkProtocol.TryReadAbilityLoadout(reader, out var loadout));
-                            Assert.Equal(LocalSpawn.EntityId, loadout.EntityId);
-                            Loadouts[loadout.EntityId] = loadout;
+                            Assert.True(loadout.EntityId==LocalSpawn.EntityId||EchoLoadouts.TryGetValue(LocalSpawn.EntityId,out var ownEchoes)&&ownEchoes.Slots.Any(s=>s.EntityId==loadout.EntityId));
+                            if(!_loadoutParts.TryGetValue(loadout.EntityId,out var assembly))_loadoutParts.Add(loadout.EntityId,assembly=new());
+                            Assert.True(assembly.Accept(loadout,out var complete));
+                            if(complete is {} ready){_loadoutParts.Remove(loadout.EntityId);Loadouts[loadout.EntityId]=ready;}
                             break;
                         case NetworkMessageType.AbilityResult:
                             Assert.True(NetworkProtocol.TryReadAbilityResult(reader, out var abilityResult));
@@ -740,6 +770,10 @@ public sealed class NetworkMovementIntegrationTests
                             break;
                         case NetworkMessageType.CombatFeedback:
                             Assert.True(NetworkProtocol.TryReadCombatFeedback(reader,out var feedback));Feedback.Add(feedback);break;
+                        case NetworkMessageType.ControlFeedback:
+                            Assert.True(NetworkProtocol.TryReadControlFeedback(reader,out var controlFeedback));ControlFeedback.Add(controlFeedback);break;
+                        case NetworkMessageType.ControlState:
+                            Assert.True(NetworkProtocol.TryReadControlState(reader,out var controlState));ControlStates.Add(controlState);break;
                         case NetworkMessageType.CombatJournalIndex:
                             Assert.True(NetworkProtocol.TryReadCombatJournalIndex(reader,out var journalIndex));JournalIndices.Add(journalIndex);break;
                         case NetworkMessageType.CombatJournalChunk:
@@ -811,7 +845,14 @@ public sealed class NetworkMovementIntegrationTests
         }
 
         public void Poll() => _manager.PollEvents();
-        public void EchoSignature(uint sequence, byte slot, Vector2 aim) => SendGame(NetworkProtocol.Write(new EchoSignatureCommand(sequence, 0, slot, aim)), DeliveryMethod.ReliableOrdered);
+        public void EchoSignature(uint sequence, byte slot, Vector2 aim)
+        {
+            var body=EchoLoadouts.TryGetValue(LocalSpawn.EntityId,out var owned)?owned.Slots.FirstOrDefault(s=>s.Slot==slot).EntityId:default;
+            SendGame(NetworkProtocol.Write(new EchoSignatureCommand(sequence,0,slot,aim,EntityId:body.IsValid?body:new(ulong.MaxValue))),DeliveryMethod.ReliableOrdered);
+        }
+        public void EchoRoster(uint sequence,uint page=0)=>SendGame(NetworkProtocol.Write(new EchoRosterRequest(sequence,page)),DeliveryMethod.ReliableOrdered);
+        public void EchoSummon(uint sequence,ulong handle)=>SendGame(NetworkProtocol.Write(new EchoSummonCommand(sequence,handle)),DeliveryMethod.ReliableOrdered);
+        public void EchoRestore(uint sequence,ulong handle,ulong death)=>SendGame(NetworkProtocol.Write(new EchoRestoreCommand(sequence,handle,death)),DeliveryMethod.ReliableOrdered);
         public void Revive(uint sequence) => SendGame(NetworkProtocol.Write(new DevelopmentReviveCommand(sequence)), DeliveryMethod.ReliableOrdered);
         public void Pickup(uint sequence, ulong handle) => SendGame(NetworkProtocol.Write(new PickupCommand(sequence, handle)), DeliveryMethod.ReliableOrdered);
         public void Inventory(uint sequence, InventoryAction action, ulong handle) => SendGame(

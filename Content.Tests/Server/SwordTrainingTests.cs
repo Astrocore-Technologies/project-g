@@ -51,7 +51,7 @@ public sealed class SwordTrainingTests
         Assert.Equal(0,w.CaptureCharacter(42).Progression!.SwordTraining!.Damage); // fallback sword is not the trainer's item
         Assert.True(w.TryQueueAbility(42,new(1,0,1,-Vector2.UnitY),0)); Step(w,40);
         Assert.Equal(0,w.CaptureCharacter(42).Progression!.SwordTraining!.Damage);
-        w.Combat!.ApplyEchoDamage(w.TrainingTargetId,10,p.EntityId); Step(w);
+        var echo=EchoTests.BindCombatBody(w,p.EntityId);w.Combat!.ApplyAbilityDamage(w.TrainingTargetId,10,echo);Step(w);
         Assert.Equal(0,w.CaptureCharacter(42).Progression!.SwordTraining!.Damage);
         now+=30001; Step(w);
         var handle=w.Inventory!.State(p.EntityId,w.Tick).Items.Single(i=>i.Name=="Тренировочный меч").Handle;
@@ -77,7 +77,7 @@ public sealed class SwordTrainingTests
         Assert.Equal(8,saved.Progression.Skills.Count(s=>s.Slot!=0));
         Assert.All(saved.Progression.Skills.Where(s=>s.DefinitionId.StartsWith("sword_")),s=>Assert.Equal(1,s.Level));
         Assert.Equal(9,w.Abilities!.Loadout(p.EntityId,w.Tick).Abilities.Count);
-        Assert.Equal(20,w.Abilities.Loadout(p.EntityId,w.Tick).Abilities.Single(a=>a.Form==AbilityForm.Dash).Range);
+        Assert.Equal(3,w.Abilities.Loadout(p.EntityId,w.Tick).Abilities.Single(a=>a.Form==AbilityForm.Dash).Range);
         w.RemovePlayer(42); var restored=City(); restored.AddPlayer(42,new(1),saved);
         Assert.Equal(saved.Progression.Serialize(),restored.CaptureCharacter(42).Progression!.Serialize());
     }

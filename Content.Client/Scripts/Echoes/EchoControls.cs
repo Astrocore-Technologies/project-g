@@ -22,6 +22,7 @@ public partial class EchoControls : CanvasLayer
 
     private readonly Button[] _buttons = new Button[NetworkConstants.MaxActiveEchoes];
     private readonly double[] _cooldowns = new double[NetworkConstants.MaxActiveEchoes];
+    private readonly bool[] _refused = new bool[NetworkConstants.MaxActiveEchoes];
     private Label _status = null!;
     private bool _alive = true, _pending;
     private uint _sequence;
@@ -50,16 +51,21 @@ public partial class EchoControls : CanvasLayer
         tabs.AddChild(GameUi.Button("Обзор",Render));
         tabs.AddChild(GameUi.Button("Память",()=>_details.Text="Воспоминания этого Эхо пока не открыты."));
         tabs.AddChild(GameUi.Button("Связь",()=>_details.Text="Сведения об отношениях с этим Эхо пока недоступны."));
-        detail.AddChild(GameUi.Button("Вернуться к приключению",_window.Close)); Render();
+        detail.AddChild(GameUi.Button("Вернуться к приключению",_window.Close));
+        _network.EchoRosterReceived+=ApplyRoster;_network.EchoSummonReceived+=ApplySummon;_network.EchoRecallReceived+=ApplyRecall;
+        _network.EchoRestoreReceived+=ApplyRestore;
+        InitializeSignatureInput();
+        if(_network.LatestEchoRoster is {} roster)ApplyRoster(roster);else Render();
     }
-    public void Toggle() { if(_window.Visible) _window.Close(); else { Render(); _window.Open(); } }
-    public void Observe(EchoSpawn state,Mesh mesh,Material? material)
-    { if(state.OwnerId!=_owner) return; _known[state.Slot]=(state,mesh,material); Render(); }
+    public void Toggle() { if(_window.Visible) _window.Close(); else { RequestRoster(_roster?.Page??0);Render(); _window.Open(); } }
+    public void Observe(EchoSpawn state,Mesh mesh,Material? material,EchoPresentation? body=null)
+    { if(state.OwnerId!=_owner) return; _known[state.Slot]=(state,mesh,material);if(body is not null)_signatureBodies[state.EntityId]=body; Render(); }
     public void Remove(NetworkEntityId id)
-    { foreach(var key in _known.Where(p=>p.Value.State.EntityId==id).Select(p=>p.Key).ToArray()) _known.Remove(key); Render(); }
+    { foreach(var key in _known.Where(p=>p.Value.State.EntityId==id).Select(p=>p.Key).ToArray()) _known.Remove(key);ForgetSignature(id); Render(); }
     private void Render()
     {
         foreach(var child in _list.GetChildren()) { _list.RemoveChild(child); child.QueueFree(); }
+        if(RenderRoster())return;
         foreach(var entry in _known.OrderBy(p=>p.Key)) { var slot=entry.Key; _list.AddChild(GameUi.Button(entry.Value.State.Name,()=> { _selected=slot; Render(); })); }
         if(!_known.TryGetValue(_selected,out var echo)) { _preview.Visible=false; _name.Text="Эхо Прошлого"; _details.Text="У вас пока нет Эхо. Сначала нужно получить спутника."; return; }
         _preview.Visible=true; _preview.SetMesh(echo.Mesh,echo.Material);
@@ -70,8 +76,10 @@ public partial class EchoControls : CanvasLayer
     public void Apply(EchoLoadout value)
     {
         if(value.OwnerId!=_owner) return; _loadout=value;
+        PruneSignatures();
         foreach (var button in _buttons) button.Visible = false;
-        foreach (var slot in value.Slots) { _buttons[slot.Slot - 1].Visible = true; _cooldowns[slot.Slot - 1] = slot.CooldownSeconds; } Render();
+        Array.Clear(_refused);
+        foreach (var slot in value.Slots) { _buttons[slot.Slot - 1].Visible = true; _cooldowns[slot.Slot - 1] = slot.CooldownSeconds;_refused[slot.Slot-1]=slot.SignatureRefused; } Render();
     }
     public void ApplyAlive(bool alive)
     {
@@ -81,21 +89,34 @@ public partial class EchoControls : CanvasLayer
     }
     public void Result(EchoSignatureResult value)
     {
-        if (value.Sequence != _sequence) return;
-        _pending = false; _cooldowns[value.Slot - 1] = value.CooldownSeconds;
-        _status.Text = value.Outcome == EchoCommandOutcome.Accepted ? "Способность Эхо применена" : $"Способность недоступна: {value.Outcome}";
+        if (value.Slot is <1 or >NetworkConstants.MaxActiveEchoes ||
+            value.Sequence!=_sequence && _issuedSignatureBySlot[value.Slot-1]!=value.Sequence) return;
+        SignatureResult(value);
+        _pendingSignatureSlots[value.Slot-1]=false;_pending=_pendingSignatureSlots.Any(p=>p); _cooldowns[value.Slot - 1] = value.CooldownSeconds;
+        _status.Text=value.Outcome switch
+        {
+            EchoCommandOutcome.Accepted=>"Команда Эхо принята",EchoCommandOutcome.NotOwned=>"В этом месте нет активного Эхо",
+            EchoCommandOutcome.Cooldown=>"Способность ещё восстанавливается",EchoCommandOutcome.OutOfRange=>"Цель слишком далеко от Эхо",
+            EchoCommandOutcome.Blocked=>"Путь к цели перекрыт",EchoCommandOutcome.RateLimited=>"Слишком частые команды",
+            EchoCommandOutcome.Refused=>"Эхо сейчас отказывается применять эту способность",
+            EchoCommandOutcome.NoMana=>"У Эхо не хватает маны",EchoCommandOutcome.NoStamina=>"У Эхо не хватает выносливости",
+            EchoCommandOutcome.NoHealth=>"У Эхо не хватает HP для оплаты навыка",
+            EchoCommandOutcome.Busy=>"Эхо выполняет другое действие",EchoCommandOutcome.NeedsWeapon=>"Эхо требуется исправное оружие",
+            EchoCommandOutcome.Capacity=>"Сейчас нельзя создать ещё один эффект",
+            _=>"Сейчас нельзя применить способность Эхо"
+        };
     }
     public override void _Process(double delta)
     {
+        UpdateSignatureInput(delta);
         _hud.Visible=_known.Count>0 && _loadout.Slots is { Count: > 0 } && !GameUi.GameplayModalOpen;
-        _readiness.Visible=_known.ContainsKey(_selected);
-        _readiness.Text=!_alive?"Ожидает вашего восстановления":_cooldowns[_selected-1]>0?$"Готовность через {_cooldowns[_selected-1]:0.0} с":"Способность готова";
-        if(_pending && Time.GetTicksMsec()/1000d-_sentAt>10) { _pending=false; _status.Text="Нет ответа. Попробуйте снова."; }
+        _readiness.Visible=_known.ContainsKey(_selected)&&(_roster is null||_roster.Value.Entries.Any(e=>e.Handle==_selectedOwned&&e.Availability==EchoAvailability.Active));
+        _readiness.Text=!_alive?"Ожидает вашего восстановления":_refused[_selected-1]?"Отказывается применять способность":_cooldowns[_selected-1]>0?$"Готовность через {_cooldowns[_selected-1]:0.0} с":"Способность готова";
         for (var i = 0; i < _buttons.Length; i++)
         {
             _cooldowns[i] = Math.Max(0, _cooldowns[i] - delta);
             _buttons[i].Disabled=false;
-            _buttons[i].Text =  $"{(_known.TryGetValue((byte)(i+1),out var echo)?echo.State.Name:$"Эхо {i+1}")}\n{Keys[i]} · "+(_cooldowns[i]>0 ? $"{_cooldowns[i]:0.0}с" : "Готово");
+            _buttons[i].Text =  $"{(_known.TryGetValue((byte)(i+1),out var echo)?echo.State.Name:$"Эхо {i+1}")}\n{Keys[i]} · "+(_refused[i]?"Отказ":_cooldowns[i]>0 ? $"{_cooldowns[i]:0.0}с" : "Готово");
         }
     }
     public override void _UnhandledInput(InputEvent input)
@@ -105,15 +126,10 @@ public partial class EchoControls : CanvasLayer
         if(key.PhysicalKeycode==Key.F3) { Toggle(); GetViewport().SetInputAsHandled(); return; }
         byte slot = key.PhysicalKeycode switch { Key.T => 1, Key.Y => 2, Key.U => 3, _ => 0 };
         if (slot == 0) return;
-        Request(slot); GetViewport().SetInputAsHandled();
+        BeginSignatureAim(slot,key.PhysicalKeycode); GetViewport().SetInputAsHandled();
     }
     private void Request(byte slot)
     {
-        if (GameUi.GameplayModalOpen || !_alive || _pending || !_buttons[slot - 1].Visible || _cooldowns[slot - 1] > 0) return;
-        var player = GetParent().GetChildren().OfType<ProjectG.Gameplay.PlayerController>().FirstOrDefault(p=>p.EntityId==_owner);
-        if (player is null || !player.TryCursorSurface(out var aim,out var height)) return;
-        _sequence++; if (_sequence == 0) _sequence++;
-        _pending = true; _sentAt=Time.GetTicksMsec()/1000d;
-        _network.SendEchoSignature(new(_sequence, _network.LatestServerTick, slot, aim, height));
+        CommitSignature(slot);
     }
 }

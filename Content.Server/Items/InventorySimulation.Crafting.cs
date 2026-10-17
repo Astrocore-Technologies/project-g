@@ -50,7 +50,7 @@ public sealed partial class InventorySimulation
             items[^1]=new(_nextHandle,NormalizeCondition(new SavedItem(Guid.NewGuid(),output,EquipmentSlot.None),definition),definition);
         }
         // Everything is prepared before one owner-bound mutation; the checkpoint persists it with XP/world stock.
-        if(items is not null) { _nextHandle++; actor.Items=items; }
+        if(items is not null) { _nextHandle++; actor.Items=items;IndexItems(id,actor); }
         actor.Crafting=saved with { LastOperation=operation,Materials=next,CooldownSeconds=0 }; actor.CraftReadyAt=combat.Time+cooldown; _dirty.Add(id); return CraftOutcome.Accepted;
     }
 }

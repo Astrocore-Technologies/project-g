@@ -43,8 +43,10 @@ public sealed class ProgressionProtocolTests
                 Assert.Throws<ArgumentException>(()=>NetworkProtocol.Write(command with { Allocation=allocation }));
             bytes[^1]=255; Assert.False(NetworkProtocol.TryReadProgressionCommand(Body(bytes),out _));
         }
-        var preview = new StatPreview(7,42,Enumerable.Repeat(1d,22).ToArray(),Enumerable.Repeat(2d,22).ToArray());
+        var preview = new StatPreview(7,42,Enumerable.Repeat(1d,NetworkConstants.CharacterStatCount).ToArray(),Enumerable.Repeat(2d,NetworkConstants.CharacterStatCount).ToArray());
         var data = NetworkProtocol.Write(preview).CopyData(); Check(data,r=>NetworkProtocol.TryReadStatPreview(r,out _));
+        Assert.Equal(394,data.Length);
+        Assert.Equal(24,Enum.GetValues<CharacterStat>().Length);
         Assert.True(NetworkProtocol.TryReadStatPreview(Body(data),out var decoded)); Assert.Equal(preview.Projected,decoded.Projected);
         Assert.InRange(data.Length,1,NetworkConstants.MaxGamePacketBytes);
         BitConverter.GetBytes(double.NaN).CopyTo(data,10); Assert.False(NetworkProtocol.TryReadStatPreview(Body(data),out _));

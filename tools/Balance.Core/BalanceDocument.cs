@@ -41,9 +41,9 @@ public sealed partial class BalanceDocument
     public IReadOnlyList<BalanceEntry> Entries()
     {
         var result = new List<BalanceEntry>();
-        foreach (var key in new[] { "balance", "progression", "defense", "control", "lifecycle", "swordsman" })
+        foreach (var key in new[] { "balance", "progression", "defense", "control", "lifecycle", "swordsman", "echoSummon", "echoRecovery" })
             if (Root[key] is JsonObject) result.Add(new(key, key));
-        foreach (var key in new[] { "weapons", "abilities", "effects", "creatures", "items", "professions" })
+        foreach (var key in new[] { "weapons", "abilities", "effects", "creatures", "items", "professions", "echoes" })
             if (Root[key] is JsonArray list)
                 for (var i = 0; i < list.Count; i++) result.Add(new($"{key}/{i}", $"{key} / {list[i]!["id"]}"));
         return result;

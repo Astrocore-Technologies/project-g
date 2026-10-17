@@ -19,6 +19,9 @@ public sealed class SupportIntegrationTests
     private static ServerWorld World(string operation)
     {
         var document=SupportSkillTests.Document(operation,operation=="Resurrect");
+        // Author both payloads as instant to isolate a single durable publication transaction.
+        document["weapons"]![0]!.AsObject().Remove("basicAttack");
+        document["weapons"]!.AsArray().Single(w=>w!["id"]!.GetValue<string>()=="unarmed")!.AsObject().Remove("basicAttack");
         document["abilities"]![1]!["action"]!["form"]="Instant";
         document["abilities"]![1]!["action"]!["preparation"]!["seconds"]=0;
         return new(Options.Create(new MovementOptions()),Options.Create(new InterestOptions()),
@@ -81,11 +84,14 @@ public sealed class SupportIntegrationTests
         {
             await Poll(()=>caster.Loadouts.Count==1&&target.Loadouts.Count==1&&target.Lives.Count==3,caster,target);
             var id=target.LocalSpawn.EntityId;Assert.True(target.Lives[id].Dead);
+            var deadBody=world.Combat!.Get(id);
+            world.Combat.ApplyEquipment(id,(deadBody.BaseDerivedStats with {StaminaRecovery=0},deadBody.Weapon,deadBody.AttackInterval));
             // Bootstrap packets can precede the first character checkpoint. Its acknowledged change
             // drains initial dirty state before the gate is assigned to the resurrection transaction.
             caster.Progression(new(1,ProgressionAction.AllocateStat,0,0,0));
             await Poll(()=>caster.ProgressionResults.Count==1&&!store.PendingSave,caster,target);
-            gate=store.PauseSaves();caster.Ability(1,2,new(-6,0));await Poll(()=>store.PendingSave,caster,target);
+            gate=store.PauseSaves(condition:changes=>changes.Any(c=>c.State.Life is {Dead:false,DeathId:1}));
+            caster.Ability(1,2,new(-6,0));await Poll(()=>store.BlockedSave,caster,target);
             Assert.True(target.Lives[id].Dead);Assert.Equal(0,target.CombatStates[id].Health);Assert.Empty(target.Feedback);
             Assert.False(world.Combat!.CaptureLife(id).Dead);Assert.Equal(10,world.Combat.Get(id).Health);
             Assert.Equal(7,world.Abilities!.Mana(id));Assert.Equal(13,world.Combat.DefenseState(id,world.Tick).Stamina);

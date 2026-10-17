@@ -43,7 +43,7 @@ public static partial class NetworkProtocol
             if (!ValidInventoryEntry(item) || !ids.Add(item.Handle) || (item.Equipped && !slots.Add(item.Slot)))
                 throw new ArgumentException("Invalid inventory item.");
             writer.Put(item.Handle); writer.Put(item.Name); writer.Put((byte)item.Slot); writer.Put(item.Equipped);
-            writer.Put(item.AttackBonus); writer.Put(item.DefenseBonus); writer.Put(item.HealthBonus);
+            writer.Put(item.AttackBonus); writer.Put(item.DefenseBonus); writer.Put(item.HealthBonus);writer.Put(item.BlockAbsorptionBonus);
         }
         return writer;
     }
@@ -57,8 +57,9 @@ public static partial class NetworkProtocol
         {
             if (!reader.TryGetULong(out var handle) || !reader.TryGetString(out var name) ||
                 !reader.TryGetByte(out var slot) || !reader.TryGetByte(out var equipped) || equipped > 1 ||
-                !reader.TryGetDouble(out var attack) || !reader.TryGetDouble(out var defense) || !reader.TryGetDouble(out var health)) return false;
-            var item = new InventoryEntry(handle, name, (EquipmentSlot)slot, equipped == 1, attack, defense, health);
+                !reader.TryGetDouble(out var attack) || !reader.TryGetDouble(out var defense) || !reader.TryGetDouble(out var health) ||
+                !reader.TryGetDouble(out var block)) return false;
+            var item = new InventoryEntry(handle, name, (EquipmentSlot)slot, equipped == 1, attack, defense, health,block);
             if (!ValidInventoryEntry(item) || !ids.Add(handle) || (item.Equipped && !slots.Add(item.Slot))) return false;
             items[i] = item;
         }
@@ -67,6 +68,7 @@ public static partial class NetworkProtocol
     }
     private static bool ValidInventoryEntry(InventoryEntry item) => item.Handle != 0 &&
         item.Name is { Length: > 0 and <= 24 } && Encoding.UTF8.GetByteCount(item.Name) <= 48 &&
-        Enum.IsDefined(item.Slot) && item.Slot != EquipmentSlot.None &&
-        double.IsFinite(item.AttackBonus) && double.IsFinite(item.DefenseBonus) && double.IsFinite(item.HealthBonus);
+        Enum.IsDefined(item.Slot) && (item.Slot != EquipmentSlot.None || !item.Equipped &&
+            item.AttackBonus==0 && item.DefenseBonus==0 && item.HealthBonus==0 && item.BlockAbsorptionBonus==0) &&
+        double.IsFinite(item.AttackBonus) && double.IsFinite(item.DefenseBonus) && double.IsFinite(item.HealthBonus) && double.IsFinite(item.BlockAbsorptionBonus);
 }

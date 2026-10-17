@@ -15,10 +15,13 @@ public sealed record SkillControlDefinition
     public ControlOrigin? Origin { get; init; }
     public float? Height { get; init; }
     public double? DownSeconds { get; init; }
+    public ControlRemovalDefinition Removal {get;init;}=ControlRemovalDefinition.Default;
 
     internal void Validate(string path)
     {
         if(!Enum.IsDefined(Kind)) throw new ArgumentException($"{path}: unknown control kind.");
+        if(Removal is null)throw new ArgumentException($"{path}: missing control removal policy.");
+        Removal.Validate();
         var displacement=Kind is CrowdControlKind.Knockback or CrowdControlKind.Pull;
         var launch=Kind==CrowdControlKind.Knockup;
         var strengthBased=Kind is CrowdControlKind.Slow or CrowdControlKind.Blind or CrowdControlKind.Taunt;

@@ -1,4 +1,5 @@
 using System.Reflection;
+using Content.Shared.Movement;
 using Content.Shared.Network;
 using Content.Shared.Navigation;
 using Godot;
@@ -45,12 +46,17 @@ public partial class NetworkClient : Node
     public event Action<CombatState>? CombatStateReceived;
     public event Action<AttackEvent>? AttackReceived;
     public event Action<AttackResult>? AttackResultReceived;
+    public event Action<BasicActionState>? BasicActionReceived;
+    public event Action<BasicInputState>? BasicInputReceived;
+    public BasicInputState? LatestBasicInput {get;private set;}
+    private readonly BasicActionStream _basicActions=new();
     public event Action<AbilityLoadout>? AbilityLoadoutReceived;
     public event Action<AbilityResult>? AbilityResultReceived;
     public event Action<AbilityEffectState>? AbilityEffectReceived;
     private readonly AbilityEffectStream _sustainedEffects=new();
     public event Action<AbilityHit>? AbilityHitReceived;
     public event Action<CombatFeedback>? CombatFeedbackReceived;
+    public event Action<ControlFeedback>? ControlFeedbackReceived;
     public event Action<CombatJournalIndex>? CombatJournalIndexReceived;
     public event Action<CombatJournalChunk>? CombatJournalChunkReceived;
     public event Action<CombatJournalResult>? CombatJournalResultReceived;
@@ -129,6 +135,8 @@ public partial class NetworkClient : Node
     public event Action<ProgressionResult>? ProgressionResultReceived;
     public event Action<StatPreview>? StatPreviewReceived;
     public event Action<DefenseState>? DefenseReceived;
+    public event Action<ControlState>? ControlStateReceived;
+    public ControlState? LatestControlState {get;private set;}
     // NC: public observer state is distinct from the owner's private defense resources.
     public event Action<AvatarState>? AvatarReceived;
     public void SendEmote(EmoteCommand command) { if (_handshakeComplete) SendGame(NetworkProtocol.Write(command), DeliveryMethod.ReliableOrdered); }
@@ -140,18 +148,35 @@ public partial class NetworkClient : Node
     public event Action<QuestJournal>? QuestJournalReceived;
     public void SendQuest(QuestCommand command) { if(_handshakeComplete) SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered); }
     public void SendDefense(DefenseCommand command)
-    { if (_handshakeComplete) SendGame(NetworkProtocol.Write(command),command.Action==DefenseAction.Block ? DeliveryMethod.Unreliable : DeliveryMethod.ReliableOrdered); }
+    { if (_handshakeComplete) SendGame(NetworkProtocol.Write(command with {ObservedServerTick=LatestServerTick}),command.Action==DefenseAction.Block ? DeliveryMethod.Unreliable : DeliveryMethod.ReliableOrdered); }
     public void SendProgression(ProgressionCommand command)
     { if (_handshakeComplete) SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered); }
     public event Action<EchoSpawn>? EchoSpawned;
     public event Action<EchoLoadout>? EchoLoadoutReceived;
     public event Action<EchoAction>? EchoActionReceived;
     public event Action<EchoSignatureResult>? EchoSignatureResultReceived;
+    public event Action<EchoRosterPage>? EchoRosterReceived;
+    public event Action<EchoSummonResult>? EchoSummonReceived;
+    public event Action<EchoRecallResult>? EchoRecallReceived;
+    public event Action<EchoRestoreResult>? EchoRestoreReceived;
+    public EchoRosterPage? LatestEchoRoster {get;private set;}
+    public void SendEchoRoster(EchoRosterRequest command)
+    {if(_handshakeComplete)SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);}
+    public void SendEchoSummon(EchoSummonCommand command)
+    {if(_handshakeComplete)SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);}
+    public void SendEchoRecall(EchoRecallCommand command)
+    {if(_handshakeComplete)SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);}
+    public void SendEchoSummonControl(EchoSummonControlCommand command)
+    {if(_handshakeComplete)SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);}
+    public void SendEchoRestore(EchoRestoreCommand command)
+    {if(_handshakeComplete)SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);}
 
     public void SendEchoSignature(EchoSignatureCommand command)
     {
         if (_handshakeComplete) SendGame(NetworkProtocol.Write(command), DeliveryMethod.ReliableOrdered);
     }
+    public void SendEchoControl(EchoSignatureControlCommand command)
+    {if(_handshakeComplete)SendGame(NetworkProtocol.Write(command),command.Kind==EchoSignatureControlKind.Aim?DeliveryMethod.Unreliable:DeliveryMethod.ReliableOrdered);}
 
     public override void _Ready()
     {
@@ -250,10 +275,14 @@ public partial class NetworkClient : Node
         if (_handshakeComplete && _serverPeer is not null)
             SendGame(NetworkProtocol.Write(command), DeliveryMethod.ReliableOrdered);
     }
+    public void SendBasicControl(BasicControlCommand command)
+    {
+        if(_handshakeComplete && _serverPeer is not null)SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
+    }
     public void SendActionCancel(ActionCancelCommand command)
     {
         if(_handshakeComplete && _serverPeer is not null)
-            SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
+            SendGame(NetworkProtocol.Write(command with {ObservedServerTick=LatestServerTick}),DeliveryMethod.ReliableOrdered);
     }
     public void SendAbilityControl(AbilityControlCommand command)
     {
@@ -318,8 +347,13 @@ public partial class NetworkClient : Node
         CurrentRegion = null;
         KnownPlayers.Clear();
         KnownLife.Clear();
+        LatestEchoRoster=null;
         _sustainedEffects.Clear();
+        _basicActions.Clear();
+        _abilityLoadoutParts.Clear();
+        LatestBasicInput=null;
         LatestCombatJournalIndex=null;
+        LatestControlState=null;
         CanDevelopmentRevive = false;
         Navigation = null; LatestWorldNode=null; LatestStarterZone=null; LatestPvpZone=null; LatestDefense=null; CraftRecipes.Clear(); ResourceNodes.Clear(); QuestNpcs.Clear(); LatestQuestJournal=null;
         LatestServerTick = 0;
@@ -526,6 +560,22 @@ public partial class NetworkClient : Node
                     if (_handshakeComplete && NetworkProtocol.TryReadEchoLoadout(reader, out var echoLoadout)) EchoLoadoutReceived?.Invoke(echoLoadout);
                     else DisconnectMalformed(peer);
                     break;
+                case NetworkMessageType.EchoRosterPage:
+                    if(_handshakeComplete&&deliveryMethod==DeliveryMethod.ReliableOrdered&&NetworkProtocol.TryReadEchoRosterPage(reader,out var echoRoster))
+                    {LatestEchoRoster=echoRoster;EchoRosterReceived?.Invoke(echoRoster);}else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.EchoSummonResult:
+                    if(_handshakeComplete&&deliveryMethod==DeliveryMethod.ReliableOrdered&&NetworkProtocol.TryReadEchoSummonResult(reader,out var echoSummon))
+                        EchoSummonReceived?.Invoke(echoSummon);else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.EchoRecallResult:
+                    if(_handshakeComplete&&deliveryMethod==DeliveryMethod.ReliableOrdered&&NetworkProtocol.TryReadEchoRecallResult(reader,out var echoRecall))
+                        EchoRecallReceived?.Invoke(echoRecall);else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.EchoRestoreResult:
+                    if(_handshakeComplete&&deliveryMethod==DeliveryMethod.ReliableOrdered&&NetworkProtocol.TryReadEchoRestoreResult(reader,out var echoRestore))
+                        EchoRestoreReceived?.Invoke(echoRestore);else DisconnectMalformed(peer);
+                    break;
                 case NetworkMessageType.EchoAction:
                     if (_handshakeComplete && NetworkProtocol.TryReadEchoAction(reader, out var echoAction)) EchoActionReceived?.Invoke(echoAction);
                     else DisconnectMalformed(peer);
@@ -572,6 +622,7 @@ public partial class NetworkClient : Node
                     {
                         QuestNpcs.Remove(despawn.EntityId);
                         KnownPlayers.Remove(despawn.EntityId);
+                        _basicActions.Remove(despawn.EntityId);
                         KnownLife.Remove(despawn.EntityId);
                         PlayerDespawned?.Invoke(despawn);
                     }
@@ -601,6 +652,20 @@ public partial class NetworkClient : Node
                     else
                         DisconnectMalformed(peer);
                     break;
+                case NetworkMessageType.BasicActionState:
+                    if(_handshakeComplete && NetworkProtocol.TryReadBasicActionState(reader,out var basic))
+                    {if(_basicActions.Accept(basic,deliveryMethod==DeliveryMethod.ReliableOrdered))BasicActionReceived?.Invoke(basic);}
+                    else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.BasicInputState:
+                    if(_handshakeComplete && NetworkProtocol.TryReadBasicInputState(reader,out var basicInput))
+                    {
+                        if(LatestBasicInput is not {} previousBasic || previousBasic.ActorId!=basicInput.ActorId ||
+                            basicInput.ServerTick==previousBasic.ServerTick || MovementSimulation.IsSequenceNewer(basicInput.ServerTick,previousBasic.ServerTick))
+                        {LatestBasicInput=basicInput;BasicInputReceived?.Invoke(basicInput);}
+                    }
+                    else DisconnectMalformed(peer);
+                    break;
                 case NetworkMessageType.AttackResult:
                     if (_handshakeComplete && NetworkProtocol.TryReadAttackResult(reader, out var result))
                         AttackResultReceived?.Invoke(result);
@@ -608,9 +673,8 @@ public partial class NetworkClient : Node
                         DisconnectMalformed(peer);
                     break;
                 case NetworkMessageType.AbilityLoadout:
-                    if (_handshakeComplete && NetworkProtocol.TryReadAbilityLoadout(reader, out var loadout))
-                        AbilityLoadoutReceived?.Invoke(loadout);
-                    else DisconnectMalformed(peer);
+                    if (!_handshakeComplete || !NetworkProtocol.TryReadAbilityLoadout(reader, out var loadout) || !ReceiveAbilityLoadout(loadout))
+                        DisconnectMalformed(peer);
                     break;
                 case NetworkMessageType.AbilityResult:
                     if (_handshakeComplete && NetworkProtocol.TryReadAbilityResult(reader, out var abilityResult))
@@ -635,6 +699,18 @@ public partial class NetworkClient : Node
                 case NetworkMessageType.CombatFeedback:
                     if(_handshakeComplete && NetworkProtocol.TryReadCombatFeedback(reader,out var feedback))CombatFeedbackReceived?.Invoke(feedback);
                     else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.ControlFeedback:
+                    if(_handshakeComplete && NetworkProtocol.TryReadControlFeedback(reader,out var controlFeedback))ControlFeedbackReceived?.Invoke(controlFeedback);
+                    else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.ControlState:
+                    if(!_handshakeComplete || !NetworkProtocol.TryReadControlState(reader,out var controlState) ||
+                        !KnownPlayers.TryGetValue(controlState.OwnerId,out var controlOwner) || controlOwner.PlayerId!=LocalPlayerId)
+                    {DisconnectMalformed(peer);break;}
+                    if(LatestControlState is not {} previousControl || previousControl.OwnerId!=controlState.OwnerId ||
+                        Content.Shared.Movement.MovementSimulation.IsSequenceNewer(controlState.ServerTick,previousControl.ServerTick))
+                    {LatestControlState=controlState;ControlStateReceived?.Invoke(controlState);}
                     break;
                 case NetworkMessageType.CombatJournalIndex:
                     if(_handshakeComplete && NetworkProtocol.TryReadCombatJournalIndex(reader,out var journalIndex) &&

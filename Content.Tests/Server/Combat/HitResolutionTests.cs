@@ -17,6 +17,9 @@ public sealed class HitResolutionTests
         var combat=new CombatSimulation(ContentCatalogTests.Load(),spatial,grid,new CombatOptions(),20,8,critical,hit);
         combat.Add(new(1),Vector2.Zero,CombatEntityKind.Player);
         combat.Add(new(2),Vector2.UnitY,CombatEntityKind.Monster);
+        // Hit ordering is tested with an explicit instant-contact weapon; production phases have separate scenarios.
+        foreach(var id in new[]{new NetworkEntityId(1),new NetworkEntityId(2)})
+            combat.Get(id).Weapon=combat.Get(id).Weapon with {BasicAttack=null};
         spatial.Add(new(1),Vector2.Zero); spatial.Add(new(2),Vector2.UnitY);
         return combat;
     }

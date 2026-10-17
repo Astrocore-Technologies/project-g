@@ -9,17 +9,19 @@ public sealed partial class ServerWorld
 {
     private EntitySnapshot ControlSnapshot(EntitySnapshot snapshot) => Combat?.ControlSnapshot(snapshot) ?? snapshot;
     private NavigationMover? ControlledMover(NetworkEntityId id) => _playersByEntity.TryGetValue(id,out var player)
-        ? player.Motion : TryGetNpcActor(id,out var actor) ? actor.Motion : null;
+        ? player.Motion : TryGetNpcActor(id,out var actor) ? actor.Motion : Echoes?.TryGet(id,out var echo)==true?echo.Motion:null;
     private void StopControlledMotion(NetworkEntityId id)
     {
         var motion = ControlledMover(id);
         motion?.Reset(motion.Position,motion.Position,motion.Height,motion.Height);
+        Echoes?.WakeActor(id);
     }
     private bool StartControlledDash(NetworkEntityId id, Vector2 destination, float speed)
     {
         var motion = ControlledMover(id);
         if (motion is null || !StartSurfaceDash(motion,destination,speed)) return false;
         if (_playersByEntity.TryGetValue(id,out var player)) _movingPlayers.Add(player.ConnectionId);
+        Echoes?.WakeActor(id);
         return true;
     }
 
@@ -34,6 +36,7 @@ public sealed partial class ServerWorld
             if(!SurfaceDash.TryDestination(Navigation,motion.Foot,direction,motion.WalkSpeed*.5f,out var destination,out var height) ||
                 Vector2.DistanceSquared(destination,motion.Position)<.0001f || !motion.TrySetTarget(destination,height)) continue;
             if(_playersByEntity.TryGetValue(id,out var player)) _movingPlayers.Add(player.ConnectionId);
+            Echoes?.WakeActor(id);
             return true;
         }
         StopControlledMotion(id); return false;

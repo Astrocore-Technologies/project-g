@@ -38,6 +38,72 @@ public sealed class NavigationGrid
         ? visibility.Clear(from + Vector3.UnitY, to + Vector3.UnitY)
         : CanTraverse(new Vector2(from.X, from.Z), new Vector2(to.X, to.Z));
 
+    public bool TryAttackObstacle(Vector3 from,Vector3 to,out float fraction)
+    {
+        if(Visibility is {} visibility)return visibility.TryFirstHit(from+Vector3.UnitY,to+Vector3.UnitY,out fraction);
+        return TraceFlatAttack(from,to,AgentRadius,out fraction);
+    }
+
+    /// <summary>A visibility ray in actual world coordinates, without a body-height offset or collision padding.</summary>
+    public bool TryVisibilityObstacle(Vector3 from,Vector3 to,out float fraction)
+    {
+        fraction=0;
+        if(!float.IsFinite(from.X) || !float.IsFinite(from.Y) || !float.IsFinite(from.Z) ||
+            !float.IsFinite(to.X) || !float.IsFinite(to.Y) || !float.IsFinite(to.Z) ||
+            Vector3.DistanceSquared(from,to)>128*128)return true;
+        if(Visibility is {} visibility)return visibility.TryFirstHit(from,to,out fraction);
+        return TraceFlatAttack(from,to,0,out fraction);
+    }
+
+    /// <summary>Actual projectile-center coordinates and radius; unlike legacy foot-to-foot attack visibility.</summary>
+    public bool TryProjectileObstacle(Vector3 from,Vector3 to,float radius,out float fraction)
+    {
+        if(!float.IsFinite(radius) || radius<=0 || radius>128)throw new ArgumentOutOfRangeException(nameof(radius));
+        if(Visibility is {} visibility)return visibility.TryFirstHit(from,to,radius,out fraction);
+        return TraceFlatAttack(from,to,radius,out fraction,sphere:true);
+    }
+
+    private bool TraceFlatAttack(Vector3 from,Vector3 to,float radius,out float fraction,bool sphere=false)
+    {
+        var start=new Vector2(from.X,from.Z);var end=new Vector2(to.X,to.Z);fraction=0;
+        if(!InBounds(start) || !float.IsFinite(end.X) || !float.IsFinite(end.Y))return true;
+        fraction=1;var blocked=false;var direction=end-start;
+        if(!InBounds(end))
+        {
+            var enter=0f;var exit=1f;
+            ClipAxis(start.X,direction.X,Origin.X+radius,Origin.X+Width*CellSize-radius,ref enter,ref exit);
+            ClipAxis(start.Y,direction.Y,Origin.Y+radius,Origin.Y+Height*CellSize-radius,ref enter,ref exit);
+            fraction=exit;blocked=true;
+        }
+        var min=Vector2.Min(start,end)-new Vector2(radius);var max=Vector2.Max(start,end)+new Vector2(radius);
+        var minX=Math.Max(0,(int)MathF.Floor((min.X-Origin.X)/CellSize));
+        var minZ=Math.Max(0,(int)MathF.Floor((min.Y-Origin.Y)/CellSize));
+        var maxX=Math.Min(Width-1,(int)MathF.Floor((max.X-Origin.X)/CellSize));
+        var maxZ=Math.Min(Height-1,(int)MathF.Floor((max.Y-Origin.Y)/CellSize));
+        for(var z=minZ;z<=maxZ;z++)for(var x=minX;x<=maxX;x++)
+        {
+            if(!IsBlocked(x,z))continue;
+            var box=Origin+new Vector2(x,z)*CellSize;
+            if(sphere)
+            {
+                var half=new Vector3(CellSize*.5f,1,CellSize*.5f);
+                if(SphereSweep.Box(new(start.X-box.X-half.X,0,start.Y-box.Y-half.Z),new(direction.X,0,direction.Y),half,radius,out var hit))
+                {fraction=Math.Min(fraction,hit);blocked=true;}
+            }
+            else
+            {
+                var enter=0f;var exit=1f;var size=CellSize+2*radius;box-=new Vector2(radius);
+                if(ClipAxis(start.X,direction.X,box.X,box.X+size,ref enter,ref exit) &&
+                    ClipAxis(start.Y,direction.Y,box.Y,box.Y+size,ref enter,ref exit))
+                {fraction=Math.Min(fraction,enter);blocked=true;}
+            }
+        }
+        return blocked;
+        bool InBounds(Vector2 point)=>float.IsFinite(point.X) && float.IsFinite(point.Y) &&
+            point.X>=Origin.X+radius && point.Y>=Origin.Y+radius &&
+            point.X<Origin.X+Width*CellSize-radius && point.Y<Origin.Y+Height*CellSize-radius;
+    }
+
     public NavigationGrid(RegionNavigation data)
     {
         if (!IsValid(data))

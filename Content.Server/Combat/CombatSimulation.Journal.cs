@@ -20,16 +20,22 @@ public sealed partial class CombatSimulation
         return _actors.TryGetValue(subject,out var actor) && JournalVisibility?.Invoke(observer,subject)!=false ? actor.PublicJournalLabel : "Неизвестный источник";
     }
     internal void RecordJournal(NetworkEntityId source,NetworkEntityId target,CombatJournalKind kind,double amount=0,
-        double duration=0,double strength=0,ushort skill=0,CrowdControlKind control=default,CombatJournalFlags flags=0,bool unknownSource=false)
+        double duration=0,double strength=0,ushort skill=0,CrowdControlKind control=default,CombatJournalFlags flags=0,bool unknownSource=false,
+        CombatHitTags hitTags=CombatHitTags.None)
     {
         var at=(long)Math.Clamp(CombatClock()*1000,0,253402300799999);
         Append(source);if(target!=source)Append(target);
+        var authorOwner=JournalOwner(source);var recipientOwner=JournalOwner(target);
+        if(authorOwner.IsValid&&authorOwner!=source&&authorOwner!=target)Append(authorOwner);
+        if(recipientOwner.IsValid&&recipientOwner!=source&&recipientOwner!=target&&recipientOwner!=authorOwner)Append(recipientOwner);
         void Append(NetworkEntityId owner)
         {
             if(!_actors.TryGetValue(owner,out var actor) || actor.Journal is not {} journal)return;
             var revealed=source==owner || !source.IsValid || JournalVisibility?.Invoke(owner,source)!=false;
             journal.Record(at,kind,JournalLabel(owner,source,unknownSource),JournalLabel(owner,target),amount,duration,strength,
-                revealed&&!unknownSource?skill:(ushort)0,control,flags);
+                revealed&&!unknownSource?skill:(ushort)0,control,flags,hitTags);
         }
     }
+    private NetworkEntityId JournalOwner(NetworkEntityId id)=>_actors.TryGetValue(id,out var actor)&&actor.Kind==CombatEntityKind.Echo
+        ? actor.CompanionOwner:default;
 }

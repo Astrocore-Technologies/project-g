@@ -12,7 +12,7 @@ public partial class ProgressionPresentation : CanvasLayer
     private Control _overlay = null!;
     private VBoxContainer _skills = null!;
     private Label _points = null!, _feedback = null!;
-    private readonly Label[] _stats = new Label[7], _derived = new Label[22];
+    private readonly Label[] _stats = new Label[7], _derived = new Label[NetworkConstants.CharacterStatCount];
     private readonly Button[] _plus = new Button[7], _minus = new Button[7];
     private Button _apply = null!, _cancel = null!;
     private readonly int[] _draft = new int[7];
@@ -36,7 +36,7 @@ public partial class ProgressionPresentation : CanvasLayer
         "Дальняя атака и оружие, скорость каста, точность. Вторичный вклад в атаки и скорость атак.",
         "Шанс критического удара и вторичный вклад в физическую и магическую атаку.",
         "Максимальный запас маны, регенерация маны и магическая защита."];
-    private static readonly string[] DerivedNames = ["Ближняя атака","Дальняя атака","Магическая атака","Ближнее оружие","Дальнее оружие","Физ. защита","Маг. защита","Макс. HP","Макс. мана","Восстановление HP*","Реген маны /с","Лечебные предметы","Предметы маны","Скорость атак","Скорость каста","Шанс крита","Блок урона","Точность","Уклонение","Критический урон","Прочность блока","Сокращение перезарядок"];
+    private static readonly string[] DerivedNames = ["Ближняя атака","Дальняя атака","Магическая атака","Ближнее оружие","Дальнее оружие","Физ. защита","Маг. защита","Макс. HP","Макс. мана","Реген HP /с","Реген маны /с","Лечебные предметы","Предметы маны","Скорость атак","Скорость каста","Шанс крита","Блок урона","Точность","Уклонение","Критический урон","Прочность блока","Сокращение перезарядок","Макс. выносливость","Реген выносливости /с"];
     public void Initialize(NetworkClient network)
     {
         _network = network; Layer = 20;
@@ -65,7 +65,7 @@ public partial class ProgressionPresentation : CanvasLayer
             _minus[i] = GameUi.Button("−",()=>Change(index,-1)); _minus[i].CustomMinimumSize = new(34,34); row.AddChild(_minus[i]);
             _plus[i] = GameUi.Button("+",()=>Change(index,1)); _plus[i].CustomMinimumSize = new(34,34); row.AddChild(_plus[i]);
         }
-        var hint = GameUi.Text("Подсказки — при наведении на стат.\n\nЧерновик учитывает экипировку.\nОчки тратятся только по «Применить».\n\n* Пассивный реген HP пока не работает.",14);
+        var hint = GameUi.Text("Подсказки — при наведении на стат.\n\nЧерновик учитывает экипировку.\nОчки тратятся только по «Применить».",14);
         hint.AutowrapMode = TextServer.AutowrapMode.WordSmart; primary.AddChild(hint);
         var details = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill }; columns.AddChild(details);
         details.AddThemeConstantOverride("separation",2);

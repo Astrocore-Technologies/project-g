@@ -25,6 +25,7 @@ public sealed partial class ServerWorld
     {
         if(!_playersByConnection.TryGetValue(connection,out var player))return;
         Abilities?.FinishDeparture(player.EntityId);Inventory?.FlushWear(player.EntityId);
+        Echoes?.PrepareOwnerExit(player.EntityId);
     }
     private void ResetLogoutSession(int connection)
     {_logoutPending.Remove(connection);_logoutSequences.Remove(connection);_logoutResults.Remove(connection);}

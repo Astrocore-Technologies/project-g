@@ -13,7 +13,7 @@ public sealed class CombatOptions
     // Input freshness only: never changes attack power, interval or resource costs.
     public double ContinuousAttackLeaseSeconds { get; set; } = .75;
     public int MaxAbilityEffects { get; set; } = 128;
-    public int MaxCompensationMilliseconds { get; set; } = 100;
+    public int MaxCompensationMilliseconds { get; set; } = 0; // D124: compensation stays disabled pending a separate decision.
     public float MaxAbilityLifetimeSeconds { get; set; } = 10;
     public float ImpactSeconds { get; set; } = 0.15f;
     public double ManaRecoveryIntervalSeconds { get; set; } = 1; // coalesce durable updates.

@@ -3,6 +3,11 @@ namespace Content.Database;
 /// <summary>Opaque versioned documents: no gameplay, Godot or wire dependencies.</summary>
 public interface ICharacterDatabase
 {
+    Task<IReadOnlyDictionary<Guid,long>> LoadItemWearAsync(IReadOnlyList<Guid> items,CancellationToken token)
+        =>throw new NotSupportedException("Instance-bound item wear storage required.");
+    Task SaveCombatCheckpointAsync(IReadOnlyList<DatabaseSave> characters,IReadOnlyList<DatabaseWorldSave> worlds,
+        DatabaseSocialSave? social,IReadOnlyList<DatabaseItemWear> wear,CancellationToken token)
+        =>wear.Count==0?SaveRegionalCheckpointAsync(characters,worlds,social,token):throw new NotSupportedException("Atomic item wear storage required.");
     Task<DatabaseWorldSession> OpenWorldAsync(string key, string initial, CancellationToken token) => throw new NotSupportedException("World ownership is required.");
     Task SaveWithWorldAsync(IReadOnlyList<DatabaseSave> changes, DatabaseWorldSave? world, CancellationToken token) =>
         world is null ? SaveAsync(changes, token) : throw new NotSupportedException("Atomic world persistence is required.");
@@ -28,13 +33,15 @@ public abstract class DatabaseSession(Guid characterId, Guid ownerId, long revis
     public string Echoes { get; } = echoes;
     public string? Progression { get; init; }
     public IReadOnlyList<DatabaseEffectRow> Effects { get; init; } = [];
+    public IReadOnlyList<DatabaseEchoRow> OwnedEchoes { get; init; } = [];
     public IReadOnlyList<DatabaseDeathLogRow> DeathLogs {get;init;}=[];
     public string IssuedToken { get; } = issuedToken;
     public abstract ValueTask DisposeAsync();
 }
 public sealed record DatabaseSave(DatabaseSession Session, long ExpectedRevision, string State, string? Inventory,
     IReadOnlyList<Guid>? GroundClaims = null, string? Echoes = null, string? Progression = null, IReadOnlyList<Guid>? InventoryItems = null,
-    IReadOnlyList<DatabaseEffectRow>? Effects = null,IReadOnlyList<DatabaseDeathLogRow>? DeathLogs=null);
+    IReadOnlyList<DatabaseEffectRow>? Effects = null,IReadOnlyList<DatabaseDeathLogRow>? DeathLogs=null,
+    IReadOnlyList<DatabaseEchoRow>? OwnedEchoes=null,DatabaseEchoChanges? EchoChanges=null);
 public sealed class DatabaseInvalidIdentityException : Exception;
 public sealed class DatabaseCharacterInUseException : Exception;
 internal static class StorageBounds

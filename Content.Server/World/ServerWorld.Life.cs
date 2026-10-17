@@ -49,8 +49,9 @@ public sealed partial class ServerWorld
     }
     private void ActorRevived(NetworkEntityId id)
     {
+        Abilities?.ResumeAfterRevival(id);
         if(!_playersByEntity.ContainsKey(id)){ResumeResurrectedNpc(id);return;}
-        Abilities?.ResumeAfterRevival(id);Echoes?.Wake(id);
+        Echoes?.Wake(id);
         if(_pvp.TryGetValue(id,out var legal) && legal.Dead)
         {_pvp[id]=legal with {Dead=false};DirtyPvp(id);}
         MarkPersistent(id);

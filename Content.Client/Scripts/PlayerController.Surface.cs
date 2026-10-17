@@ -5,6 +5,23 @@ namespace ProjectG.Gameplay;
 
 public partial class PlayerController
 {
+    internal ProjectG.Combat.CombatAimBody? CombatAimBody {get;set;}
+
+    public bool TryCursorCombatPoint(out NumericsVector2 point,out float height,Vector2? screenPoint=null)
+    {
+        point=default;height=0;
+        var camera=GetViewport().GetCamera3D();if(camera is null)return false;
+        var mouse=screenPoint??GetViewport().GetMousePosition();var origin=camera.ProjectRayOrigin(mouse);var ray=camera.ProjectRayNormal(mouse);
+        var excluded=new Godot.Collections.Array<Rid>{GetRid()};
+        if(CombatAimBody is {} body && GodotObject.IsInstanceValid(body))excluded.Add(body.GetRid());
+        var query=PhysicsRayQueryParameters3D.Create(origin,origin+ray*500,1|ProjectG.Combat.CombatAimBody.Layer,excluded);
+        query.CollideWithAreas=true;
+        var result=GetWorld3D().DirectSpaceState.IntersectRay(query);
+        if(result.Count>0)
+        {var hit=result["position"].AsVector3();point=new(hit.X,hit.Z);height=hit.Y;return true;}
+        return TryCursorSurface(out point,out height,screenPoint);
+    }
+
     public bool TryCursorSurface(out NumericsVector2 point, out float height, Vector2? screenPoint = null)
     {
         point = default; height = 0;

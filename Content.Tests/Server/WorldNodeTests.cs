@@ -49,8 +49,10 @@ public sealed class WorldNodeTests
         var w=World(1,true);long now=100000;w.PvpClock=()=>now; var p=w.AddPlayer(42,new(1),Initial(w));
         w.TryQueueAttack(42,new(1,0,Vector2.UnitX)); w.Simulate(0.05f); Assert.Equal(0,w.CaptureCharacter(42).Progression!.WorldParticipation.PatrolHits);
         ProfessionTests.Step(w,40); Assert.Equal(0,w.CaptureCharacter(42).Progression!.WorldParticipation.PatrolHits);
-        w.TryQueueAttack(42,new(2,0,-Vector2.UnitX)); w.Simulate(0.05f); Assert.Equal(1,w.CaptureCharacter(42).Progression!.WorldParticipation.PatrolHits);
+        w.TryQueueAttack(42,new(2,0,-Vector2.UnitX)); w.Simulate(0.05f);
+        Content.Tests.Server.Combat.CombatTestSteps.Contact(w,p.EntityId);Assert.Equal(1,w.CaptureCharacter(42).Progression!.WorldParticipation.PatrolHits);
         Assert.Equal(WorldNodeOutcome.Busy,Command(w,p,1,WorldNodeAction.Patrol));
+        Content.Tests.Server.Combat.CombatTestSteps.FinishAction(w,p.EntityId);
         now+=30001;
         Assert.Equal(WorldNodeOutcome.Accepted,Command(w,p,2,WorldNodeAction.Patrol)); Assert.Equal((byte)2,w.PublicWorldNode().Consequences);
     }

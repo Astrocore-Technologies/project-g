@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://Scenes/Actors/Primitives/CapsuleFigure.tscn" id="1"]
+
+[node name="EchoFigure" instance=ExtResource("1")]
+BodyTint = Color(0.1, 0.8, 0.9, 1)
+PreviewArmed = true

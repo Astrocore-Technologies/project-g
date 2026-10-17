@@ -72,6 +72,7 @@ public sealed partial class InventorySimulation
         var receipt=new SavedEconomy{LastOperation=c.Operation,Coins=checked(wallet.Coins+quote.CoinChange),PayloadHash=EconomyHash(c),Effect=effect};receipt.Validate();
         // No mutation or RNG outcome is published until the enclosing atomic checkpoint commits.
         actor.Items=next;actor.Crafting=materials with {Materials=nextMaterials};actor.Economy=receipt;
+        IndexItems(id,actor);
         if(received is not null)_nextHandle++;
         combat.ApplyEquipment(id,profile);abilities.ApplyEquipment(id,resource);_dirty.Add(id);return effect;
     }

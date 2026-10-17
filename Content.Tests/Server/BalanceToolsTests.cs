@@ -12,6 +12,23 @@ namespace Content.Tests.Server;
 
 public sealed class BalanceToolsTests
 {
+    [Fact]public void EchoRefusalAuthoringIsExplicitValidatedAtomicAndUndoable()
+    {
+        var document=new BalanceDocument(ContentCatalogTests.DataPath);var path=document.Entries().Single(e=>e.Name=="echoes / test_guardian_echo").Path;
+        var original=document.Text;
+        Assert.Throws<ArgumentException>(()=>document.ConfigureEchoRefusal(path,5,null));Assert.Equal(original,document.Text);Assert.False(document.CanUndo);
+        Assert.Throws<ArgumentException>(()=>document.ConfigureEchoRefusal(path,4,Content.Server.Data.EchoRefusalActionReaction.FinishCurrent));Assert.Equal(original,document.Text);
+        document.ConfigureEchoRefusal(path,5,Content.Server.Data.EchoRefusalActionReaction.InterruptAsEnemy);
+        var echo=document.Catalog.Echoes["test_guardian_echo"];Assert.Equal((byte)5,echo.Stars);
+        Assert.Equal(Content.Server.Data.EchoRefusalActionReaction.InterruptAsEnemy,echo.RefusalDuringAction);
+        var page=EditorSchema.Pages(document).Single(p=>p.Key=="echo/test_guardian_echo");
+        Assert.DoesNotContain(EditorSchema.Fields(document,page),field=>field.Path.EndsWith("/stars"));
+        document.Undo();Assert.Equal(original,document.Text);Assert.False(document.Dirty);
+        document.Redo();Assert.Equal((byte)5,document.Catalog.Echoes["test_guardian_echo"].Stars);
+        document.ConfigureEchoRefusal(path,4,null);Assert.Null(document.Catalog.Echoes["test_guardian_echo"].RefusalDuringAction);
+        document.ConfigureEchoRefusal(path,null,null);Assert.Equal(original,document.Text);
+        Assert.Equal(original,new BalanceDocument(ContentCatalogTests.DataPath).Text);
+    }
     [Fact]
     public void DraftUndoAndSavePreserveUntouchedPrecisionAndDetectExternalEdit()
     {
@@ -79,7 +96,7 @@ public sealed class BalanceToolsTests
         if (profession == 2)
         {
             Assert.Equal(8, world.ProgressionState(player.EntityId, 0).Skills.Count(s => s.Slot > 0));
-            Assert.Equal(20, world.Abilities!.Loadout(player.EntityId, 0).Abilities.Single(a => a.Form == AbilityForm.Dash).Range);
+            Assert.Equal(3, world.Abilities!.Loadout(player.EntityId, 0).Abilities.Single(a => a.Form == AbilityForm.Dash).Range);
         }
     }
 

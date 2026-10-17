@@ -36,7 +36,7 @@ public sealed class SkillBalanceTests
         }
         Assert.Equal(11, document.ProfessionSkills(2).Count);
         Assert.Single(document.ProfessionSkills(1));
-        Assert.Equal(5, document.ProfessionSkills(0).Count);
+        Assert.Equal(6, document.ProfessionSkills(0).Count); // Includes the separately grouped manual Mira Signature.
         var thrust = document.ProfessionSkills(2).Single(e => e.Name.EndsWith("sword_thrust")).Path;
         var oldSweep = document.Catalog.SkillProgressions["sword_sweep"];
         document.SetSkillLevel(thrust, 2, 50, 1.7);

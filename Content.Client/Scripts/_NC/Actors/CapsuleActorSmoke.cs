@@ -52,7 +52,7 @@ public partial class CapsuleActorSmoke : Node3D
             figure.Apply(State(1,true)); figure._Process(.4);
             avatar.SwordAnimation.PredictBasic(1,V2.UnitY,1); avatar.SwordAnimation._Process(.05); figure._Process(.016);
             Check(figure.CurrentClip.StartsWith("basic"),"Capsule attack was not sampled");
-            var hit=new AttackEvent(new(1),1,2,V2.Zero,V2.UnitY,2,new(2),10,90,false);
+            var hit=new AttackEvent(new(1),1,2,V2.Zero,V2.UnitY,2,new(2),10,90,false,ExecutionId:1);
             avatar.SwordAnimation.ConfirmBasic(hit); avatar.SwordAnimation._Process(.12);
             var progress=avatar.SwordAnimation.ClipPosition; avatar.SwordAnimation.ConfirmBasic(hit);
             Check(avatar.SwordAnimation.ClipPosition==progress,"Duplicate restarted contact");
@@ -60,6 +60,25 @@ public partial class CapsuleActorSmoke : Node3D
             Check(!avatar.SwordAnimation.IsAnimating,"Attack recovery stuck");
             avatar.SwordAnimation.PredictBasic(2,V2.UnitY,1); avatar.SwordAnimation.RejectBasic(2); figure._Process(.2);
             Check(!avatar.SwordAnimation.IsAnimating && !figure.CurrentClip.StartsWith("basic"),"Rejected prediction stuck");
+            var aimed=new BasicActionState(new(1),900,3,3,Content.Shared.Combat.CombatActionPhase.Preparation,V2.Zero,V2.UnitY,0,2,Mathf.Pi/4,
+                .2,.1,.7,.2,1,true,Content.Shared.Combat.ActionCancelPermission.Parry,OriginHeightOffset:1,Thickness:.3f);
+            avatar.SwordAnimation.ApplyBasic(aimed);avatar.SwordAnimation._Process(.1);figure._Process(.2);
+            var weapon=figure.GetNode<Node3D>("Center/Pose/Weapon");var flat=weapon.Transform;
+            avatar.SwordAnimation.ApplyBasic(aimed with {Direction=new(0,.8f),DirectionY=.6f});
+            avatar.SwordAnimation._Process(.1);figure._Process(.2);
+            var tilt=new Basis(Vector3.Right,-Mathf.Asin(.6f));
+            var expected=new Transform3D(tilt*flat.Basis,tilt*flat.Origin);
+            Check(weapon.Transform.IsEqualApprox(expected),"Confirmed 3D pitch did not reach the capsule weapon pose");
+            figure._Process(.01);Check(weapon.Transform.IsEqualApprox(expected),"Attack pitch accumulated across render frames");
+            avatar.SwordAnimation.Stop();
+            avatar.SwordAnimation.ApplyBasic(aimed);avatar.SwordAnimation._Process(.1);figure._Process(.2);
+            Check(weapon.Transform.IsEqualApprox(flat),"Previous attack pitch leaked into the next basic");
+            avatar.SwordAnimation.Stop();
+            avatar.SwordAnimation.PredictAbility(900,22,V2.UnitY,.2);avatar.SwordAnimation._Process(.1);figure._Process(.2);
+            var flatSkill=weapon.Transform;avatar.SwordAnimation.Stop();
+            avatar.SwordAnimation.PredictAbility(901,22,new(0,.8f),.2,.6f);avatar.SwordAnimation._Process(.1);figure._Process(.2);
+            Check(weapon.Transform.IsEqualApprox(new Transform3D(tilt*flatSkill.Basis,tilt*flatSkill.Origin)),"Manual skill pitch did not reach its weapon pose");
+            avatar.SwordAnimation.Stop();
             ushort[] skills=[3,20,21,22,23,24,25,26,27,28,29,1,4];
             uint sequence=10;
             foreach(var skill in skills)
@@ -110,7 +129,20 @@ public partial class CapsuleActorSmoke : Node3D
             timeline._Process(.25); timeline.Area(new(new(3),3,106,V2.Zero,3,.1f,NpcAreaPhase.Impact));
             timeline._Process(.05); npc._Process(.016);
             Check(npc.CurrentClip=="boss_slam","NPC area impact");
-            timeline.SetAlive(false); timeline.Windup(windup with {Sequence=4,ServerTick=107}); npc._Process(1.3);
+            timeline.Facing(new(new(3),106,false,false,V2.UnitX,0,0,AvatarGesture.None,0,0));timeline._Process(.01);npc._Process(.1);
+            Check(Mathf.Abs(npc.Rotation.Y-Mathf.Pi/2)<.001,"NPC area ignored authoritative combat orientation");
+            var basic=new BasicActionState(new(3),100,4,107,Content.Shared.Combat.CombatActionPhase.Preparation,V2.Zero,V2.UnitY,0,2,1,
+                20,.1,.4,20,0,false,Content.Shared.Combat.ActionCancelPermission.None);
+            timeline.Basic(basic);timeline._Process(13);
+            Check(timeline.IsAnimating && timeline.ClipPosition<.35,"Confirmed slow NPC preparation was timed out");
+            timeline.Basic(basic with {Phase=Content.Shared.Combat.CombatActionPhase.Active,RemainingSeconds=.1});
+            timeline.Confirm(contact with {Sequence=4,ServerTick=107,ExecutionId=100});timeline._Process(.1);
+            Check(timeline.IsAnimating && timeline.ClipPosition>.5,"Confirmed NPC Active lost its duration");
+            timeline.Basic(basic with {Phase=Content.Shared.Combat.CombatActionPhase.Recovery,RemainingSeconds=.4});timeline._Process(.2);
+            Check(timeline.IsAnimating && timeline.ClipPosition<1,"NPC recovery used the old fixed contact timeout");
+            timeline.Basic(basic with {Phase=Content.Shared.Combat.CombatActionPhase.Finished,RemainingSeconds=0});
+            Check(!timeline.IsAnimating,"Finished NPC basic retained its pose");
+            timeline.SetAlive(false); timeline.Windup(windup with {Sequence=5,ServerTick=108}); npc._Process(1.3);
             Check(!timeline.IsAnimating && npc.CurrentClip=="dead_back","Dead NPC restarted windup");
             timeline.QueueFree(); npc.QueueFree(); await Frame();
             var preview=new UiModelPreview(); AddChild(preview); preview.SetVisual(ActorScenes.Load("TrainerFigure"));

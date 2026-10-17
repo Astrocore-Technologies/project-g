@@ -20,6 +20,9 @@ public sealed class DefenseSimulationTests
             Combat.Add(new(1),Vector2.Zero,CombatEntityKind.Player);
             Combat.Add(new(2),Vector2.UnitY,CombatEntityKind.Monster);
             Combat.Add(new(3),Vector2.UnitY,CombatEntityKind.Monster);
+            // These contact-math fixtures inject an instantaneous weapon, independently of NPC AI phases.
+            foreach(var id in new[]{new NetworkEntityId(1),new NetworkEntityId(2),new NetworkEntityId(3)})
+                Combat.Get(id).Weapon=Combat.Get(id).Weapon with {BasicAttack=null};
             // 30 pressure against the player's 30 strength costs exactly 10 on impact.
             Combat.Get(new(2)).Stats=Combat.Get(new(2)).Stats with {MeleeAttack=20,MeleeWeaponMultiplier=1};
             Combat.Get(new(3)).Stats=Combat.Get(new(3)).Stats with {MeleeAttack=20,MeleeWeaponMultiplier=1};
@@ -81,7 +84,7 @@ public sealed class DefenseSimulationTests
         var f=new Fixture(); f.Guard(1,DefenseAction.Parry);
         for(var i=0;i<steps;i++) f.Step(delta);
         Assert.Equal(100,f.State.Stamina,5);
-        f.Combat.SpendDodge(new(1)); Assert.Equal(80,f.State.Stamina);
+        f.Combat.SpendDodge(new(1),f.Combat.DodgeCostFor(new(1))); Assert.Equal(80,f.State.Stamina);
         for(var i=0;i<steps;i++) f.Step(delta);
         Assert.Equal(95,f.State.Stamina,4);
     }

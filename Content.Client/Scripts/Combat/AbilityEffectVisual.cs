@@ -14,6 +14,7 @@ public partial class AbilityEffectVisual : Node3D
     private float _opacity;
     private double _life;
     public Node3D? Caster { get; set; }
+    public System.Numerics.Vector2 AimFacing {get;set;}=System.Numerics.Vector2.UnitY;
     private bool _applied;
     private Vector3 _casterPosition;
 
@@ -31,6 +32,9 @@ public partial class AbilityEffectVisual : Node3D
                 Position+=new Vector3(state.Direction.X,0,state.Direction.Y)*length*.5f;
                 Rotation=new(0,Mathf.Atan2(state.Direction.X,state.Direction.Y),0);
             }
+            if(state.Form==AbilityForm.Melee)PlaceMelee(state);
+            if(state.Form==AbilityForm.GroundArea && state.GroundVolumeHeight>0)
+                Position=new(state.Position.X,state.Height+state.GroundVolumeHeight*.5f,state.Position.Y);
             return;
         }
         _applied=true;
@@ -38,13 +42,14 @@ public partial class AbilityEffectVisual : Node3D
         _casterPosition=new(state.Position.X,state.Height+1,state.Position.Y);
         _remaining = state.RemainingSeconds + 0.25;
         _life = _remaining;
-        Position = new(state.Position.X, state.Height + (state.Phase == AbilityPhase.Flying ? 1 : .12f), state.Position.Y);
+        Position = new(state.Position.X, state.Height + (state.Phase == AbilityPhase.Flying ? 0 : .12f), state.Position.Y);
         var projectile = state.Phase == AbilityPhase.Flying;
         var radius = Math.Max(0.08f, state.Radius);
         Rotation = Vector3.Zero;
         _mesh.Mesh = projectile
             ? new SphereMesh { Radius = radius, Height = radius * 2 }
-            : new CylinderMesh { TopRadius = radius, BottomRadius = radius, Height = 0.035f };
+            : new CylinderMesh { TopRadius = radius, BottomRadius = radius,
+                Height = state.Form==AbilityForm.GroundArea && state.GroundVolumeHeight>0 ? state.GroundVolumeHeight : .035f };
         if (state.Form == AbilityForm.Melee)
         {
             // The same public geometry drives aiming and confirmed melee telegraphs.
@@ -85,10 +90,25 @@ public partial class AbilityEffectVisual : Node3D
                 Position = new(state.Position.X,state.Height + style.Height,state.Position.Y);
             }
         }
+        if(state.Form==AbilityForm.GroundArea && state.GroundVolumeHeight>0)
+        {
+            Position=new(state.Position.X,state.Height+state.GroundVolumeHeight*.5f,state.Position.Y);
+            var color=_material.AlbedoColor;color.A=state.Phase==AbilityPhase.Impact ? .25f : .12f;_material.AlbedoColor=color;
+        }
         _opacity = _material.AlbedoColor.A;
         _mesh.Visible=state.Phase != AbilityPhase.Recovery;
+        if(state.Form==AbilityForm.Melee)PlaceMelee(state);
         _mesh.MaterialOverride = _material;
         _mesh.CastShadow = GeometryInstance3D.ShadowCastingSetting.Off;
+    }
+
+    private void PlaceMelee(AbilityEffectState state)
+    {
+        var forward=new Vector3(state.Direction.X,state.DirectionY,state.Direction.Y);
+        Position=new(state.Position.X,state.OriginHeight,state.Position.Y);
+        if(state.Area.Shape==AbilityAreaShape.Corridor)Position+=forward*(state.Area.Length*.5f);
+        var yaw=state.Direction==System.Numerics.Vector2.Zero?AimFacing:state.Direction;
+        Rotation=new(-Mathf.Asin(Math.Clamp(state.DirectionY,-1,1)),Mathf.Atan2(yaw.X,yaw.Y),0);
     }
 
     public override void _Process(double delta)

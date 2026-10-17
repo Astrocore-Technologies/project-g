@@ -227,6 +227,8 @@ public sealed class AbilitySimulationTests
             }
             World = new(Options.Create(new MovementOptions()), Options.Create(new InterestOptions()),
                 catalog: catalog, combat: Options.Create(options ?? new CombatOptions()), hitRoll: () => 0, criticalRoll: () => 1);
+            var target=World.Combat!.Get(World.TrainingTargetId);
+            World.Combat.ApplyEquipment(target.Id,(target.BaseDerivedStats with {HealthRecovery=0},target.Weapon,target.AttackInterval));
             Player = World.AddPlayer(42, new(1));
         }
         public bool Queue(uint seq, ushort id, Vector2 aim) => World.TryQueueAbility(42, new(seq, 0, id, aim), 0);

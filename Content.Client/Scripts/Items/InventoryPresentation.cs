@@ -32,7 +32,7 @@ public partial class InventoryPresentation : CanvasLayer
         var search=new LineEdit { PlaceholderText="Поиск по названию…",ClearButtonEnabled=true }; page.AddChild(search);
         search.TextChanged+=value=> { _search=value; Rebuild(); };
         var categories=new HBoxContainer(); page.AddChild(categories);
-        string[] names=["Все","Оружие","Броня","Материалы"];
+        string[] names=["Все","Оружие","Броня","Щиты","Материалы"];
         var categoryGroup=new ButtonGroup();
         for(var i=0;i<names.Length;i++) { var index=i; var button=GameUi.Button(names[i],()=> { _category=index; Rebuild(); }); button.ToggleMode=true; button.ButtonGroup=categoryGroup; button.ButtonPressed=i==0; if(UiAssets.Skin.TabSelected is {} selected) button.AddThemeStyleboxOverride("pressed",selected); button.AddThemeColorOverride("font_pressed_color",UiAssets.Skin.Ink); categories.AddChild(button); }
         _count=GameUi.Text("Экипировка",14); page.AddChild(_count);
@@ -60,7 +60,7 @@ public partial class InventoryPresentation : CanvasLayer
         foreach(var child in _grid.GetChildren()) { _grid.RemoveChild(child); child.QueueFree(); }
         _count.Text=$"Снаряжение: {state.Items.Count} / {NetworkConstants.MaxInventoryItems} · Материалы хранятся отдельно";
         if(!state.Items.Any(item=>item.Handle==_selected)) _selected=state.Items.Count>0?state.Items[0].Handle:0;
-        var visible=state.Items.Where(item=>item.Name.Contains(_search,StringComparison.OrdinalIgnoreCase) && (_category==0 || _category<3 && (int)item.Slot==_category)).ToArray();
+        var visible=state.Items.Where(item=>item.Name.Contains(_search,StringComparison.OrdinalIgnoreCase) && (_category==0 || _category<4 && (int)item.Slot==_category)).ToArray();
         foreach(var item in visible)
         {
             var cell=new VBoxContainer { SizeFlagsHorizontal=Control.SizeFlags.ExpandFill,CustomMinimumSize=new(68,104) }; _grid.AddChild(cell);
@@ -70,7 +70,7 @@ public partial class InventoryPresentation : CanvasLayer
             var label=GameUi.Text(item.Name,12); label.CustomMinimumSize=new(64,0); label.AutowrapMode=TextServer.AutowrapMode.WordSmart; cell.AddChild(label);
         }
         var materialCount=0;
-        if(_category is 0 or 3) foreach(var material in _materials.Materials??Array.Empty<MaterialAmount>())
+        if(_category is 0 or 4) foreach(var material in _materials.Materials??Array.Empty<MaterialAmount>())
         {
             var name=MaterialName(material.Id); if(!name.Contains(_search,StringComparison.OrdinalIgnoreCase)) continue; materialCount++;
             var cell=new VBoxContainer { SizeFlagsHorizontal=Control.SizeFlags.ExpandFill,CustomMinimumSize=new(68,104) }; _grid.AddChild(cell);
@@ -97,7 +97,10 @@ public partial class InventoryPresentation : CanvasLayer
         var item=Selected(); _equip.Disabled=_waiting || !_alive || item is null;
         if(item is not {} selected) { _name.Text="Выберите предмет"; _stats.Text=""; _condition.Text=""; _comparison.Text=""; _selectedIcon.Bind("equipment.unknown","Нет предмета"); return; }
         _name.Text=selected.Name; _selectedIcon.Bind(UiAssets.EquipmentKey(selected.Slot),selected.Name);
+        if(selected.Slot==EquipmentSlot.None)
+        {_stats.Text="Расходуемый предмет";_condition.Text="Восстановление Эхо — F3.";_comparison.Text="";_equip.Text="Расходуемый предмет";_equip.Disabled=true;return;}
         _stats.Text=$"Атака {selected.AttackBonus:+0.##;-0.##;0}\nЗащита {selected.DefenseBonus:+0.##;-0.##;0}\nЗдоровье {selected.HealthBonus:+0.##;-0.##;0}";
+        if(selected.Slot==EquipmentSlot.Offhand)_stats.Text+=$"\nВторая рука · щит\nПоглощение Block {selected.BlockAbsorptionBonus*100:+0.##;-0.##;0} п.п.";
         _equip.Text=selected.Equipped?"Снять":"Надеть"; _condition.Text="";
         var equipped=_state.Items.FirstOrDefault(other=>other.Equipped && other.Slot==selected.Slot);
         _comparison.Text=selected.Equipped?"Сейчас экипирован":equipped.Handle==0?"В этом слоте ничего не надето":$"По сравнению с: {equipped.Name}\nАтака {selected.AttackBonus-equipped.AttackBonus:+0.##;-0.##;0}  ·  Защита {selected.DefenseBonus-equipped.DefenseBonus:+0.##;-0.##;0}\nЗдоровье {selected.HealthBonus-equipped.HealthBonus:+0.##;-0.##;0}";
@@ -109,12 +112,13 @@ public partial class InventoryPresentation : CanvasLayer
     private void Condition(ItemConditionState state) { if(state.OwnerId!=_owner) return; _latestCondition=state; RefreshDetail(); }
     private void Request()
     {
-        if(!_alive || _waiting || Selected() is not {} item) return;
+        if(!_alive || _waiting || Selected() is not {} item || item.Slot==EquipmentSlot.None) return;
         if(++_sequence==0) _sequence++; _waiting=true; _sentAt=Time.GetTicksMsec()/1000d; _status.Text="Ожидание подтверждения…"; RefreshDetail();
         _network.SendInventory(new(_sequence,item.Equipped?InventoryAction.Unequip:InventoryAction.Equip,item.Handle));
     }
     public void Result(InventoryResult result)
-    { if(result.Sequence!=_sequence) return; _waiting=false; RefreshDetail(); _status.Text=result.Outcome==InventoryOutcome.Accepted?"Изменения сохранены":$"Действие отклонено: {result.Outcome}"; }
+    { if(result.Sequence!=_sequence) return; _waiting=false; RefreshDetail(); _status.Text=result.Outcome switch
+        {InventoryOutcome.Accepted=>"Изменения сохранены",InventoryOutcome.IncompatibleEquipment=>"Щит несовместим с оружием в обеих руках. Сначала снимите щит или оружие.",_=>$"Действие отклонено: {result.Outcome}"}; }
     public void PickupResult(PickupResult result) => _status.Text=result.Outcome switch
     {
         PickupOutcome.Accepted=>"Предмет подобран", PickupOutcome.Channeling=>"Подбор: стойте 5 секунд с активным PvP-тегом",

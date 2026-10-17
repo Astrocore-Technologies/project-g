@@ -67,7 +67,7 @@ public sealed class DeathLogStorageTests
         var store=new SqliteCharacterStore();await store.InitializeAsync(default);var initial=CharacterPersistenceTests.World().CreateInitialCharacter() with {Health=17};
         var session=await store.OpenAsync("",initial,default);var token=session.IssuedToken;await session.DisposeAsync();
         using(var connection=new SqliteConnection(new SqliteConnectionStringBuilder{DataSource=store.DatabasePath,Pooling=false}.ToString()))
-        {connection.Open();using var query=connection.CreateCommand();query.CommandText="DROP TABLE character_death_logs; DELETE FROM schema_version WHERE version=10";query.ExecuteNonQuery();}
+        {connection.Open();using var query=connection.CreateCommand();query.CommandText="DROP TABLE item_weapon_wear; DROP TABLE character_owned_echoes; DROP TABLE character_death_logs; DELETE FROM schema_version WHERE version>=10";query.ExecuteNonQuery();}
         await store.InitializeAsync(default);await store.InitializeAsync(default);
         await using var restored=await store.OpenAsync(token,initial,default);Assert.Equal(17,restored.State.Health);Assert.Empty(restored.State.DeathLogs!);
     }

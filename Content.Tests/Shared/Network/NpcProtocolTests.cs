@@ -11,9 +11,9 @@ public sealed class NpcProtocolTests
     [InlineData(NpcAreaPhase.Telegraph)] [InlineData(NpcAreaPhase.Impact)] [InlineData(NpcAreaPhase.Finished)]
     public void AreaRoundTripsAndRejectsTruncationTrailingEnumsAndNonFiniteData(NpcAreaPhase phase)
     {
-        var value = new NpcArea(new(1), 2, 3, Vector2.One, 2, phase == NpcAreaPhase.Finished ? 0 : 1, phase);
+        var value = new NpcArea(new(1), 2, 3, Vector2.One, 2, phase == NpcAreaPhase.Finished ? 0 : 1, phase,VolumeHeight:2);
         var bytes = NetworkProtocol.Write(value).CopyData();
-        Assert.Equal(39, bytes.Length);
+        Assert.Equal(43, bytes.Length);
         Assert.True(NetworkProtocol.TryReadNpcArea(new(bytes, 2, bytes.Length), out var parsed)); Assert.Equal(value, parsed);
         for (var end = 2; end < bytes.Length; end++) Assert.False(NetworkProtocol.TryReadNpcArea(new(bytes, 2, end), out _));
         var extra = new byte[bytes.Length + 1]; bytes.CopyTo(extra, 0);

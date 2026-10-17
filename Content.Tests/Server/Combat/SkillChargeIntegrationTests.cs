@@ -44,7 +44,7 @@ public sealed class SkillChargeIntegrationTests
         var f=new Fight(active:.2); f.Cdr(1); f.Use(1);
         Assert.Equal(0,f.Skill.CooldownSeconds); Assert.Equal(3,f.Skill.Charges);
         Assert.True(f.World.TryQueueAbility(42,new(2,0,1,Vector2.UnitX),0)); f.Step();
-        Assert.Equal(AbilityOutcome.Busy,f.Abilities.Results[f.Id].Outcome);
+        Assert.Equal(AbilityOutcome.Buffered,f.Abilities.Results[f.Id].Outcome);
         f.Step(5); f.Use(3); Assert.Equal(3,f.Skill.Charges);
     }
 

@@ -26,6 +26,14 @@ public sealed class InventoryProtocolTests
         Assert.Equal(state.EntityId, decoded.EntityId); Assert.Equal(state.ServerTick, decoded.ServerTick);
         Assert.Equal(item, Assert.Single(decoded.Items));
     }
+    [Fact]public void ConsumablesHaveNoEquipmentSlotAndCannotClaimEquipmentOrBonuses()
+    {
+        var seal=new InventoryEntry(42,"Печать восстановления",EquipmentSlot.None,false,0,0,0);
+        Assert.True(NetworkProtocol.TryReadInventoryState(Body(NetworkProtocol.Write(new InventoryState(new(1),1,[seal]))),out var state));
+        Assert.Equal(seal,Assert.Single(state.Items));
+        foreach(var bad in new[]{seal with {Equipped=true},seal with {HealthBonus=1},seal with {AttackBonus=1},seal with {DefenseBonus=1},seal with {BlockAbsorptionBonus=.1}})
+            Assert.Throws<ArgumentException>(()=>NetworkProtocol.Write(new InventoryState(new(1),0,[bad])));
+    }
     [Fact]
     public void EveryTruncationAndTrailingByteIsRejected()
     {
@@ -50,5 +58,20 @@ public sealed class InventoryProtocolTests
         var bytes = NetworkProtocol.Write(new InventoryState(new(1), 0, [])).CopyData(); bytes[^1] = 9;
         var reader = new NetDataReader(bytes); reader.GetUShort();
         Assert.False(NetworkProtocol.TryReadInventoryState(reader, out _));
+    }
+
+    [Fact]public void ShieldSlotBonusAndIncompatibilityAreBoundedWithoutRenumberingPreviousSlots()
+    {
+        Assert.Equal(1,(int)EquipmentSlot.Weapon);Assert.Equal(2,(int)EquipmentSlot.Armor);Assert.Equal(3,(int)EquipmentSlot.Offhand);
+        var shield=new InventoryEntry(1,"Щит",EquipmentSlot.Offhand,true,0,0,0,.2);
+        var writer=NetworkProtocol.Write(new InventoryState(new(1),42,[shield]));
+        Assert.True(NetworkProtocol.TryReadInventoryState(Body(writer),out var state));Assert.Equal(shield,Assert.Single(state.Items));
+        Assert.Throws<ArgumentException>(()=>NetworkProtocol.Write(new InventoryState(new(1),0,[shield with {BlockAbsorptionBonus=double.NaN}])));
+        var bytes=writer.CopyData();BitConverter.GetBytes(double.PositiveInfinity).CopyTo(bytes,bytes.Length-8);
+        Assert.False(NetworkProtocol.TryReadInventoryState(new(bytes,2,bytes.Length),out _));
+        var maximum=Enumerable.Range(1,NetworkConstants.MaxInventoryItems).Select(i=>shield with {Handle=(ulong)i,Name=new string('я',24),Equipped=false}).ToArray();
+        Assert.InRange(NetworkProtocol.Write(new InventoryState(new(1),0,maximum)).Length+NetworkProtocol.RegionEnvelopeBytes,1,NetworkConstants.MaxGamePacketBytes);
+        var rejected=new InventoryResult(1,42,InventoryOutcome.IncompatibleEquipment);
+        Assert.True(NetworkProtocol.TryReadInventoryResult(Body(NetworkProtocol.Write(rejected)),out var result));Assert.Equal(rejected,result);
     }
 }

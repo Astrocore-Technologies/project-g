@@ -47,9 +47,13 @@ public sealed class ContinuousAttackIntegrationTests
             { await Observe(100); client.Attack(++sequence,Vector2.UnitX,BasicAttackMode.UpdateContinuous); }
             await Poll(()=>client.Attacks.Count>=3);
             client.Attack(++sequence,Vector2.UnitX,BasicAttackMode.EndContinuous);
-            await Poll(()=>!world.Combat!.HasContinuousBasic(id)); var releasedAt=world.Tick;
+            await Poll(()=>world.Combat!.Get(id).LastSequence==sequence&&!world.Combat.HasContinuousBasic(id));
+            var releasedAt=world.Tick;
             await Observe(1800); var count=client.Attacks.Count;
-            Assert.All(client.Attacks,attack=>Assert.True(attack.ServerTick<=releasedAt,"Attack executed after the server consumed release"));
+            // Releasing the hold stops new swings; an already accepted swing keeps its contact phase.
+            Assert.All(client.Attacks,attack=>Assert.Contains(client.BasicActions,phase=>phase.ExecutionId==attack.ExecutionId&&
+                phase.Phase==Content.Shared.Combat.CombatActionPhase.Preparation&&phase.ServerTick<=releasedAt));
+            Assert.DoesNotContain(client.BasicActions,phase=>phase.Phase==Content.Shared.Combat.CombatActionPhase.Preparation&&phase.ServerTick>releasedAt);
             Assert.Equal(count,client.Attacks.Select(a=>a.ExecutionId).Distinct().Count());
             Assert.Equal(position,world.Combat!.Get(id).Position); Assert.Equal(mana,client.Loadouts[id].Mana);
             Assert.Equal(100,world.Combat.DefenseState(id,world.Tick).Stamina);

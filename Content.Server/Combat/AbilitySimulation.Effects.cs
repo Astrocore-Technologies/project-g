@@ -11,6 +11,7 @@ public sealed partial class AbilitySimulation
         {
             var active=application.Trigger==SkillEffectTrigger.Activated;
             if(active==hitTarget.IsValid) continue;
+            if(!active && ((hit.Tags&application.RequiredHitTags)!=application.RequiredHitTags || (hit.Tags&application.ForbiddenHitTags)!=0))continue;
             if(!active && (hit.Evaded || hit.Guard==GuardImpact.Parried ||
                 application.Trigger is SkillEffectTrigger.HealthDamage or SkillEffectTrigger.UnblockedHealthDamage && hit.Damage<=0 ||
                 application.Trigger==SkillEffectTrigger.UnblockedHealthDamage && hit.Guard==GuardImpact.Blocked)) continue;
@@ -26,10 +27,25 @@ public sealed partial class AbilitySimulation
                     _combat.ApplyEffect(execution.ActorId,target,application.EffectId!,power,execution.Id,application.AllowOtherPlayers,execution.ReleasedSource);break;
                 case SkillEffectOperation.Heal:
                     _combat.ResolveHealing(execution.ActorId,target,application.Power!,power,execution.Id,application.AllowOtherPlayers);break;
+                case SkillEffectOperation.SelfDamage:
+                    if(sourceAvailable)_combat.SelfDamage(execution.ActorId,
+                        Content.Server.Stats.StatMath.Multiply(application.Power!.Evaluate(sourceActor!.Stats,
+                            _calculator.WeaponPower(sourceActor.Weapon,sourceActor.Stats)),power),application.SelfDamageFamily!.Value);
+                    break;
                 case SkillEffectOperation.Resurrect:
                     _combat.ResolveResurrection(execution.ActorId,target,application.Power!,power,execution.Id,application.AllowOtherPlayers);break;
+                case SkillEffectOperation.CooldownReset:
+                    if(recipient.Health>0 && _combat.CanSupport(execution.ActorId,target,application.AllowOtherPlayers) &&
+                        ResetCooldown(target,_catalog.Abilities[application.ResetSkillId!].NetworkId))
+                        _combat.RecordJournal(execution.ActorId,target,Content.Shared.Combat.CombatJournalKind.CooldownReset,
+                            skill:_catalog.Abilities[application.ResetSkillId!].NetworkId);
+                    break;
                 case SkillEffectOperation.Control:
                     ApplySkillControl(execution,target,application.Control!);break;
+                case SkillEffectOperation.Threat:
+                    var threatStats=sourceAvailable?sourceActor!.Stats:execution.ReleasedSource!.Stats;
+                    var weaponPower=sourceAvailable?_calculator.WeaponPower(sourceActor!.Weapon,threatStats):execution.ReleasedSource!.WeaponPower;
+                    _combat.AddAuthoredThreat(execution.ActorId,target,Content.Server.Stats.StatMath.Multiply(application.Power!.Evaluate(threatStats,weaponPower),power));break;
                 case SkillEffectOperation.Cleanse:
                 case SkillEffectOperation.Dispel:
                     _combat.ResolveRemoval(execution.ActorId,target,application.Removal!,application.Operation==SkillEffectOperation.Cleanse,
@@ -49,22 +65,22 @@ public sealed partial class AbilitySimulation
         {
             case Content.Shared.Combat.CrowdControlKind.Knockup:
                 _combat.Knockup(target,control.DurationSeconds!.Value,control.Height!.Value,control.DownSeconds!.Value,
-                    source,definition,execution.Id,execution.ReleasedSource);break;
+                    source,definition,execution.Id,execution.ReleasedSource,control.Removal);break;
             case Content.Shared.Combat.CrowdControlKind.Knockback:
             case Content.Shared.Combat.CrowdControlKind.Pull:
                 var origin=control.Origin==ControlOrigin.Source ? sourcePosition : execution.Position;
                 if(control.Kind==Content.Shared.Combat.CrowdControlKind.Pull)
-                    _combat.Pull(target,origin,control.Distance!.Value,control.Speed!.Value,source,definition,execution.Id,execution.ReleasedSource);
+                    _combat.Pull(target,origin,control.Distance!.Value,control.Speed!.Value,source,definition,execution.Id,execution.ReleasedSource,control.Removal);
                 else
                 {
                     var offset=_combat.Get(target).Position-origin;
                     var direction=offset.LengthSquared()>.000001f ? System.Numerics.Vector2.Normalize(offset) : execution.Direction;
-                    _combat.Knockback(target,direction,control.Distance!.Value,control.Speed!.Value,source,definition,execution.Id,execution.ReleasedSource);
+                    _combat.Knockback(target,direction,control.Distance!.Value,control.Speed!.Value,source,definition,execution.Id,execution.ReleasedSource,control.Removal);
                 }
                 break;
             default:
                 _combat.ApplyStatusControl(source,target,definition,execution.Id,control.Kind,control.DurationSeconds!.Value,
-                    control.Strength ?? 1,execution.ReleasedSource);break;
+                    control.Strength ?? 1,execution.ReleasedSource,control.Removal);break;
         }
     }
 
@@ -79,8 +95,9 @@ public sealed partial class AbilitySimulation
 
     private void ImportPeriodicHits(uint tick)
     {
-        foreach(var effect in _combat.EffectEvents)
+        for(;_importedEffectEvents<_combat.EffectEvents.Count;_importedEffectEvents++)
         {
+            var effect=_combat.EffectEvents[_importedEffectEvents];
             if(effect.Kind!=CombatEffectEventKind.PeriodicDamage || effect.Amount<=0) continue;
             var source=_combat.ResolveSource(effect.Source);
             if(source.IsValid && _combat.TryGet(effect.Target,out var target))

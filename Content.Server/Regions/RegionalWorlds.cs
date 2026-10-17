@@ -56,7 +56,7 @@ public sealed class RegionalWorlds
     }
 
     public static RegionalWorlds Load(string path, IConfiguration configuration, ContentCatalog catalog,
-        Func<double>? hitRoll=null,Func<double>? criticalRoll=null)
+        Func<double>? hitRoll=null,Func<double>? criticalRoll=null,IEchoCombatPermissionSource? echoPermissions=null)
     {
         var definitions = JsonSerializer.Deserialize<Layout[]>(File.ReadAllText(path), new JsonSerializerOptions
         { PropertyNameCaseInsensitive = true, UnmappedMemberHandling = System.Text.Json.Serialization.JsonUnmappedMemberHandling.Disallow })
@@ -144,7 +144,7 @@ public sealed class RegionalWorlds
                     Options.Create(new GroundItemOptions { Enabled = true, PickupRange = Settings<GroundItemOptions>("GroundItems").Value.PickupRange }),
                 Settings<EchoOptions>("Echoes"), Settings<WorldStoryOptions>("WorldStory"), Settings<StarterZoneOptions>("StarterZone"),
                 definition.Crafting is { } crafting ? Options.Create(crafting) : Settings<CraftingOptions>("Crafting"), definition.Id, ids, node, starter,Settings<QuestOptions>("Quests"),pvp,placements.GetValueOrDefault(definition.Id),
-                criticalRoll:criticalRoll,hitRoll:hitRoll));
+                criticalRoll:criticalRoll,hitRoll:hitRoll,echoPermissions:echoPermissions));
         }
         var routes = new List<RegionBoundary>();
         foreach (var d in definitions)

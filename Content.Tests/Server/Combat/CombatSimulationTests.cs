@@ -77,7 +77,9 @@ public sealed class CombatSimulationTests
         Assert.Equal(health, fixture.Target.Health);
         Assert.Empty(fixture.Combat.Events);
         Assert.Single(fixture.Combat.Results);
-        Assert.Equal(AttackOutcome.Cooldown, fixture.Combat.Results[new(1)].Outcome);
+        Assert.Equal(AttackOutcome.Buffered, fixture.Combat.Results[new(1)].Outcome);
+        for(var i=0;i<4;i++)fixture.Step();
+        Assert.Equal(health,fixture.Target.Health);Assert.Equal(0,fixture.Combat.Inputs.WaitingCount);
         Assert.False(fixture.Combat.Queue(new(1), new(2, 0, Vector2.UnitY), fixture.Tick));
     }
 
@@ -96,14 +98,15 @@ public sealed class CombatSimulationTests
     }
 
     [Fact]
-    public void NearestTargetTieUsesStableIdAndOnlyOneTargetIsDamaged()
+    public void EveryIntersectedTargetIsDamagedInStableIdOrder()
     {
         var fixture = new Fixture();
         fixture.Combat.Add(new(3), fixture.Target.Position, CombatEntityKind.TrainingTarget);
         fixture.Spatial.Add(new(3), fixture.Target.Position);
         fixture.Attack(1, Vector2.UnitY);
-        Assert.Equal(new NetworkEntityId(2), Assert.Single(fixture.Combat.Events).TargetId);
-        Assert.Equal(fixture.Combat.Get(new(3)).Stats.MaxHealth, fixture.Combat.Get(new(3)).Health);
+        Assert.Equal(new[]{new NetworkEntityId(2),new NetworkEntityId(3)},fixture.Combat.Events.Select(e=>e.TargetId));
+        Assert.All(fixture.Combat.Events,e=>Assert.True(e.Damage>0));
+        Assert.Single(fixture.Combat.Events.Select(e=>e.ExecutionId).Distinct());
     }
 
     [Fact]
@@ -157,6 +160,7 @@ public sealed class CombatSimulationTests
         Assert.True(world.TryQueueAttack(42, new(1, 0, Vector2.UnitY)));
         var position = player.Position;
         world.Simulate(0.05f);
+        CombatTestSteps.Contact(world,player.EntityId);
         Assert.Equal(world.TrainingTargetId, Assert.Single(world.Combat!.Events).TargetId);
         Assert.Equal(position, player.Position);
     }
@@ -262,6 +266,9 @@ public sealed class CombatSimulationTests
         {
             var json = JsonNode.Parse(File.ReadAllText(ContentCatalogTests.DataPath))!;
             json["weapons"]![0]!["range"] = range;
+            // This fixture exercises the allowed instant basic profile and ingress/hit rules.
+            // Shipped phase timing and held-input parity are covered by BasicActionPhase/CombatTimeline tests.
+            json["weapons"]![0]!.AsObject().Remove("basicAttack");
             var catalog = ContentCatalog.Parse(Encoding.UTF8.GetBytes(json.ToJsonString()));
             var options = new NavigationOptions();
             if (wall) options.BlockedAreas.Add(new BlockedAreaOptions { X = 14, Z = 10, Width = 2, Height = 10 });
@@ -271,6 +278,8 @@ public sealed class CombatSimulationTests
             var targetPosition = wall ? new Vector2(1.5f, 0) : new Vector2(0, 1);
             Combat.Add(new(1), playerPosition, CombatEntityKind.Player);
             Combat.Add(new(2), targetPosition, CombatEntityKind.TrainingTarget);
+            // Damage/ingress isolation; common actor regeneration has its own scenarios.
+            Combat.ApplyEquipment(new(2),(Target.BaseDerivedStats with {HealthRecovery=0},Target.Weapon,Target.AttackInterval));
             Spatial.Add(new(1), playerPosition);
             Spatial.Add(new(2), targetPosition);
         }

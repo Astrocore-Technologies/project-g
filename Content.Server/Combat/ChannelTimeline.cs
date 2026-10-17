@@ -25,6 +25,9 @@ internal sealed class ChannelTimeline
     internal double NextEventAt=>Math.Min(_startedAt+_nextPulse*_definition.IntervalSeconds,
         _definition.MaximumSeconds is {} maximum?_startedAt+maximum:double.PositiveInfinity);
     internal double? Remaining=>_definition.MaximumSeconds is {} maximum?Math.Max(0,_startedAt+maximum-_paidUntil):null;
+    internal double FundedUntil(double mana,double stamina)=>_paidUntil+Math.Min(
+        _definition.ManaPerSecond>0 ? mana/_definition.ManaPerSecond : double.PositiveInfinity,
+        _definition.StaminaPerSecond>0 ? stamina/_definition.StaminaPerSecond : double.PositiveInfinity);
 
     internal ChannelAdvance Advance(double now,double mana,double stamina)
     {
@@ -43,7 +46,7 @@ internal sealed class ChannelTimeline
         if(!double.IsFinite(count) || count>int.MaxValue || count>ulong.MaxValue-_nextPulse)
             throw new InvalidOperationException("Channel cadence exceeds representable work for this simulation step.");
         _nextPulse+=(ulong)count;_paidUntil=through;
-        var starved=funded<desired;
+        var starved=Remaining is not <=0 && (funded<desired || manaLimit<=desired || staminaLimit<=desired);
         Finished=starved || Remaining is <=0;
         return new(funded,funded==manaLimit?mana:Math.Min(mana,StatMath.Multiply(funded,_definition.ManaPerSecond)),
             funded==staminaLimit?stamina:Math.Min(stamina,StatMath.Multiply(funded,_definition.StaminaPerSecond)),

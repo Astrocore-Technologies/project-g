@@ -3,17 +3,33 @@ using Content.Database;
 namespace Content.Server.Persistence;
 
 /// <summary>Domain validation stays on the server; Database stores bounded documents.</summary>
-public sealed class DatabaseCharacterStore(ICharacterDatabase database, RiverLandingMigration? migration = null) : IRegionalCharacterStore
+public sealed class DatabaseCharacterStore(ICharacterDatabase database, RiverLandingMigration? migration = null) : IRegionalCharacterStore,ICombatCheckpointStore
 {
     public async Task<WorldNodeSession> OpenWorldAsync(string key,SavedWorldNode initial,CancellationToken token)
     {
         var lease=await database.OpenWorldAsync(key,initial.Serialize(),token);
-        try { return new WorldSession(lease,SavedWorldNode.Deserialize(lease.State)); }
+        try
+        {
+            var state=SavedWorldNode.Deserialize(lease.State);
+            var ids=(state.Market?.Listings.Select(l=>l.Item.InstanceId)??[]).Concat(state.DeathLoot?.Select(l=>l.Item.InstanceId)??[]).ToArray();
+            if(ids.Length>0)
+            {
+                var wear=await database.LoadItemWearAsync(ids,token);
+                SavedItem Update(SavedItem item)=>ItemWearDocuments.Settle(ItemWearDocuments.Apply(item,wear.GetValueOrDefault(item.InstanceId)));
+                state=state with
+                {
+                    Market=state.Market is {} market?market with {Listings=market.Listings.Select(l=>l with {Item=Update(l.Item)}).ToArray()}:null,
+                    DeathLoot=state.DeathLoot?.Select(l=>l with {Item=Update(l.Item)}).ToArray()
+                };
+            }
+            return new WorldSession(lease,state);
+        }
         catch { await lease.DisposeAsync(); throw; }
     }
     private sealed class WorldSession(DatabaseWorldSession lease,SavedWorldNode state) : WorldNodeSession(lease.Revision,state)
     {
         internal DatabaseWorldSession Lease { get; }=lease;
+        internal IReadOnlyDictionary<Guid,long> KnownWear {get;set;}=WorldWear(state);
         public override ValueTask DisposeAsync() => Lease.DisposeAsync();
     }
     public async Task<SocialSession> OpenSocialAsync(CancellationToken token)
@@ -51,11 +67,15 @@ public sealed class DatabaseCharacterStore(ICharacterDatabase database, RiverLan
                 await database.SaveAsync([new(lease, lease.Revision, initial.Serialize(),
                     (initial.Inventory ?? SavedInventory.Empty).Serialize(), null,
                     (initial.Echoes ?? SavedEchoes.Empty).Serialize(), initial.Progression?.Serialize(),
-                    initial.Inventory?.Items.Select(item => item.InstanceId).ToArray() ?? [], [],[])], token);
+                    initial.Inventory?.Items.Select(item => item.InstanceId).ToArray() ?? [], [],[],[])], token);
                 return new Session(lease, initial) { Revision = checked(lease.Revision + 1) };
             }
-            var state = CharacterState.Deserialize(lease.State) with { Inventory = SavedInventory.Deserialize(lease.Inventory), Echoes = SavedEchoes.Deserialize(lease.Echoes), Progression = lease.Progression is null ? null : SavedProgression.Deserialize(lease.Progression), Effects = CombatEffectDocuments.Deserialize(lease.Effects),DeathLogs=DeathLogDocuments.Deserialize(lease.DeathLogs) };
+            var state = CharacterState.Deserialize(lease.State) with { Inventory = SavedInventory.Deserialize(lease.Inventory), Echoes = SavedEchoes.Deserialize(lease.Echoes), OwnedEchoes=EchoCombatDocuments.Deserialize(lease.OwnedEchoes), Progression = lease.Progression is null ? null : SavedProgression.Deserialize(lease.Progression), Effects = CombatEffectDocuments.Deserialize(lease.Effects),DeathLogs=DeathLogDocuments.Deserialize(lease.DeathLogs) };
+            EchoCombatDocuments.ValidateEffectTargets(state.OwnedEchoes!,state.Effects!);
             await database.EnsureInventoryOwnershipAsync(lease,state.Inventory.Items.Select(i=>i.InstanceId).ToArray(),token);
+            var wear=await database.LoadItemWearAsync(state.Inventory.Items.Select(i=>i.InstanceId).ToArray(),token);
+            state=state with {Inventory=state.Inventory with {Items=state.Inventory.Items.Select(item=>
+                ItemWearDocuments.Apply(item,wear.GetValueOrDefault(item.InstanceId))).ToArray()}};
             var migrated = migration?.Apply(state) ?? state;
             var session = new Session(lease, migrated);
             if (!ReferenceEquals(migrated, state))
@@ -72,11 +92,15 @@ public sealed class DatabaseCharacterStore(ICharacterDatabase database, RiverLan
     public Task SaveAsync(IReadOnlyList<CharacterSave> changes, CancellationToken token) => SaveWithWorldAsync(changes,null,token);
     public Task SaveWithWorldAsync(IReadOnlyList<CharacterSave> changes,WorldNodeSave? world,CancellationToken token)
     => SaveRegionalCheckpointAsync(changes,world is null ? [] : [world],null,token);
-    public async Task SaveRegionalCheckpointAsync(IReadOnlyList<CharacterSave> changes,IReadOnlyList<WorldNodeSave> worlds,SocialSave? social,CancellationToken token)
+    public Task SaveRegionalCheckpointAsync(IReadOnlyList<CharacterSave> changes,IReadOnlyList<WorldNodeSave> worlds,SocialSave? social,CancellationToken token)
+        =>SaveCombatCheckpointAsync(changes,worlds,social,[],token);
+    public async Task SaveCombatCheckpointAsync(IReadOnlyList<CharacterSave> changes,IReadOnlyList<WorldNodeSave> worlds,
+        SocialSave? social,IReadOnlyList<ItemWearChange> wear,CancellationToken token)
     {
         if (changes.Count > 64 || worlds.Count > Content.Server.Regions.RegionalWorlds.MaxRegions) throw new InvalidDataException("Regional checkpoint exceeds the prototype budget.");
         var writes = new DatabaseSave[changes.Count];
         List<(Session Session,ulong Ordinal)>? journalUpdates=null;
+        List<(Session Session,IReadOnlyList<DatabaseEchoRow> Rows)>? echoUpdates=null;
         for (var i = 0; i < writes.Length; i++)
         {
             var change = changes[i];
@@ -86,6 +110,18 @@ public sealed class DatabaseCharacterStore(ICharacterDatabase database, RiverLan
                     if (change.State.Inventory is null || !change.State.Inventory.Items.Any(item => item.InstanceId == instance && item.EquippedSlot == Content.Shared.Network.EquipmentSlot.None))
                         throw new InvalidDataException("Picked instance missing from inventory.");
             IReadOnlyList<DatabaseDeathLogRow>? journalRows=null;
+            DatabaseEchoChanges? echoChanges=null;
+            if(change.State.OwnedEchoes is {} roster)
+            {
+                var serialized=EchoCombatDocuments.Serialize(roster);
+                var previous=session.SavedEchoRows.ToDictionary(row=>row.InstanceId);var upserts=new List<DatabaseEchoRow>();
+                foreach(var row in serialized)
+                    if(!previous.Remove(row.InstanceId,out var old)||old!=row)upserts.Add(row);
+                if(upserts.Count>0||previous.Count>0)
+                {echoChanges=new(upserts,previous.Keys.ToArray());(echoUpdates??=[]).Add((session,serialized));}
+            }
+            if(change.State.OwnedEchoes is {} owned && change.State.Effects is {} allEffects)
+                EchoCombatDocuments.ValidateEffectTargets(owned,allEffects);
             if(change.State.DeathLogs is {} deaths)
             {
                 var ordinal=deaths.Count==0?0:deaths[^1].DeathId;
@@ -95,7 +131,7 @@ public sealed class DatabaseCharacterStore(ICharacterDatabase database, RiverLan
             }
             writes[i] = new(session.Lease, session.Revision, change.State.Serialize(), change.State.Inventory?.Serialize(), change.GroundClaims, change.State.Echoes?.Serialize(), change.State.Progression?.Serialize(),change.State.Inventory?.Items.Select(i=>i.InstanceId).ToArray(),
                 change.State.Effects is {} effects ? CombatEffectDocuments.Serialize(effects) : null,
-                journalRows);
+                journalRows,EchoChanges:echoChanges);
         }
         var worldWrites = new List<DatabaseWorldSave>(worlds.Count);
         foreach (var world in worlds)
@@ -109,16 +145,49 @@ public sealed class DatabaseCharacterStore(ICharacterDatabase database, RiverLan
             if (social.Session is not SocialLease owner) throw new ArgumentException("Foreign social session.");
             socialWrite = new(new(owner.Lease, owner.Revision, "{}", [new("social", "SocialCheckpoint", "Rows " + social.Rows.Count, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())], []), social.Rows);
         }
-        await database.SaveRegionalCheckpointAsync(writes,worldWrites,socialWrite,token);
+        var completeWear=await CompleteWearWrites(changes,worlds,wear,token);
+        if(completeWear.Count==0)await database.SaveRegionalCheckpointAsync(writes,worldWrites,socialWrite,token);
+        else await database.SaveCombatCheckpointAsync(writes,worldWrites,socialWrite,
+            completeWear.Select(w=>new DatabaseItemWear(w.ItemId,w.ExpectedTotal,w.Total)).ToArray(),token);
         // Ordinary movement/resource checkpoints do not serialize or rewrite 3000 historic entries.
         // Advance this cache only after the whole fenced transaction succeeds.
         if(journalUpdates is not null)foreach(var update in journalUpdates)update.Session.DeathLogOrdinal=update.Ordinal;
+        if(echoUpdates is not null)foreach(var update in echoUpdates)update.Session.SavedEchoRows=update.Rows;
+        foreach(var change in changes)if(change.State.Inventory is {} items)((Session)change.Session).KnownWear=InventoryWear(items);
+        foreach(var world in worlds)((WorldSession)world.Session).KnownWear=WorldWear(world.State);
     }
+    private async Task<IReadOnlyList<ItemWearChange>> CompleteWearWrites(IReadOnlyList<CharacterSave> changes,
+        IReadOnlyList<WorldNodeSave> worlds,IReadOnlyList<ItemWearChange> explicitWrites,CancellationToken token)
+    {
+        var included=explicitWrites.Select(w=>w.ItemId).ToHashSet();var candidates=new Dictionary<Guid,long>();
+        void Consider(Guid id,long total,IReadOnlyDictionary<Guid,long> known)
+        {if(total>known.GetValueOrDefault(id)&&!included.Contains(id))candidates[id]=Math.Max(candidates.GetValueOrDefault(id),total);}
+        foreach(var change in changes)
+            if(change.State.Inventory is {} inventory)
+                foreach(var item in inventory.Items)Consider(item.InstanceId,item.Condition?.AppliedWeaponWear??0,((Session)change.Session).KnownWear);
+        foreach(var world in worlds)
+            foreach(var (id,total) in WorldWear(world.State))Consider(id,total,((WorldSession)world.Session).KnownWear);
+        if(candidates.Count==0)return explicitWrites;
+        var result=new List<ItemWearChange>(explicitWrites);
+        foreach(var batch in candidates.Keys.Chunk(64))
+        {
+            var stored=await database.LoadItemWearAsync(batch,token);
+            foreach(var id in batch)
+                if(candidates[id]>stored.GetValueOrDefault(id))result.Add(new(id,stored.GetValueOrDefault(id),candidates[id]));
+        }
+        return result;
+    }
+    private static IReadOnlyDictionary<Guid,long> InventoryWear(SavedInventory inventory)=>inventory.Items
+        .ToDictionary(i=>i.InstanceId,i=>i.Condition?.AppliedWeaponWear??0);
+    private static IReadOnlyDictionary<Guid,long> WorldWear(SavedWorldNode state)=>(state.Market?.Listings.Select(l=>l.Item)??[])
+        .Concat(state.DeathLoot?.Select(l=>l.Item)??[]).ToDictionary(i=>i.InstanceId,i=>i.Condition?.AppliedWeaponWear??0);
     private sealed class Session(DatabaseSession lease, CharacterState state)
         : CharacterSession(lease.CharacterId, lease.OwnerId, lease.Revision, state, lease.IssuedToken)
     {
         internal DatabaseSession Lease { get; } = lease;
+        internal IReadOnlyDictionary<Guid,long> KnownWear {get;set;}=state.Inventory is {} inventory?InventoryWear(inventory):new Dictionary<Guid,long>();
         internal ulong DeathLogOrdinal {get;set;}=state.DeathLogs is {Count:>0} deaths?deaths[^1].DeathId:0;
+        internal IReadOnlyList<DatabaseEchoRow> SavedEchoRows {get;set;}=state.OwnedEchoes is {} roster ? EchoCombatDocuments.Serialize(roster) : [];
         public override ValueTask DisposeAsync() => Lease.DisposeAsync();
     }
 }

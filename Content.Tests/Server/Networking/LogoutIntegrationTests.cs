@@ -24,9 +24,12 @@ public sealed class LogoutIntegrationTests
     [Fact]public void LogoutIsEvaluatedAfterDamageAndRejectsOldOrDuplicateCommands()
     {
         var world=CharacterPersistenceTests.World();long now=100000;world.PvpClock=()=>now;world.AddPlayer(42,new(1),world.CreateInitialCharacter() with {X=-7,Z=2});
+        Assert.True(world.TryQueueAttack(42,new(1,world.Tick,Vector2.UnitY)));world.Simulate(.05f);
+        var actor=world.Combat!.Get(world.Players.Single().EntityId);
+        world.Simulate((float)(actor.Action!.PhaseEndsAt-world.Combat.Time-.025));
         Assert.False(world.TryQueueLogout(999,new(1)));Assert.False(world.TryQueueLogout(42,new(0)));
         Assert.True(world.TryQueueLogout(42,new(10)));Assert.False(world.TryQueueLogout(42,new(11)));
-        Assert.True(world.TryQueueAttack(42,new(1,world.Tick,Vector2.UnitY)));world.Simulate(.05f);
+        world.Simulate(.05f);
         Assert.Equal(LogoutOutcome.InCombat,world.LogoutResults[42].Outcome);
         world.ClearLogoutResults();Assert.False(world.TryQueueLogout(42,new(10)));
         now+=30001;Assert.True(world.TryQueueLogout(42,new(11)));world.Simulate(.05f);

@@ -4,7 +4,7 @@ public enum ProgressionOutcome : byte { Accepted, RateLimited, InvalidState, Bus
 // StatIndex: STR, AGI, VIT, INT, DEX, LUK, WIS (appended stable index). Zero slot removes a skill from the bar.
 public readonly record struct ProgressionCommand(uint Sequence, ProgressionAction Action, byte StatIndex, ushort SkillId, byte Slot, int[]? Allocation = null);
 // Owner-only display values in the order documented by CharacterStat. No balance formulas leave the server.
-public enum CharacterStat : byte { MeleeAttack, RangedAttack, MagicAttack, MeleeWeapon, RangedWeapon, PhysicalDefense, MagicDefense, MaxHealth, MaxMana, HealthRecovery, ManaRecovery, HealthItem, ManaItem, AttackSpeed, CastSpeed, CriticalChance, BlockDamage, Accuracy, Evasion, CriticalDamage, BlockStrength, CooldownReduction }
+public enum CharacterStat : byte { MeleeAttack, RangedAttack, MagicAttack, MeleeWeapon, RangedWeapon, PhysicalDefense, MagicDefense, MaxHealth, MaxMana, HealthRecovery, ManaRecovery, HealthItem, ManaItem, AttackSpeed, CastSpeed, CriticalChance, BlockDamage, Accuracy, Evasion, CriticalDamage, BlockStrength, CooldownReduction, MaxStamina, StaminaRecovery }
 public readonly record struct StatPreview(uint Sequence, uint ServerTick, double[] Current, double[] Projected);
 public readonly record struct ProgressionResult(uint Sequence, uint ServerTick, ProgressionOutcome Outcome);
 public readonly record struct SkillProgress(ushort Id, int Level, int Practice, int NextPractice, byte Slot, bool Learnable,bool IsPassive=false);

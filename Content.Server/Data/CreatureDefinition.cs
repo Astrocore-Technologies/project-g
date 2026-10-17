@@ -10,6 +10,9 @@ public sealed record CreatureDefinition
     public bool CanBeStunned { get; init; } = true;
     public ControlResistance ControlResistance { get; init; } = new();
     public required string Id { get; init; }
+    public required HurtboxDefinition Hurtbox { get; init; }
+    public MovementAvoidanceDefinition Avoidance {get;init;}=new();
+    public required ThreatDefinition Threat {get;init;}
     public required BaseStats Stats { get; init; }
     public DerivedStatModifiers Modifiers { get; init; } = new();
     public required double BaseHealth { get; init; }

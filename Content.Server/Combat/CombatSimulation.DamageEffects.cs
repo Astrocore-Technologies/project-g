@@ -59,9 +59,14 @@ public sealed partial class CombatSimulation
     /// <summary>Receives damage after Defense/Block. No hit/critical roll can occur in this stage.</summary>
     private double ApplyHealthDamage(CombatSourceId sourceIdentity,NetworkEntityId source,NetworkEntityId targetId,
         double mitigated,DamageOrigin origin,EffectDamageFamily family,bool critical=false,GuardImpact guard=GuardImpact.None,ushort skill=0,ulong weaponExecution=0,
-        ReleasedSourceSnapshot? releasedSource=null)
+        ReleasedSourceSnapshot? releasedSource=null,CombatHitTags hitTags=CombatHitTags.None,CombatSourceId? contributionCredit=null,bool createsThreat=true)
     {
         var target=_actors[targetId];
+        if(mitigated>0 && DodgeProtects(targetId,origin,family))
+        {
+            ReportHostileContact(source,targetId,sourceIdentity.Kind==CombatSourceKind.Echo?ContributionIdentity(sourceIdentity,contributionCredit??releasedSource?.ContributionCredit):null);RecordJournal(source,targetId,CombatJournalKind.Dodge,skill:skill);
+            ReportEffectEvent(new(default,sourceIdentity,targetId,CombatEffectEventKind.Dodge,mitigated));return 0;
+        }
         if(target.Health<=0 || !target.Active || DamageImmune(target,family)) return 0;
         _actors.TryGetValue(source,out var attacker);
         // Capture before death removes temporary effects. D041 permits reflection of a lethal hit.
@@ -70,15 +75,20 @@ public sealed partial class CombatSimulation
         var damage=Math.Min(target.Health,AbsorbShields(target,Math.Max(0,mitigated)));
         target.Health=Math.Max(0,target.Health-damage);
         if(damage<=0) return 0;
+        if(origin!=DamageOrigin.SelfDamage)RecordEncounterDamage(sourceIdentity,source,targetId,damage,
+            contributionCredit ?? releasedSource?.ContributionCredit,createsThreat);
         if(origin==DamageOrigin.Direct && weaponExecution!=0)WeaponHealthDamage?.Invoke(source,weaponExecution);
         var flags=(critical?CombatJournalFlags.Critical:0)|(family==EffectDamageFamily.Magical?CombatJournalFlags.Magical:0)|
             (guard==GuardImpact.Blocked?CombatJournalFlags.Blocked:0)|(guard==GuardImpact.GuardBroken?CombatJournalFlags.GuardBroken:0);
         RecordJournal(source,targetId,origin==DamageOrigin.Periodic?CombatJournalKind.PeriodicDamage:
             origin==DamageOrigin.Reflected?CombatJournalKind.ReflectedDamage:CombatJournalKind.Damage,damage,skill:skill,flags:flags,
-            unknownSource:!source.IsValid&&sourceIdentity.Kind!=CombatSourceKind.Environment);
-        if(origin!=DamageOrigin.SelfDamage) ReportHostileContact(source,targetId);
+            unknownSource:!source.IsValid&&sourceIdentity.Kind!=CombatSourceKind.Environment,hitTags:hitTags);
+        if(origin!=DamageOrigin.SelfDamage) ReportHostileContact(source,targetId,
+            sourceIdentity.Kind==CombatSourceKind.Echo?ContributionIdentity(sourceIdentity,contributionCredit??releasedSource?.ContributionCredit):null);
         // Preserve target-side legal attribution before NotifyDamage can complete a lethal death.
         if(attacker is null && releasedSource is not null)ReleasedDamageApplied?.Invoke(releasedSource,targetId,damage);
+        else if(attacker is null && origin!=DamageOrigin.SelfDamage)
+            DetachedDamageApplied?.Invoke(sourceIdentity,contributionCredit,targetId,damage);
         NotifyDamage(source,targetId,damage,direct:origin is DamageOrigin.Direct or DamageOrigin.SelfDamage,
             unknownSource:!source.IsValid&&sourceIdentity.Kind!=CombatSourceKind.Environment);
         _effectDirty.Add(targetId); _equipmentDirty.Add(targetId);

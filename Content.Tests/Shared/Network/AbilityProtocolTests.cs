@@ -77,7 +77,17 @@ public sealed class AbilityProtocolTests
         Assert.Throws<ArgumentException>(()=>NetworkProtocol.Write(new AbilityLoadout(new(1),1,1,1,[Profile with {RechargeInSeconds=3}])));
     }
 
-    private static AbilityProfile Profile => new(1, AbilityForm.Projectile, 10, 0.3f, 8, 0.5, 2, 5, 1,Charges:0,RechargeInSeconds:1,RechargeDuration:2);
+    private static AbilityProfile Profile => new(1, AbilityForm.Projectile, 10, 0.3f, 8, 0.5, 2, 5, 1,Charges:0,RechargeInSeconds:1,RechargeDuration:2,ProjectileLaunchHeight:1);
+
+    [Theory][InlineData(-1f)][InlineData(float.NaN)][InlineData(float.PositiveInfinity)][InlineData(129f)]
+    public void InvalidLaunchHeightIsRejectedBeforeWritingAndAfterReading(float height)
+    {
+        var loadout=new AbilityLoadout(new(1),2,40,55,[Profile]);
+        Assert.Throws<ArgumentException>(()=>NetworkProtocol.Write(loadout with {Abilities=[Profile with {ProjectileLaunchHeight=height}]}));
+        var bytes=NetworkProtocol.Write(loadout).CopyData();BitConverter.GetBytes(height).CopyTo(bytes,bytes.Length-4);
+        Assert.False(NetworkProtocol.TryReadAbilityLoadout(new(bytes,2,bytes.Length),out _));
+        Assert.Throws<ArgumentException>(()=>NetworkProtocol.Write(loadout with {Abilities=[Profile with {Form=AbilityForm.GroundArea}]}));
+    }
     private static AbilityEffectState Effect => new(1, new(2), 3, 4, 1, AbilityForm.Projectile,
         AbilityPhase.Flying, Vector2.Zero, Vector2.One, Vector2.UnitY, 0.3f, 8, 1);
     private static NetDataReader Body(NetDataWriter value) => new(value.CopyData(), 2, value.Length);

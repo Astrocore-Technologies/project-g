@@ -70,7 +70,7 @@ public sealed class StatCalculatorTests
         {
             MeleeAttack = -100, RangedAttack = -100, MagicAttack = -100,
             PhysicalDefense = -100, MagicDefense = -100, MaxHealth = -200,
-            MaxMana = -100, HealthRecovery = -2, ManaRecovery = -2,
+            MaxMana = -100, HealthRecovery = -2, ManaRecovery = -2, MaxStamina=-200, StaminaRecovery=-20,
             AttackSpeedMultiplier = -2, CastSpeedMultiplier = -2,
             HealthItemMultiplier = -2, ManaItemMultiplier = -2,
             MeleeWeaponMultiplier = -2, RangedWeaponMultiplier = -2, CriticalChance = -1, BlockDamage = -1, Accuracy = -1, Evasion = -1, CriticalDamage = -2, BlockStrength = -100, CooldownReduction=-1

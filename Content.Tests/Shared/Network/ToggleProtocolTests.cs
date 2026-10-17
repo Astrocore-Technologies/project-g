@@ -16,18 +16,25 @@ public sealed class ToggleProtocolTests
     [Fact]public void MaximumOwnerLoadoutWithToggleStateAndPoliciesFitsRegionalBudgetAndRejectsTruncation()
     {
         var profiles=Enumerable.Range(1,9).Select(i=>Profile with {Id=(ushort)i}).ToArray();
-        var bytes=NetworkProtocol.Write(new AbilityLoadout(new(1),1,4,140,profiles)).CopyData();Assert.Equal(35+9*125,bytes.Length);
+        var bytes=NetworkProtocol.Write(new AbilityLoadout(new(1),1,4,140,profiles)).CopyData();Assert.Equal(38+9*128,bytes.Length);
         Assert.True(bytes.Length+NetworkProtocol.RegionEnvelopeBytes<=NetworkConstants.MaxGamePacketBytes);
         Assert.True(NetworkProtocol.TryReadAbilityLoadout(Body(bytes),out var parsed));Assert.Equal(profiles,parsed.Abilities);
         for(var count=2;count<bytes.Length;count++)Assert.False(NetworkProtocol.TryReadAbilityLoadout(new(bytes,2,count),out _));
         Assert.False(NetworkProtocol.TryReadAbilityLoadout(Body([..bytes,0]),out _));
     }
 
-    [Theory][InlineData(0)][InlineData(1)][InlineData(2)]
-    public void InvalidToggleStateBooleanAndFlagsNeverReachPresentation(int field)
+    [Fact]public void PackedToggleMetadataPreservesEveryStateAndPolicyAndRejectsReservedState()
     {
-        var bytes=NetworkProtocol.Write(new AbilityLoadout(new(1),1,4,140,[Profile])).CopyData();bytes[bytes.Length-3+field]=255;
-        Assert.False(NetworkProtocol.TryReadAbilityLoadout(Body(bytes),out _));
+        for(var flags=0;flags<256;flags++)
+        {
+            var bytes=NetworkProtocol.Write(new AbilityLoadout(new(1),1,4,140,[Profile])).CopyData();bytes[^1]=(byte)flags;
+            var accepted=NetworkProtocol.TryReadAbilityLoadout(Body(bytes),out var parsed);
+            Assert.Equal((flags&3)!=3,accepted);
+            if(!accepted)continue;
+            var slot=Assert.Single(parsed.Abilities);
+            Assert.Equal((ToggleState)(flags&3),slot.ToggleState);Assert.Equal((flags&4)!=0,slot.ToggleOccupiesAction);
+            Assert.Equal((ToggleStopTriggers)(flags>>3),slot.ToggleStopOn);
+        }
     }
 
     [Fact]public void DesiredDeactivationHasAnExplicitBoundedIntentAndCannotBeForgedWithAnUnknownMode()
@@ -42,7 +49,7 @@ public sealed class ToggleProtocolTests
     [Fact]public void BackgroundSustainingHasItsOwnPublicPhaseAndCannotBeResurrectedByALatePose()
     {
         var state=new AbilityEffectState(1,new(2),3,4,5,AbilityForm.GroundArea,AbilityPhase.Sustaining,default,default,Vector2.UnitX,.5f,0,0);
-        var bytes=NetworkProtocol.Write(state).CopyData();Assert.Equal(92,bytes.Length);
+        var bytes=NetworkProtocol.Write(state).CopyData();Assert.Equal(96,bytes.Length);
         Assert.True(NetworkProtocol.TryReadAbilityEffectState(Body(bytes),out var parsed));Assert.Equal(state,parsed);
         var stream=new AbilityEffectStream();Assert.True(stream.Accept(state,true));Assert.True(stream.Accept(state with {ServerTick=5},false));
         Assert.True(stream.Accept(state with {ServerTick=6,Phase=AbilityPhase.Finished},true));Assert.False(stream.Accept(state with {ServerTick=7},false));

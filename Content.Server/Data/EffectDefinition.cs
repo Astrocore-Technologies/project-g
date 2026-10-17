@@ -11,6 +11,7 @@ public sealed record EffectDefinition
     public required double DurationSeconds { get; init; }
     public EffectDisposition Disposition { get; init; }
     public DerivedStatModifiers Modifiers { get; init; } = new();
+    public ControlResistance ControlResistance {get;init;}=new();
     public PeriodicEffectDefinition? Periodic { get; init; }
     public ShieldEffectDefinition? Shield { get; init; }
     public DamageProcDefinition? LifeSteal { get; init; }
@@ -38,6 +39,7 @@ public sealed record EffectDefinition
             AllowsUnarmedBlock && Disposition!=EffectDisposition.Beneficial)
             throw new ArgumentException($"effect {Id}: invalid duration, modifiers, stacks or removal policy");
         ValidateTags(Tags); ValidateTags(ImmuneTags); ValidateTags(RequiredEnvironmentTags); ValidateTags(ExcludedEnvironmentTags);
+        ArgumentNullException.ThrowIfNull(ControlResistance);ControlResistance.Validate();
         Periodic?.Validate(); Shield?.Validate(); LifeSteal?.Validate(); ManaSteal?.Validate(); Reflection?.Validate();
         if(Periodic is {Kind:PeriodicEffectKind.Damage} && Disposition!=EffectDisposition.Harmful ||
             Periodic is {Kind:PeriodicEffectKind.Healing} && Disposition!=EffectDisposition.Beneficial || Shield is not null && Disposition!=EffectDisposition.Beneficial)

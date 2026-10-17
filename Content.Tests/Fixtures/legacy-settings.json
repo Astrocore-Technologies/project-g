@@ -40,7 +40,7 @@
     "TargetZ": 3.0,
     "HalfAngleDegrees": 45.0,
     "MaxAbilityEffects": 128,
-    "MaxCompensationMilliseconds": 100,
+    "MaxCompensationMilliseconds": 0,
     "MaxAbilityLifetimeSeconds": 10,
     "ImpactSeconds": 0.15
   },

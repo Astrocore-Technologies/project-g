@@ -30,6 +30,7 @@ public sealed partial class ServerWorld
         Combat!.DamageOriginPermission=position=>!Rules.IsSafe(position); Combat.DamagePermission=PvpCanHit;Combat.DamageApplied=PvpDamage;Combat.PlayerAction=PvpActionStarted;
         Combat.CaptureReleasedPvp=CaptureProjectilePvp;Combat.ReleasedDamagePermission=ProjectileCanHit;
         Combat.ReleasedDamageApplied=ProjectileDamageFromRemovedSource;
+        Combat.DetachedDamageApplied=PersistentDamageFromRemovedSource;
         Inventory!.ActionStarted=id=>GroundItems!.CancelChannel(id,Tick);
         GroundItems!.Clock=()=>PvpClock();GroundItems.ChannelSeconds=Rules.PickupSeconds;
         GroundItems.CanChannel=id=>_playersByEntity.TryGetValue(id,out var p)&&!p.Motion.IsMoving&&!p.Motion.IsDashing&&!Combat.Get(id).IsCasting&&!Abilities!.HasActiveEffects(id)&&!Inventory!.IsTrading(id)&&_pvp.TryGetValue(id,out var state)&&state.CombatUntil>PvpClock();
@@ -48,18 +49,23 @@ public sealed partial class ServerWorld
         if(!Combat!.TryGet(target,out var victim)||victim.Health<=0||source==target)return false;
         if(!Combat.TryGet(source,out var actor))return CombatSimulation.IsHostileTarget(victim.Kind);
         if(actor.Health<=0)return false;
-        if(CombatSimulation.IsNpc(actor.Kind))return victim.Kind==CombatEntityKind.Player;
-        if(victim.Kind!=CombatEntityKind.Player)return CombatSimulation.IsHostileTarget(victim.Kind);
+        if(CombatSimulation.IsNpc(actor.Kind))return CombatSimulation.IsPlayerUnit(victim);
+        if(!CombatSimulation.IsPlayerUnit(victim))return CombatSimulation.IsHostileTarget(victim.Kind);
+        var sourceBody=actor;var targetBody=victim;
+        source=Combat.PrincipalActor(source);target=Combat.PrincipalActor(target);
+        if(source==target)return false;
         if(!_pvp.TryGetValue(source,out var attacker)||!_pvp.TryGetValue(target,out var defender))return false;
         if(Social?.SameParty(_pvpIdentities[source],_pvpIdentities[target])==true)return false;
         var now=PvpClock();
-        if(Rules.IsSafe(actor.Position)||Rules.IsSafe(victim.Position)||defender.ProtectionUntil>now)return false;
+        if(Rules.IsSafe(sourceBody.Position)||Rules.IsSafe(targetBody.Position)||
+            Rules.IsSafe(Combat.Get(source).Position)||Rules.IsSafe(Combat.Get(target).Position)||defender.ProtectionUntil>now)return false;
         if(defender.Mode!=PvpMode.Peaceful||defender.CombatUntil>now||defender.AggressorUntil>now)return true;
         if(attacker.Mode!=PvpMode.Criminal)return false;
         var owner=_pvpIdentities[target];return attacker.Episodes.Any(e=>e.Victim==owner&&e.Until>now)||attacker.Episodes.Count(e=>e.Until>now)<16;
     }
     private void PvpActionStarted(NetworkEntityId id)
     {
+        id=Combat!.PrincipalActor(id);
         if(!_pvp.TryGetValue(id,out var s))return;GroundItems!.CancelChannel(id,Tick);
         var now=PvpClock();var next=s with {ProtectionUntil=0};
         if(s.Mode==PvpMode.Criminal&&!Rules.IsSafe(Combat!.Get(id).Position))next=next with {CombatUntil=now+Rules.CombatSeconds*1000L};
@@ -67,6 +73,7 @@ public sealed partial class ServerWorld
     }
     private void PvpDamage(NetworkEntityId source,NetworkEntityId target,double damage)
     {
+        source=Combat!.PrincipalActor(source);target=Combat.PrincipalActor(target);
         if(!_pvp.ContainsKey(target))return;var now=PvpClock();GroundItems!.CancelChannel(target,Tick);
         if(source!=target && _pvp.TryGetValue(source,out var attacker))
         {
@@ -87,7 +94,7 @@ public sealed partial class ServerWorld
         if(!_playersByEntity.TryGetValue(target,out var player))return;
         if(_pvp.ContainsKey(target))_lethal.Add(target);
         player.Motion.Reset(player.Position,player.Position,player.Height,player.Height);_movingPlayers.Remove(player.ConnectionId);
-        Abilities!.StopDead(target);Inventory?.FlushWear(target);Echoes?.Wake(target);MarkPersistent(target);
+        Inventory?.FlushWear(target);Echoes?.Wake(target);MarkPersistent(target);
         // A same-tick resurrection must not erase the legal consequences of an actual death.
         if(_pvp.ContainsKey(target))SimulateDeaths();
     }

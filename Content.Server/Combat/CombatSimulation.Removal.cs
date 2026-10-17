@@ -22,9 +22,8 @@ public sealed partial class CombatSimulation
         if(cleanse)
             foreach(var kind in removal.Controls)
             {
-                var count=0;
-                foreach(var control in actor.Controls.Active) if(control.Key.Kind==kind && control.EndsAt>_time) count++;
-                if(count==0 || !RemoveControl(target,kind)) continue;
+                var count=RemoveControlInstances(target,kind,true,removal.ControlTags);
+                if(count==0) continue;
                 removed+=count;RecordJournal(source,target,CombatJournalKind.ControlRemoved,count,skill:skill,control:kind);
             }
         return removed;

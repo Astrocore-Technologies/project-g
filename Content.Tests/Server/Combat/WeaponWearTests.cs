@@ -68,6 +68,55 @@ public sealed class WeaponWearTests
         {for(var i=0;i<150 && !predicate();i++)Step();Assert.True(predicate());}
     }
 
+    [Fact]public void PhasedBasicKeepsItsWeaponUntilRecoveryAndSettlesOnlyOneWearDebit()
+    {
+        var f=new Fight(data:BasicActionPhaseTests.Document());var armed=f.Actor.Stats.MeleeAttack;
+        Assert.True(f.World.TryQueueAttack(42,new(1,0,Vector2.UnitY)));f.Step();Assert.Empty(f.Combat.Events);
+        f.Until(()=>f.Condition.PendingWear>0);
+        Assert.Equal(1,f.Condition.Current);Assert.Equal(1,f.Condition.PendingWear);Assert.Equal(1UL,f.Condition.Revision);
+        Assert.Equal(armed,f.Actor.Stats.MeleeAttack);Assert.NotNull(f.Actor.Action);
+        f.Until(()=>f.Actor.Action is null);
+        Assert.Equal(0,f.Condition.Current);Assert.Equal(0,f.Condition.PendingWear);Assert.Equal(2UL,f.Condition.Revision);
+        Assert.Equal("unarmed",f.Actor.Weapon.Id);Assert.Equal(armed-12,f.Actor.Stats.MeleeAttack);
+    }
+
+    [Fact]public void SimultaneousLethalBasicsBothWearTheirActualItemBeforeBothDeathDrops()
+    {
+        var world=PvpTests.World(Parse(BasicActionPhaseTests.Document()));world.DeathRoll=_=>0;
+        CharacterState Seed(float z)
+        {
+            var state=PvpTests.Initial(world,-5,z) with {Health=1};var item=Assert.Single(state.Inventory!.Items);
+            return state with {Inventory=state.Inventory with {Items=[item with {Condition=item.Condition! with {Current=1}}]}};
+        }
+        var firstSeed=Seed(-5);var secondSeed=Seed(-4);
+        var first=world.AddPlayer(42,new(1),firstSeed);var second=world.AddPlayer(43,new(2),secondSeed);
+        Assert.Equal(PvpOutcome.Accepted,PvpTests.Command(world,42,1,PvpMode.Criminal));
+        Assert.Equal(PvpOutcome.Accepted,PvpTests.Command(world,43,1,PvpMode.Criminal));
+        Assert.True(world.TryQueueAttack(42,new(1,world.Tick,Vector2.UnitY)));
+        Assert.True(world.TryQueueAttack(43,new(1,world.Tick,-Vector2.UnitY)));world.Simulate(.05f);
+        for(var i=0;i<20 && world.Combat!.Get(first.EntityId).Health>0;i++)world.Simulate(.05f);
+        Assert.Equal(0,world.Combat!.Get(first.EntityId).Health);Assert.Equal(0,world.Combat.Get(second.EntityId).Health);
+        Assert.Empty(world.CaptureCharacter(42).Inventory!.Items);Assert.Empty(world.CaptureCharacter(43).Inventory!.Items);
+        var loot=world.CaptureWorldNode().DeathLoot!;Assert.Equal(2,loot.Length);
+        foreach(var seed in new[]{firstSeed,secondSeed})
+        {
+            var original=Assert.Single(seed.Inventory!.Items);var dropped=Assert.Single(loot,l=>l.Item.InstanceId==original.InstanceId);
+            Assert.Equal(0,dropped.Item.Condition!.Current);Assert.Equal(0,dropped.Item.Condition.PendingWear);
+            Assert.Equal(original.Condition!.Revision+1,dropped.Item.Condition.Revision);
+        }
+    }
+
+    [Fact]public void LethalReflectionFinishesTheBasicWeaponReceiptOnlyOnce()
+    {
+        var data=Document();var phases=BasicActionPhaseTests.Document();
+        data["weapons"]![0]!["basicAttack"]=phases["weapons"]![0]!["basicAttack"]!.DeepClone();
+        var f=new Fight(data:data);f.Actor.Health=1;
+        Assert.True(f.Combat.ApplyEffect(default,f.World.TrainingTargetId,"wear_reflect"));
+        Assert.True(f.World.TryQueueAttack(42,new(1,0,Vector2.UnitY)));f.Step();f.Until(()=>f.Actor.Health<=0);
+        Assert.Null(f.Actor.Action);Assert.Equal(0,f.Condition.Current);Assert.Equal(0,f.Condition.PendingWear);Assert.Equal(2UL,f.Condition.Revision);
+        f.Step();Assert.Equal(2UL,f.Condition.Revision);
+    }
+
     [Fact]public void OneAreaExecutionWearsOnceAndKeepsWeaponBonusesUntilRecoveryCompletes()
     {
         var f=new Fight();var target=f.Combat.Get(f.World.TrainingTargetId);
@@ -87,6 +136,7 @@ public sealed class WeaponWearTests
         var f=new Fight(10,hitRoll:result=="evasion"?1:0);
         if(result is "parry" or "block" or "shield")
         {
+            f.Combat.DamagePermission=(_,target)=>target!=f.World.TrainingTargetId;
             var target=f.World.AddPlayer(43,new(2),f.World.CreateInitialCharacter() with
             {X=f.Player.Position.X,Z=f.Player.Position.Y+.8f,Inventory=new(){Items=[new(Guid.NewGuid(),"test_sword_item",EquipmentSlot.Weapon)]}});
             if(result=="shield")Assert.True(f.Combat.ApplyEffect(target.EntityId,target.EntityId,"wear_shield"));
@@ -98,8 +148,23 @@ public sealed class WeaponWearTests
             }
         }
         Assert.True(f.World.TryQueueAttack(42,new(1,0,result=="miss"?-Vector2.UnitY:Vector2.UnitY)));f.Step();
+        f.Until(()=>f.Combat.Events.Any(e=>e.AttackerId==f.Player.EntityId));
         var hit=Assert.Single(f.Combat.Events,e=>e.AttackerId==f.Player.EntityId);Assert.Equal(0,hit.Damage);
         Assert.Equal(10,f.Condition.Current);Assert.Equal(0,f.Condition.PendingWear);Assert.Equal(1UL,f.Condition.Revision);
+    }
+
+    [Fact]public void ARegularBasicDamagesMultipleBodiesButStagesAndSpendsWearOnlyOnce()
+    {
+        var f=new Fight(10);var dummy=f.Combat.Get(f.World.TrainingTargetId);
+        var other=f.World.AddPlayer(43,new(2),f.World.CreateInitialCharacter() with {X=dummy.Position.X+.3f,Z=dummy.Position.Y});
+        Assert.True(f.World.TryQueueAttack(42,new(1,0,Vector2.UnitY)));f.Step();
+        f.Until(()=>f.Combat.Events.Count(e=>e.AttackerId==f.Player.EntityId)==2);
+        var hits=f.Combat.Events.Where(e=>e.AttackerId==f.Player.EntityId).ToArray();
+        Assert.All(hits,h=>Assert.True(h.Damage>0));Assert.Contains(hits,h=>h.TargetId==other.EntityId);
+        Assert.Single(hits.Select(h=>h.ExecutionId).Distinct());
+        Assert.Equal(10,f.Condition.Current);Assert.Equal(1,f.Condition.PendingWear);Assert.Equal(1UL,f.Condition.Revision);
+        f.Until(()=>f.Actor.Action is null);
+        Assert.Equal(9,f.Condition.Current);Assert.Equal(0,f.Condition.PendingWear);Assert.Equal(2UL,f.Condition.Revision);
     }
 
     [Fact]public void DotAndHealthPriceDoNotWearWeaponsAndLethalReflectionDoesNotAddASecondWear()
@@ -109,6 +174,7 @@ public sealed class WeaponWearTests
         Assert.Equal(10,f.Condition.Current);Assert.True(f.Combat.PayHealth(f.Player.EntityId,1));Assert.Equal(10,f.Condition.Current);
         Assert.True(f.Combat.ApplyEffect(target,target,"wear_reflect"));f.Actor.Health=1;
         Assert.True(f.World.TryQueueAttack(42,new(1,f.World.Tick,Vector2.UnitY)));f.Step();
+        f.Until(()=>f.Actor.Health<=0);
         Assert.Equal(0,f.Actor.Health);Assert.Equal(9,f.Condition.Current);Assert.Equal(0,f.Condition.PendingWear);Assert.Equal(2UL,f.Condition.Revision);
     }
 
@@ -153,6 +219,7 @@ public sealed class WeaponWearTests
         Assert.Equal(PvpOutcome.Accepted,PvpTests.Command(world,42,1,PvpMode.Criminal));
         Assert.True(world.Combat!.ApplyEffect(target.EntityId,target.EntityId,"wear_reflect"));
         Assert.True(world.TryQueueAttack(42,new(1,world.Tick,Vector2.UnitY)));world.Simulate(.05f);
+        CombatTestSteps.Contact(world,attacker.EntityId);
         Assert.Equal(0,world.Combat.Get(attacker.EntityId).Health);Assert.Empty(world.CaptureCharacter(42).Inventory!.Items);
         var loot=Assert.Single(world.CaptureWorldNode().DeathLoot!,l=>l.Item.InstanceId==item.InstanceId);
         Assert.Equal(0,loot.Item.Condition!.Current);Assert.Equal(0,loot.Item.Condition.PendingWear);

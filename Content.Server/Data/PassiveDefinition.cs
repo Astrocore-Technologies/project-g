@@ -31,15 +31,17 @@ public sealed record PassiveDefinition
 {
     public PassiveConditions Conditions {get;init;}=new();
     public DerivedStatModifiers Modifiers {get;init;}=new();
+    public ControlResistance ControlResistance {get;init;}=new();
     public bool ScaleModifiersWithSkillLevel {get;init;}
     public bool AllowsPeriodicCriticals {get;init;}
     public bool AllowsUnarmedBlock {get;init;}
 
     internal void Validate(ContentCatalog catalog,string path)
     {
-        if(Conditions is null || Modifiers is null || !Modifiers.IsValid() ||
-            Modifiers.IsEmpty && !AllowsPeriodicCriticals && !AllowsUnarmedBlock)
+        if(Conditions is null || Modifiers is null || ControlResistance is null || !Modifiers.IsValid() ||
+            Modifiers.IsEmpty && ControlResistance.IsEmpty && !AllowsPeriodicCriticals && !AllowsUnarmedBlock)
             throw new ArgumentException($"{path}: missing or invalid passive operation.");
         Conditions.Validate(catalog,path+".conditions");
+        ControlResistance.Validate();
     }
 }

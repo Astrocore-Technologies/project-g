@@ -49,9 +49,10 @@ public sealed partial class ServerWorld
         Content.Server.WorldStory.WorldNodeDefinition? worldNodeDefinition = null,
         Content.Server.StarterZone.StarterZoneDefinition? starterZoneDefinition = null, IOptions<QuestOptions>? quests = null,
         Content.Server.Pvp.PvpDefinition? pvpDefinition = null, IReadOnlyDictionary<string,float[]>? scenePlacements = null,
-        Func<double>? hitRoll = null, Func<double>? criticalRoll = null)
+        Func<double>? hitRoll = null, Func<double>? criticalRoll = null,IEchoCombatPermissionSource? echoPermissions=null)
     {
         RegionOwnership.ValidateRegion(regionId);
+        ItemWear.Attach(ApplyEscrowWear);
         RegionId = regionId;
         _entityIds = entityIds ?? new RuntimeEntityAllocator();
         _movement = options.Value.ToSettings();
@@ -83,11 +84,16 @@ public sealed partial class ServerWorld
             Combat = new CombatSimulation(catalog, _spatial, Navigation, settings,
                 server?.Value.TickRate ?? NetworkConstants.ServerTickRate, _interest.CellSize, criticalRoll, hitRoll);
             Combat.CombatClock=()=>PvpClock()/1000d;
+            Combat.PrepareActions=PrepareCombatActions;Combat.PrepareMotion=PrepareCombatMotion;
+            Combat.MotionBoundary=NextCombatMotionBoundary;Combat.MotionFor=CurrentCombatMotion;
+            Combat.ResolveWorldContacts=ResolveNpcContacts;
+            Combat.FacingChanged=MarkPersistent;
             Combat.JournalVisibility=(observer,subject)=>Combat.TryGet(observer,out var a) && Combat.TryGet(subject,out var b) &&
                 Vector2.DistanceSquared(a.Position,b.Position)<=_interest.Radius*_interest.Radius;
-            Combat.Defeated+=PlayerDefeated;Combat.Revived+=ActorRevived;
-            Combat.SupportPermission=(source,target)=>Social is not null && _pvpIdentities.TryGetValue(source,out var author) &&
-                _pvpIdentities.TryGetValue(target,out var recipient) && Social.SameParty(author,recipient);
+            Combat.Revived+=ActorRevived;
+            Combat.CorpseExpired+=id=>Echoes?.OwnerCorpseRemoved(id);
+            Combat.SupportPermission=(source,target)=>Social is not null && _pvpIdentities.TryGetValue(Combat.PrincipalActor(source),out var author) &&
+                _pvpIdentities.TryGetValue(Combat.PrincipalActor(target),out var recipient) && Social.SameParty(author,recipient);
             var position = new Vector2(settings.TargetX, settings.TargetZ);
             if (!Navigation.IsOnSurface(new Vector3(position.X,settings.TargetHeight,position.Y)))
                 throw new ArgumentException("Training target must have a walkable configured position.");
@@ -96,20 +102,24 @@ public sealed partial class ServerWorld
                 catalog.Swordsman is { } sword && sword.RegionId == regionId ? sword.DummyDefinitionId : null, height: settings.TargetHeight);
             _spatial.Add(TrainingTargetId, position);
             Abilities = new AbilitySimulation(catalog, Combat, _spatial, Navigation, settings, _interest.CellSize, StartDash);
-            Abilities.StopForCast = StopForSwordCast;
+            Combat.Defeated+=PlayerDefeated;
+            Abilities.StopForCast = StopControlledMotion;
             Combat.StopForControl = StopControlledMotion;
             Combat.StartControlDash = StartControlledDash;
             Combat.FleeRequested=StartFleeRoute;
             Combat.InterruptRequested += id => { if(TryGetNpcActor(id,out var actor))actor.Interrupt(Tick,id); };
             Combat.CapabilityInterruptRequested+=(id,capability)=>
             {if(TryGetNpcActor(id,out var actor) && (actor.CurrentCapabilities&capability)!=0)actor.Interrupt(Tick,id);};
-            if (echoes?.Value.Enabled == true)
-                Echoes = new EchoSimulation(echoes.Value,Navigation,_movement,Combat,_spatial,id =>
-                { var owner = _playersByEntity[id]; return (owner.Position,Combat.Get(id).Health > 0,owner.Motion.IsMoving); });
             if (inventory?.Value.Enabled == true)
+            {
                 Inventory = new InventorySimulation(catalog, Combat, Abilities, id => _playersByEntity[id].BaseStats);
-            if(Inventory is not null) { Combat.WeaponUsable=Inventory.WeaponUsable; Combat.SwordEquipped=Inventory.HasEquippedSword;
-                Combat.BlockWeaponAvailable=Inventory.HasFunctionalWeapon; }
+                Inventory.UseWearLedger(ItemWear);
+            }
+            if (echoes?.Value.Enabled == true)
+                Echoes = new EchoSimulation(echoes.Value,catalog,Navigation,_movement,Combat,Abilities,_spatial,()=>PvpClock(),Inventory,echoPermissions);
+            if(Inventory is not null) { Combat.WeaponUsable=Inventory.WeaponUsable;
+                Combat.SwordEquipped=id=>_playersByEntity.ContainsKey(id)?Inventory.HasEquippedSword(id):Combat.Get(id).Weapon.IsSword;
+                Combat.BlockWeaponAvailable=id=>_playersByEntity.ContainsKey(id)?Inventory.HasFunctionalWeapon(id):Combat.Get(id).Weapon.Id!=catalog.UnarmedWeapon.Id; }
             if (groundItems?.Value.Enabled == true)
                 GroundItems = new GroundItemSimulation(catalog, Inventory ?? throw new ArgumentException("Pickup requires inventory."),
                     Combat, Navigation, groundItems.Value, _interest.CellSize);
@@ -121,7 +131,8 @@ public sealed partial class ServerWorld
                 var home = new Vector2(npcSettings.X, npcSettings.Z);
                 Combat.Add(id, home, CombatEntityKind.Monster, npcSettings.DefinitionId, height: npcSettings.Height);
                 _spatial.Add(id, home);
-                Npc = new NpcSimulation(id, Combat, _spatial, Navigation, _movement, npcSettings, _interest.CellSize);
+                Abilities.AddActor(id, catalog.Creatures[npcSettings.DefinitionId]);
+                Npc = new NpcSimulation(id, Combat, _spatial, Navigation, _movement, npcSettings, _interest.CellSize, abilities: Abilities);
             }
             if (boss?.Value is { Actor.Enabled: true } bossSettings)
             {
@@ -134,8 +145,9 @@ public sealed partial class ServerWorld
                 var home = new Vector2(actor.X, actor.Z);
                 Combat.Add(id, home, CombatEntityKind.Boss, actor.DefinitionId, height: actor.Height);
                 _spatial.Add(id, home);
+                Abilities.AddActor(id, definition);
                 Boss = new NpcSimulation(id, Combat, _spatial, Navigation, _movement, actor, _interest.CellSize,
-                    area, bossSettings, new StatCalculator(catalog.Balance));
+                    area, bossSettings, new StatCalculator(catalog.Balance), Abilities);
             }
         }
         InitializeWorldNode(worldStory?.Value,worldNodeDefinition ?? catalog?.WorldNode);
@@ -181,6 +193,8 @@ public sealed partial class ServerWorld
         var player = new ServerPlayer(connectionId, playerId, entityId,
             new NavigationMover(Navigation, _movement, _pathfinder, spawn, saved?.Surface?.Height ?? spawnHeight));
         player.BaseStats = saved?.Stats ?? _playerDefinition?.Stats ?? default;
+        player.RetainedEchoCombat=saved?.OwnedEchoes;
+        player.RetainedEchoEffects=saved?.Effects?.Where(effect=>effect.TargetEcho is not null).ToArray() ?? [];
         _playersByConnection.Add(connectionId, player);
         _playersByEntity.Add(entityId, player);
         _spatial.Add(entityId, spawn);
@@ -195,17 +209,19 @@ public sealed partial class ServerWorld
             if (saved is not null)
             {
                 var actor = Combat!.Get(entityId);
-                var previousStats=Combat.StatsAtSave(entityId,saved.Effects,saved.ActivePassiveModifiers);
-                if (saved.Health > previousStats.MaxHealth || saved.Mana>Math.Max(0,previousStats.MaxMana))
+                var playerEffects=saved.Effects?.Where(effect=>effect.TargetEcho is null).ToArray();
+                var previousStats=Combat.StatsAtSave(entityId,playerEffects,saved.ActivePassiveModifiers);
+                if (saved.Health > previousStats.MaxHealth || saved.Mana>Math.Max(0,previousStats.MaxMana) || saved.Defense?.Stamina>Math.Max(0,previousStats.MaxStamina))
                     throw new InvalidDataException("Saved resources exceed previous maximum; content migration is required.");
                 var offline = saved.OfflineSeconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
                 actor.Health=saved.Health;Combat.RestoreCombatPresence(entityId,saved.InCombatSeconds,offline);
-                Combat.RestoreEffects(entityId,saved.Effects,offline,loggingIn:restoringFromLogout,savedPhase:saved.CombatControl?.Phase ?? CombatControlPhase.None);
+                Combat.RestoreFacing(entityId,saved.Facing);
+                Combat.RestoreEffects(entityId,playerEffects,offline,loggingIn:restoringFromLogout,savedPhase:saved.CombatControl?.Phase ?? CombatControlPhase.None);
                 actor.Health = Math.Min(saved.Health,actor.Stats.MaxHealth);
                 Combat.RefreshHealthRecovery(entityId);
                 actor.ReadyAt = Combat.Time + Math.Max(0, saved.AttackCooldownSeconds - offline);
                 Abilities!.Restore(entityId, saved with {Mana=Math.Min(saved.Mana,Math.Max(0,actor.Stats.MaxMana))}, offline);
-                Combat.RestoreDefense(entityId,saved.Defense,offline);
+                Combat.RestoreDefense(entityId,saved.Defense is {} defense ? defense with {Stamina=Math.Min(defense.Stamina,Math.Max(0,actor.Stats.MaxStamina))} : null,offline);
                 Combat.RestoreControl(entityId,saved.CombatControl,offline,finishForcedMotion:restoringFromLogout);
             }
             AddPvp(entityId,saved?.Progression?.Pvp);
@@ -215,7 +231,8 @@ public sealed partial class ServerWorld
             if(saved?.DeathLogs is {Count:>0} logs && logs[^1].DeathId>Combat!.CaptureLife(entityId).DeathId)
                 throw new InvalidDataException("Death journal ordinal exceeds character life.");
             Inventory?.FlushWear(entityId); // In-progress actions do not resume on restore; settle their durable debit before publication.
-            Echoes?.Add(entityId,saved?.Echoes ?? SavedEchoes.Empty,saved?.OfflineSeconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()) ?? 0,AllocateEntityId);
+            Echoes?.Add(entityId,saved?.Echoes ?? SavedEchoes.Empty,saved?.OwnedEchoes,saved?.Effects,
+                saved?.SavedAtUnixMilliseconds??DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),AllocateEntityId,transfer:!restoringFromLogout);
         }
         catch { RemovePlayer(connectionId); throw; }
         return player;
@@ -238,6 +255,7 @@ public sealed partial class ServerWorld
             Progression = SavedProgression.Starter(definition,_progressionCatalog!),
             X = spawn.X, Z = spawn.Y, Surface = Navigation.SurfaceHash == 0 ? null : new(1, spawnHeight, Navigation.SurfaceHash), Health = stats.MaxHealth, Mana = Math.Max(0, stats.MaxMana),
             AttackCooldownSeconds = 0, Cooldowns = definition.AbilityIds.Select(id => new SavedCooldown(id, 0)).ToArray(),
+            Facing=new(1,0,1),
             SavedAtUnixMilliseconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
         };
     }
@@ -251,16 +269,18 @@ public sealed partial class ServerWorld
             RegionId = RegionId, ProfileId = _playerDefinition!.Id, Stats = player.BaseStats, WorldLayoutVersion = _worldLayoutVersion,
             Inventory = Inventory?.Capture(player.EntityId),
             Echoes = Echoes?.Capture(player.EntityId),
+            OwnedEchoes = Echoes?.CaptureOwned(player.EntityId)??player.RetainedEchoCombat,
             Progression = CaptureProgression(player.EntityId),
             X = player.Position.X, Z = player.Position.Y, Surface = Navigation.SurfaceHash == 0 ? null : new(1, player.Height, Navigation.SurfaceHash), Health = actor.Health,
             Mana = Abilities!.Mana(player.EntityId), Cooldowns = Abilities.CaptureCooldowns(player.EntityId),
             AttackCooldownSeconds = Math.Max(0, actor.ReadyAt - Combat.Time),
+            Facing=new(1,actor.Facing.X,actor.Facing.Y),
             InCombatSeconds=Combat.CombatRemaining(player.EntityId),
             Life=Combat.CaptureLife(player.EntityId),
             ActivePassiveModifiers=Combat.CapturePassiveModifiers(player.EntityId),
             Defense = Combat.CaptureDefense(player.EntityId),
             CombatControl = Combat.CaptureControl(player.EntityId),
-            Effects = Combat.CaptureEffects(player.EntityId),
+            Effects = Combat.CaptureEffects(player.EntityId).Concat(Echoes?.CaptureEffects(player.EntityId)??player.RetainedEchoEffects).ToArray(),
             DeathLogs=Combat.DeathLogs(player.EntityId),SessionJournal=includeSessionJournal?Combat.SessionJournal(player.EntityId):null,
             SavedAtUnixMilliseconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
         };
@@ -342,6 +362,8 @@ public sealed partial class ServerWorld
     public bool TryQueueAttack(int connectionId, AttackCommand command) =>
         _playersByConnection.TryGetValue(connectionId, out var player) &&
         Combat?.Queue(player.EntityId, command, Tick) == true;
+    public bool TryQueueBasicControl(int connectionId,BasicControlCommand command)=>
+        _playersByConnection.TryGetValue(connectionId,out var player) && Combat?.QueueBasicControl(player.EntityId,command,Tick)==true;
     public bool TryQueueDefense(int connectionId, DefenseCommand command) =>
         _playersByConnection.TryGetValue(connectionId,out var player) && Combat?.QueueDefense(player.EntityId,command,Tick)==true;
 
@@ -360,21 +382,26 @@ public sealed partial class ServerWorld
         _playersByConnection.TryGetValue(connectionId, out var player) && GroundItems?.Queue(player.EntityId, command, Tick) == true;
     public bool TryQueueEchoSignature(int connectionId, EchoSignatureCommand command) =>
         _playersByConnection.TryGetValue(connectionId,out var player) && Echoes?.Queue(player.EntityId,command,Tick) == true;
+    public bool TryQueueEchoRoster(int connectionId,EchoRosterRequest command)=>
+        _playersByConnection.TryGetValue(connectionId,out var player)&&player.Loaded&&Echoes?.QueueRoster(player.EntityId,command,Tick)==true;
+    public bool TryQueueEchoSummon(int connectionId,EchoSummonCommand command)=>
+        _playersByConnection.TryGetValue(connectionId,out var player)&&player.Loaded&&Echoes?.QueueSummon(player.EntityId,command,Tick)==true;
+    public bool TryQueueEchoRecall(int connectionId,EchoRecallCommand command)=>
+        _playersByConnection.TryGetValue(connectionId,out var player)&&player.Loaded&&Echoes?.QueueRecall(player.EntityId,command,Tick)==true;
+    public bool TryQueueEchoSummonControl(int connectionId,EchoSummonControlCommand command)=>
+        _playersByConnection.TryGetValue(connectionId,out var player)&&player.Loaded&&Echoes?.QueueSummonControl(player.EntityId,command,Tick)==true;
+    public bool TryQueueEchoRestore(int connectionId,EchoRestoreCommand command)=>
+        _playersByConnection.TryGetValue(connectionId,out var player)&&player.Loaded&&Echoes?.QueueRestore(player.EntityId,command,Tick)==true;
+    public bool TryQueueEchoControl(int connectionId,EchoSignatureControlCommand command)=>
+        _playersByConnection.TryGetValue(connectionId,out var player)&&player.Loaded&&Echoes?.QueueControl(player.EntityId,command,Tick)==true;
     private NetworkEntityId AllocateEntityId() => _entityIds.Allocate();
     public IReadOnlyList<Guid> PickupClaims(int connectionId) =>
         _playersByConnection.TryGetValue(connectionId, out var player) ? GroundItems?.Claims(player.EntityId) ?? [] : [];
 
     private bool StartDash(NetworkEntityId id, Vector2 destination, float speed)
     {
-        if (!_playersByEntity.TryGetValue(id, out var player) || Combat?.Get(id).Health <= 0 ||
-            !StartSurfaceDash(player.Motion, destination, speed)) return false;
-        _movingPlayers.Add(player.ConnectionId);
-        return true;
-    }
-
-    private void StopForSwordCast(NetworkEntityId id)
-    {
-        if (_playersByEntity.TryGetValue(id, out var player)) player.Motion.Reset(player.Position, player.Position);
+        return Combat is not null && Combat.TryGet(id, out var actor) && actor.Health > 0 &&
+            StartControlledDash(id, destination, speed);
     }
 
     public void UpdateAbilityInterest(int connectionId, InterestView entities, AbilityInterestView effects) =>
@@ -400,42 +427,14 @@ public sealed partial class ServerWorld
         SimulateRespawns();
         SimulateSocial();
 
-        _stoppedPlayers.Clear();
-        // Idle players do not require movement work or spatial updates each tick.
-        foreach (var connectionId in _movingPlayers)
-        {
-            var player = _playersByConnection[connectionId];
-            _persistenceDirty.Add(connectionId);
-            if (Combat is not null && Combat.Get(player.EntityId).Health <= 0)
-                player.Motion.Reset(player.Position, player.Position);
-            var previousPosition=player.Position;
-            player.Motion.Step(fixedDeltaSeconds*(player.Motion.IsDashing ? 1 : Combat?.IsFleeing(player.EntityId)==true ?
-                Combat.FearMovement(player.EntityId) : Combat?.DefenseMovement(player.EntityId) ?? 1));
-            _spatial.Move(player.EntityId, player.Position);
-            Combat?.Move(player.EntityId, player.Position, player.Height);
-            VisitDiscoveries(player);
-            RevealStarterArea(player,player.Position!=previousPosition);
-            Echoes?.Wake(player.EntityId);
-            if (!player.Motion.IsMoving)
-                _stoppedPlayers.Add(connectionId);
-        }
-        foreach (var connectionId in _stoppedPlayers)
-            _movingPlayers.Remove(connectionId);
-        // Resolve queued attacks after movement, on current authoritative positions; no client-time rewind.
         AttachPendingNpcActors();
-        foreach(var actor in _npcActors.Values)actor.Move(fixedDeltaSeconds,Tick);
-        Combat?.Simulate(fixedDeltaSeconds, Tick);
+        Echoes?.PrepareFrame(Tick);
+        if(Combat is {} simulation)simulation.SimulateFrame(fixedDeltaSeconds,Tick,AdvanceCombatMotion);
+        else AdvanceCombatMotion(fixedDeltaSeconds);
         RecordSwordTraining();
-        Abilities?.Simulate(fixedDeltaSeconds, Tick);
         AttachPendingNpcActors();
-        foreach(var actor in _npcActors.Values)actor.Resolve(fixedDeltaSeconds,Tick);
         if (Echoes is { } echoes)
         {
-            foreach (var action in Combat!.Events)
-            {
-                if (action.TargetId.IsValid) { echoes.Alert(action.AttackerId,action.TargetId); echoes.Alert(action.TargetId,action.AttackerId); }
-            }
-            foreach (var hit in Abilities!.Hits) { echoes.Alert(hit.ActorId,hit.TargetId); echoes.Alert(hit.TargetId,hit.ActorId); }
             echoes.Simulate(fixedDeltaSeconds,Tick);
             foreach (var owner in echoes.DirtyOwners) MarkPersistent(owner);
         }
@@ -482,8 +481,31 @@ public sealed partial class ServerWorld
         SimulateLogout(); // Damage/control from this tick can still prevent a queued ordinary logout.
     }
 
+    private void AdvanceCombatMotion(double delta)
+    {
+        _stoppedPlayers.Clear();
+        // Moving players and NPC motion advance to each contact boundary.
+        foreach(var connectionId in _movingPlayers)
+        {
+            var player=_playersByConnection[connectionId];
+            _persistenceDirty.Add(connectionId);
+            if(Combat is not null && Combat.Get(player.EntityId).Health<=0)player.Motion.Reset(player.Position,player.Position);
+            var previousPosition=player.Position;
+            var ordinary=!player.Motion.IsDashing && Combat?.IsFleeing(player.EntityId)!=true;
+            player.Motion.Step((float)(delta*PlayerMovementMultiplier(player)));
+            _spatial.Move(player.EntityId,player.Position);Combat?.Move(player.EntityId,player.Position,player.Height);
+            if(ordinary)Combat?.FaceMovement(player.EntityId,player.Position-previousPosition);
+            VisitDiscoveries(player);RevealStarterArea(player,player.Position!=previousPosition);Echoes?.Wake(player.EntityId);
+            if(!player.Motion.IsMoving)_stoppedPlayers.Add(connectionId);
+        }
+        foreach(var connectionId in _stoppedPlayers)_movingPlayers.Remove(connectionId);
+        foreach(var actor in _npcActors.Values)actor.Move(delta,Tick);
+        Echoes?.Move(delta);
+    }
+
     private void MarkPersistent(NetworkEntityId id)
     {
+        if(Combat is not null)id=Combat.PrincipalActor(id);
         if (_playersByEntity.TryGetValue(id, out var player)) _persistenceDirty.Add(player.ConnectionId);
     }
 
@@ -535,7 +557,9 @@ public sealed partial class ServerWorld
             if (player is null)
             {
                 if (Echoes?.TryGet(id,out var echoActor) == true)
-                    view.States.Add(new(id,echoActor.Motion.Position,0,echoActor.Motion.Target, Height: echoActor.Motion.Height, TargetHeight: echoActor.Motion.TargetHeight));
+                    view.States.Add(ControlSnapshot(new(id,echoActor.Motion.Position,0,echoActor.Motion.Target,
+                        DashDestination:echoActor.Motion.DashDestination,DashSpeed:echoActor.Motion.DashSpeed,
+                        Height: echoActor.Motion.Height, TargetHeight: echoActor.Motion.TargetHeight,DashHeight:echoActor.Motion.DashHeight)));
                 else if (TryGetNpcActor(id,out var npcActor))
                     view.States.Add(ControlSnapshot(new(id, npcActor.Motion.Position, 0, npcActor.Motion.Target, DashDestination: npcActor.Motion.DashDestination, DashSpeed: npcActor.Motion.DashSpeed, Height: npcActor.Motion.Height, TargetHeight: npcActor.Motion.TargetHeight, DashHeight: npcActor.Motion.DashHeight)));
                 continue;

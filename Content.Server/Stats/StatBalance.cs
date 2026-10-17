@@ -14,6 +14,10 @@ public sealed record StatBalance
     public required StatWeights Mana { get; init; }
     public required StatWeights HealthRecovery { get; init; }
     public required StatWeights ManaRecovery { get; init; }
+    public required double BaseStamina { get; init; }
+    public required double BaseStaminaRecovery { get; init; }
+    public required StatWeights Stamina { get; init; }
+    public required StatWeights StaminaRecovery { get; init; }
     public required StatWeights HealthItem { get; init; }
     public required StatWeights ManaItem { get; init; }
     public required StatWeights AttackSpeed { get; init; }
@@ -33,11 +37,12 @@ public sealed record StatBalance
     {
         StatWeights?[] rules = [MeleeAttack, RangedAttack, MagicAttack, MeleeWeapon,
             RangedWeapon, PhysicalDefense, MagicDefense, Health, Mana, HealthRecovery,
-            ManaRecovery, HealthItem, ManaItem, AttackSpeed, CastSpeed, CriticalOdds, Accuracy, Evasion, CriticalDamage, BlockStrength];
+            ManaRecovery, Stamina, StaminaRecovery, HealthItem, ManaItem, AttackSpeed, CastSpeed, CriticalOdds, Accuracy, Evasion, CriticalDamage, BlockStrength];
         if (rules.Any(rule => rule is null || !rule.IsValid()) ||
             !double.IsFinite(BaseCriticalChance) || BaseCriticalChance <= 0 || BaseCriticalChance >= 1 ||
             !double.IsFinite(DefenseScale) || DefenseScale <= 0 || !double.IsFinite(BaseBlockDamage) ||
-            !double.IsFinite(BaseCriticalDamage) || BaseCriticalDamage < 0 || !double.IsFinite(BaseBlockStrength) || BaseBlockStrength < 0)
+            !double.IsFinite(BaseCriticalDamage) || BaseCriticalDamage < 0 || !double.IsFinite(BaseBlockStrength) || BaseBlockStrength < 0 ||
+            !double.IsFinite(BaseStamina) || BaseStamina < 0 || !double.IsFinite(BaseStaminaRecovery) || BaseStaminaRecovery < 0)
             throw new ArgumentException("Invalid balance: coefficients must be finite/non-negative, " +
                 "critical chance in (0, 1), defense scale positive.");
     }

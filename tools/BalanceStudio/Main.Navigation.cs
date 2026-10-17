@@ -6,7 +6,9 @@ namespace ProjectG.BalanceStudio;
 public partial class Main
 {
     private bool PageChanged(EditorPage page) => page.RootPath.Length > 0 &&
-        (EditorSchema.Fields(_document, page).Any(f => _document.IsChanged(f.Path)) || page.RootPath.StartsWith("abilities/") && _document.IsChanged(page.RootPath + "/progression"));
+        (EditorSchema.Fields(_document, page).Any(f => _document.IsChanged(f.Path)) ||
+            page.RootPath.StartsWith("abilities/") && _document.IsChanged(page.RootPath + "/progression") ||
+            page.RootPath.StartsWith("echoes/") && (_document.IsChanged(page.RootPath+"/stars")||_document.IsChanged(page.RootPath+"/refusalDuringAction")));
 
     private void RebuildTree()
     {

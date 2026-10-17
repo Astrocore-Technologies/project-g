@@ -17,10 +17,17 @@ public partial class CombatInputSmoke : Node
             var world=GD.Load<PackedScene>("res://Scenes/World.tscn").Instantiate<WorldController>();
             world.AutoConnect=false; AddChild(world);
             var network=world.GetNode<NetworkClient>("NetworkClient");
+            var phasedBasics=OS.GetCmdlineUserArgs().Contains("--phased-basics");
+            var basicPhases=new List<BasicActionState>();network.BasicActionReceived+=state=>basicPhases.Add(state);
             AbilityEffectState? casting=null; AbilityResult? cancelled=null; AbilityLoadout loadout=default;
             InventoryState inventory=default;CombatState health=default;CombatFeedback? healing=null;
             ProgressionState progression=default;network.ProgressionReceived+=state=>progression=state;
             AbilityResult? lastResult=null;AbilityEffectState? supportState=null;
+            AbilityEffectState? dodgeState=null;
+            AttackResult? bufferedBasic=null;
+            AttackResult? basicCancellation=null;
+            network.AttackResultReceived+=result=>{if(result.Outcome==AttackOutcome.Buffered)bufferedBasic=result;};
+            network.AttackResultReceived+=result=>{if(result.Outcome is AttackOutcome.Cancelled or AttackOutcome.CancelDenied)basicCancellation=result;};
             AbilityEffectState? channelState=null;
             AbilityEffectState? chargedState=null,automaticCharge=null;
             AbilityEffectState? heldState=null;
@@ -31,6 +38,8 @@ public partial class CombatInputSmoke : Node
             network.AbilityEffectReceived+=state=> { if(state.Phase==AbilityPhase.Telegraph) casting=state; };
             network.AbilityResultReceived+=result=> { lastResult=result;if(result.Outcome==AbilityOutcome.Cancelled) cancelled=result; };
             network.AbilityEffectReceived+=state=>{if(state.AbilityId==2)supportState=state;};
+            network.AbilityEffectReceived+=state=>{if(state.AbilityId==3&&state.Phase==AbilityPhase.Dash&&
+                (dodgeState is null || state.RemainingSeconds>dodgeState.Value.RemainingSeconds))dodgeState=state;};
             network.AbilityEffectReceived+=state=>{if(state.AbilityId==600)channelState=state;};
             network.AbilityEffectReceived+=state=>
             {
@@ -45,6 +54,8 @@ public partial class CombatInputSmoke : Node
             network.ConnectToServer(); await Wait(()=>network.LatestDefense is not null && _interval>0,"initial combat state");
             await Wait(()=>progression.Skills?.Any(s=>s.Id==610 && s.IsPassive && s.Level==1 && s.Slot==0)==true && loadout.Abilities is not null,"known passive arrives without an active slot");
             if(loadout.Abilities.Any(s=>s.Id==610))throw new Exception("Passive consumed an active profile slot.");
+            if(loadout.Abilities.Any(s=>s.Form==AbilityForm.Projectile && s.ProjectileLaunchHeight!=1))
+                throw new Exception("Projectile launch height did not arrive in the owner loadout.");
             await Delay(.5);
             KeyEvent(Key.Tab,true);
             await Wait(()=>network.LatestDefense is {Outcome:DefenseOutcome.NeedsWeapon,Blocking:false},"unarmed Block rejection");
@@ -56,6 +67,20 @@ public partial class CombatInputSmoke : Node
             var point=Aim(new(0,-1,-3)); Input.WarpMouse(point); await Delay(.1);
             Mouse(true,point); Mouse(false,point);
             await Wait(()=>_attacks.Count==1,"single ground tap"); await Delay(_interval+.25);
+            if(phasedBasics)
+            {
+                var firstBasic=_attacks[0];
+                if(firstBasic.DirectionY>=-.2f || Math.Abs(firstBasic.OriginHeight-player.PredictedFoot.Y-1)>.01 ||
+                    Math.Abs(firstBasic.HalfAngleRadians-Mathf.Pi/4)>.001 || Math.Abs(firstBasic.Thickness-.3f)>.001 ||
+                    health.Body!=new CombatBodyProfile(CombatBodyShape.Capsule,2,.4f))
+                    throw new Exception("A ground click lost its manual basic pitch, authored volume or public body profile.");
+                await Wait(()=>basicPhases.Any(s=>s.ExecutionId==firstBasic.ExecutionId&&s.Phase==Content.Shared.Combat.CombatActionPhase.Finished),"authoritative basic phase completion");
+                var preparation=basicPhases.First(s=>s.ExecutionId==firstBasic.ExecutionId&&s.Phase==Content.Shared.Combat.CombatActionPhase.Preparation);
+                var total=preparation.PreparationSeconds+preparation.ActiveSeconds+preparation.RecoverySeconds;
+                if(Math.Abs(preparation.PreparationSeconds/total-.2)>1e-8 || Math.Abs(preparation.ActiveSeconds/total-.1)>1e-8 || preparation.ServerTick>=firstBasic.ServerTick)
+                    throw new Exception("Basic hit arrived without its separate 20/10/70 preparation.");
+                GD.Print("BASIC_PHASES_CONFIRMED: manual 3D pitch, public capsule, authored volume/timings, preparation before contact, one execution identity and finish.");
+            }
             if(_attacks.Count!=1) throw new Exception("A tap resumed attacks after release.");
             KeyEvent(Key.Ctrl,true); Mouse(true,point,true);
             await Wait(()=>_attacks.Count==2,"manual chord"); await Delay(2*_interval+.25);
@@ -80,6 +105,8 @@ public partial class CombatInputSmoke : Node
             var mana=loadout.Mana;
             KeyEvent(Key.Q,true); await Delay(.1); KeyEvent(Key.Q,false);
             await Wait(()=>casting is not null,"server preparation phase");
+            if(casting is {Form:AbilityForm.Projectile} preparing && Math.Abs(preparing.OriginHeight-player.PredictedFoot.Y-1)>.01)
+                throw new Exception("Confirmed projectile preparation uses the wrong launch height.");
             KeyEvent(Key.Escape,true); KeyEvent(Key.Escape,false);
             await Wait(()=>cancelled?.Sequence==casting?.Sequence,"Esc cancellation acknowledged");
             await Delay(.65);
@@ -165,6 +192,30 @@ public partial class CombatInputSmoke : Node
             if(loadout.Abilities.First(p=>p.Id==605).ToggleState!=Content.Shared.Combat.ToggleState.Active)throw new Exception("Esc on the ordinary Cast also stopped background Toggle.");
             KeyEvent(Key.F,true);KeyEvent(Key.F,false);
             await Wait(()=>loadout.Abilities.First(p=>p.Id==605).ToggleState==Content.Shared.Combat.ToggleState.Off && loadout.Abilities.First(p=>p.Id==605).ReadyInSeconds>0,"second Toggle press stops only its own sustain");
+            await Wait(()=>loadout.Abilities.First(p=>p.Id==1).Charges>0,"a charge for the buffered basic scenario");
+            casting=null;bufferedBasic=null;var bufferedAttackCount=_attacks.Count;
+            KeyEvent(Key.Q,true);KeyEvent(Key.Q,false);await Wait(()=>casting is not null,"Cast before an early manual basic");
+            // Aim inside the 150 ms buffer using the remaining authoritative cast,
+            // including time already spent before the first publication at this TPS.
+            await Delay(Math.Max(0,casting!.Value.RemainingSeconds-.12));Mouse(true,point,true);Mouse(false,point,true);
+            await Wait(()=>bufferedBasic is not null,"manual basic enters the common buffer during an uncancellable Cast phase");
+            await Wait(()=>_attacks.Count==bufferedAttackCount+1,"the buffered basic executes at the legal boundary");
+            await Delay(_interval+.2);
+            if(_attacks.Count!=bufferedAttackCount+1)throw new Exception("The buffered manual basic repeated after its one execution.");
+            await Wait(()=>loadout.Abilities.First(p=>p.Id==1).Charges>0,"a charge for replacing a buffered skill");
+            casting=null;lastResult=null;KeyEvent(Key.Q,true);KeyEvent(Key.Q,false);
+            await Wait(()=>casting is not null,"the Cast that forbids skill cancellation");
+            var protectedCast=casting!.Value.Sequence;var oldChannel=channelState;
+            KeyEvent(Key.E,true);KeyEvent(Key.E,false);
+            await Wait(()=>lastResult?.Outcome==AbilityOutcome.Buffered,"first skill waits without cancelling the Cast");
+            var replacedSequence=lastResult!.Value.Sequence;
+            KeyEvent(Key.W,true);KeyEvent(Key.W,false);
+            await Wait(()=>lastResult?.Outcome==AbilityOutcome.Buffered&&lastResult?.Sequence!=replacedSequence,"another key replaces the single buffered skill");
+            var replacementSequence=lastResult!.Value.Sequence;
+            await Wait(()=>lastResult?.Sequence==replacementSequence&&lastResult?.Outcome==AbilityOutcome.Busy,"the replacement expires rather than cancelling the protected Cast");
+            if(channelState!=oldChannel || casting?.Sequence!=protectedCast)
+                throw new Exception("A replaced or expired buffered skill executed, or cancelled the protected Cast.");
+            await Delay(.35);
             // Reconnect fixture: a fresh presentation must advance beyond the retained body's acknowledged inputs.
             player.GetChildren().OfType<ProjectG.Combat.AbilityPresentation>().Single().ApplyLoadout(loadout with {LastInputSequence=5000});
             casting=null;cancelled=null;KeyEvent(Key.Q,true);await Delay(.1);KeyEvent(Key.Q,false);
@@ -174,13 +225,59 @@ public partial class CombatInputSmoke : Node
             KeyEvent(Key.R,true);await Delay(.1);KeyEvent(Key.R,false);
             await Wait(()=>lastResult?.Outcome==AbilityOutcome.NoMana,"channel resource exhaustion result");
             await Wait(()=>world.FindChildren("*","Label3D",true,false).OfType<Label3D>().Any(label=>label.Text.Contains("Поддержание прекращено: закончилась мана")),"channel resource exhaustion reason");
+            await Delay(.25);
+            var dodge=loadout.Abilities.Single(p=>p.Form==AbilityForm.Dash);
+            if(dodge.DodgeDurationSeconds!=.2 || dodge.DodgeProtectionSeconds!=.15 || dodge.StaminaCost!=20)
+                throw new Exception("The approved Dodge profile did not arrive in the owner HUD.");
+            var dodgeStamina=network.LatestDefense!.Value.Stamina;
+            point=Aim(new(1,-1,0));Input.WarpMouse(point);await Delay(.05);
+            KeyEvent(Key.Space,true);await Delay(.05);KeyEvent(Key.Space,false);
+            // Receipt admission can precede publication by part of the negotiated world tick.
+            var minimumPublishedDodge=.2-1d/network.ServerTickRate-.001;
+            await Wait(()=>dodgeState is {} state&&state.RemainingSeconds>=minimumPublishedDodge,"real Space input starts the approved Dodge");
+            if(dodgeState!.Value.RemainingSeconds<minimumPublishedDodge || dodgeState.Value.RemainingSeconds>.201f)
+                throw new Exception("A short cursor path changed the published Dodge duration.");
+            await Wait(()=>Math.Abs(network.LatestDefense!.Value.Stamina-(dodgeStamina-20))<.5,"Dodge pays its Stamina exactly once");
+            if(world.FindChildren("*","Label3D",true,false).OfType<Label3D>().Any(label=>label.Text.Contains("УВОРОТ")))
+                throw new Exception("Starting Dodge invented a confirmed avoided hit.");
+            GD.Print("DODGE_CONFIRMED: Space input, owner profile, fixed short-path duration, authoritative cost and no predicted defense success.");
+            await Delay(.3);
+            if(phasedBasics)
+            {
+                await Delay(_interval+.2);var attackCount=_attacks.Count;
+                var combat=player.GetChildren().OfType<ProjectG.Combat.CombatPresentation>().Single();
+                combat.ApplyBasicInput(new(health.EntityId,health.ServerTick,5000,7000));
+                point=Aim(new(0,-1,-3));Input.WarpMouse(point);await Delay(.05);
+                Mouse(true,point,true);Mouse(false,point,true);
+                await Wait(()=>basicPhases.Any(s=>s.Sequence==5001&&s.Phase==Content.Shared.Combat.CombatActionPhase.Preparation),"basic floor seeds the next click");
+                KeyEvent(Key.Escape,true);KeyEvent(Key.Escape,false);
+                await Wait(()=>basicCancellation is {Sequence:5001,Outcome:AttackOutcome.Cancelled},"Esc cancels the owned basic preparation");
+                await Delay(_interval+.2);if(_attacks.Count!=attackCount)throw new Exception("Cancelled basic preparation produced a contact.");
+                if(!player.TryCursorCombatPoint(out var clicked,out var clickedY,point))throw new Exception("Missing original manual aim point.");
+                var clickOrigin=player.PredictedFoot+System.Numerics.Vector3.UnitY*health.BasicOriginHeight;
+                var clickDirection=System.Numerics.Vector3.Normalize(new System.Numerics.Vector3(clicked.X,clickedY,clicked.Y)-clickOrigin);
+                Mouse(true,point,true);Mouse(false,point,true);await Delay(.02);
+                var turnPoint=Aim(new(3,-1,0));Input.WarpMouse(turnPoint);
+                Input.ParseInputEvent(new InputEventMouseMotion {Position=turnPoint,GlobalPosition=turnPoint});
+                await Wait(()=>_attacks.Any(a=>a.Sequence==5002),"manual basic contact after preparation aim update");
+                var turned=_attacks.First(a=>a.Sequence==5002);
+                var confirmedDirection=new System.Numerics.Vector3(turned.Direction.X,turned.DirectionY,turned.Direction.Y);
+                // The first published preparation pose may already include the turn.
+                // Compare to the actual click, not to that coalesced network observation.
+                if(System.Numerics.Vector3.Dot(clickDirection,confirmedDirection)>.8)
+                    throw new Exception($"Manual basic direction stayed at the click despite a preparation turn: click={clickDirection}, contact={confirmedDirection}.");
+                await Wait(()=>basicPhases.Any(s=>s.Sequence==5002&&s.Phase==Content.Shared.Combat.CombatActionPhase.Recovery),"basic recovery");
+                KeyEvent(Key.Escape,true);KeyEvent(Key.Escape,false);
+                await Wait(()=>basicCancellation is {Sequence:5002,Outcome:AttackOutcome.Cancelled},"Esc cancels owned basic recovery");
+                GD.Print("BASIC_CONTROL_CONFIRMED: owner floor 5000 -> click 5001, preparation/recovery Esc and manual preparation aim.");
+            }
             if(network.LatestDefense!.Value.InCombatRemaining!=0)throw new Exception("Empty attacks incorrectly started combat.");
             var navigation=world.GetChildren().OfType<ProjectG.UI.GameNavigation>().Single();navigation.ToggleMenu();await Delay(.1);
             var logout=world.FindChildren("LogoutButton","Button",true,false).OfType<Button>().Single();logout.EmitSignal(Button.SignalName.Pressed);
             await Wait(()=>network.LoggedOut,"menu logout committed and acknowledged");
             if(network.LastConnectionError.Length!=0)throw new Exception("Ordinary logout was presented as a connection error.");
             world.QueueFree(); await Delay(.2);
-            GD.Print("COMBAT_INPUT_OK: manual/held/release/aim, no approach, Parry, execution IDs, Cast/Esc, sequential charges/HUD, support area, private journal, Channel/Esc/rates/exhaustion, Charged, Hold, rapid and ordinary background Toggle, learned Passive without active slot via UDP/UI, empty actions stay out of combat, menu logout and cleanup.");
+            GD.Print("COMBAT_INPUT_OK: manual/held/release/aim, early manual basic buffered during Cast and executed once, buffered skill replacement and expiry without cancelling a protected Cast, no approach, Parry, execution IDs, Cast/Esc, sequential charges/HUD, support area, private journal, Channel/Esc/rates/exhaustion, Charged, Hold, rapid and ordinary background Toggle, learned Passive without active slot via UDP/UI, empty actions stay out of combat, menu logout and cleanup.");
             GetTree().Quit();
         }
         catch(Exception error) { GD.PushError(error.ToString()); GetTree().Quit(1); }

@@ -1,4 +1,5 @@
 using System.Numerics;
+using Content.Server.Stats;
 using Content.Shared.Combat;
 using Content.Shared.Network;
 
@@ -18,7 +19,6 @@ public sealed partial class CombatSimulation
     internal event Action<NetworkEntityId>? DirectlyDamaged;
     internal event Action<NetworkEntityId>? InterruptRequested;
     internal event Action<NetworkEntityId,Content.Shared.Combat.ActionCapability>? CapabilityInterruptRequested;
-    internal event Action<NetworkEntityId>? ActionAttempted;
     internal event Action<NetworkEntityId,Content.Shared.Combat.CombatActionCategory>? OrdinaryActionAccepted;
     internal event Action<NetworkEntityId>? SwordWindowsChanged;
     internal bool HasSword(NetworkEntityId id) => SwordEquipped?.Invoke(id) == true && WeaponUsable?.Invoke(id) != false;
@@ -28,9 +28,9 @@ public sealed partial class CombatSimulation
         (a.StationaryCast || a.StunnedUntil > _time || a.Control != CombatControlPhase.None || a.Controls.Has(CrowdControlKind.Root));
     internal void SetProfession(NetworkEntityId id, ushort profession)
     {
-        var actor=_actors[id];actor.ProfessionId=profession;actor.ProfessionAllowsUnarmedBlock=false;
+        var actor=_actors[id];actor.ProfessionId=profession;actor.ProfessionAllowsUnarmedBlock=false;actor.ProfessionDodge=null;
         foreach(var definition in _catalog.Professions)
-            if(definition.Id==profession){actor.ProfessionAllowsUnarmedBlock=definition.AllowsUnarmedBlock;break;}
+            if(definition.Id==profession){actor.ProfessionAllowsUnarmedBlock=definition.AllowsUnarmedBlock;actor.ProfessionDodge=definition.Dodge;break;}
         RefreshPassiveConditions(id);RefreshBlockPermission(id);
         if (!_swords.TryGetValue(id, out var s)) _swords.Add(id, s = new());
         s.Profession = _catalog.Swordsman?.ProfessionId == profession;
@@ -38,7 +38,6 @@ public sealed partial class CombatSimulation
         _defenseDirty.Add(id);
         SwordWindowsChanged?.Invoke(id);
     }
-    internal void AttemptAction(NetworkEntityId id) => ActionAttempted?.Invoke(id);
     internal bool HasRiposte(NetworkEntityId id) => HasSword(id) && _swords.TryGetValue(id, out var s) && s.RiposteUntil > _time;
     internal void ConsumeRiposte(NetworkEntityId id) { if (_swords.TryGetValue(id, out var s)) { s.RiposteUntil = 0; SwordWindowsChanged?.Invoke(id); } }
     internal double ConsumeFocus(NetworkEntityId id)
@@ -97,7 +96,7 @@ public sealed partial class CombatSimulation
     internal void RestoreStamina(NetworkEntityId id, double amount)
     {
         if (!_defense.TryGetValue(id, out var d)) return;
-        d.Stamina = Math.Min(_catalog.Defense.MaxStamina, d.Stamina + amount); _defenseDirty.Add(id);
+        d.Stamina = Math.Min(Math.Max(0,_actors[id].Stats.MaxStamina), StatMath.Add(d.Stamina,amount)); _defenseDirty.Add(id);
     }
-    internal double DodgeCostFor(NetworkEntityId id) => IsSwordsman(id) ? _catalog.Swordsman!.DashCost : DodgeCost;
+    internal double DodgeCostFor(NetworkEntityId id) => (_actors[id].ProfessionDodge??_actors[id].BaseDodge)?.StaminaCost??0;
 }

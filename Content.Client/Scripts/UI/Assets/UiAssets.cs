@@ -33,5 +33,6 @@ public static class UiAssets
     public static string SkillKey(ushort publicId) => $"skill.{publicId}";
     // Inventory currently has no definition ID. Do not use the instance handle or display name as an art ID.
     public static string EquipmentKey(Content.Shared.Network.EquipmentSlot slot) => slot switch
-    { Content.Shared.Network.EquipmentSlot.Weapon => "equipment.weapon", Content.Shared.Network.EquipmentSlot.Armor => "equipment.armor", _ => "equipment.unknown" };
+    { Content.Shared.Network.EquipmentSlot.Weapon => "equipment.weapon", Content.Shared.Network.EquipmentSlot.Armor => "equipment.armor",
+        Content.Shared.Network.EquipmentSlot.Offhand=>"icon.shield",Content.Shared.Network.EquipmentSlot.None=>"icon.star",_ => "equipment.unknown" };
 }

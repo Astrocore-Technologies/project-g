@@ -86,7 +86,8 @@ public sealed class QuestTests
         var active = world.CaptureCharacter(42);
         world.RemovePlayer(42); p = world.AddPlayer(42, new(1), active with { X = -7, Z = 7, Inventory = active.Inventory! with { Crafting = active.Inventory.Crafting! with { Materials = [] } } });
         var recipient = Npc(world, "Орен");
-        world.AddPlayer(43, new(2), initial with { X = -7, Z = 7 });
+        world.AddPlayer(43, new(2), initial with { X = -7, Z = 7,Inventory=initial.Inventory! with
+            {Items=initial.Inventory.Items.Select(i=>i with {InstanceId=Guid.NewGuid()}).ToArray()}});
         Assert.Equal(QuestOutcome.Unavailable, Do(world, 1, QuestAction.Deliver, recipient, 43));
         Assert.Equal(QuestOutcome.MissingMaterials, Do(world, 1, QuestAction.Deliver, recipient));
         Assert.Equal(QuestStatus.Active, world.QuestJournal(p.EntityId).Status);

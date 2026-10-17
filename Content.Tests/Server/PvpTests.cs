@@ -89,8 +89,9 @@ public sealed class PvpTests
     [Fact]public void EchoDamageUsesOwnerAndCannotOriginateInsideCity()
     {
         var w=World();var a=w.AddPlayer(42,new(1),Initial(w));var b=w.AddPlayer(43,new(2),Initial(w,-4.5f));Command(w,42,1,PvpMode.Criminal);
-        Assert.Equal(0,w.Combat!.ApplyEchoDamage(b.EntityId,1,a.EntityId,new Vector2(-9,0)));Assert.Equal(0,w.PrivatePvp(a.EntityId).Pk);Assert.Equal(0,w.PrivatePvp(a.EntityId).Reputation);
-        Assert.True(w.Combat.ApplyEchoDamage(b.EntityId,100000,a.EntityId,a.Position)>0);w.Simulate(.05f);Assert.True(w.PrivatePvp(b.EntityId).PvpDeath);Assert.Equal(1,w.PrivatePvp(a.EntityId).Pk);Assert.Equal(-110,w.PrivatePvp(a.EntityId).Reputation);
+        var echo=EchoTests.BindCombatBody(w,a.EntityId,new(-9,0));
+        Assert.Equal(0,w.Combat!.ApplyAbilityDamage(b.EntityId,1,echo));Assert.Equal(0,w.PrivatePvp(a.EntityId).Pk);Assert.Equal(0,w.PrivatePvp(a.EntityId).Reputation);
+        w.Combat.Move(echo,a.Position);Assert.True(w.Combat.ApplyAbilityDamage(b.EntityId,100000,echo)>0);w.Simulate(.05f);Assert.True(w.PrivatePvp(b.EntityId).PvpDeath);Assert.Equal(1,w.PrivatePvp(a.EntityId).Pk);Assert.Equal(-110,w.PrivatePvp(a.EntityId).Reputation);
     }
     [Fact]public void CorruptSavedPvpAndDeathLootAreRejected()
     {

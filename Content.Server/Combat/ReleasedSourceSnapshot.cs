@@ -8,6 +8,6 @@ namespace Content.Server.Combat;
 /// <summary>Immutable release context, owned by the bounded projectile rather than an actor/session.</summary>
 internal sealed record ReleasedSourceSnapshot(NetworkEntityId Actor,CombatSourceId Identity,CombatEntityKind Kind,
     Vector2 Position,DerivedStats Stats,double WeaponPower,bool PeriodicCriticalsAllowed,double SkillPower,
-    ReleasedPvpSource? Pvp);
+    ReleasedPvpSource? Pvp,CombatSourceId? ContributionCredit=null,CombatSourceId? PlayerFamily=null);
 
 internal sealed record ReleasedPvpSource(Guid Character,ulong Party,SavedPvp State);

@@ -4,6 +4,7 @@ using System.Text.Json.Nodes;
 using Content.Server.Data;
 using Content.Server.Persistence;
 using Content.Server.Stats;
+using Content.Tests.Server.Combat;
 using Content.Shared.Combat;
 using Content.Shared.Network;
 using Content.Tests.Server.Data;
@@ -22,6 +23,7 @@ public sealed class UnarmedCombatTests
         Assert.Equal(calculator.AttackInterval(1,actor.Stats),actor.AttackInterval,8);
         Assert.Equal(actor.Stats.MeleeAttack,calculator.WeaponPower(actor.Weapon,actor.Stats));
         Assert.True(world.TryQueueAttack(1,new(1,0,Vector2.UnitX)));world.Simulate(.05f);
+        Assert.Empty(combat.Events);CombatTestSteps.Contact(world,player.EntityId);
         var hit=Assert.Single(combat.Events);Assert.Equal(target.Id,hit.TargetId);
         Assert.Equal(calculator.ApplyDefense(actor.Stats.MeleeAttack,target.Stats.PhysicalDefense),hit.Damage,8);
     }
@@ -29,8 +31,10 @@ public sealed class UnarmedCombatTests
     [Fact]public void EquippingAndRemovingAWeaponChangesReachWithoutResettingTheCurrentInterval()
     {
         var world=InventoryTests.World();var combat=world.Combat!;var target=combat.Get(world.TrainingTargetId);
-        var player=world.AddPlayer(1,new(1),world.CreateInitialCharacter() with {X=target.Position.X-1.25f,Z=target.Position.Y});
-        Assert.True(world.TryQueueAttack(1,new(1,0,Vector2.UnitX)));world.Simulate(.05f);Assert.False(Assert.Single(combat.Events).TargetId.IsValid);
+        var player=world.AddPlayer(1,new(1),world.CreateInitialCharacter() with {X=target.Position.X-1.6f,Z=target.Position.Y});
+        Assert.True(world.TryQueueAttack(1,new(1,0,Vector2.UnitX)));world.Simulate(.05f);Assert.Empty(combat.Events);
+        Assert.False(CombatTestSteps.Contact(world,player.EntityId).TargetId.IsValid);
+        world.Simulate(.1f);Assert.Equal(CombatActionPhase.Recovery,combat.Get(player.EntityId).Action!.Phase);
         var remaining=world.CaptureCharacter(1).AttackCooldownSeconds;
         var sword=world.Inventory!.State(player.EntityId,world.Tick).Items.Single(i=>i.Slot==EquipmentSlot.Weapon);
         Assert.True(world.TryQueueInventory(1,new(1,InventoryAction.Equip,sword.Handle)));world.Simulate(.05f);
@@ -51,6 +55,7 @@ public sealed class UnarmedCombatTests
         var baseline=new StatCalculator(ContentCatalogTests.Load().Balance).Calculate(ContentCatalogTests.Load().Creatures["test_adventurer"]);
         Assert.Equal(baseline,actor.Stats);Assert.Equal("unarmed",actor.Weapon.Id);
         Assert.True(world.TryQueueAttack(1,new(1,0,Vector2.UnitX)));world.Simulate(.05f);
+        Assert.Empty(combat.Events);CombatTestSteps.Contact(world,player.EntityId);
         Assert.True(Assert.Single(combat.Events).Damage>0);Assert.Equal(AttackOutcome.Accepted,combat.Results[player.EntityId].Outcome);
         var saved=world.CaptureCharacter(1);Assert.Equal(item,Assert.Single(saved.Inventory!.Items));world.RemovePlayer(1);
         var restored=world.AddPlayer(1,new(1),saved);Assert.Equal("unarmed",combat.Get(restored.EntityId).Weapon.Id);
@@ -87,11 +92,12 @@ public sealed class UnarmedCombatTests
         Assert.True(world.TryQueueDefense(1,new(1,DefenseAction.Block,Vector2.UnitX)));world.Simulate(.05f);
         Assert.Equal(DefenseOutcome.NeedsWeapon,combat.DefenseState(player.EntityId,world.Tick).Outcome);
         Assert.False(combat.DefenseState(player.EntityId,world.Tick).Blocking);Assert.Equal(100,combat.DefenseState(player.EntityId,world.Tick).Stamina);
-        Assert.True(world.TryQueueDefense(1,new(2,DefenseAction.Parry,Vector2.UnitX)));world.Simulate(.05f);
-        Assert.Equal(DefenseOutcome.Accepted,combat.DefenseState(player.EntityId,world.Tick).Outcome);
         combat.Add(new(999),new(-6,0),CombatEntityKind.Monster);
         Assert.True(combat.ExecuteNpcAttack(new(999),1,-Vector2.UnitX,world.Tick));
-        var hit=Assert.Single(combat.Events,e=>e.AttackerId==new NetworkEntityId(999));Assert.Equal(player.EntityId,hit.TargetId);Assert.Equal(GuardImpact.Parried,hit.Guard);
+        world.Simulate((float)(combat.Get(new(999)).Action!.PhaseEndsAt-combat.Time-.05));
+        Assert.True(world.TryQueueDefense(1,new(2,DefenseAction.Parry,Vector2.UnitX)));world.Simulate(.025f);
+        Assert.Equal(DefenseOutcome.Accepted,combat.DefenseState(player.EntityId,world.Tick).Outcome);
+        var hit=CombatTestSteps.Contact(world,new(999));Assert.Equal(player.EntityId,hit.TargetId);Assert.Equal(GuardImpact.Parried,hit.Guard);
         Assert.Equal(90,combat.DefenseState(player.EntityId,world.Tick).Stamina);
     }
 

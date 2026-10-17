@@ -9,6 +9,28 @@ namespace Content.Tests.Server.Combat;
 
 public sealed class ToggleAbilityTests
 {
+    [Fact]public void ABackgroundWeaponPulseSettlesItsBreakWhileAnotherCastOwnsTheOrdinaryLane()
+    {
+        var data=Document();data["abilities"]![1]!["action"]!["capabilities"]="Weapon, Magical";
+        data["abilities"]![0]!["action"]!["preparation"]!["seconds"]=.5;
+        var f=new ChannelingTests.Fight(data,weapon:true);f.Cast();
+        Assert.True(f.World.TryQueueAbility(42,new(2,f.World.Tick,1,Vector2.UnitX),0));f.Step();
+        var action=f.Actor.Action;Assert.NotNull(action);Assert.Equal("test_projectile",action.DefinitionId);
+        for(var i=0;i<5 && f.Hits.Count==0;i++)f.Step();
+        Assert.Single(f.Hits);Assert.Equal("unarmed",f.Actor.Weapon.Id);Assert.Equal(ToggleState.Off,f.Skill.ToggleState);
+        Assert.Same(action,f.Actor.Action);Assert.False(action.Finished);Assert.Equal(0,f.Skill.PendingEndCharges);
+    }
+
+    [Fact]public void BackgroundWeaponToggleWithAnActivationPulseBreaksAndPublishesOffInTheSameTick()
+    {
+        var data=Document();data["abilities"]![1]!["action"]!["capabilities"]="Weapon, Magical";
+        data["abilities"]![1]!["channel"]!["pulseAtStart"]=true;
+        var f=new ChannelingTests.Fight(data,weapon:true,delta:.25f);f.Cast();
+        Assert.Single(f.Hits);Assert.Equal("unarmed",f.Actor.Weapon.Id);Assert.Equal(ToggleState.Off,f.Skill.ToggleState);
+        Assert.Empty(f.Abilities.ActiveStates);Assert.Equal(0,f.Skill.PendingEndCharges);Assert.Equal(5,f.Skill.ReadyInSeconds);
+        Assert.Equal(138,f.Mana);f.Step();Assert.Single(f.Hits);Assert.Equal(138,f.Mana);
+    }
+
     [Fact]public void BackgroundWeaponToggleBreaksAfterItsCompletedPulseAndStopsBeforeAnyMorePaidWork()
     {
         var data=Document(stops:"Skill");data["abilities"]![1]!["action"]!["capabilities"]="Weapon, Magical";
@@ -17,7 +39,7 @@ public sealed class ToggleAbilityTests
         for(var i=0;i<10 && f.Hits.Count==0;i++)f.Step();Assert.NotEmpty(f.Hits);
         Assert.Single(f.Hits);Assert.Equal("unarmed",f.Actor.Weapon.Id);Assert.Equal(ToggleState.Off,f.Skill.ToggleState);
         Assert.Equal(137.7,f.Mana,8);Assert.Empty(f.Abilities.ActiveStates);Assert.Equal(0,f.Skill.PendingEndCharges);
-        Assert.Equal(5,f.Skill.ReadyInSeconds);var mana=f.Mana;
+        Assert.Equal(4.85,f.Skill.ReadyInSeconds,7);var mana=f.Mana;
         Assert.True(f.World.TryQueueAbility(42,new(2,f.World.Tick,20,Vector2.UnitY),0));f.Step();
         Assert.Equal(AbilityOutcome.NeedsSword,f.Abilities.Results[f.Id].Outcome);Assert.Null(f.Actor.Action);
         Assert.Equal(0,f.Abilities.Loadout(f.Id,f.World.Tick).Abilities.Single(s=>s.Id==20).ReadyInSeconds);
@@ -79,7 +101,7 @@ public sealed class ToggleAbilityTests
     [Fact]public void AToggleCanExplicitlyOwnTheSingleOrdinaryLane()
     {
         var f=new ChannelingTests.Fight(Document(true));f.Cast();Assert.True(f.Actor.IsCasting);Assert.Equal(AbilityPhase.Channeling,Assert.Single(f.Abilities.ActiveStates).Phase);
-        Assert.True(f.World.TryQueueAbility(42,new(2,f.World.Tick,1,Vector2.UnitX),0));f.Step();Assert.Equal(AbilityOutcome.Busy,f.Abilities.Results[f.Id].Outcome);
+        Assert.True(f.World.TryQueueAbility(42,new(2,f.World.Tick,1,Vector2.UnitX),0));f.Step();Assert.Equal(AbilityOutcome.Buffered,f.Abilities.Results[f.Id].Outcome);
         Off(f,3);Assert.Null(f.Actor.Action);Assert.Equal(ToggleState.Off,f.Skill.ToggleState);
     }
 
@@ -104,7 +126,8 @@ public sealed class ToggleAbilityTests
     {
         var f=new ChannelingTests.Fight(Document(stops:"BasicAttack"));f.Cast();
         f.Actor.ReadyAt=100;Assert.True(f.World.TryQueueAttack(42,new(1,0,Vector2.UnitX)));f.Step();
-        Assert.Equal(AttackOutcome.Cooldown,f.Combat.Results[f.Id].Outcome);Assert.Equal(ToggleState.Active,f.Skill.ToggleState);
+        Assert.Equal(AttackOutcome.Buffered,f.Combat.Results[f.Id].Outcome);Assert.Equal(ToggleState.Active,f.Skill.ToggleState);
+        for(var i=0;i<4;i++)f.Step();Assert.Equal(0,f.Combat.Inputs.WaitingCount);Assert.Equal(ToggleState.Active,f.Skill.ToggleState);
     }
 
     [Fact]public void AcceptedMovementUsesTheAuthoredToggleStopWithoutChangingOtherActionOwnership()

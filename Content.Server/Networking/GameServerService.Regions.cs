@@ -106,13 +106,14 @@ public sealed partial class GameServerService
 
     private bool BeginTravel()
     {
-        if (_regions is null) return false;
+        if (_regions is null || _world.ItemWear.HasWrites) return false;
         // Only the bounded set of live sessions is checked, never every entity in the world.
         foreach (var connection in _views.Keys)
         {
             if(_departed.Contains(connection))continue;
             if (!_regions.TryBeginTravel(connection, (IRegionalCharacterStore)_characters!, _worldLeases, _socialSession!)) continue;
             _intentions.Remove(connection);
+            _receivedCombat.Remove(connection);
             _views.Remove(connection); // Ignore intentions until destination bootstrap has been published.
             return true;
         }
@@ -123,6 +124,7 @@ public sealed partial class GameServerService
     {
         if (_regions?.TryCompleteTravel(out var arrival) != true) return;
         _intentions.Remove(arrival!.Connection);
+        _receivedCombat.Remove(arrival.Connection);
         if (_peers.TryGetValue(arrival.Connection, out var peer)) SendRegionBootstrap(peer);
         BroadcastSnapshot();
         _logger.LogInformation("Regional arrival committed. Connection={Connection}, Region={Region}, Epoch={Epoch}",

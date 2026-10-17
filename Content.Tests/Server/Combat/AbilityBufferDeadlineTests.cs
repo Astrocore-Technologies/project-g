@@ -25,7 +25,7 @@ public sealed class AbilityBufferDeadlineTests
 
     [Fact]public void AnExpiredInputCannotExecuteJustBecauseItsLockEndsInTheSameStep()
     {
-        var f=new Fight();f.Buffer();f.Step(.11f);
+        var f=new Fight();f.World.Combat!.SetRecovery(f.Id,.155);f.Buffer();f.Step(.11f);
         Assert.Equal(AbilityOutcome.Busy,f.Result);Assert.Empty(f.Abilities.ActiveStates);Assert.Equal(140,f.Abilities.Mana(f.Id));
         f.Step();Assert.Empty(f.Abilities.ActiveStates);
     }

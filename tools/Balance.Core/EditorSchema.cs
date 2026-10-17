@@ -25,6 +25,7 @@ public static class EditorSchema
         var playerPath = PathFor("creatures", "test_adventurer");
         pages.Add(new("character/base", "Стартовые характеристики", ["Персонаж"], playerPath, "stats"));
         pages.Add(new("character/resources", "HP, мана и восстановление", ["Персонаж"], playerPath, "resources"));
+        pages.Add(new("character/hurtbox", "Область получения попаданий", ["Персонаж"], playerPath, "hurtbox"));
         foreach (var (key, value) in document.Root["balance"]!.AsObject())
             if (value is JsonObject) pages.Add(new("weights/" + key, EditorLabels.Name(key), ["Персонаж", "Влияние характеристик"], "balance/" + key));
         pages.Add(new("progression/character", "Уровни персонажа и опыт", ["Уровни и опыт"], "progression", "character"));
@@ -35,6 +36,8 @@ public static class EditorSchema
         pages.Add(new("combat/control", "Контроль, буфер и Quick Recover", ["Бой и защита"], "defense", "control"));
         if(document.Root["control"] is JsonObject) pages.Add(new("combat/acr","Категории контроля и ACR",["Бой и защита"],"control"));
         if(document.Root["lifecycle"] is JsonObject) pages.Add(new("combat/lifecycle","Бой, disconnect и тело",["Бой и защита"],"lifecycle"));
+        if(document.Root["echoSummon"] is JsonObject)pages.Add(new("echo/summon","Призыв Эхо",["Эхо"],"echoSummon"));
+        if(document.Root["echoRecovery"] is JsonObject)pages.Add(new("echo/recovery","Восстановление Эхо",["Эхо"],"echoRecovery"));
         foreach(var entry in entries.Where(e=>e.Name.StartsWith("effects / ",StringComparison.Ordinal)))
         {
             var effect=document.Read(entry.Path)!;var id=effect["id"]!.GetValue<string>();
@@ -44,6 +47,8 @@ public static class EditorSchema
         {
             var entry = entries.Single(e => e.Name == "professions / " + profession.Id);
             pages.Add(new($"profession/{profession.Id}", "Обзор и получение", ["Профессии", profession.Name], entry.Path));
+            if(document.Read(entry.Path)?["dodge"] is not null)
+                pages.Add(new($"professions/{profession.Id}/dash","Уворот",["Профессии",profession.Name],entry.Path+"/dodge"));
             foreach (var skill in document.ProfessionSkills(profession.Id))
             {
                 var id = document.Read(skill.Path)!["id"]!.GetValue<string>();
@@ -51,7 +56,7 @@ public static class EditorSchema
             }
             if (document.Root["swordsman"]?["professionId"]?.GetValue<ushort>() == profession.Id)
             {
-                foreach (var (key, title) in new[] { ("passives", "Пассивки"), ("dash", "Рывок Мечника") })
+                foreach (var (key, title) in new[] { ("passives", "Пассивки") })
                     pages.Add(new($"professions/{profession.Id}/{key}", title, ["Профессии", profession.Name], "swordsman", key));
             }
         }
@@ -73,6 +78,16 @@ public static class EditorSchema
             pages.Add(new(kind + "/" + id, title, groups, entry.Path));
         }
         PlaceBossSkills(document, pages, playerPath);
+        foreach(var entry in entries.Where(e=>e.Path.StartsWith("echoes/",StringComparison.Ordinal)))
+        {
+            var echo=document.Read(entry.Path)!; var id=echo["id"]!.GetValue<string>(); var name=echo["name"]!.GetValue<string>();
+            pages.Add(new("echo/"+id,name,["Эхо","Боевые профили"],entry.Path));
+            var profile=echo["profileId"]!.GetValue<string>();var signature=echo["signatureId"]!.GetValue<string>();
+            foreach(var page in pages.Where(p=>p.Key=="creatures/"+profile || p.Key=="ability/"+signature).ToArray())
+            {
+                pages.Remove(page);pages.Add(page with {Groups=["Эхо",name],ParentKey="echo/"+id});
+            }
+        }
         pages.Add(new("sandbox", "Тестовая площадка", [], ""));
         pages.Add(new("changes", "Изменения", [], ""));
         pages.Add(new("settings", "Настройки и проект", [], ""));
@@ -116,20 +131,25 @@ public static class EditorSchema
             if (page.Key == "creatures/" + training["dummyDefinitionId"])
                 fields.Insert(0, Describe(page, "swordsman/dummyResetSeconds") with { Group = "Восстановление", Minimum = 0, Maximum = 100000 });
         }
+        if(page.Key=="combat/stamina")
+            foreach(var key in new[]{"baseStamina","baseStaminaRecovery"})
+                fields.Insert(0,Describe(page,"balance/"+key) with {Group="Общий профиль Stamina",Minimum=0});
         return fields;
     }
 
     private static bool Include(BalanceDocument document, EditorPage page, string path)
     {
         var key = path.Split('/')[^1];
+        if(page.RootPath.StartsWith("abilities/",StringComparison.Ordinal)&&key is "healthCost" or "allowFatalHealthCost")return false;
+        if(page.RootPath.StartsWith("echoes/",StringComparison.Ordinal)&&key=="stars")return false;
         if (page.RootPath == "swordsman") return page.Section switch
         {
-            "dash" => key.StartsWith("dash") || key == "recoveryPerSecond",
-            "passives" => !(key.StartsWith("dash") || key is "requiredDamage" or "interactionRange" or "dummyResetSeconds" or "recoveryPerSecond"), _ => true
+            "dash" => key.StartsWith("dash"),
+            "passives" => !(key.StartsWith("dash") || key is "requiredDamage" or "interactionRange" or "dummyResetSeconds"), _ => true
         };
         if (page.RootPath == "defense") return page.Section switch
         {
-            "stamina" => key is "maxStamina" or "recoveryPerSecond" or "recoveryDelay" or "dodgeCost",
+            "stamina" => key == "recoveryDelay",
             "block" => key is "blockCost" or "blockMovementMultiplier" or "guardLeaseSeconds" or "blockHoldPerSecond" or "guardBreakSeconds" or "frontalAngleDegrees",
             "parry" => key.StartsWith("parry"),
             "control" => key.StartsWith("quickRecover") || key=="inputBufferSeconds", _ => true
@@ -137,13 +157,14 @@ public static class EditorSchema
         if (page.RootPath == "progression") return (key is "practicePerLevel" or "skillLevelCap" or "powerPerSkillLevel") == (page.Section == "skills");
         if (page.Section == "rules") return path.Count(c => c == '/') == 1;
         if (page.Section == "stats") return path.Contains("/stats/");
+        if (page.Section == "hurtbox") return path.Contains("/hurtbox/");
         if (page.Section == "resources") return key.StartsWith("base") || path.Contains("/modifiers/");
         if (page.RootPath.StartsWith("abilities/"))
         {
             var node = document.Read(page.RootPath)!; var kind = node["kind"]!.GetValue<string>();
             if (kind is "Melee" or "Recovery" && path==page.RootPath+"/"+key && key is "power" or "magicAttackScale" or "speed" or "range") return false;
             if (kind == "Recovery" && key is "damageFactor" or "rangeFactor" or "radius") return false;
-            if (kind == "Dash" && key is "power" or "magicAttackScale") return false;
+            if (kind == "Dash" && key is "power" or "magicAttackScale" or "speed") return false;
         }
         return true;
     }
@@ -155,9 +176,41 @@ public static class EditorSchema
         var help = "Значение проверяется серверным каталогом перед сохранением и запуском.";
         if (page.RootPath.StartsWith("balance/"))
         { group = "За каждое очко характеристики"; help = $"Добавка к показателю «{page.Title}» за одно очко этой характеристики. Точная дробь сохраняется."; min = 0; }
+        else if(path.Contains("/threat/"))
+        {
+            group="Угроза NPC";min=0;
+            title=key=="damagePerHp" ? "Threat за снятый HP" : "Threat за восстановленный HP союзнику против NPC";
+            help="Веса конкретного существа. Урон считается после защиты и щитов, лечение — без overheal и только для уже участвующей в этом бою цели. Контроль не добавляет Threat; Taunt временно меняет цель. Contribution от этих весов не зависит.";
+        }
+        else if (path.Contains("/hurtbox/"))
+        {
+            group="Область получения попаданий";min=0;
+            title=key=="height" ? "Полная высота капсулы · м" : key=="radius" ? "Радиус капсулы · м" : title;
+            help="Боевое тело отдельно от навигации. Высота не меньше двух радиусов. Knockdown укладывает капсулу по направлению существа; Airborne поднимает её целиком.";
+        }
+        else if(path.Contains("/basicVolume/"))
+        {
+            group="Объём обычного удара";min=0;
+            title=key=="thickness"?"Полная толщина дуги · м":key=="originHeight"?"Высота начала над ногами · м":title;
+            help="Дуга движения оружия с округлённой толщиной. Внешняя граница, включая толщину, равна Range. Каждый пересечённый противник получает один контакт.";
+        }
+        else if(path.Contains("/basicProjectile/"))
+        {
+            group="Снаряд обычной атаки";min=0;
+            title=key=="originHeight"?"Высота выпуска над ногами · м":key=="speed"?"Скорость снаряда · м/с":key=="radius"?"Радиус снаряда · м":title;
+            help="Один ручной выпуск в начале Active. Сила/Accuracy/crit фиксируются при выпуске, защита проверяется при первом контакте. Препятствия останавливают полёт; доводки нет.";
+        }
         else if (path.Contains("/stats/")) { group = "Базовые характеристики"; integer = true; min = 0; help = "Исходное значение без экипировки и временных эффектов."; }
         else if (path.Contains("/modifiers/")) { group = "Бонусы к показателям"; help = "Прибавляется к рассчитанному показателю. Допустимы отрицательные значения."; }
         else if (path.Contains("/condition/")) { group = "Прочность и ремонт"; min = 0; }
+        else if(path.Contains("/dodge/"))
+        {
+            group="Уворот";min=0;
+            help="Отдельный профиль: время действия сохраняется при коротком пути, контроль прерывает защиту. Скорость вычисляется из дальности и времени; Attack Speed и уровень навыка не меняют длительность.";
+            if(key=="durationSeconds")title="Длительность уворота · с";
+            if(key=="protectionSeconds")title="Начальное окно защиты от урона · с";
+            if(key=="protectedThreats")title="Защищаемые виды урона";
+        }
         else if (key.StartsWith("base")) group = "Ресурсы и базовые показатели";
         if (page.RootPath.StartsWith("abilities/"))
         {
@@ -165,6 +218,26 @@ public static class EditorSchema
                 key is "stunSeconds" or "slowFraction" or "slowSeconds" or "executeThreshold" or "executeFactor" or "restoreStamina" || key.StartsWith("knock") ? "Эффекты" :
                 key.Contains("Recovery") || key is "hitCancelAfterSeconds" or "minimumWindupSeconds" ? "Фазы и продолжения" : "Основное";
             min = 0;
+            if(key=="projectileLaunchHeight")
+            {group="Попадание";title="Высота выпуска над ногами · м";max=128;help="Точка выпуска и начало ручного 3D-прицеливания. Клиент получает это значение от сервера.";}
+            if(path.Contains("/groundVolume/"))
+            {
+                group="Попадание";
+                title=key=="height" ? "Высота области над поверхностью · м" : key=="requiresConnectedSurface" ? "Требовать связную поверхность" : "Форма области";
+                if(key=="height")max=128;
+                help="Cylinder: вертикальный цилиндр, радиус берётся из Radius навыка. Видимость проверяется от центра к телу цели; путь по земле требуется только при явном включении этого поля.";
+            }
+            if(path.Contains("/dodge/"))
+            {
+                group="Уворот";help="Скорость определяется дальностью и длительностью. Окно защищает от явно перечисленного урона; сопротивления и ACR контроля остаются обычными.";
+                title=key=="durationSeconds"?"Длительность уворота · с":key=="protectionSeconds"?"Начальное окно защиты · с":key=="protectedThreats"?"Защищаемые виды урона":title;
+            }
+            if(path.Contains("/melee/"))
+            {
+                if(key=="originHeight"){group="Попадание";title="Начало удара над ногами · м";max=128;}
+                if(key=="thickness"){group="Попадание";title="Полная толщина дуги · м";max=128;}
+                if(key=="firstTargetOnly")help="Одна цель: первый контакт по траектории. Выключено: каждый пересечённый противник, один раз за применение.";
+            }
             if(path.Contains("/passive/"))
             {
                 group="Пассивный навык";help="Работает после изучения без ячейки. Условия проверяются сервером при изменении состояния.";
@@ -175,6 +248,11 @@ public static class EditorSchema
                 group="Эффекты / Контроль";
                 title=key=="strength" ? "Сила контроля" : key=="height" ? "Высота полёта · м" : title;
                 help="Параметр отдельного контроля. Иммунитет, сопротивления и ACR применяются общим серверным исполнителем.";
+                if(path.Contains("/removal/"))
+                {
+                    group="Эффекты / Контроль / Снятие";
+                    help="Разрешение Cleanse и теги этого экземпляра контроля. Истечение, смерть и специальные освобождения используют собственные правила.";
+                }
             }
             if(path.Contains("/action/"))
             {
@@ -247,7 +325,6 @@ public static class EditorSchema
             "requiredDamage" => "Урон тренировочным мечом по манекенам для предложения профессии.",
             "interactionRange" when path.StartsWith("swordsman/") => "Максимальная дистанция разговора с тренером для получения меча и профессии, в метрах.",
             "dummyResetSeconds" => "Через сколько секунд после разрушения манекен арены полностью восстанавливает здоровье. Это не регенерация во время боя.",
-            "recoveryPerSecond" when page.RootPath == "swordsman" => "Скорость восстановления выносливости в секунду при активном Мечнике с мечом.",
             _ => help
         };
         return new(path, title, group, help, percent, integer, min, max);

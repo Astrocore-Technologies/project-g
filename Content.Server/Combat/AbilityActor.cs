@@ -4,7 +4,7 @@ using Content.Shared.Network;
 namespace Content.Server.Combat;
 
 /// <summary>Owner-only resources, unlocked slots and per-slot cooldowns.</summary>
-internal sealed class AbilityActor(AbilityDefinition[] definitions, AbilityProfile[] profiles, ActionDurations[] durations,SkillCooldown[] cooldowns,double maximumMana)
+internal sealed class AbilityActor(AbilityDefinition[] definitions, AbilityProfile[] profiles, ActionDurations[] durations,SkillCooldown[] cooldowns,double maximumMana,CombatResources resources)
 {
     public AbilityDefinition[] Definitions { get; } = definitions;
     public AbilityProfile[] Profiles { get; } = profiles;
@@ -12,9 +12,8 @@ internal sealed class AbilityActor(AbilityDefinition[] definitions, AbilityProfi
     public HashSet<ushort> Enabled { get; set; } = profiles.Where(p=>p.ExecutionForm!=Content.Shared.Combat.CombatActionForm.Passive).Select(p => p.Id).ToHashSet();
     public Dictionary<ushort,int> Levels { get; set; } = new();
     internal SkillCooldown[] Cooldowns { get; } = cooldowns;
-    public double Mana { get; set; } = maximumMana;
+    public double Mana { get=>resources.Mana; set=>resources.Mana=value; }
     public double MaxMana { get; } = maximumMana;
-    internal double RecoveryElapsed { get; set; } // online simulation time; not persisted.
     public uint LastSeenSequence { get; set; }
     public uint? LastRequestTick { get; set; }
     internal uint LastCancelSequence { get; set; }

@@ -23,6 +23,39 @@ public sealed class RegionalTravelTests
         f.Now += 30_001; f.Realm.Simulate(.05f);
         Assert.False(f.Source.IsCombatTagged(42)); Assert.True(f.Begin()); await f.Complete();
     }
+
+    [Fact]
+    public async Task OwnedCombatCargoPreservesResourcesAndRelocatesOnlyTheActiveEcho()
+    {
+        await using var f=await Fixture.Create();
+        var owned=new SavedEchoCombat
+        {
+            InstanceId=Guid.NewGuid(),DefinitionId="test_guardian_echo",ProfileId="mira_combat",
+            Availability=SavedEchoAvailability.Ready,Stats=new(10,10,10,10,10,10,10),
+            X=13.5f,Z=10,Health=51,Mana=27,Defense=new(1,31,2,1),CombatControl=new(1,0,0,0,0,0),
+            AttackCooldownSeconds=2,Cooldowns=[new("mira_signature",4)],SavedAtUnixMilliseconds=f.Now
+        };
+        var ready=owned with {InstanceId=Guid.NewGuid(),Availability=SavedEchoAvailability.Ready,ActiveSlot=null,X=2,Z=2};
+        var initial=PvpTests.Initial(f.Source,13,10) with {OwnedEchoes=[owned,ready]};
+        var first=await f.Store.OpenAsync("",initial,default);var token=first.IssuedToken;
+        await f.Store.SaveAsync([new(first,initial)],default);await first.DisposeAsync();
+        var session=await f.Store.OpenAsync(token,initial,default);f.Sessions.Add(session);
+        f.Realm.AddPlayer(42,new(42),session);EchoTests.Summon(f.Source,42,owned.InstanceId);
+        var body=f.Source.Echoes!.Loadout(f.Source.GetPlayer(42).EntityId,f.Source.Tick).Slots[0].EntityId;
+        var before=f.Source.CaptureCharacter(42).OwnedEchoes!.Single(e=>e.InstanceId==owned.InstanceId);
+        Content.Server.Combat.CompanionRuntimeState.Restore(f.Source.Combat!,f.Source.Abilities!,body,before with
+        {Health=51,Mana=27,Defense=owned.Defense,Cooldowns=owned.Cooldowns},[],0,false);
+        before=f.Source.CaptureCharacter(42).OwnedEchoes!.Single(e=>e.InstanceId==owned.InstanceId);
+        var readyBefore=f.Source.CaptureCharacter(42).OwnedEchoes!.Single(e=>e.InstanceId==ready.InstanceId);
+        Assert.True(f.Begin());await f.Complete();
+        var restored=f.Target.CaptureCharacter(42).OwnedEchoes!;
+        var active=Assert.Single(restored,e=>e.Availability==SavedEchoAvailability.Active);
+        Assert.Equal(owned.InstanceId,active.InstanceId);Assert.Equal((byte)1,active.ActiveSlot);
+        Assert.Equal(before.X-25,active.X);Assert.Equal(before.Z,active.Z);Assert.Equal(51,active.Health);Assert.Equal(27,active.Mana);
+        Assert.Equal(31,active.Defense.Stamina);Assert.Equal(4,active.Cooldowns[0].Seconds);Assert.Equal(owned.SavedAtUnixMilliseconds,active.SavedAtUnixMilliseconds);
+        Assert.Equal(EchoCombatDocuments.Serialize([readyBefore]).Single().State,
+            EchoCombatDocuments.Serialize([Assert.Single(restored,e=>e.Availability==SavedEchoAvailability.Ready)]).Single().State);
+    }
     private sealed class Fixture : IAsyncDisposable
     {
         public SqliteCharacterStore Store { get; } = new();
@@ -42,7 +75,8 @@ public sealed class RegionalTravelTests
                 Options.Create(new NavigationOptions { BlockedAreas = [new() { X = 14, Z = 10, Width = 2, Height = 10 }] }), catalog,
                 inventory: Options.Create(new InventoryOptions { Enabled = true }),
                 groundItems: Options.Create(new GroundItemOptions { Enabled = true, Seeds = [] }),
-                npc: Options.Create(new NpcOptions { Enabled = true, X = 13, Z = 13 }),
+                // The world-node fixture needs an NPC; keep it away from the travel/summon scenario.
+                npc: Options.Create(new NpcOptions { Enabled = true,X=-13,Z=-13 }),
                 worldStory: Options.Create(new WorldStoryOptions { Enabled = true }),
                 starterZone: Options.Create(new StarterZoneOptions { Enabled = true }),
                 crafting: Options.Create(new CraftingOptions { Enabled = true }),
@@ -66,13 +100,16 @@ public sealed class RegionalTravelTests
         {
             var state = PvpTests.Initial(Source, x, z) with
             {
-                Mana = 3, AttackCooldownSeconds = 4,
+                Mana = 140, AttackCooldownSeconds = 4,
                 Echoes = new() { Active = Enumerable.Range(1, 3).Select(i => new SavedEcho(
                     Guid.NewGuid(), "test_guardian_echo", (byte)i, x, z + i * .2f, 2, 6)).ToArray() }
             };
             state = state with { Progression = state.Progression! with { Discoveries = discoveries } };
             var session = await Store.OpenAsync("", state, default); Sessions.Add(session);
-            Realm.AddPlayer(connection, new((ulong)connection), session); Realm.Simulate(.05f); return session;
+            Realm.AddPlayer(connection, new((ulong)connection), session);
+            uint sequence=0;foreach(var echo in state.Echoes!.Active)EchoTests.Summon(Source,connection,echo.InstanceId,++sequence);
+            var actor=Source.Combat!.Get(Source.GetPlayer(connection).EntityId);actor.Resources.Mana=3;actor.ReadyAt=Source.Combat.Time+4;
+            return session;
         }
 
         public bool Begin(int connection = 42) => Realm.TryBeginTravel(connection, Store, Leases, SocialLease);
@@ -117,9 +154,9 @@ public sealed class RegionalTravelTests
         var after = f.Target.CaptureCharacter(42);
         Assert.Equal(before.Health, after.Health); Assert.Equal(before.Mana, after.Mana);
         Assert.Equal(before.Inventory!.Serialize(), after.Inventory!.Serialize());
-        Assert.Equal(before.Echoes!.Active.Select(e => e.InstanceId), after.Echoes!.Active.Select(e => e.InstanceId));
-        Assert.Equal(before.Echoes.Active.Select(e => e.Slot), after.Echoes.Active.Select(e => e.Slot));
-        Assert.All(after.Echoes.Active, e => Assert.InRange(e.SignatureCooldownSeconds, 4, 6));
+        Assert.Equal(before.OwnedEchoes!.Select(e=>e.InstanceId),after.OwnedEchoes!.Select(e=>e.InstanceId));
+        Assert.Equal(before.OwnedEchoes!.Select(e=>e.ActiveSlot),after.OwnedEchoes!.Select(e=>e.ActiveSlot));
+        Assert.Equal(3,after.OwnedEchoes!.Count(e=>e.Availability==SavedEchoAvailability.Active));
         Assert.Equal(before.Progression!.Profession, after.Progression!.Profession);
         using var c = WorldNodeStorageTests.Connect(f.Store.DatabasePath); using var q = c.CreateCommand();
         q.CommandText = "SELECT count(*) FROM world_audit WHERE operation IN ('RegionArrival','RegionDeparture')";
@@ -211,12 +248,16 @@ public sealed class RegionalTravelTests
     public async Task ReopeningTheSameCredentialLoadsOnlyTheDurableDestination()
     {
         await using var f = await Fixture.Create(); var session = await f.Add(); var credential = session.IssuedToken;
-        Assert.True(f.Begin()); await f.Complete(); f.Realm.RemovePlayer(42); await session.DisposeAsync();
+        Assert.True(f.Begin()); await f.Complete();f.Target.FinishDeparture(42);
+        await f.Store.SaveAsync([new(session,f.Target.CaptureCharacter(42))],default);
+        f.Realm.RemovePlayer(42); await session.DisposeAsync();
         await using var reopened = await f.Store.OpenAsync(credential, f.Source.CreateInitialCharacter(), default);
         Assert.Equal(session.CharacterId, reopened.CharacterId); Assert.Equal("outskirts", reopened.State.RegionId);
         var actor = f.Realm.AddPlayer(42, new(42), reopened);
         Assert.Single(f.Target.Players); Assert.Empty(f.Source.Players);
-        Assert.Equal(3, f.Target.CaptureCharacter(42).Echoes!.Active.Length);
+        Assert.Equal(3, f.Target.CaptureCharacter(42).OwnedEchoes!.Count);
+        Assert.All(f.Target.CaptureCharacter(42).OwnedEchoes!,e=>Assert.Equal(SavedEchoAvailability.Ready,e.Availability));
+        Assert.Empty(f.Target.Echoes!.Loadout(actor.EntityId,f.Target.Tick).Slots);
         Assert.True(actor.EntityId.IsValid);
     }
 }

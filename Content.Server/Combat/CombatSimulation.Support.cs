@@ -31,7 +31,7 @@ public sealed partial class CombatSimulation
     {
         if(!_actors.TryGetValue(source,out var author) || !author.Active || author.Health<=0 ||
             !_actors.TryGetValue(target,out var recipient) || !recipient.Active)return false;
-        return source==target || SupportPermission?.Invoke(source,target)==true ||
-            allowOtherPlayers && author.Kind==CombatEntityKind.Player && recipient.Kind==CombatEntityKind.Player;
+        return source==target || SamePlayerFamily(source,recipient) || SupportPermission?.Invoke(source,target)==true ||
+            allowOtherPlayers && IsPlayerUnit(author) && IsPlayerUnit(recipient);
     }
 }

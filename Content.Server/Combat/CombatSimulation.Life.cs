@@ -23,22 +23,25 @@ public sealed partial class CombatSimulation
     private void CompleteDeath(NetworkEntityId id,NetworkEntityId source=default,bool unknownSource=false)
     {
         var actor=_actors[id];if(actor.Health>0 || actor.LifeDead)return;
+        if(DeferContactDeath(id,source,unknownSource))return;
         if(actor.DeathId==long.MaxValue)throw new InvalidOperationException("Combat death ordinal exhausted.");
         actor.DeathId++;actor.LifeDead=true;
+        EncounterActorDied(id);
         actor.CorpseEndsAt=CombatClock()+_catalog.Lifecycle.CorpseSeconds;
         actor.RespawnReadyAt=CombatClock()+_catalog.Lifecycle.RespawnSeconds;
         RecordJournal(source,id,CombatJournalKind.Death,unknownSource:unknownSource);actor.Journal?.Died(actor.DeathId);
         ScheduleLife(actor);_lifeDirty.Add(id);_equipmentDirty.Add(id);
-        StopContinuousBasic(id);_suppressedBasicInputs.Add(id);
+        StopContinuousBasic(id);StopBasic(id,ActionStopReason.Death);StopSummon(id,ActionStopReason.Death);Inputs.Invalidate(id);_suppressedBasicInputs.Add(id);
         ClearControl(id);RefreshControlModifiers(actor);StopForControl?.Invoke(id);
         if(_defense.TryGetValue(id,out var defense))defense.GuardUntil=defense.ParryUntil=0;
         RemoveActorEffects(id,death:true);RemoveSourceEffects(actor.SourceIdentity);
         RefreshPassiveConditions(id);
+        RefreshManaRecovery(id);
         Defeated?.Invoke(id);
     }
 
     internal bool CanResurrect(NetworkEntityId id,ulong death)=>_actors.TryGetValue(id,out var actor) && actor.Active &&
-        actor.Health<=0 && actor.LifeDead && actor.DeathId==death && actor.CorpseEndsAt>CombatClock();
+        actor.Kind!=CombatEntityKind.Echo && actor.Health<=0 && actor.LifeDead && actor.DeathId==death && actor.CorpseEndsAt>CombatClock();
 
     internal bool Resurrect(NetworkEntityId source,NetworkEntityId target,ulong death,double health,bool allowOtherPlayers=false)
     {
@@ -55,6 +58,8 @@ public sealed partial class CombatSimulation
     {
         UnscheduleLife(actor);actor.LifeDead=false;actor.CorpseEndsAt=actor.RespawnReadyAt=0;
         _lifeDirty.Add(actor.Id);_equipmentDirty.Add(actor.Id);
+        RefreshManaRecovery(actor.Id);
+        _defenseActive.Add(actor.Id);
     }
     internal SavedCombatLife CaptureLife(NetworkEntityId id)
     {

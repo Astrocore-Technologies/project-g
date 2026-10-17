@@ -13,6 +13,7 @@ public sealed record CharacterState
     // Separate model/table: additive schema migration preserves the accepted character v1 document.
     [JsonIgnore] public SavedInventory? Inventory { get; init; }
     [JsonIgnore] public SavedEchoes? Echoes { get; init; }
+    [JsonIgnore] public IReadOnlyList<SavedEchoCombat>? OwnedEchoes { get; init; }
     [JsonIgnore] public SavedProgression? Progression { get; init; }
     [JsonIgnore] public IReadOnlyList<SavedCombatEffect>? Effects { get; init; }
     [JsonIgnore] public IReadOnlyList<SavedDeathLog>? DeathLogs {get;init;}
@@ -28,6 +29,7 @@ public sealed record CharacterState
     public required float X { get; init; }
     public SavedSurface? Surface { get; init; }
     public required float Z { get; init; }
+    [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)]public SavedFacing? Facing {get;init;}
     public required double Health { get; init; }
     public required double Mana { get; init; }
     // Optional additive v1 extension: legacy characters start with a full resource, never reset existing data.
@@ -50,7 +52,7 @@ public sealed record CharacterState
 
     public void Validate()
     {
-        Defense?.Validate(); Surface?.Validate(); CombatControl?.Validate();Life?.Validate();
+        Defense?.Validate(); Surface?.Validate(); CombatControl?.Validate();Life?.Validate();Facing?.Validate();
         if(ActivePassiveModifiers is {} passives && (passives.Length>NetworkConstants.MaxLearnedSkills ||
             passives.Any(id=>string.IsNullOrWhiteSpace(id) || id.Length>64) || passives.Distinct(StringComparer.Ordinal).Count()!=passives.Length))
             throw new InvalidDataException("Invalid saved passive modifier context.");

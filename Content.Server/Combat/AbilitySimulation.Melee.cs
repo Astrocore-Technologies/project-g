@@ -12,11 +12,6 @@ public sealed partial class AbilitySimulation
     {
         var profile = actor.Profiles[index]; var definition = actor.Definitions[index];
         if(MissingBackgroundToggleWeapon(id,definition))profile=profile with {Availability=AbilityAvailability.NeedsWeapon};
-        if (profile.Form == AbilityForm.Dash)
-        {
-            profile = profile with { StaminaCost = _combat.DodgeCostFor(id) };
-            if (_combat.IsSwordsman(id)) profile = profile with { Range = _catalog.Swordsman!.DashRange, CooldownSeconds = _catalog.Swordsman.DashCooldown };
-        }
         if (definition.Melee is { } technique)
             profile = profile with
             {
@@ -28,7 +23,7 @@ public sealed partial class AbilitySimulation
 
     internal void CancelRecovery(NetworkEntityId id) => StopActions(id,ActionStopReason.Voluntary,recoveryOnly:true);
     internal void InterruptCast(NetworkEntityId id) => StopActions(id,ActionStopReason.EnemyInterrupt);
-    internal bool CancelAction(NetworkEntityId id,uint relatedSequence,ulong executionId=0) => StopActions(id,ActionStopReason.Voluntary,relatedSequence:relatedSequence,executionId:executionId);
+    internal bool CancelAction(NetworkEntityId id,uint relatedSequence,ulong executionId=0) => StopActions(id,ActionStopReason.Voluntary,relatedSequence:relatedSequence,executionId:executionId,includeBasic:false);
 
     private bool ResolveTechnique(AbilityEffect effect, uint tick)
     {
@@ -40,53 +35,57 @@ public sealed partial class AbilitySimulation
             _practice.Add((effect.ActorId, effect.Profile.Id)); return true;
         }
         var actor = _combat.Get(effect.ActorId);
-        _spatial.Query(actor.Position, effect.Profile.Range + effect.Profile.Radius, _candidates);
-        Combatant? first = null; var distance = float.MaxValue;
+        _spatial.Query(actor.Position, effect.Profile.Range + _combat.MaximumHurtboxReach, _candidates);
+        Combatant? first = null; var distance = double.PositiveInfinity;
         foreach (var id in _candidates)
         {
-            if (!MeleeCandidate(effect, actor, id, out var target)) continue;
-            var next = Vector3.DistanceSquared(actor.Foot, target.Foot);
+            if (!MeleeCandidate(effect, actor, id, out var target,out var progress)) continue;
+            var next = technique.FirstTargetOnly ? progress : Vector3.DistanceSquared(actor.Foot,target.Foot);
             if (next < distance || next == distance && (first is null || id.Value < first.Id.Value)) { first = target; distance = next; }
         }
         if (first is null) return false;
         var hit = TechniqueHit(effect, first, tick, effect.FocusFactor);
         if (technique.FirstTargetOnly) return hit;
         foreach (var id in _candidates)
-            if (id != first.Id && MeleeCandidate(effect, actor, id, out var target)) hit |= TechniqueHit(effect, target, tick, 1);
+            if (id != first.Id && MeleeCandidate(effect, actor, id, out var target,out _)) hit |= TechniqueHit(effect, target, tick, 1);
         return hit;
     }
 
-    private bool MeleeCandidate(AbilityEffect effect, Combatant actor, NetworkEntityId id, out Combatant target)
+    private bool MeleeCandidate(AbilityEffect effect, Combatant actor, NetworkEntityId id, out Combatant target,out double progress)
     {
-        if (!_combat.TryGet(id, out target!) || !_combat.CanTarget(actor.Id, id) || Vector3.DistanceSquared(actor.Foot, target.Foot) > effect.Profile.Range * effect.Profile.Range || !_grid.ClearAttack(actor.Foot, target.Foot)) return false;
+        progress=0;
+        if (!_combat.TryGet(id, out target!) || !_combat.CanTarget(actor.Id, id)) return false;
         var t = effect.Definition.Melee!;
+        var direction=new Vector3(effect.Direction.X,effect.DirectionY,effect.Direction.Y);
+        var origin=actor.Foot+Vector3.UnitY*effect.Profile.MeleeOriginHeight;
+        Vector3 blade;bool hit;float radius;
         if (t.NarrowThrust)
         {
-            var offset = target.Position - actor.Position;
-            var along = Vector2.Dot(offset, effect.Direction);
-            var across = MathF.Abs(offset.X * effect.Direction.Y - offset.Y * effect.Direction.X);
-            return along >= 0 && along <= effect.Profile.Range && across <= effect.Profile.Radius + _grid.AgentRadius;
+            radius=effect.Profile.Radius;
+            hit=new MeleeThrust(origin,direction,effect.Profile.Range,radius).TryFirstContact(target.Hurtbox,out progress,out blade);
         }
-        return BasicAttackShape.Contains(actor.Position, effect.Direction, target.Position, effect.Profile.Range, t.ArcDegrees * MathF.PI / 360);
+        else
+        {
+            radius=effect.Profile.MeleeThickness*.5f;
+            var arc=new MeleeArc(origin,direction,actor.Facing,effect.Profile.Range,t.ArcDegrees*Math.PI/180,effect.Profile.MeleeThickness);
+            hit=t.FirstTargetOnly ? arc.TryFirstContact(target.Hurtbox,out progress,out blade) : arc.TryContact(target.Hurtbox,out blade);
+        }
+        return hit && _combat.BodyContactVisible(origin,blade,radius,target.Hurtbox);
     }
 
     private bool TechniqueHit(AbilityEffect effect, Combatant target, uint tick, double focus)
     {
         var t = effect.Definition.Melee!;
-        var basePower = _combat.SwordPower(effect.ActorId);
-        var level = PowerFactor(_actors[effect.ActorId], effect.Profile.Id)*effect.ChargePower;
+        var basePower = effect.HitSnapshot?.Power ?? _combat.SwordPower(effect.ActorId);
+        var level = (effect.ChannelSkillPower>0?effect.ChannelSkillPower:PowerFactor(_actors[effect.ActorId], effect.Profile.Id))*effect.ChargePower;
         var power = CombatBalanceMath.TechniquePower(basePower, t, target.Health, target.Stats.MaxHealth, level, focus);
+        if(effect.HitSnapshot is {} snapshot)effect.HitSnapshot=snapshot with {Power=power};
         var rules=effect.Definition.HitRules;
+        if(_combat.CaptureAbilityContact(effect,target,power,false,tick,true,ContactSkillPower(effect)))return false;
         var hit = _combat.ResolveDirectHit(effect.ActorId, target.Id, effect.Direction, power, magic: false,
             blockable: rules.Blockable, parryable: rules.Parryable,pressureScale: rules.PressureScale,skill:effect.Profile.Id,
-            weaponExecution:effect.WeaponExecution);
-        var damage = hit.Damage; var guard = hit.Guard;
-        ApplySkillEffects(effect,target.Id,hit);
-        _hits.Add(new(effect.Id, effect.ActorId, target.Id, tick, damage, target.Health, guard, hit.Critical, hit.Evaded));
-        _combat.SwordHit(effect.ActorId, basic: false, success: damage > 0);
-        if (damage <= 0) return false;
-        if (target.Kind != CombatEntityKind.Player && _practiced.Add(effect.Id)) _practice.Add((effect.ActorId, effect.Profile.Id));
-        return guard == GuardImpact.None;
+            weaponExecution:effect.WeaponExecution,execution:effect.Id,snapshot:effect.HitSnapshot,context:effect.Definition.HitContext,combo:effect.Combo);
+        return CompleteContact(effect,target,tick,hit,true);
     }
 
 }

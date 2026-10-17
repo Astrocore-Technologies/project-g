@@ -19,6 +19,8 @@ public sealed partial class InventorySimulation
         this.catalog=catalog;this.combat=combat;this.abilities=abilities;this.primary=primary;
         combat.WeaponExecutionStarted+=BeginWeaponUse;combat.WeaponExecutionFinished+=EndWeaponUse;
         combat.WeaponHealthDamage+=QueueWear;combat.WeaponActionBoundary+=FlushWear;
+        combat.WeaponPulseBoundary+=FlushPulseWear;
+        _wearLedger.Attach(ApplyWeaponWear);
     }
     private readonly Dictionary<NetworkEntityId, Actor> _actors = new();
     private readonly Dictionary<NetworkEntityId, InventoryCommand> _pending = new();
@@ -38,7 +40,7 @@ public sealed partial class InventorySimulation
         public SavedMaintenance? Maintenance;
         public SavedEconomy? Economy;
         public ulong TradeSession;
-        public readonly Dictionary<ulong,WeaponUse> WeaponUses=new();
+        public Guid[] IndexedItems=[];
         public double CraftReadyAt;
         public uint Sequence;
         public uint? RequestTick;
@@ -55,7 +57,7 @@ public sealed partial class InventorySimulation
         foreach (var item in actor.Items) if (item.Saved.InstanceId == saved.InstanceId) return false;
         if (_nextHandle == 0) throw new InvalidOperationException("Runtime item handles exhausted.");
         var next = new Item[actor.Items.Length + 1]; Array.Copy(actor.Items, next, actor.Items.Length);
-        next[^1] = new(_nextHandle++, NormalizeCondition(saved with {Bound=saved.Bound||definition.Bound},definition), definition); actor.Items = next; _dirty.Add(id); return true;
+        next[^1] = new(_nextHandle++, NormalizeCondition(saved with {Bound=saved.Bound||definition.Bound},definition), definition); actor.Items = next;IndexItems(id,actor); _dirty.Add(id); return true;
     }
     public static SavedInventory CreateStarter(CreatureDefinition definition) => new()
     {
@@ -78,15 +80,17 @@ public sealed partial class InventorySimulation
         foreach(var item in items)if(item.Saved.Enhancement>0 && (catalog.Economy is not {} balance || item.Saved.Enhancement>balance.EnhancementChances.Length || item.Definition.Id!=balance.BaseWeapon && item.Definition.Id!=balance.EvolvedWeapon))throw new InvalidDataException("Enhancement migration required.");
         if(saved.Maintenance is { } receipt && (catalog.Crafting is not { } crafting || !crafting.Materials.Any(m=>m.Id==receipt.MaterialId))) throw new InvalidDataException("Maintenance material requires migration.");
         var actor = new Actor(items) { Crafting=saved.Crafting, Maintenance=saved.Maintenance, Economy=saved.Economy, CraftReadyAt=combat.Time+Math.Max(0,(saved.Crafting?.CooldownSeconds ?? 0)-offlineSeconds) };
+        if(!CompatibleEquipment(actor,null,EquipmentSlot.None))throw new InvalidDataException("Saved two-handed weapon and shield are incompatible.");
         Apply(id, actor, null, EquipmentSlot.None);
-        _actors.Add(id, actor); _dirty.Add(id);
+        _actors.Add(id, actor);IndexItems(id,actor); _dirty.Add(id);
         foreach(var item in items)if(item.Saved.Condition is {PendingWear:>0}){_wearPending.Add(id);break;}
     }
-    public void Remove(NetworkEntityId id) { _actors.Remove(id); _wearPending.Remove(id);_pending.Remove(id); _dirty.Remove(id); _results.Remove(id); }
+    public void Remove(NetworkEntityId id) { if(_actors.Remove(id,out var actor))UnindexItems(id,actor); _wearPending.Remove(id);_pending.Remove(id); _dirty.Remove(id); _results.Remove(id); }
     public SavedInventory Capture(NetworkEntityId id) => new() { Items = _actors[id].Items.Select(item => item.Saved).ToArray(), Crafting=CaptureCrafting(id), Maintenance=_actors[id].Maintenance, Economy=_actors[id].Economy };
     public InventoryState State(NetworkEntityId id, uint tick) => new(id, tick, _actors[id].Items.Select(item => new InventoryEntry(
         item.Handle, item.Definition.Name+(item.Saved.Enhancement>0?" +"+item.Saved.Enhancement:""), item.Definition.Slot, item.Saved.EquippedSlot != EquipmentSlot.None,
-        EffectiveDefinition(item).Modifiers.MeleeAttack, item.Definition.Modifiers.PhysicalDefense, item.Definition.Modifiers.MaxHealth)).ToArray());
+        EffectiveDefinition(item).Modifiers.MeleeAttack, item.Definition.Modifiers.PhysicalDefense, item.Definition.Modifiers.MaxHealth,
+        item.Definition.Modifiers.BlockDamage)).ToArray());
     public bool Queue(NetworkEntityId id, InventoryCommand command, uint tick)
     {
         if (!_actors.TryGetValue(id, out var actor) || command.Sequence == 0 || command.ItemHandle == 0 ||
@@ -104,9 +108,12 @@ public sealed partial class InventorySimulation
         {
             var actor = _actors[id]; var target = Array.Find(actor.Items, item => item.Handle == command.ItemHandle);
             var outcome = target is null ? InventoryOutcome.NotOwned
+                : target.Definition.Slot==EquipmentSlot.None ? InventoryOutcome.InvalidState
                 : actor.TradeSession!=0 ? InventoryOutcome.Busy
                 : combat.Get(id).Health <= 0 ? InventoryOutcome.InvalidState
-                : combat.InCombat(id) || combat.Get(id).IsCasting || abilities.HasActiveEffects(id) ? InventoryOutcome.Busy : InventoryOutcome.Accepted;
+                : combat.InCombat(id) || combat.Get(id).IsCasting || abilities.HasActiveEffects(id) ? InventoryOutcome.Busy
+                : !CompatibleEquipment(actor,target,command.Action==InventoryAction.Equip ? target!.Definition.Slot : EquipmentSlot.None)
+                    ? InventoryOutcome.IncompatibleEquipment : InventoryOutcome.Accepted;
             if (outcome == InventoryOutcome.Accepted)
             {
                 try
@@ -129,7 +136,7 @@ public sealed partial class InventorySimulation
     }
     private void Apply(NetworkEntityId id, Actor actor, Item? changed, EquipmentSlot desired)
     {
-        var equipment = new List<ItemDefinition>(2);
+        var equipment = new List<ItemDefinition>(3);
         // Prepare both subsystems before mutating: unusable content cannot partially change stats/resources.
         foreach (var item in actor.Items)
         {
@@ -149,7 +156,7 @@ public sealed partial class InventorySimulation
     // Preview uses the same ordered, condition-aware equipment modifiers without changing any actor.
     internal Content.Server.Stats.DerivedStats PreviewStats(NetworkEntityId id, Content.Server.Stats.BaseStats stats)
     {
-        var equipment = new List<ItemDefinition>(2);
+        var equipment = new List<ItemDefinition>(3);
         foreach (var item in _actors[id].Items)
             if (item.Saved.EquippedSlot != EquipmentSlot.None && item.Saved.Condition?.Current != 0)
                 equipment.Add(EffectiveDefinition(item));

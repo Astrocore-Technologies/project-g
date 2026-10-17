@@ -32,7 +32,7 @@ public sealed class CombatJournalProtocolTests
         Assert.True(max.Length+NetworkProtocol.RegionEnvelopeBytes<=NetworkConstants.MaxGamePacketBytes);Assert.True(NetworkProtocol.TryReadCombatJournalChunk(Body(max),out _));
         var valid=new CombatJournalChunk(new(1),0,0,0,0,[Entry()]);
         foreach(var index in new[]{26,43}){var bytes=NetworkProtocol.Write(valid).CopyData();bytes[index]=255;Assert.False(NetworkProtocol.TryReadCombatJournalChunk(Body(bytes),out _));}
-        var flags=NetworkProtocol.Write(valid).CopyData();flags[^1]=255;Assert.False(NetworkProtocol.TryReadCombatJournalChunk(Body(flags),out _));
+        var flags=NetworkProtocol.Write(valid).CopyData();flags[^2]=255;Assert.False(NetworkProtocol.TryReadCombatJournalChunk(Body(flags),out _));
         Assert.Throws<ArgumentException>(()=>NetworkProtocol.Write(valid with {DeathId=1}));
         Assert.Throws<ArgumentException>(()=>NetworkProtocol.Write(valid with {Entries=[Entry(2),Entry(1)]}));
         Assert.Throws<ArgumentException>(()=>NetworkProtocol.Write(valid with {Sequence=1,Total=201,Entries=[]}));

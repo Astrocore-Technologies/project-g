@@ -18,6 +18,7 @@ internal sealed class TimedEffectInstance(Guid id, TimedEffectKey key, EffectDef
     internal double ShieldRemaining { get; set; }
     internal double PowerScale { get; set; } = 1;
     internal ulong ExecutionId { get; set; }
+    internal CombatSourceId? ContributionCredit {get;set;}
 }
 
 public readonly record struct EffectSnapshot(double Power,double CriticalChance,double CriticalDamage)

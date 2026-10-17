@@ -21,6 +21,7 @@ public partial class Main
                 var tab = Tab(section); DrawFieldCard(tab, section, selected);
                 if (section == "Основное")
                 {
+                    ShowHealthPrice(tab);
                     if (_page.ParentKey is null) tab.AddChild(Button("Поставить на Q в тестовом билде", TestSelectedSkill));
                     else tab.AddChild(Wrap("Навык существа: на панель тестового персонажа не назначается."));
                 }
@@ -36,6 +37,7 @@ public partial class Main
         else
         {
             var tab = Tab("Настройки");
+            if(_page.RootPath.StartsWith("echoes/",StringComparison.Ordinal))DrawEchoRefusal(tab);
             if (_page.RootPath == "swordsman" && _build.ProfessionId != _document.Catalog.Swordsman!.ProfessionId)
                 tab.AddChild(Button("Выбрать Мечника для расчётов и теста", () =>
                 { _build = _build with { ProfessionId = _document.Catalog.Swordsman!.ProfessionId, WeaponItemId = "arena_training_sword", SelectedAbilityId = null }; Changed(true); }));
@@ -141,6 +143,7 @@ public partial class Main
     }
 
     private EditorPage? PageForPath(string path) => _pages.FirstOrDefault(p => EditorSchema.Fields(_document, p).Any(f => f.Path == path)) ??
+        _pages.FirstOrDefault(p=>p.RootPath.StartsWith("echoes/")&&(path==p.RootPath+"/stars"||path==p.RootPath+"/refusalDuringAction")) ??
         _pages.FirstOrDefault(p => p.RootPath.StartsWith("abilities/") && path.StartsWith(p.RootPath + "/progression"));
 
     private void ShowChanges()

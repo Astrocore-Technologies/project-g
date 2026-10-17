@@ -35,7 +35,9 @@ public sealed partial class InventorySimulation
         foreach(var item in right.Items) if(second.Items.Contains(item.Handle)) li.Add(new(_nextHandle++,item.Saved,item.Definition));
         foreach(var item in left.Items) if(first.Items.Contains(item.Handle)) ri.Add(new(_nextHandle++,item.Saved,item.Definition));
         // All validation/preparation succeeds before either owner is mutated. Database fences both owners in one batch.
+        UnindexItems(a,left);UnindexItems(b,right);
         left.Items=li.ToArray(); right.Items=ri.ToArray(); left.Crafting=(left.Crafting ?? SavedCrafting.Empty) with { Materials=lm }; right.Crafting=(right.Crafting ?? SavedCrafting.Empty) with { Materials=rm }; left.TradeSession=right.TradeSession=0;
+        IndexItems(a,left);IndexItems(b,right);
         _dirty.Add(a); _dirty.Add(b); return CraftOutcome.Accepted;
     }
 }

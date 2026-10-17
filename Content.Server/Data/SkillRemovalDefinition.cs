@@ -8,6 +8,7 @@ public sealed record SkillRemovalDefinition
     public required bool Timed { get; init; }
     public required CrowdControlKind[] Controls { get; init; }
     public string[]? Tags { get; init; }
+    public string[]? ControlTags {get;init;}
 
     internal void Validate(bool cleanse,string path)
     {
@@ -18,6 +19,12 @@ public sealed record SkillRemovalDefinition
         {
             EffectDefinition.ValidateTags(Tags);
             if(Tags.Length==0) throw new ArgumentException($"{path}: use null for all eligible tags or a nonempty filter.");
+        }
+        if(ControlTags is not null)
+        {
+            if(!cleanse || Controls.Length==0 || ControlTags.Length==0)
+                throw new ArgumentException($"{path}: control tag filtering requires an explicit cleanse control selection.");
+            EffectDefinition.ValidateTags(ControlTags);
         }
     }
 }

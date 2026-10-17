@@ -19,7 +19,7 @@ public sealed partial class CombatSimulation
                 AppliedOrder=effect.AppliedOrder,RemainingSeconds=effect.EndsAt-_time,
                 EnvironmentActive=EnvironmentAllows(actor,effect.Definition),Snapshot=effect.Snapshot,
                 NextTickSeconds=effect.NextTickAt is {} next ? Math.Min(effect.Definition.Periodic!.IntervalSeconds,Math.Max(double.Epsilon,next-_time)) : null,
-                ShieldRemaining=effect.ShieldRemaining,PowerScale=effect.PowerScale
+                ShieldRemaining=effect.ShieldRemaining,PowerScale=effect.PowerScale,ContributionCredit=effect.ContributionCredit
             });
         }
         foreach (var control in actor.Controls.Active)
@@ -29,7 +29,8 @@ public sealed partial class CombatSimulation
             {
                 InstanceId = control.InstanceId, Source = control.Key.Source, DefinitionId = control.Key.DefinitionId,
                 Kind = control.Key.Kind, Strength = control.Strength, RemainingSeconds = control.EndsAt - _time,
-                AppliedOrder = control.AppliedOrder, SourceX = control.SourcePosition.X, SourceZ = control.SourcePosition.Y
+                AppliedOrder = control.AppliedOrder, SourceX = control.SourcePosition.X, SourceZ = control.SourcePosition.Y,
+                ContributionCredit=control.ContributionCredit,Removal=control.Removal
             });
         }
         return effects.AsReadOnly();
@@ -53,7 +54,7 @@ public sealed partial class CombatSimulation
                     throw new InvalidDataException("Saved effect operation/timing requires content migration.");
                 if((definition.PersistThroughLogout || !loggingIn) && effect.RemainingSeconds>offline) AddEffectInstance(id,new(timed.InstanceId,new(timed.Source,timed.DefinitionId),definition,
                     _time+timed.RemainingSeconds-offline,timed.Stacks,timed.AppliedOrder)
-                    {Snapshot=timed.Snapshot,ShieldRemaining=timed.ShieldRemaining,PowerScale=timed.PowerScale,
+                    {Snapshot=timed.Snapshot,ShieldRemaining=timed.ShieldRemaining,PowerScale=timed.PowerScale,ContributionCredit=timed.ContributionCredit,
                         NextTickAt=timed.NextTickSeconds is {} nextTick ? _time+NextAfterOffline(nextTick,offline,definition.Periodic!.IntervalSeconds) : null});
                 continue;
             }
@@ -63,7 +64,8 @@ public sealed partial class CombatSimulation
                 control.Kind==Content.Shared.Combat.CrowdControlKind.Knockup && savedPhase==CombatControlPhase.Airborne)) continue;
             actor.Controls.Restore(new(new(control.Source, control.DefinitionId, control.Kind),
                 _time + control.RemainingSeconds - offline, control.Strength, control.AppliedOrder)
-                { InstanceId = control.InstanceId, SourcePosition = new(control.SourceX, control.SourceZ) });
+                { InstanceId = control.InstanceId, SourcePosition = new(control.SourceX, control.SourceZ),ContributionCredit=control.ContributionCredit,
+                    Removal=control.Removal });
         }
         RefreshHardControl(actor); RefreshControlModifiers(actor);
         RefreshEffectStats(id);

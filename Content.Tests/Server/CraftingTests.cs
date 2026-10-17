@@ -41,7 +41,8 @@ public sealed class CraftingTests
     [Fact] public void CompetingPlayersCannotBothTakeLastSharedUnitAndReplaySurvivesReconnect()
     {
         var w=World(); w.RestoreWorldNode(new() { Resources=[new(1,1),new(2,24)] },1); var initial=w.CreateInitialCharacter() with { X=-11,Z=-7 };
-        var a=w.AddPlayer(42,new(1),initial); var b=w.AddPlayer(43,new(2),initial);
+        var a=w.AddPlayer(42,new(1),initial); var b=w.AddPlayer(43,new(2),initial with {Inventory=initial.Inventory! with
+            {Items=initial.Inventory.Items.Select(i=>i with {InstanceId=Guid.NewGuid()}).ToArray()}});
         Assert.True(w.TryQueueCraft(42,new(1,CraftAction.Gather,1))); Assert.True(w.TryQueueCraft(43,new(1,CraftAction.Gather,1))); w.Simulate(0.05f);
         Assert.Equal(CraftOutcome.Accepted,w.CraftResults[a.EntityId].Outcome); Assert.Equal(CraftOutcome.Depleted,w.CraftResults[b.EntityId].Outcome); Assert.Equal((ushort)0,w.ResourceState(1).Remaining);
         Assert.Single(w.CraftState(a.EntityId).Materials); Assert.Empty(w.CraftState(b.EntityId).Materials);

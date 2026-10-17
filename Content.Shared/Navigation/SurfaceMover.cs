@@ -12,11 +12,22 @@ internal sealed class SurfaceMover
     private List<Vector3> route = [];
     private List<Vector3> candidate = [];
     private int waypoint;
+    internal Vector2 Avoidance;
+    internal float AvoidanceHorizon=.25f;
+    private readonly List<Vector3> avoidanceCrossings=new();
     public Vector3 Position { get; private set; }
     public Vector3 Target { get; private set; }
     public Vector3 DashDestination { get; private set; }
     public float DashSpeed { get; private set; }
     public bool Moving => DashSpeed > 0 || waypoint < route.Count;
+
+    internal NavigationMotionSegment CurrentSegment(float multiplier)
+    {
+        for(var i=waypoint;i<route.Count;i++)
+            if(route[i]!=Position)return DashSpeed>0?NavigationMotionSegment.Toward(Position,route[i],DashSpeed):
+                NavigationSteering.Segment(grid,Position,route[i],settings.Speed*multiplier,Avoidance,AvoidanceHorizon,avoidanceCrossings);
+        return NavigationMotionSegment.Stationary;
+    }
 
     public SurfaceMover(NavigationGrid grid, MovementSettings settings, Vector3 spawn)
     {
@@ -69,10 +80,21 @@ internal sealed class SurfaceMover
         while (waypoint < route.Count && budget > 0)
         {
             var offset = route[waypoint] - Position; var distance = offset.Length();
-            var next = distance <= budget ? route[waypoint] : Position + offset / distance * budget;
+            if(distance<.0001f){Position=route[waypoint];waypoint++;continue;}
+            var avoiding=DashSpeed<=0&&Avoidance!=Vector2.Zero;
+            var segment=avoiding?CurrentSegment(1):default;
+            var travelled=avoiding?(float)Math.Min(budget,settings.Speed*segment.Seconds):Math.Min(distance,budget);
+            var next=avoiding?Position+segment.Velocity*(travelled/settings.Speed):distance<=budget?route[waypoint]:Position+offset/distance*budget;
             if (!grid.Surface!.TryLocate(next, .35f, out var located) || !grid.TraverseSurface(Position, located.Position))
             { route.Clear(); waypoint = 0; Target = Position; DashSpeed = 0; return; }
             Position = located.Position;
+            if(avoiding)
+            {
+                budget-=travelled;
+                if(Vector3.DistanceSquared(Position,route[waypoint])<.00000001f)waypoint++;
+                if(travelled<=0)return;
+                continue;
+            }
             if (distance > budget) return;
             budget -= distance; waypoint++;
         }

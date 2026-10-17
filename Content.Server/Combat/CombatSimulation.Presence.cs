@@ -15,16 +15,24 @@ public sealed partial class CombatSimulation
     private void TagCombat(NetworkEntityId id)
     {
         if(!_actors.TryGetValue(id,out var actor)) return;
-        var was=InCombat(id);
+        TagCombatActor(actor);
+        if(actor.CompanionOwner.IsValid && _actors.TryGetValue(actor.CompanionOwner,out var owner))TagCombatActor(owner);
+    }
+
+    private void TagCombatActor(Combatant actor)
+    {
+        var id=actor.Id;var was=InCombat(id);
         actor.CombatUntil=CombatClock()+_catalog.Lifecycle.InCombatSeconds;
         _combatTagged.Add(id); _combatPresenceDirty.Add(id);
         if(!was)RefreshPassiveConditions(id);
         if(_defense.ContainsKey(id)) _defenseDirty.Add(id);
     }
 
-    private void ReportHostileContact(NetworkEntityId source,NetworkEntityId target)
+    private void ReportHostileContact(NetworkEntityId source,NetworkEntityId target,CombatSourceId? companionCredit=null)
     {
+        EncounterContact(source,target);
         TagCombat(source); TagCombat(target); HostileContact?.Invoke(source,target);
+        if(companionCredit is {Kind:CombatSourceKind.Character} owner)TagCombat(ResolveSource(owner));
     }
 
     private void SupportCombatParticipant(NetworkEntityId source,NetworkEntityId target,double amount)

@@ -45,7 +45,8 @@ public partial class DefensePresentation : Node
         _state=state; _quickReadyAt=Now()+state.QuickRecoverCooldown;
         if(_lastAction==DefenseAction.Block && state.Sequence==_sequence)_blockDenied=!state.Blocking;
         if(_lastAction!=DefenseAction.QuickRecover && state.Sequence==_sequence)
-            _quickLabel.Text=_lastAction==DefenseAction.Block && state.Outcome==DefenseOutcome.NeedsWeapon ? "Для блока нужно оружие или особая способность" : "";
+            _quickLabel.Text=state.Outcome==DefenseOutcome.Buffered ? "Действие подготовлено" :
+                _lastAction==DefenseAction.Block && state.Outcome==DefenseOutcome.NeedsWeapon ? "Для блока нужно оружие, щит или особая способность" : "";
         _player.SetRecoveryRemaining(state.RecoveryRemaining);
         if (_lastAction==DefenseAction.QuickRecover && state.Sequence==_sequence && state.Outcome!=DefenseOutcome.Accepted)
             _quickLabel.Text=state.Outcome switch { DefenseOutcome.NoStamina=>"Не хватает выносливости", DefenseOutcome.Cooldown=>"Восстановление перезаряжается", _=>"Сейчас нельзя восстановиться" };

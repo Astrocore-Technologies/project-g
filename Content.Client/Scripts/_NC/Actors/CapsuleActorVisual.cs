@@ -22,6 +22,7 @@ public partial class CapsuleActorVisual : ActorVisual
     private bool _started, _alive = true, _armed, _blocking, _preparing, _hasState, _focused, _dashing;
     private string _clip = "", _attack = "", _oneShot = "";
     private float _attackTime, _yaw, _speed, _hitWeight;
+    private float _attackPitch;
     private double _clock, _locomotionTime, _transition, _oneUntil, _deathAt, _stunUntil, _parryUntil, _stepAt;
     private uint _stateTick, _gestureSequence, _rhythmCue;
     private AvatarGesture _gesture;
@@ -78,7 +79,8 @@ public partial class CapsuleActorVisual : ActorVisual
         _blocking=state.Blocking; _stunUntil=_clock+state.StunRemaining;
         if(state.ParryRemaining>0 && _parryUntil<=_clock) { PlayGesture("parry"); Cue("parry_attempt"); }
         _parryUntil=_clock+state.ParryRemaining;
-        if(_blocking || state.ParryRemaining>0) _yaw=Mathf.Atan2(state.Facing.X,state.Facing.Y);
+        if(_blocking || state.ParryRemaining>0 || _attack.Length==0 && _control==CombatControlPhase.None && _speed<.001f)
+            _yaw=Mathf.Atan2(state.Facing.X,state.Facing.Y);
         if(state.GestureSequence != _gestureSequence)
         {
             if(_gesture==AvatarGesture.Sit && state.Gesture==AvatarGesture.None) PlayGesture("stand_up");
@@ -103,7 +105,8 @@ public partial class CapsuleActorVisual : ActorVisual
         if(!_alive || _control!=CombatControlPhase.None) return;
         _attack=clip; _attackTime=Math.Clamp(normalized,0,1); _yaw=yaw; _preparing=preparing; _gesture=AvatarGesture.None;
     }
-    public override void EndAttack() { _attack=""; _feedback?.CancelCue("breath"); }
+    public override void EndAttack() { _attack="";_attackPitch=0; _feedback?.CancelCue("breath"); }
+    public override void SetAttackPitch(float directionY)=>_attackPitch=-Mathf.Asin(Math.Clamp(directionY,-1,1));
     public override void SwingCue(string clip) => Cue(clip);
     public override void ContactCue(string clip) { if(clip=="breath") Cue("recover"); }
     private void Cue(string clip) { if(!PreviewOnly) _feedback.Cue(clip); }
@@ -183,6 +186,11 @@ public partial class CapsuleActorVisual : ActorVisual
             _transition-=delta;
         }
         SavePose();
+        if(_attack.Length>0 && _attackPitch!=0)
+        {
+            var tilt=new Basis(Vector3.Right,_attackPitch);var weapon=_weapon.Transform;
+            _weapon.Transform=new(tilt*weapon.Basis,tilt*weapon.Origin);
+        }
         if(_hitWeight>0) { _pose.RotateObjectLocal(Vector3.Right,_hitTilt.X*_hitWeight); _pose.RotateObjectLocal(Vector3.Back,_hitTilt.Z*_hitWeight); _hitWeight=Math.Max(0,_hitWeight-(float)delta*5); }
         _feedback.Trail(_bladeBase.GlobalPosition,_bladeTip.GlobalPosition,
             _alive && _armed && _control==CombatControlPhase.None && _attack.Length>0 && _attack is not "breath" and not "dash" && !_attack.StartsWith("cast")?_attackTime:0);

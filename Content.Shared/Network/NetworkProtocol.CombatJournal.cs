@@ -51,7 +51,7 @@ public static partial class NetworkProtocol
         var w=CreateWriter(NetworkMessageType.CombatJournalChunk);w.Put(value.OwnerId.Value);w.Put(value.Sequence);w.Put(value.DeathId);
         w.Put(value.Start);w.Put(value.Total);w.Put((byte)value.Entries.Length);
         foreach(var e in value.Entries)
-        {w.Put(e.Id);w.Put(e.AtUnixMilliseconds);w.Put((byte)e.Kind);w.Put(e.Source);w.Put(e.Target);w.Put(e.Amount);w.Put(e.Duration);w.Put(e.Strength);w.Put(e.SkillId);w.Put((byte)e.Control);w.Put((byte)e.Flags);}
+        {w.Put(e.Id);w.Put(e.AtUnixMilliseconds);w.Put((byte)e.Kind);w.Put(e.Source);w.Put(e.Target);w.Put(e.Amount);w.Put(e.Duration);w.Put(e.Strength);w.Put(e.SkillId);w.Put((byte)e.Control);w.Put((byte)e.Flags);w.Put((byte)e.HitTags);}
         if(w.Length>NetworkConstants.MaxGamePacketBytes-RegionEnvelopeBytes)throw new ArgumentException("Journal chunk exceeds packet budget.");return w;
     }
     public static bool TryReadCombatJournalChunk(NetDataReader r,out CombatJournalChunk value)
@@ -63,8 +63,8 @@ public static partial class NetworkProtocol
         {
             if(!r.TryGetULong(out var id) || !r.TryGetLong(out var at) || !r.TryGetByte(out var kind) || !r.TryGetString(out var source) ||
                 !r.TryGetString(out var target) || !r.TryGetDouble(out var amount) || !r.TryGetDouble(out var duration) || !r.TryGetDouble(out var strength) ||
-                !r.TryGetUShort(out var skill) || !r.TryGetByte(out var control) || !r.TryGetByte(out var flags))return false;
-            entries[i]=new(id,at,(CombatJournalKind)kind,source,target,amount,duration,strength,skill,(CrowdControlKind)control,(CombatJournalFlags)flags);
+                !r.TryGetUShort(out var skill) || !r.TryGetByte(out var control) || !r.TryGetByte(out var flags) || !r.TryGetByte(out var tags))return false;
+            entries[i]=new(id,at,(CombatJournalKind)kind,source,target,amount,duration,strength,skill,(CrowdControlKind)control,(CombatJournalFlags)flags,(CombatHitTags)tags);
         }
         var candidate=new CombatJournalChunk(new(owner),sequence,death,start,total,entries);if(r.AvailableBytes!=0 || !ValidJournalChunk(candidate))return false;value=candidate;return true;
     }

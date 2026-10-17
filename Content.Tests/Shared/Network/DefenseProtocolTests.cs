@@ -5,6 +5,22 @@ using Xunit;
 namespace Content.Tests.Shared.Network;
 public sealed class DefenseProtocolTests
 {
+    [Fact]public void ZeroAndVeryLargeCapacityRoundTripWithoutAnArtificialResourceCap()
+    {
+        foreach(var capacity in new[]{0d,1e100})
+        {
+            var state=new DefenseState(new(1),1,0,DefenseOutcome.Accepted,capacity,capacity,.3,0,0,20,10,false,1,Vector2.UnitY);
+            Assert.True(NetworkProtocol.TryReadDefenseState(Body(NetworkProtocol.Write(state).CopyData()),out var decoded));
+            Assert.Equal(state,decoded);
+        }
+    }
+    [Fact]public void BufferedDefenseUsesTheExistingStateLayout()
+    {
+        var state=new DefenseState(new(1),1,2,DefenseOutcome.Buffered,100,100,.3,0,0,20,10,false,1,Vector2.UnitY);
+        var bytes=NetworkProtocol.Write(state).CopyData();Assert.Equal(140,bytes.Length);
+        Assert.True(NetworkProtocol.TryReadDefenseState(Body(bytes),out var actual));Assert.Equal(state,actual);
+    }
+
     [Fact]public void WeaponRequiredRejectionRoundTripsInTheExistingBoundedState()
     {
         var state=new DefenseState(new(1),1,1,DefenseOutcome.NeedsWeapon,100,100,.3,0,0,20,10,false,1,Vector2.UnitY);

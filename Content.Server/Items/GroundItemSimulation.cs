@@ -30,6 +30,12 @@ public sealed class GroundItemSimulation
     public IReadOnlyDictionary<NetworkEntityId,PickupResult> Results=>_results;
     public IReadOnlyList<SavedGroundItem> Seeds {get;}
     public bool IsDeathLoot(ulong handle)=>_death.ContainsKey(handle);
+    internal void UpdateDeathLoot(SavedDeathLoot updated)
+    {
+        foreach(var (handle,loot) in _death)
+            if(loot.Item.InstanceId==updated.Item.InstanceId){_death[handle]=updated;return;}
+        throw new InvalidOperationException("Durable death loot is missing its live ground item.");
+    }
     public PvpLootState LootState(ulong handle)=>new(handle,(float)Math.Clamp((_death[handle].Expires-Clock())/1000d,0,1800));
     public bool ChannelDirty(NetworkEntityId id)=>_channelDirty.Contains(id);
     public PickupChannelState ChannelState(NetworkEntityId id,uint tick)=>_channels.TryGetValue(id,out var c)?new(id,tick,c.Command.Handle,(float)Math.Clamp((c.Ready-Clock())/1000d,.001,5)):new(id,tick,0,0);

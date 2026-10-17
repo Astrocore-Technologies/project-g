@@ -28,7 +28,7 @@ public sealed class StatCalculator
         double baseHealthRecovery, double baseManaRecovery, DerivedStatModifiers? modifiers = null)
     {
         RequirePositive(baseHealth);
-        RequirePositive(baseMana);
+        RequireNonNegative(baseMana);
         RequireNonNegative(baseHealthRecovery);
         RequireNonNegative(baseManaRecovery);
         var odds = StatMath.ScalePositive(_balance.BaseCriticalChance / (1 - _balance.BaseCriticalChance),
@@ -51,7 +51,9 @@ public sealed class StatCalculator
             StatMath.PositiveScale(_balance.CastSpeed.Evaluate(stats)), critical, _balance.BaseBlockDamage,
             _balance.Accuracy.Evaluate(stats), _balance.Evasion.Evaluate(stats),
             StatMath.Add(_balance.BaseCriticalDamage, _balance.CriticalDamage.Evaluate(stats)),
-            StatMath.Add(_balance.BaseBlockStrength, _balance.BlockStrength.Evaluate(stats)));
+            StatMath.Add(_balance.BaseBlockStrength, _balance.BlockStrength.Evaluate(stats)),
+            MaxStamina: StatMath.Add(_balance.BaseStamina, _balance.Stamina.Evaluate(stats)),
+            StaminaRecovery: StatMath.Add(_balance.BaseStaminaRecovery, _balance.StaminaRecovery.Evaluate(stats)));
         return modifiers?.Apply(result) ?? result;
     }
 

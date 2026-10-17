@@ -20,6 +20,9 @@ public sealed record ContentDocument
     public required WeaponDefinition[] Weapons { get; init; }
     public required AbilityDefinition[] Abilities { get; init; }
     public EffectDefinition[] Effects { get; init; } = [];
+    public EchoCombatDefinition[] Echoes { get; init; } = [];
+    public required EchoSummonDefinition EchoSummon {get;init;}
+    public required EchoRecoveryDefinition EchoRecovery {get;init;}
     public required CreatureDefinition[] Creatures { get; init; }
     public Content.Server.Crafting.CraftingDefinition? Crafting { get; init; }
     public Content.Server.Quests.DeliveryQuestDefinition? DeliveryQuest {get;init;}

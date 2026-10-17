@@ -14,7 +14,7 @@ public sealed partial class CombatSimulation
     internal void RefreshHealthRecovery(NetworkEntityId id)
     {
         if (!_actors.TryGetValue(id, out var actor)) return;
-        if (actor.Kind == CombatEntityKind.Player && actor.Active &&
+        if (actor.Active && !(_encounters.TryGetValue(id,out var encounter) && encounter.Returning) &&
             actor.Health > 0 && actor.Health < actor.Stats.MaxHealth && actor.Stats.HealthRecovery > 0)
             _recoveringHealth.Add(id);
         else
@@ -24,10 +24,10 @@ public sealed partial class CombatSimulation
         }
     }
 
-    private void RecoverHealth(float delta)
+    private void RecoverHealth(double delta)
     {
         _healthRecoveryFinished.Clear();
-        // Only injured connected players are scheduled. Coalescing avoids a durable write every tick.
+        // Only injured active actors are scheduled. Coalescing avoids a durable write every tick.
         foreach (var id in _recoveringHealth)
         {
             var actor = _actors[id];

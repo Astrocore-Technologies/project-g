@@ -1,185 +1,182 @@
 using System.Numerics;
-using System.Text;
 using Content.Server.Combat;
 using Content.Server.Configuration;
+using Content.Server.Data;
 using Content.Server.Persistence;
+using Content.Server.Items;
 using Content.Shared.Movement;
 using Content.Shared.Navigation;
 using Content.Shared.Network;
 
 namespace Content.Server.World;
 
-/// <summary>Only moving/assisting owners wake this AI; idle Echoes never scan the world.</summary>
-public sealed class EchoSimulation
+/// <summary>Owned companion lifecycle and AI intents. Combat rules and clock belong to common runners.</summary>
+public sealed partial class EchoSimulation
 {
-    public sealed class Actor(NetworkEntityId id, NetworkEntityId owner, SavedEcho saved, NavigationMover motion)
+    public sealed class Actor(NetworkEntityId id,NetworkEntityId owner,Guid instance,byte slot,
+        EchoCombatDefinition definition,NavigationMover motion)
     {
-        public NetworkEntityId Id { get; } = id;
-        public NetworkEntityId OwnerId { get; } = owner;
-        public SavedEcho Saved { get; } = saved;
-        public NavigationMover Motion { get; } = motion;
-        internal double AttackReady, SignatureReady, DecisionReady;
+        public NetworkEntityId Id {get;}=id;
+        public NetworkEntityId OwnerId {get;}=owner;
+        public Guid InstanceId {get;}=instance;
+        public byte Slot {get;}=slot;
+        public NavigationMover Motion {get;}=motion;
+        internal EchoCombatDefinition Definition {get;}=definition;
+        internal double DecisionAt,UnreachableAt=double.NaN;
+        internal uint BasicSequence,AbilitySequence;
+        internal uint SignatureSequence,SignatureActorSequence,ControlSequence,CancelSequence;
+        internal NetworkEntityId Target;
     }
-    private sealed class Owner(Actor[] actors)
+
+    private sealed class Entry(SavedEchoCombat saved,IReadOnlyList<SavedCombatEffect> effects,double registeredAt,double offline)
     {
-        public Actor[] Actors = actors;
-        public NetworkEntityId Target;
-        public double AssistUntil;
-        public uint Sequence;
-        public uint? RequestTick;
-        public Vector2 LastPosition;
-        public bool HadTarget;
+        internal readonly ulong Handle=AllocateHandle();
+        internal SavedEchoCombat Saved=saved;
+        internal IReadOnlyList<SavedCombatEffect> Effects=effects;
+        internal double RegisteredAt=registeredAt,Offline=offline;
+        internal bool LoggingIn;
+        internal EchoCombatPermission Permission=EchoCombatPermission.AllowAll;
+        internal Actor? Body;
     }
+    private sealed class Owner(Func<NetworkEntityId> allocate)
+    {
+        internal readonly Dictionary<Guid,Entry> Entries=new();
+        internal readonly Dictionary<ulong,Entry> Handles=new();
+        internal readonly List<Entry> Roster=new();
+        internal readonly Actor?[] Slots=new Actor?[NetworkConstants.MaxActiveEchoes];
+        internal readonly HashSet<NetworkEntityId> Opponents=new();
+        internal readonly Func<NetworkEntityId> Allocate=allocate;
+        internal uint Sequence;
+        internal readonly uint?[] SignatureRequestTicks=new uint?[NetworkConstants.MaxActiveEchoes];
+        internal bool Exiting;
+        internal uint RosterSequence,RosterPage;
+        internal uint SummonSequence,RecallSequence,SummonControlSequence;
+        internal uint? SummonRequestTick,RecallRequestTick,SummonControlTick;
+        internal uint? RosterRequestTick;
+        internal uint RestoreSequence;
+        internal uint SignatureControlSequence;
+        internal uint? RestoreRequestTick;
+    }
+
     private readonly EchoOptions _options;
+    private readonly ContentCatalog _catalog;
+    private readonly CombatSimulation _combat;
+    private readonly AbilitySimulation _abilities;
     private readonly NavigationGrid _grid;
     private readonly NavigationPathfinder _pathfinder;
     private readonly MovementSettings _movement;
-    private readonly CombatSimulation _combat;
     private readonly SpatialIndex _spatial;
-    private readonly Func<NetworkEntityId, (Vector2 Position, bool Alive, bool Moving)> _ownerState;
-    private readonly Dictionary<NetworkEntityId, Owner> _owners = new();
-    private readonly Dictionary<NetworkEntityId, Actor> _actors = new();
-    private readonly HashSet<NetworkEntityId> _active = new(), _dirty = new(), _loadoutDirty = new(), _candidates = new();
-    private readonly List<NetworkEntityId> _stopped = new();
-    private readonly Dictionary<NetworkEntityId, EchoSignatureCommand> _pending = new();
-    private readonly Dictionary<NetworkEntityId, EchoSignatureResult> _results = new();
-    private readonly List<EchoAction> _actions = new();
-    private double _time;
-    public IReadOnlyCollection<NetworkEntityId> DirtyOwners => _dirty;
-    public IReadOnlyDictionary<NetworkEntityId, EchoSignatureResult> Results => _results;
-    public IReadOnlyList<EchoAction> Actions => _actions;
-    public EchoSimulation(EchoOptions options, NavigationGrid grid, MovementSettings movement, CombatSimulation combat,
-        SpatialIndex spatial, Func<NetworkEntityId, (Vector2 Position, bool Alive, bool Moving)> ownerState)
+    private readonly Func<long> _now;
+    private readonly InventorySimulation? _inventory;
+    private readonly IEchoCombatPermissionSource? _permissionSource;
+    private readonly Dictionary<NetworkEntityId,Owner> _owners=new();
+    private readonly Dictionary<NetworkEntityId,Actor> _actors=new();
+    private readonly HashSet<NetworkEntityId> _awake=new(),_dirty=new(),_loadoutDirty=new(),_deadBodies=new();
+    private readonly List<NetworkEntityId> _work=new(),_sleep=new();
+    private static long _nextHandle;
+    private static ulong AllocateHandle()
+    {var handle=Interlocked.Increment(ref _nextHandle);if(handle<=0)throw new InvalidOperationException("Echo handles exhausted.");return(ulong)handle;}
+    internal IReadOnlyCollection<NetworkEntityId> AwakeActors=>_awake;
+    public IReadOnlyCollection<NetworkEntityId> DirtyOwners=>_dirty;
+    internal string DefinitionId=>_options.DefinitionId;
+    public IReadOnlyList<EchoAction> Actions=>Array.Empty<EchoAction>(); // Common attack/ability events replace legacy feedback.
+
+    public EchoSimulation(EchoOptions options,ContentCatalog catalog,NavigationGrid grid,MovementSettings movement,
+        CombatSimulation combat,AbilitySimulation abilities,SpatialIndex spatial,Func<long> now,InventorySimulation? inventory=null,
+        IEchoCombatPermissionSource? permissionSource=null)
     {
-        if (string.IsNullOrWhiteSpace(options.DefinitionId) || options.DefinitionId.Length > 64 || options.Name is not { Length: > 0 and <= 24 } ||
-            Encoding.UTF8.GetByteCount(options.Name) > 48 || !Finite(options.Speed,.1,20) || !Finite(options.FollowDistance,.5,3) ||
-            !Finite(options.DecisionSeconds,.1,2) || !Finite(options.AssistSeconds,.1,30) || !Finite(options.LeashRadius,.1,10) ||
-            !Finite(options.AttackRange,.1,5) || !Finite(options.AttackPower,0,1000000) || !Finite(options.AttackIntervalSeconds,.2,60) ||
-            !Finite(options.SignatureRange,.1,10) || !Finite(options.SignatureRadius,.1,10) || !Finite(options.SignaturePower,0,1000000) ||
-            !Finite(options.SignatureCooldownSeconds,1,86400)) throw new ArgumentException("Invalid prototype Echo definition.");
-        _options = options; _grid = grid; _movement = movement with { Speed = options.Speed }; _combat = combat; _spatial = spatial;
-        _ownerState = ownerState; _pathfinder = new(grid);
+        if(!catalog.Echoes.ContainsKey(options.DefinitionId) || !float.IsFinite(options.DecisionSeconds) || options.DecisionSeconds is <.05f or >2)
+            throw new ArgumentException("Invalid Echo content reference or AI decision interval.");
+        _options=options;_catalog=catalog;_grid=grid;_movement=movement;_combat=combat;_abilities=abilities;_spatial=spatial;_now=now;
+        _pathfinder=new(grid);_inventory=inventory;_permissionSource=permissionSource;
+        if(combat.CompanionActionPermission is not null)throw new InvalidOperationException("Duplicate companion permission policy.");
+        combat.CompanionActionPermission=AllowsAction;
+        if(combat.SummonEligibility is not null || combat.SummonActivated is not null)throw new InvalidOperationException("Duplicate companion coordinator.");
+        combat.SummonEligibility=CanSummon;combat.SummonActivated=ActivateSummon;
+        combat.HostileContact+=OnContact;combat.Defeated+=OnDefeated;
     }
-    private static bool Finite(double value, double min, double max) => double.IsFinite(value) && value >= min && value <= max;
-    internal string DefinitionId => _options.DefinitionId;
-    private Vector2 Offset(byte slot) => slot switch { 1 => new(-_options.FollowDistance,0), 2 => new(_options.FollowDistance,0), _ => new(0,_options.FollowDistance) };
-    public void Add(NetworkEntityId owner, SavedEchoes saved, double offlineSeconds, Func<NetworkEntityId> allocate)
+
+    public bool TryGet(NetworkEntityId id,out Actor actor)=>_actors.TryGetValue(id,out actor!);
+    public void Wake(NetworkEntityId owner)
     {
-        saved.Validate(); var master = _ownerState(owner); var actors = new Actor[saved.Active.Length];
-        // Validate before inserting into the shared spatial index: corrupt saves cannot leave partial actors.
-        for (var i = 0; i < actors.Length; i++)
-        {
-            var source = saved.Active[i]; if (source.DefinitionId != _options.DefinitionId) throw new InvalidDataException("Unknown Echo definition.");
-            Vector2 position;
-            if (source.X is { } x) { position = new(x,source.Z!.Value); if (!_grid.IsOnSurface(new Vector3(position.X,source.Surface?.Height ?? 0,position.Y)) || (_grid.SurfaceHash != 0 && source.Surface?.GeometryHash != _grid.SurfaceHash)) throw new InvalidDataException("Blocked saved Echo position."); }
-            else { position = MovementSimulation.ClampTarget(master.Position+Offset(source.Slot),_movement); if (_grid.Surface is null) { if (!_grid.TryFindSpawn(position,out position)) throw new InvalidDataException("No Echo spawn."); } else if (!_grid.IsOnSurface(new(position.X,_combat.Get(owner).Height,position.Y))) position = master.Position; }
-            actors[i] = new(allocate(),owner,source,new(_grid,_movement,_pathfinder,position,source.Surface?.Height ?? _combat.Get(owner).Height))
-            { AttackReady = _time+Math.Max(0,source.AttackCooldownSeconds-offlineSeconds), SignatureReady = _time+Math.Max(0,source.SignatureCooldownSeconds-offlineSeconds) };
-        }
-        _owners.Add(owner,new(actors));
-        foreach (var actor in actors) { _actors.Add(actor.Id,actor); _spatial.Add(actor.Id,actor.Motion.Position); }
-        Wake(owner); _dirty.Add(owner); _loadoutDirty.Add(owner);
+        if(!_owners.TryGetValue(owner,out var state))return;
+        foreach(var body in state.Slots)if(body is not null && _combat.Get(body.Id).Health>0)
+            if(_awake.Add(body.Id))body.DecisionAt=_combat.Time;
     }
-    public bool TryGet(NetworkEntityId id, out Actor actor) => _actors.TryGetValue(id,out actor!);
-    internal void ResetSession(NetworkEntityId owner){if(_owners.TryGetValue(owner,out var s)){s.Sequence=0;s.RequestTick=null;}_pending.Remove(owner);_results.Remove(owner);}
-    internal void Respawn(NetworkEntityId owner)
+    internal void WakeActor(NetworkEntityId id)
+    {if(_actors.TryGetValue(id,out var actor)){actor.DecisionAt=_combat.Time;_awake.Add(id);}}
+    internal void Respawn(NetworkEntityId owner)=>Wake(owner);
+    internal void ResetSession(NetworkEntityId owner)
     {
-        if(!_owners.TryGetValue(owner,out var state))return;var position=_ownerState(owner).Position;
-        state.Target=default;state.AssistUntil=0;
-        foreach(var actor in state.Actors){if(!_grid.TryFindSpawn(MovementSimulation.ClampTarget(position+Offset(actor.Saved.Slot),_movement),out var spawn))throw new InvalidOperationException("No Echo respawn.");actor.Motion.Reset(spawn,spawn,_combat.Get(owner).Height,_combat.Get(owner).Height);_spatial.Move(actor.Id,spawn);}
-        _dirty.Add(owner);Wake(owner);
+        if(_owners.TryGetValue(owner,out var state)){state.Sequence=0;Array.Clear(state.SignatureRequestTicks);state.RosterSequence=0;state.RosterRequestTick=null;
+            state.SummonSequence=state.RecallSequence=state.SummonControlSequence=state.RestoreSequence=0;state.SummonRequestTick=state.RecallRequestTick=state.SummonControlTick=state.RestoreRequestTick=null;}
+        RemovePendingSignatures(owner);_results.Remove(owner);_signatureControls.Remove(owner);_signatureResultBatches.Remove(owner);
+        if(state is not null)state.SignatureControlSequence=0;
+        _summonRequests.Remove(owner);_summonResults.Remove(owner);_rosterDirty.Remove(owner);
+        _recallResults.Remove(owner);
+        _restorePending.Remove(owner);_restoreResults.Remove(owner);
     }
-    public void Wake(NetworkEntityId owner) { if (_owners.ContainsKey(owner)) _active.Add(owner); }
+
+    private CompanionSummonOutcome CanSummon(NetworkEntityId owner,Guid instance)
+    {
+        if(!_owners.TryGetValue(owner,out var state) || !state.Entries.TryGetValue(instance,out var entry))return CompanionSummonOutcome.InvalidEcho;
+        if(state.Exiting)return CompanionSummonOutcome.InvalidState;
+        if(entry.Body is not null || entry.Saved.Availability==SavedEchoAvailability.Active)return CompanionSummonOutcome.AlreadyActive;
+        if(entry.Saved.Availability!=SavedEchoAvailability.Ready)return CompanionSummonOutcome.Unavailable;
+        foreach(var body in state.Slots)if(body is null)return CompanionSummonOutcome.Accepted;
+        return CompanionSummonOutcome.ActiveLimit;
+    }
+
+    internal bool QueueSummon(NetworkEntityId owner,Guid instance,uint sequence,uint tick)
+        =>_owners.ContainsKey(owner) && _combat.QueueSummon(owner,new(sequence,instance),tick);
+
+    private void ActivateSummon(NetworkEntityId owner,Guid instance)
+    {
+        var state=_owners[owner];var entry=state.Entries[instance];
+        var slot=Array.FindIndex(state.Slots,body=>body is null);
+        if(slot<0)throw new InvalidOperationException("A validated summon lost its active slot.");
+        var master=_combat.Get(owner);var definition=_catalog.Echoes[entry.Saved.DefinitionId];
+        var preferred=master.Position+FollowOffset((byte)(slot+1),definition.FollowDistance);
+        if(!TryArrival(preferred,master.Foot,definition.ArrivalRadius,out var foot))throw new InvalidOperationException("No valid Echo summon position.");
+        SpawnBody(owner,entry,(byte)(slot+1),foot,loggingIn:entry.LoggingIn);
+    }
+
+    private void OnDefeated(NetworkEntityId id)
+    {
+        if(_actors.ContainsKey(id)){_deadBodies.Add(id);_dirty.Add(_actors[id].OwnerId);_loadoutDirty.Add(_actors[id].OwnerId);}
+        ForgetOpponent(id);
+    }
+
     public void Remove(NetworkEntityId owner)
     {
-        if (_owners.Remove(owner,out var state)) foreach (var actor in state.Actors) { _actors.Remove(actor.Id); _spatial.Remove(actor.Id); }
-        _active.Remove(owner); _pending.Remove(owner); _results.Remove(owner); _dirty.Remove(owner); _loadoutDirty.Remove(owner);
+        if(!_owners.Remove(owner,out var state))return;
+        ForgetOwnerOpponents(owner,state);
+        foreach(var entry in state.Entries.Values)if(entry.Body is {} body)RemoveBody(body);
+        RemovePendingSignatures(owner);_results.Remove(owner);_dirty.Remove(owner);_loadoutDirty.Remove(owner);_signatureControls.Remove(owner);_signatureResultBatches.Remove(owner);
+        _summonRequests.Remove(owner);_summonResults.Remove(owner);_rosterDirty.Remove(owner);
+        _recallResults.Remove(owner);
+        _restorePending.Remove(owner);_restoreResults.Remove(owner);
     }
-    public SavedEchoes Capture(NetworkEntityId owner) => new() { Active = _owners[owner].Actors.Select(actor => actor.Saved with
-    { X = actor.Motion.Position.X, Z = actor.Motion.Position.Y, Surface = _grid.SurfaceHash == 0 ? null : new(1, actor.Motion.Height, _grid.SurfaceHash), AttackCooldownSeconds = Math.Max(0,actor.AttackReady-_time), SignatureCooldownSeconds = Math.Max(0,actor.SignatureReady-_time) }).ToArray() };
-    public EchoSpawn Spawn(NetworkEntityId id, uint tick)
-    { var actor = _actors[id]; return new(id,actor.OwnerId,actor.Saved.Slot,tick,actor.Motion.Position,_options.Name,actor.Motion.Height); }
-    public bool IsLoadoutDirty(NetworkEntityId owner) => _loadoutDirty.Contains(owner);
-    public EchoLoadout Loadout(NetworkEntityId owner, uint tick) => new(owner,tick,_owners[owner].Actors.Select(actor =>
-        new EchoSlot(actor.Saved.Slot,actor.Id,_options.SignatureRange,_options.SignatureRadius,(float)Math.Max(0,actor.SignatureReady-_time))).ToArray());
-    public void Alert(NetworkEntityId owner, NetworkEntityId target)
+
+    private void RemoveBody(Actor body)
     {
-        if (!_owners.TryGetValue(owner,out var state) || !_combat.TryGet(target,out var enemy) || !_combat.CanTarget(owner,target) || enemy.Health <= 0) return;
-        state.Target = target; state.AssistUntil = _time+_options.AssistSeconds; Wake(owner);
+        _signatureRequests.Remove(body.Id);_awake.Remove(body.Id);_deadBodies.Remove(body.Id);
+        _abilities.FinishDeparture(body.Id);_abilities.Remove(body.Id);
+        _spatial.Remove(body.Id);_actors.Remove(body.Id);_combat.Remove(body.Id);
     }
-    public bool Queue(NetworkEntityId owner, EchoSignatureCommand command, uint tick)
+
+    public void ClearResults()
     {
-        if (!_owners.TryGetValue(owner,out var state) || command.Sequence == 0 || command.Slot is < 1 or > NetworkConstants.MaxActiveEchoes ||
-            !float.IsFinite(command.Aim.X) || !float.IsFinite(command.Aim.Y) || !float.IsFinite(command.AimHeight) || MathF.Abs(command.AimHeight)>128 || !MovementSimulation.IsSequenceNewer(command.Sequence,state.Sequence)) return false;
-        state.Sequence = command.Sequence;
-        if (state.RequestTick == tick) { _pending.Remove(owner); _results[owner] = new(command.Sequence,tick,command.Slot,EchoCommandOutcome.RateLimited,0); return false; }
-        state.RequestTick = tick; _pending[owner] = command; return true;
-    }
-    public void Simulate(float delta, uint tick)
-    {
-        _time += delta; _stopped.Clear();
-        foreach (var owner in _active)
+        _work.Clear();_work.AddRange(_deadBodies);
+        foreach(var id in _work)
         {
-            var state = _owners[owner]; var master = _ownerState(owner); var moving = false;
-            var target = state.AssistUntil > _time && _combat.TryGet(state.Target,out var enemy) && enemy.Health > 0 &&
-                Vector2.DistanceSquared(master.Position,enemy.Position) <= _options.LeashRadius*_options.LeashRadius ? enemy : null;
-            foreach (var actor in state.Actors)
-            {
-                var before = actor.Motion.Position;
-                if (!master.Alive || !_combat.Get(owner).Active) actor.Motion.Reset(before,before,actor.Motion.Height,actor.Motion.Height);
-                else
-                {
-                    // Final owner movement must replan before the Echo is allowed to sleep.
-                    if (_time >= actor.DecisionReady || (!master.Moving && master.Position != state.LastPosition) || (target is null && state.HadTarget))
-                    {
-                        actor.DecisionReady = _time+_options.DecisionSeconds;
-                        var destination = target?.Position ?? MovementSimulation.ClampTarget(master.Position+Offset(actor.Saved.Slot),_movement);
-                        var height = target?.Height ?? _combat.Get(owner).Height;
-                        if (_grid.Surface is null ? _grid.TryFindSpawn(destination,out destination) : _grid.IsOnSurface(new(destination.X,height,destination.Y))) actor.Motion.TrySetTarget(destination, height);
-                        else if (target is null) actor.Motion.TrySetTarget(master.Position, height);
-                    }
-                    actor.Motion.Step(delta);
-                    if (target is { Health: > 0 } && Vector3.DistanceSquared(actor.Motion.Foot,target.Foot) <= _options.AttackRange*_options.AttackRange && _grid.ClearAttack(actor.Motion.Foot,target.Foot))
-                    {
-                        actor.Motion.Reset(actor.Motion.Position,actor.Motion.Position,actor.Motion.Height,actor.Motion.Height);
-                        if (_time >= actor.AttackReady) { actor.AttackReady = _time+_options.AttackIntervalSeconds; _dirty.Add(owner); Hit(actor,target,EchoActionKind.BasicAttack,actor.Motion.Position,_options.AttackRange,_options.AttackPower,tick); }
-                    }
-                }
-                if (actor.Motion.Position != before) { _spatial.Move(actor.Id,actor.Motion.Position); _dirty.Add(owner); }
-                moving |= actor.Motion.IsMoving;
-            }
-            state.LastPosition = master.Position;
-            state.HadTarget = target is not null;
-            if (!master.Alive || (!master.Moving && !moving && target is null)) _stopped.Add(owner);
+            if(!_actors.TryGetValue(id,out var body))continue;
+            var owner=_owners[body.OwnerId];var entry=owner.Entries[body.InstanceId];
+            SaveBody(entry,body,active:false);entry.Body=null;owner.Slots[body.Slot-1]=null;RemoveBody(body);
         }
-        foreach (var owner in _stopped) _active.Remove(owner);
-        foreach (var (owner,command) in _pending) ResolveSignature(owner,command,tick);
-        _pending.Clear();
+        _deadBodies.Clear();_results.Clear();_signatureResultBatches.Clear();_dirty.Clear();_loadoutDirty.Clear();
+        _summonResults.Clear();_rosterDirty.Clear();
+        _recallResults.Clear();
+        _restoreResults.Clear();
     }
-    private void ResolveSignature(NetworkEntityId owner, EchoSignatureCommand command, uint tick)
-    {
-        var actor = Array.Find(_owners[owner].Actors,actor => actor.Saved.Slot == command.Slot);
-        var center = new Vector3(command.Aim.X,command.AimHeight,command.Aim.Y);
-        if(_grid.Surface is { } surface && surface.TryLocate(center,.35f,out var ground))center=ground.Position;
-        var outcome = actor is null ? EchoCommandOutcome.NotOwned : !_ownerState(owner).Alive || !_combat.Get(owner).Active || _combat.Get(owner).IsCasting ? EchoCommandOutcome.InvalidState
-            : _time < actor.SignatureReady ? EchoCommandOutcome.Cooldown
-            : Vector3.DistanceSquared(actor.Motion.Foot,center) > _options.SignatureRange*_options.SignatureRange ? EchoCommandOutcome.OutOfRange
-            : !_grid.IsOnSurface(center) || !_grid.ClearAttack(actor.Motion.Foot,center) ? EchoCommandOutcome.Blocked : EchoCommandOutcome.Accepted;
-        // Client timestamps cannot accelerate cooldowns or grant unbounded rewind.
-        if (command.ClientTick != tick && MovementSimulation.IsSequenceNewer(command.ClientTick,tick)) outcome = EchoCommandOutcome.InvalidState;
-        if (outcome == EchoCommandOutcome.Accepted)
-        {
-            _combat.PlayerAction?.Invoke(owner);
-            actor!.SignatureReady = _time+_options.SignatureCooldownSeconds; _dirty.Add(owner); _loadoutDirty.Add(owner);
-            _actions.Add(new(actor.Id,tick,EchoActionKind.Signature,default,command.Aim,_options.SignatureRadius,0,0,center.Y));
-            _spatial.Query(command.Aim,_options.SignatureRadius,_candidates);
-            foreach (var id in _candidates)
-                if (_combat.TryGet(id,out var target) && _combat.CanTarget(owner,target.Id) && target.Health > 0 && Vector3.DistanceSquared(center,target.Foot)<=_options.SignatureRadius*_options.SignatureRadius && _grid.ClearAttack(center,target.Foot))
-                    Hit(actor,target,EchoActionKind.Signature,command.Aim,_options.SignatureRadius,_options.SignaturePower,tick,center.Y);
-        }
-        _results[owner] = new(command.Sequence,tick,command.Slot,outcome,actor is null ? 0 : (float)Math.Max(0,actor.SignatureReady-_time));
-    }
-    private void Hit(Actor actor, Combatant target, EchoActionKind kind, Vector2 position, float radius, double power, uint tick, float? height=null)
-    { var damage = _combat.ApplyEchoDamage(target.Id,power,actor.OwnerId,actor.Motion.Position); _actions.Add(new(actor.Id,tick,kind,target.Id,position,radius,damage,target.Health,height ?? actor.Motion.Height)); }
-    public void ClearResults() { _actions.Clear(); _results.Clear(); _dirty.Clear(); _loadoutDirty.Clear(); }
 }

@@ -67,7 +67,7 @@ public sealed partial class RegionalSimulation
         Social = new(clock, character => !characters.TryGetValue(character, out var connection) ||
             CanExecute(connection, ownership.Owner(character)) && World(connection).CanChangeSocial(connection), maxParties, maxGuilds);
         Social.Restore(socialRows);
-        foreach (var world in orderedWorlds) { world.PvpClock = clock; world.AttachSocial(Social); }
+        foreach (var world in orderedWorlds) { world.UseItemWearLedger(orderedWorlds[0].ItemWear);world.PvpClock = clock; world.AttachSocial(Social); }
     }
 
     public ServerWorld Region(string key) => worlds.TryGetValue(key, out var world)

@@ -179,7 +179,7 @@ public sealed class ChannelingTests
         var f=new Fight(data);f.Combat.ApplyEquipment(f.Id,(f.Actor.Stats with {CooldownReduction=1},f.Actor.Weapon,f.Actor.AttackInterval));f.Cast();
         Assert.Equal(0,f.Skill.Charges);Assert.Equal(1,f.Skill.PendingEndCharges);Assert.Equal(0,f.Skill.RechargeInSeconds);
         Assert.True(f.World.TryQueueAbility(42,new(2,f.World.Tick,2,f.Combat.Get(f.World.TrainingTargetId).Position),0));f.Step();
-        Assert.Equal(AbilityOutcome.Busy,f.Abilities.Results[f.Id].Outcome);f.Finish();Assert.Equal(1,f.Skill.Charges);Assert.Equal(0,f.Skill.ReadyInSeconds);
+        Assert.Equal(AbilityOutcome.Cooldown,f.Abilities.Results[f.Id].Outcome);f.Finish();Assert.Equal(1,f.Skill.Charges);Assert.Equal(0,f.Skill.ReadyInSeconds);
     }
 
     [Fact]public void ExplicitlyUnboundedChannelContinuesUntilItsAllowedCancel()
@@ -227,7 +227,7 @@ public sealed class ChannelingTests
         {
             case "missing":skill.AsObject().Remove("channel");break;
             case "unexpected":skill["action"]!["form"]="Cast";break;
-            case "shape":skill["kind"]="Projectile";skill["speed"]=1;break;
+            case "shape":skill["kind"]="Dash";break;
             case "ambiguousDuration":skill["action"]!["active"]!["seconds"]=1;break;
             case "negativeRate":channel["manaPerSecond"]=-1;break;
             case "zeroInterval":channel["intervalSeconds"]=0;break;

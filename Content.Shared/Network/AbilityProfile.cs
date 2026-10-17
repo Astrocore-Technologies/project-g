@@ -9,4 +9,10 @@ public readonly record struct AbilityProfile(ushort Id, AbilityForm Form, float 
     double ChannelManaPerSecond=0,double ChannelStaminaPerSecond=0,double ChannelMaximumSeconds=0,byte PendingEndCharges=0,
     double ChargeSeconds=0,bool ChargeAutoRelease=false,bool ChargeCanTurn=false,bool SustainCanTurn=false,
     Content.Shared.Combat.ToggleState ToggleState=Content.Shared.Combat.ToggleState.Off,bool ToggleOccupiesAction=false,
-    Content.Shared.Combat.ToggleStopTriggers ToggleStopOn=Content.Shared.Combat.ToggleStopTriggers.None);
+    Content.Shared.Combat.ToggleStopTriggers ToggleStopOn=Content.Shared.Combat.ToggleStopTriggers.None,
+    float ProjectileLaunchHeight=0,float MeleeOriginHeight=0,float MeleeThickness=0,float GroundVolumeHeight=0,bool GroundRequiresSurface=false,
+    double DodgeDurationSeconds=0,double DodgeProtectionSeconds=0,Content.Shared.Combat.DodgeThreats DodgeProtectedThreats=Content.Shared.Combat.DodgeThreats.None,
+    double HealthCost=0,bool AllowFatalHealthCost=false)
+{
+    public float AttackOriginHeight=>Form==AbilityForm.Projectile?ProjectileLaunchHeight:Form==AbilityForm.Melee?MeleeOriginHeight:0;
+}

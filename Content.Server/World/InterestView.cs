@@ -19,6 +19,7 @@ public sealed class InterestView
     internal List<NetworkEntityId> LeftIds { get; } = new();
     internal List<EntitySnapshot> States { get; } = new();
     internal AbilityInterestView Abilities { get; } = new();
+    internal BasicActionInterestView BasicActions {get;}=new();
     internal HashSet<NetworkEntityId> GroundCandidates { get; } = new();
     internal HashSet<NetworkEntityId> GroundVisible { get; } = new();
     internal List<NetworkEntityId> GroundEntered { get; } = new();
@@ -28,6 +29,8 @@ public sealed class InterestView
     internal Dictionary<NetworkEntityId,(uint Windup,uint Area)> NpcFeedbackVersions {get;}=new();
     internal bool JournalInitialized;
     internal ulong JournalSerial,JournalDeathId;
+    internal NetworkEntityId ControlOwner;
+    internal ulong? ControlRevision;
 
     public IReadOnlyCollection<NetworkEntityId> Entities => Visible;
     public IReadOnlyList<NetworkEntityId> Entered => EnteredIds;

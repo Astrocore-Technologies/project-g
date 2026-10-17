@@ -116,6 +116,21 @@ public sealed partial class RegionalSimulation
             echoes = echoes with { Active = active };
         }
         var progression = state.Progression;
+        IReadOnlyList<SavedEchoCombat>? owned=state.OwnedEchoes;
+        if(owned is not null)
+        {
+            var arrivals=new SavedEchoCombat[owned.Count];
+            for(var i=0;i<arrivals.Length;i++)
+            {
+                var echo=owned[i];arrivals[i]=echo;
+                if(echo.Availability!=SavedEchoAvailability.Active)continue;
+                var requested=new Vector2(echo.X,echo.Z)+delta;var position=requested;
+                if(target.Navigation.Surface is not null ? !target.Navigation.IsOnSurface(new(requested.X,route.ArrivalHeight,requested.Y)) :
+                    !target.Navigation.TryFindSpawn(requested,out position))throw new InvalidDataException("No valid owned Echo arrival in destination region.");
+                arrivals[i]=echo with {X=position.X,Z=position.Y,Surface=target.Navigation.SurfaceHash==0?null:new(1,route.ArrivalHeight,target.Navigation.SurfaceHash)};
+            }
+            owned=Array.AsReadOnly(arrivals);
+        }
         if (progression is not null)
         {
             var maps = new List<SavedExploration>(2);
@@ -125,6 +140,6 @@ public sealed partial class RegionalSimulation
                 OtherExplorations = maps.Where(m => m.RegionKey != target.RegionId).ToArray() };
         }
         return state with { RegionId = target.RegionId, X = route.Arrival.X, Z = route.Arrival.Y, Surface = target.Navigation.SurfaceHash == 0 ? null : new(1, route.ArrivalHeight, target.Navigation.SurfaceHash),
-            Echoes = echoes, Progression = progression };
+            Echoes = echoes, OwnedEchoes=owned, Progression = progression };
     }
 }

@@ -5,7 +5,7 @@ using Content.Shared.Combat;
 
 namespace Content.Server.Combat;
 
-internal enum CombatEffectEventKind : byte { PeriodicDamage, Healing, ShieldAbsorption, LifeSteal, ManaSteal, Reflection, HealthPrice, Resurrection }
+internal enum CombatEffectEventKind : byte { PeriodicDamage, Healing, ShieldAbsorption, LifeSteal, ManaSteal, Reflection, HealthPrice, Resurrection, Dodge }
 internal readonly record struct CombatEffectEvent(Guid Instance,CombatSourceId Source,NetworkEntityId Target,
     CombatEffectEventKind Kind,double Amount,bool Critical=false,ulong Execution=0,ulong EventId=0);
 
@@ -52,7 +52,7 @@ public sealed partial class CombatSimulation
         return new(StatMath.Multiply(EffectPowerAtSource(source,periodic.Power,releasedSource),scale),crit ? StatCalculator.CriticalProbability(stats) : 0,Math.Max(0,stats.CriticalDamage));
     }
 
-    private void TickEffect(NetworkEntityId targetId,TimedEffectInstance effect)
+    private void CapturePeriodicTick(NetworkEntityId targetId,TimedEffectInstance effect)
     {
         var target=_actors[targetId]; var definition=effect.Definition.Periodic!;
         if(target.Health<=0 || !target.Active || !EnvironmentAllows(target,effect.Definition)) return;
@@ -62,32 +62,48 @@ public sealed partial class CombatSimulation
             if(source.IsValid) effect.Snapshot=SnapshotEffect(source,definition,effect.PowerScale);
             else if(definition.MissingSource==MissingEffectSource.Expire) {RemoveEffect(effect.Id);return;}
         }
+        if(!_capturingContacts)throw new InvalidOperationException("Periodic contacts require the common timeline barrier.");
         var snapshot=effect.Snapshot;
-        var critical=snapshot.CriticalChance>0 && _roll()<snapshot.CriticalChance;
-        var power=StatMath.Multiply(snapshot.Power,effect.Stacks);
-        if(critical) power=StatMath.Multiply(power,snapshot.CriticalDamage);
-        if(definition.Kind==PeriodicEffectKind.Healing)
+        _periodicContacts.Add(new(effect.Id,effect.Key.Source,source,targetId,definition.Kind,definition.DamageFamily,
+            StatMath.Multiply(snapshot.Power,effect.Stacks),snapshot.CriticalChance,snapshot.CriticalDamage,effect.ExecutionId,effect.ContributionCredit));
+        _contactOrder.Add(new(effect.ExecutionId,targetId,ContactKind.Periodic,_periodicContacts.Count-1));
+    }
+
+    private readonly record struct PeriodicContact(Guid Instance,CombatSourceId SourceIdentity,NetworkEntityId Source,NetworkEntityId Target,
+        PeriodicEffectKind Kind,EffectDamageFamily DamageFamily,double Power,double CriticalChance,double CriticalDamage,
+        ulong Execution,CombatSourceId? ContributionCredit);
+    private readonly List<PeriodicContact> _periodicContacts=new();
+
+    private void ResolvePeriodicContact(PeriodicContact contact)
+    {
+        if(!_actors.TryGetValue(contact.Target,out var target))return;
+        var critical=contact.CriticalChance>0 && _roll()<contact.CriticalChance;
+        var power=critical?StatMath.Multiply(contact.Power,contact.CriticalDamage):contact.Power;
+        var source=contact.Source;var targetId=contact.Target;
+        if(contact.Kind==PeriodicEffectKind.Healing)
         {
-            var restored=Heal(source,targetId,power,authorizedEffect:true,reportJournal:false);
-            ReportEffectEvent(new(effect.Id,effect.Key.Source,targetId,CombatEffectEventKind.Healing,restored,critical,effect.ExecutionId));
+            var restored=Heal(source,targetId,power,authorizedEffect:true,reportJournal:false,sourceIdentity:contact.SourceIdentity,contributionCredit:contact.ContributionCredit);
+            ReportEffectEvent(new(contact.Instance,contact.SourceIdentity,targetId,CombatEffectEventKind.Healing,restored,critical,contact.Execution));
         }
         else if(PeriodicDamageAllowed?.Invoke(targetId)!=false)
         {
-            var defense=definition.DamageFamily==EffectDamageFamily.Magical ? target.Stats.MagicDefense : target.Stats.PhysicalDefense;
-            var damage=ApplyHealthDamage(effect.Key.Source,source,targetId,_calculator.ApplyDefense(power,defense),
-                DamageOrigin.Periodic,definition.DamageFamily,critical);
-            ReportEffectEvent(new(effect.Id,effect.Key.Source,targetId,CombatEffectEventKind.PeriodicDamage,damage,critical,effect.ExecutionId));
+            var defense=contact.DamageFamily==EffectDamageFamily.Magical ? target.Stats.MagicDefense : target.Stats.PhysicalDefense;
+            var damage=ApplyHealthDamage(contact.SourceIdentity,source,targetId,_calculator.ApplyDefense(power,defense),
+                DamageOrigin.Periodic,contact.DamageFamily,critical,contributionCredit:contact.ContributionCredit);
+            ReportEffectEvent(new(contact.Instance,contact.SourceIdentity,targetId,CombatEffectEventKind.PeriodicDamage,damage,critical,contact.Execution));
         }
         _effectDirty.Add(targetId);
     }
 
-    internal double Heal(NetworkEntityId source,NetworkEntityId targetId,double power,bool authorizedEffect=false,bool allowOtherPlayers=false,bool reportJournal=true)
+    internal double Heal(NetworkEntityId source,NetworkEntityId targetId,double power,bool authorizedEffect=false,bool allowOtherPlayers=false,bool reportJournal=true,
+        CombatSourceId? sourceIdentity=null,CombatSourceId? contributionCredit=null)
     {
         if(!double.IsFinite(power) || power<0) throw new ArgumentException("Invalid healing power.");
         if(!_actors.TryGetValue(targetId,out var target) || target.Health<=0 || !target.Active) return 0;
         if(!authorizedEffect && source.IsValid && !CanSupport(source,targetId,allowOtherPlayers))return 0;
         var restored=Math.Min(power,Math.Max(0,target.Stats.MaxHealth-target.Health));
         target.Health=StatMath.Add(target.Health,restored);
+        if(restored>0)RecordEncounterHealing(sourceIdentity ?? SourceIdentity(source),source,targetId,restored,contributionCredit);
         if(restored>0 && reportJournal)RecordJournal(source,targetId,CombatJournalKind.Healing,restored);
         if(restored>0) {RefreshHealthRecovery(targetId); _effectDirty.Add(targetId); _equipmentDirty.Add(targetId);SupportCombatParticipant(source,targetId,restored); HealingApplied?.Invoke(source,targetId,restored);}
         return restored;

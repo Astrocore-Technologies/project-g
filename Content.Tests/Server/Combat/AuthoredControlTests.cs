@@ -105,7 +105,7 @@ public sealed class AuthoredControlTests
     public void ProjectileControlRespectsItsTriggerAfterAFullBlock(SkillEffectTrigger trigger,bool accepted)
     {
         var data=Document(CrowdControlKind.Root,trigger);var skill=data["abilities"]![1]!;
-        skill["kind"]="Projectile";skill["speed"]=10;skill["radius"]=.1;
+        skill["kind"]="Projectile";skill.AsObject().Remove("groundVolume");skill["projectileLaunchHeight"]=1;skill["speed"]=10;skill["radius"]=.1;
         skill["defense"]=new JsonObject{["blockable"]=true,["parryable"]=false};
         var (world,source,target)=Setup(data);var combat=world.Combat!;var victim=combat.Get(target.EntityId);
         combat.ApplyEquipment(target.EntityId,(victim.Stats with {BlockDamage=1},victim.Weapon,victim.AttackInterval));

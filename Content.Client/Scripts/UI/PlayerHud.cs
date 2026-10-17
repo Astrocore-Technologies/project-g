@@ -21,12 +21,14 @@ public partial class PlayerHud : CanvasLayer
     private AbilityLoadout _loadout;
     private double _received, _refresh;
     private bool _alive = true;
+    private double _health;
     private NetworkEntityId _owner;
     public void Initialize(NetworkEntityId owner, Action character)
     {
         _owner = owner; Layer = 3;
         var root = _root = new Control { Theme = GameUi.CreateTheme(), MouseFilter = Control.MouseFilterEnum.Ignore };
         AddChild(root); root.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+        InitializeControls(root);
         var portraitPanel = new PanelContainer { AnchorLeft=.5f,AnchorRight=.5f,AnchorTop=1,AnchorBottom=1,OffsetLeft=-328,OffsetRight=328,OffsetTop=-290,OffsetBottom=-124 }; root.AddChild(portraitPanel);
         var body = new VBoxContainer(); body.AddThemeConstantOverride("separation",3); portraitPanel.AddChild(body);
         var header = new HBoxContainer(); body.AddChild(header);
@@ -67,7 +69,7 @@ public partial class PlayerHud : CanvasLayer
     }
     private static void Value(ProgressBar bar, double value, double max) { bar.MaxValue = Math.Max(1,max); bar.Value = Math.Clamp(value,0,bar.MaxValue); }
     public void Health(double health, double max)
-    { _alive = health>0; _hpText.Text = $"HP  {health:0} / {max:0}"+(_alive ? "" : " · Вы повержены"); Value(_hp,health,max); }
+    { _health=health;_alive = health>0; _hpText.Text = $"HP  {health:0} / {max:0}"+(_alive ? "" : " · Вы повержены"); Value(_hp,health,max); }
     public void Apply(DefenseState state)
     {
         if (state.OwnerId!=_owner) return;
@@ -85,7 +87,7 @@ public partial class PlayerHud : CanvasLayer
         Value(_xp,state.NextExperience == 0 ? 1 : state.Experience,state.NextExperience == 0 ? 1 : state.NextExperience);
         Array.Clear(_bar); foreach (var skill in state.Skills) if (skill.Slot>0) _bar[skill.Slot-1] = skill.Id; UpdateSlots();
     }
-    public override void _Process(double delta) { _root.Visible=!GameUi.GameplayModalOpen; _refresh+=delta; if (_refresh<.1) return; _refresh=0; UpdateSlots(); }
+    public override void _Process(double delta) { _root.Visible=!GameUi.GameplayModalOpen; _refresh+=delta; if (_refresh<.1) return; _refresh=0; UpdateSlots(); UpdateControls(); }
     private void UpdateSlots()
     {
         var inCombat=Math.Max(0,_defense.InCombatRemaining-(Time.GetTicksMsec()/1000d-_defenseReceived));
@@ -109,9 +111,17 @@ public partial class PlayerHud : CanvasLayer
             _slotNames[i].Text=GameUi.SkillName(skill.Id); _slotTimers[i].Text=!_alive ? "—" : cooldown>0 ? $"{cooldown:0.0} с" : _loadout.Mana<skill.ManaCost ? "Нет маны" : "Готово";
             _slotTimers[i].Modulate=cooldown<=0 && _loadout.Mana>=skill.ManaCost && _alive ? GameUi.Accent : new Color("a9aeb7");
             _slots[i].TooltipText=$"{GameUi.SkillName(skill.Id)}\nМана: {skill.ManaCost:0}\nКаст: {skill.CastSeconds:0.##} с";
-            if (skill.Form==AbilityForm.Dash) { _slotNames[i].Text=skill.Range>3 ? "Длинный рывок" : "Рывок"; _slots[i].TooltipText=$"{_slotNames[i].Text}\nВыносливость: {skill.StaminaCost:0}\nДо {skill.Range:0.#} м · {skill.CooldownSeconds:0.#} с\nSpace · до курсора, без неуязвимости"; }
+            if (skill.Form==AbilityForm.Dash)
+            {
+                _slotNames[i].Text="Уворот";
+                _slots[i].TooltipText=$"Уворот\nВыносливость: {skill.StaminaCost:0}\nДо {skill.Range:0.#} м за {skill.DodgeDurationSeconds:0.##} с · перезарядка {skill.CooldownSeconds:0.#} с\nЗащита: первые {skill.DodgeProtectionSeconds:0.##} с — {DodgeThreatLabels(skill.DodgeProtectedThreats)}\nSpace · до курсора. Контроль проходит по обычным правилам.";
+            }
             if (skill.Id is >=20 and <=30) _slots[i].TooltipText=$"{GameUi.SkillName(skill.Id)}\n{SwordsmanUi.Description(skill.Id)}\nТекущий расход: {skill.StaminaCost:0}; перезарядка: {skill.CooldownSeconds:0.#} с";
             if (skill.RecoverySeconds>0) _slots[i].TooltipText+=$"\nВосстановление после удара: до {skill.RecoverySeconds:0.##} с";
+            if(skill.HealthCost>0)_slots[i].TooltipText+=$"\nСтоимость HP: {skill.HealthCost:0.##}"+
+                (skill.AllowFatalHealthCost?" · может привести к смерти":" · требуется остаток HP выше нуля");
+            if(skill.HealthCost>0 && (_health<skill.HealthCost || !skill.AllowFatalHealthCost&&_health<=skill.HealthCost))
+            {_slotTimers[i].Text="Нет HP";_slotTimers[i].Modulate=new Color("ee9b8a");}
             if(skill.MaxCharges>1)
             {
                 _slotTimers[i].Text=$"{skill.Charges}/{skill.MaxCharges} · "+_slotTimers[i].Text;
@@ -160,4 +170,17 @@ public partial class PlayerHud : CanvasLayer
         return ToggleStopLabels[(byte)flags]=string.Join(", ",labels);
     }
     private static readonly string?[] ToggleStopLabels=new string?[32];
+
+    private static string DodgeThreatLabels(Content.Shared.Combat.DodgeThreats flags)
+    {
+        if((byte)flags>=DodgeThreatCache.Length)return "неизвестный вид урона";
+        if(DodgeThreatCache[(byte)flags] is {} cached)return cached;
+        var labels=new List<string>();
+        if((flags&Content.Shared.Combat.DodgeThreats.DirectPhysical)!=0)labels.Add("прямой физический урон");
+        if((flags&Content.Shared.Combat.DodgeThreats.DirectMagical)!=0)labels.Add("прямой магический урон");
+        if((flags&Content.Shared.Combat.DodgeThreats.PeriodicPhysical)!=0)labels.Add("периодический физический урон");
+        if((flags&Content.Shared.Combat.DodgeThreats.PeriodicMagical)!=0)labels.Add("периодический магический урон");
+        return DodgeThreatCache[(byte)flags]=labels.Count==0?"нет защиты от урона":string.Join(", ",labels);
+    }
+    private static readonly string?[] DodgeThreatCache=new string?[16];
 }

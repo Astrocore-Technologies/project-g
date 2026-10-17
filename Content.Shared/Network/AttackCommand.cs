@@ -6,4 +6,4 @@ public enum BasicAttackMode : byte { Manual, BeginContinuous, UpdateContinuous, 
 
 /// <summary>Input only. Continuous repetition is server-timed; no target, approach or hit claim.</summary>
 public readonly record struct AttackCommand(uint Sequence, uint ClientTick, Vector2 Direction,
-    BasicAttackMode Mode = BasicAttackMode.Manual);
+    BasicAttackMode Mode = BasicAttackMode.Manual,float DirectionY=0);

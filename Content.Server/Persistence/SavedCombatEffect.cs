@@ -16,10 +16,14 @@ public abstract record SavedCombatEffect
     public required CombatSourceId Source { get; init; }
     public required double RemainingSeconds { get; init; }
     public required ulong AppliedOrder { get; init; }
+    public CombatSourceId? ContributionCredit {get;init;}
+    // Null targets the character; an instance UUID targets one of that character's owned Echoes.
+    [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)] public Guid? TargetEcho {get;init;}
 
     public virtual void Validate()
     {
         if (Version != 1 || InstanceId == Guid.Empty || !Source.IsValid ||
+            ContributionCredit is {} credit && !credit.IsValid || TargetEcho == Guid.Empty ||
             !double.IsFinite(RemainingSeconds) || RemainingSeconds <= 0 || AppliedOrder == 0)
             throw new InvalidDataException("Invalid saved combat effect identity/lifetime.");
     }
@@ -51,12 +55,16 @@ public sealed record SavedControlEffect : SavedCombatEffect
     public required double Strength { get; init; }
     public required float SourceX { get; init; }
     public required float SourceZ { get; init; }
+    public Content.Server.Data.ControlRemovalDefinition Removal {get;init;}=Content.Server.Data.ControlRemovalDefinition.Default;
 
     public override void Validate()
     {
         base.Validate();
         if (!Enum.IsDefined(Kind) || !double.IsFinite(Strength) || Strength <= 0 ||
             !float.IsFinite(SourceX) || !float.IsFinite(SourceZ)) throw new InvalidDataException("Invalid saved control effect.");
+        if(Removal is null)throw new InvalidDataException("Missing saved control removal policy.");
+        try{Removal.Validate();}
+        catch(ArgumentException exception){throw new InvalidDataException("Invalid saved control removal policy.",exception);}
     }
 }
 

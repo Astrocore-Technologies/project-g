@@ -18,8 +18,13 @@ public partial class NetworkClient
         CurrentRegion = entry; RegionActive = false; _surfaceAssembly = new();
         KnownPlayers.Clear(); CraftRecipes.Clear(); ResourceNodes.Clear();
         KnownLife.Clear();
+        LatestEchoRoster=null;
         _sustainedEffects.Clear();
+        _basicActions.Clear();
+        _abilityLoadoutParts.Clear();
+        LatestBasicInput=null;
         LatestCombatJournalIndex=null;
+        LatestControlState=null;
         Navigation = null; LatestServerTick = 0;
         LatestWorldNode = null; LatestStarterZone = null; LatestPvpZone = null; LatestDefense = null;
         QuestNpcs.Clear(); LatestQuestJournal=null;

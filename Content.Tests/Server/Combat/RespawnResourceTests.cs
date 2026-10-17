@@ -29,7 +29,7 @@ public sealed class RespawnResourceTests
         combat.Respawn(id);abilities.Respawn(id);
         Assert.Equal(combat.Get(id).Stats.MaxHealth*.5,combat.Get(id).Health);
         Assert.Equal(abilities.Loadout(id,world.Tick).MaxMana*.5,abilities.Mana(id));
-        Assert.Equal(catalog.Defense.MaxStamina,combat.DefenseState(id,world.Tick).Stamina);
+        Assert.Equal(combat.Get(id).Stats.MaxStamina,combat.DefenseState(id,world.Tick).Stamina);
         Assert.Equal(cooldowns,abilities.CaptureCooldowns(id));Assert.Equal(30,combat.Get(id).ReadyAt-combat.Time);
         Assert.Equal(used,combat.Get(id).Controls.Ledger.Snapshot(ControlCategory.Hard,combat.Time).Used);
         Assert.Single(combat.Get(id).Effects);Assert.Empty(combat.Get(id).Controls.Active);

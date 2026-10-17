@@ -16,6 +16,8 @@ public sealed record DerivedStatModifiers
     public double MaxMana { get; init; }
     public double HealthRecovery { get; init; }
     public double ManaRecovery { get; init; }
+    public double MaxStamina { get; init; }
+    public double StaminaRecovery { get; init; }
     public double HealthItemMultiplier { get; init; }
     public double ManaItemMultiplier { get; init; }
     public double AttackSpeedMultiplier { get; init; }
@@ -32,7 +34,7 @@ public sealed record DerivedStatModifiers
         double.IsFinite(MagicAttack) && double.IsFinite(MeleeWeaponMultiplier) &&
         double.IsFinite(RangedWeaponMultiplier) && double.IsFinite(PhysicalDefense) &&
         double.IsFinite(MagicDefense) && double.IsFinite(MaxHealth) && double.IsFinite(MaxMana) &&
-        double.IsFinite(HealthRecovery) && double.IsFinite(ManaRecovery) &&
+        double.IsFinite(HealthRecovery) && double.IsFinite(ManaRecovery) && double.IsFinite(MaxStamina) && double.IsFinite(StaminaRecovery) &&
         double.IsFinite(HealthItemMultiplier) && double.IsFinite(ManaItemMultiplier) &&
         double.IsFinite(AttackSpeedMultiplier) && double.IsFinite(CastSpeedMultiplier) &&
         double.IsFinite(CriticalChance) && double.IsFinite(BlockDamage) && double.IsFinite(Accuracy) && double.IsFinite(Evasion) && double.IsFinite(CriticalDamage) && double.IsFinite(BlockStrength) && double.IsFinite(CooldownReduction);
@@ -56,6 +58,7 @@ public sealed record DerivedStatModifiers
             StatMath.Add(value.CastSpeedMultiplier, StatMath.Multiply(CastSpeedMultiplier, stacks)),
             StatMath.Add(value.CriticalChance, StatMath.Multiply(CriticalChance, stacks)), StatMath.Add(value.BlockDamage, StatMath.Multiply(BlockDamage, stacks)),
             StatMath.Add(value.Accuracy, StatMath.Multiply(Accuracy, stacks)), StatMath.Add(value.Evasion, StatMath.Multiply(Evasion, stacks)), StatMath.Add(value.CriticalDamage, StatMath.Multiply(CriticalDamage, stacks)),
-            StatMath.Add(value.BlockStrength, StatMath.Multiply(BlockStrength, stacks)),StatMath.Add(value.CooldownReduction,StatMath.Multiply(CooldownReduction,stacks)));
+            StatMath.Add(value.BlockStrength, StatMath.Multiply(BlockStrength, stacks)),StatMath.Add(value.CooldownReduction,StatMath.Multiply(CooldownReduction,stacks)),
+            StatMath.Add(value.MaxStamina, StatMath.Multiply(MaxStamina, stacks)), StatMath.Add(value.StaminaRecovery, StatMath.Multiply(StaminaRecovery, stacks)));
     }
 }

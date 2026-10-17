@@ -4,10 +4,13 @@ public static class NetworkConstants
 {
     public const int Port = 9050;
     public const string ConnectionKey = "project-g-dev";
-    public const ushort ProtocolVersion = 52; // GDD 01: confirmed execution control and reconnect input sequence floor.
+    public const ushort ProtocolVersion = 73; // GDD 01: revealed HP prices and explicit fatal-payment permission.
+    public const int CharacterStatCount = 24;
+    public const int MaxControlKinds = 14; // Public kinds, not a gameplay cap on control instances.
     public const double ContinuousAttackHeartbeatSeconds = .1;
     public const int MaxRegionGates = 4;
     public const int MaxActiveEchoes = 3;
+    public const int EchoRosterPageSize = 8; // Packet budget; ownership has no roster cap.
     public const int MaxInventoryItems = 8;
     public const int ServerTickRate = 20;
     public const int MaxHandshakePacketBytes = 256;

@@ -63,11 +63,23 @@ public partial class SwordAnimationSmoke : Node3D
                 Check(rig.GetParent().GetNode<Node3D>("MeshInstance3D").Transform==Transform3D.Identity,"Rest pose not restored.");
             }
             var test=rigs[0];
+            var phased=new BasicActionState(new(1),1000,100,5,Content.Shared.Combat.CombatActionPhase.Preparation,V2.Zero,V2.UnitY,0,2,1,
+                .2,.1,.7,.2,1,true,Content.Shared.Combat.ActionCancelPermission.Parry);
+            test.ApplyBasic(phased);test._Process(.1);Check(test.IsAnimating&&test.ClipPosition<test.ContactTime,"Basic skipped its authored preparation.");
+            test._Process(.2);Check(test.IsAnimating&&test.ClipPosition==test.ContactTime,"Basic invented contact before authoritative activation.");
+            test.ApplyBasic(phased with {Phase=Content.Shared.Combat.CombatActionPhase.Active,RemainingSeconds=.1,CanTurn=false});test._Process(.1);
+            Check(test.IsAnimating&&test.ClipPosition>test.ContactTime,"Basic lost its authored post-contact recovery.");
+            test.ApplyBasic(phased with {Phase=Content.Shared.Combat.CombatActionPhase.Recovery,RemainingSeconds=.7});test._Process(.2);
+            Check(test.IsAnimating,"Authored basic recovery ended early.");
+            test.ApplyBasic(phased with {Phase=Content.Shared.Combat.CombatActionPhase.Finished,RemainingSeconds=0});Check(!test.IsAnimating,"Finished basic retained its pose.");
+            test.ApplyBasic(phased with {ExecutionId=1001,PreparationSeconds=20,RemainingSeconds=20});test._Process(13);
+            Check(test.IsAnimating,"A slow confirmed basic was cut off by the old prediction timeout.");test.Stop();
             test.PredictBasic(100,V2.UnitY,1); test.RejectBasic(100); Check(!test.IsAnimating,"Rejected attack stuck.");
             test.PredictAbility(101,23,V2.UnitY,.6); test.RejectAbility(100); Check(test.IsAnimating,"Old rejection cancelled new cast.");
             test.RejectAbility(101); Check(!test.IsAnimating,"Rejected cast stuck.");
             test.PredictAbility(102,23,V2.UnitY,.6);
             test.ApplyAbility(State(20,AbilityPhase.Impact,.15f) with {Sequence=101});
+            test.ApplyBasic(phased with {ExecutionId=1002});
             test.ConfirmBasic(new(new(1),90,1,V2.Zero,V2.UnitY,2,new(2),10,90,false));
             Check(test.Clip=="breaker","Delayed old confirmation replaced the new wind-up."); test.Stop();
             test.PredictAbility(1,28,V2.UnitY,1.2); test.ApplyAbility(State(28,AbilityPhase.Telegraph,1.2f));

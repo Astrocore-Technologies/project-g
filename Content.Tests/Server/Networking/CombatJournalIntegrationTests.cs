@@ -36,7 +36,8 @@ public sealed class CombatJournalIntegrationTests
             {
                 await Poll(()=>first.JournalIndices.Count>0&&victim.JournalIndices.Count>0&&first.CombatStates.Count==3,first,victim);
                 first.Progression(new(1,ProgressionAction.AllocateStat,0,0,0));await Poll(()=>first.ProgressionResults.Count==1&&!store.PendingSave,first,victim);
-                gate=store.PauseSaves();first.Attack(1,System.Numerics.Vector2.UnitX);await Poll(()=>store.PendingSave,first,victim);
+                gate=store.PauseSaves(condition:changes=>changes.Any(c=>c.State.Health<=0));
+                first.Attack(1,System.Numerics.Vector2.UnitX);await Poll(()=>store.BlockedSave,first,victim);
                 var owner=victim.LocalSpawn.EntityId;Assert.Equal(0,world.Combat!.Get(owner).Health);
                 Assert.False(victim.Lives[owner].Dead);Assert.All(victim.JournalIndices,i=>Assert.Empty(i.Deaths));Assert.Empty(victim.JournalChunks);
                 first.Journal(1,1);victim.Journal(1,1);
@@ -48,6 +49,7 @@ public sealed class CombatJournalIntegrationTests
                 Assert.DoesNotContain(first.JournalChunks,c=>c.DeathId!=0);
                 report=victim.JournalChunks.Where(c=>c.Sequence==1).OrderBy(c=>c.Start).SelectMany(c=>c.Entries).ToArray();
                 Assert.Equal(2,report.Length);Assert.Equal(CombatJournalKind.Damage,report[0].Kind);Assert.Equal(1,report[0].Amount);
+                Assert.Equal(CombatHitTags.SideHit,report[0].HitTags);
                 Assert.Equal(CombatJournalKind.Death,report[^1].Kind);Assert.Equal("Вы",report[^1].Target);Assert.Contains("Игрок",report[^1].Source);
             }
             finally{gate?.TrySetResult();await server.StopAsync(default);}

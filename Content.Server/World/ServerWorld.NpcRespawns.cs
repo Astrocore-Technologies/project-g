@@ -87,13 +87,13 @@ public sealed partial class ServerWorld
             var actor = spawn.Actor;
             var oldId = actor.Id;
             // The replacement owns a fresh identity; the former body keeps its own remaining lifetime.
-            Abilities!.Remove(oldId);
             if(Combat!.CaptureLife(oldId).CorpseSeconds>0)_retiredNpcCorpses.Add(oldId,actor);
-            else{Combat.Remove(oldId);_spatial.Remove(oldId);}
+            else{Abilities!.Remove(oldId);Combat.Remove(oldId);_spatial.Remove(oldId);}
             _npcSpawnActors.Remove(oldId);
             _npcActors.Remove(oldId);
             var nextId = AllocateEntityId();
             Combat.Add(nextId, actor.Home, spawn.Kind, actor.Options.DefinitionId, height: actor.HomeHeight);
+            Abilities!.AddActor(nextId, _progressionCatalog!.Creatures[actor.Options.DefinitionId]);
             _spatial.Add(nextId, actor.Home);
             actor.BeginNewLife(nextId);
             _npcSpawnActors.Add(nextId, spawn);
@@ -107,7 +107,7 @@ public sealed partial class ServerWorld
     {
         if(!_retiredNpcCorpses.Remove(id))return;
         _npcActors.Remove(id);_pendingNpcActors.Remove(id);
-        _spatial.Remove(id);Combat!.Remove(id);
+        Abilities?.Remove(id);_spatial.Remove(id);Combat!.Remove(id);
     }
 
     private void ResumeResurrectedNpc(NetworkEntityId id)

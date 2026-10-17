@@ -7,18 +7,18 @@ public static partial class NetworkProtocol
     public static NetDataWriter Write(DefenseCommand c)
     {
         if (!ValidDefenseCommand(c)) throw new ArgumentException("Invalid defense command.");
-        var w=CreateWriter(NetworkMessageType.DefenseCommand); w.Put(c.Sequence); w.Put((byte)c.Action); WriteVector2(w,c.Direction); return w;
+        var w=CreateWriter(NetworkMessageType.DefenseCommand); w.Put(c.Sequence); w.Put((byte)c.Action); WriteVector2(w,c.Direction);w.Put(c.ObservedServerTick); return w;
     }
     public static bool TryReadDefenseCommand(NetDataReader r,out DefenseCommand c)
     {
         c=default;
-        if (r.AvailableBytes!=13 || !r.TryGetUInt(out var seq) || !r.TryGetByte(out var action) || !TryReadVector2(r,out var direction)) return false;
-        var value=new DefenseCommand(seq,(DefenseAction)action,direction); if (!ValidDefenseCommand(value)) return false; c=value; return true;
+        if (r.AvailableBytes!=17 || !r.TryGetUInt(out var seq) || !r.TryGetByte(out var action) || !TryReadVector2(r,out var direction)||!r.TryGetUInt(out var observed)) return false;
+        var value=new DefenseCommand(seq,(DefenseAction)action,direction,observed); if (!ValidDefenseCommand(value)) return false; c=value; return true;
     }
     private static bool ValidDefense(DefenseState s) => s.OwnerId.IsValid && Enum.IsDefined(s.Outcome) &&
-        double.IsFinite(s.Stamina) && s.Stamina>=0 && double.IsFinite(s.MaxStamina) && s.MaxStamina>0 && s.Stamina<=s.MaxStamina &&
+        double.IsFinite(s.Stamina) && s.Stamina>=0 && double.IsFinite(s.MaxStamina) && s.MaxStamina>=0 && s.Stamina<=s.MaxStamina &&
         double.IsFinite(s.BlockDamage) && double.IsFinite(s.ParryRemaining) && s.ParryRemaining is >=0 and <=60 &&
-        double.IsFinite(s.ParryCooldown) && s.ParryCooldown is >=0 and <=60 && double.IsFinite(s.DodgeCost) && s.DodgeCost>0 &&
+        double.IsFinite(s.ParryCooldown) && s.ParryCooldown is >=0 and <=60 && double.IsFinite(s.DodgeCost) && s.DodgeCost>=0 &&
         double.IsFinite(s.ParryCost) && s.ParryCost>0 && float.IsFinite(s.MovementMultiplier) && s.MovementMultiplier is >=0 and <=2 && BasicAttackShape.IsValidDirection(s.Direction) &&
         double.IsFinite(s.RecoveryRemaining) && s.RecoveryRemaining is >=0 and <=10 &&
         double.IsFinite(s.QuickRecoverCooldown) && s.QuickRecoverCooldown is >=0 and <=60 &&

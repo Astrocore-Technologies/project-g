@@ -19,6 +19,7 @@ internal sealed class SkillCooldown
     internal byte Maximum { get; }
     internal double ConfiguredDuration { get; private set; }
     internal bool Recovering=>_available+_pendingEnd<Maximum;
+    internal double NextRechargeAt=>_nextAt;
 
     internal bool Advance(double now)
     {

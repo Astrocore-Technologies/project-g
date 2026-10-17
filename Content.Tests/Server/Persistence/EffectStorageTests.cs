@@ -92,7 +92,7 @@ public sealed class EffectStorageTests
         using (var connection = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Pooling = false }.ToString()))
         {
             connection.Open(); using var query = connection.CreateCommand();
-            query.CommandText = "DROP TABLE character_death_logs; DROP TABLE character_effects; DELETE FROM schema_version WHERE version >= 9";
+            query.CommandText = "DROP TABLE item_weapon_wear; DROP TABLE character_owned_echoes; DROP TABLE character_death_logs; DROP TABLE character_effects; DELETE FROM schema_version WHERE version >= 9";
             query.ExecuteNonQuery();
         }
         await store.InitializeAsync(CancellationToken.None); await store.InitializeAsync(CancellationToken.None);

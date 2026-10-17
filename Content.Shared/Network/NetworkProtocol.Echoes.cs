@@ -29,16 +29,41 @@ public static partial class NetworkProtocol
     }
     public static NetDataWriter Write(EchoSignatureCommand value)
     {
-        if (value.Sequence == 0 || !EchoSlotValid(value.Slot) || !EchoPositionValid(value.Aim)) throw new ArgumentException("Invalid Echo command.");
+        if (value.Sequence == 0 || !EchoSlotValid(value.Slot) || !EchoPositionValid(value.Aim) || !value.EntityId.IsValid ||
+            !float.IsFinite(value.DirectionY) || MathF.Abs(value.DirectionY)>1 ||
+            !float.IsFinite(value.DashDistance) || value.DashDistance is <0 or >100 || !Enum.IsDefined(value.Intent)) throw new ArgumentException("Invalid Echo command.");
         var writer = CreateWriter(NetworkMessageType.EchoSignatureCommand);
-        writer.Put(value.Sequence); writer.Put(value.ClientTick); writer.Put(value.Slot); writer.Put(value.Aim.X); writer.Put(value.Aim.Y); WriteHeight(writer,value.AimHeight); return writer;
+        writer.Put(value.Sequence); writer.Put(value.ClientTick); writer.Put(value.Slot); writer.Put(value.Aim.X); writer.Put(value.Aim.Y); WriteHeight(writer,value.AimHeight);
+        writer.Put(value.DirectionY);writer.Put(value.DashDistance);writer.Put((byte)value.Intent);writer.Put(value.EntityId.Value);return writer;
     }
     public static bool TryReadEchoSignatureCommand(NetDataReader reader, out EchoSignatureCommand value)
     {
         value = default;
-        if (reader.AvailableBytes != 21 || !reader.TryGetUInt(out var sequence) || sequence == 0 || !reader.TryGetUInt(out var tick) ||
-            !reader.TryGetByte(out var slot) || !EchoSlotValid(slot) || !reader.TryGetFloat(out var x) || !reader.TryGetFloat(out var z) || !EchoPositionValid(new(x,z)) || !ReadHeight(reader,out var height)) return false;
-        value = new(sequence,tick,slot,new(x,z),height); return true;
+        if (reader.AvailableBytes != 38 || !reader.TryGetUInt(out var sequence) || sequence == 0 || !reader.TryGetUInt(out var tick) ||
+            !reader.TryGetByte(out var slot) || !EchoSlotValid(slot) || !reader.TryGetFloat(out var x) || !reader.TryGetFloat(out var z) || !EchoPositionValid(new(x,z)) || !ReadHeight(reader,out var height) ||
+            !reader.TryGetFloat(out var dy)||!float.IsFinite(dy)||MathF.Abs(dy)>1 || !reader.TryGetFloat(out var distance)||!float.IsFinite(distance)||distance is <0 or >100 ||
+            !reader.TryGetByte(out var intent)||!Enum.IsDefined((AbilityIntent)intent)||!reader.TryGetULong(out var entity)||entity==0) return false;
+        value = new(sequence,tick,slot,new(x,z),height,dy,distance,(AbilityIntent)intent,new(entity)); return true;
+    }
+
+    public static NetDataWriter Write(EchoSignatureControlCommand value)
+    {
+        if(value.Sequence==0 || !value.EntityId.IsValid || value.ActionSequence==0 || !Enum.IsDefined(value.Kind) ||
+            !EchoPositionValid(value.Aim) || !float.IsFinite(value.DirectionY) || MathF.Abs(value.DirectionY)>1)
+            throw new ArgumentException("Invalid Echo action control.");
+        var writer=CreateWriter(NetworkMessageType.EchoSignatureControlCommand);
+        writer.Put(value.Sequence);writer.Put(value.EntityId.Value);writer.Put(value.ActionSequence);writer.Put(value.ExecutionId);
+        writer.Put(value.ObservedServerTick);writer.Put((byte)value.Kind);writer.Put(value.Aim.X);writer.Put(value.Aim.Y);
+        WriteHeight(writer,value.AimHeight);writer.Put(value.DirectionY);return writer;
+    }
+    public static bool TryReadEchoSignatureControlCommand(NetDataReader reader,out EchoSignatureControlCommand value)
+    {
+        value=default;
+        if(reader.AvailableBytes!=45 || !reader.TryGetUInt(out var sequence)||sequence==0 || !reader.TryGetULong(out var entity)||entity==0 ||
+            !reader.TryGetUInt(out var action)||action==0 || !reader.TryGetULong(out var execution)||!reader.TryGetUInt(out var tick) ||
+            !reader.TryGetByte(out var kind)||!Enum.IsDefined((EchoSignatureControlKind)kind) || !reader.TryGetFloat(out var x)||!reader.TryGetFloat(out var z)||!EchoPositionValid(new(x,z)) ||
+            !ReadHeight(reader,out var height)||!reader.TryGetFloat(out var dy)||!float.IsFinite(dy)||MathF.Abs(dy)>1)return false;
+        value=new(sequence,new(entity),action,execution,tick,(EchoSignatureControlKind)kind,new(x,z),height,dy);return true;
     }
     public static NetDataWriter Write(EchoSignatureResult value)
     {
@@ -82,21 +107,21 @@ public static partial class NetworkProtocol
         foreach (var slot in value.Slots)
         {
             if (!ValidEchoSlot(slot) || !slots.Add(slot.Slot) || !ids.Add(slot.EntityId) || slot.EntityId == value.OwnerId) throw new ArgumentException("Invalid Echo slot.");
-            writer.Put(slot.Slot); writer.Put(slot.EntityId.Value); writer.Put(slot.Range); writer.Put(slot.Radius); writer.Put(slot.CooldownSeconds);
+            writer.Put(slot.Slot); writer.Put(slot.EntityId.Value); writer.Put(slot.Range); writer.Put(slot.Radius); writer.Put(slot.CooldownSeconds);writer.Put(slot.SignatureRefused);
         }
         return writer;
     }
     private static bool ValidEchoSlot(EchoSlot slot) => EchoSlotValid(slot.Slot) && slot.EntityId.IsValid &&
-        float.IsFinite(slot.Range) && slot.Range is > 0 and <= 10 && float.IsFinite(slot.Radius) && slot.Radius is > 0 and <= 10 && EchoDurationValid(slot.CooldownSeconds);
+        float.IsFinite(slot.Range) && slot.Range>0 && float.IsFinite(slot.Radius) && slot.Radius>0 && EchoDurationValid(slot.CooldownSeconds);
     public static bool TryReadEchoLoadout(NetDataReader reader, out EchoLoadout value)
     {
         value = default;
-        if (!reader.TryGetULong(out var owner) || owner == 0 || !reader.TryGetUInt(out var tick) || !reader.TryGetByte(out var count) || count > NetworkConstants.MaxActiveEchoes || reader.AvailableBytes != count * 21) return false;
+        if (!reader.TryGetULong(out var owner) || owner == 0 || !reader.TryGetUInt(out var tick) || !reader.TryGetByte(out var count) || count > NetworkConstants.MaxActiveEchoes || reader.AvailableBytes != count * 22) return false;
         var entries = new EchoSlot[count]; var slots = new HashSet<byte>(); var ids = new HashSet<NetworkEntityId>();
         for (var i = 0; i < count; i++)
         {
-            if (!reader.TryGetByte(out var slot) || !reader.TryGetULong(out var id) || !reader.TryGetFloat(out var range) || !reader.TryGetFloat(out var radius) || !reader.TryGetFloat(out var cooldown)) return false;
-            var entry = new EchoSlot(slot,new(id),range,radius,cooldown);
+            if (!reader.TryGetByte(out var slot) || !reader.TryGetULong(out var id) || !reader.TryGetFloat(out var range) || !reader.TryGetFloat(out var radius) || !reader.TryGetFloat(out var cooldown)||!reader.TryGetByte(out var refused)||refused>1) return false;
+            var entry = new EchoSlot(slot,new(id),range,radius,cooldown,refused==1);
             if (!ValidEchoSlot(entry) || id == owner || !slots.Add(slot) || !ids.Add(entry.EntityId)) return false;
             entries[i] = entry;
         }

@@ -56,6 +56,17 @@ public sealed class RegionalNetworkTests
             await Task.Delay(10, timeout.Token);
         }
     }
+    private static async Task SummonThree(params Client[] clients)
+    {
+        await Poll(()=>clients.All(c=>c.Active&&c.EchoRosters.ContainsKey(c.LocalSpawn.EntityId)),clients);
+        var handles=clients.Select(c=>c.EchoRosters[c.LocalSpawn.EntityId].Entries.Select(e=>e.Handle).ToArray()).ToArray();
+        Assert.All(handles,items=>Assert.Equal(3,items.Length));
+        for(var slot=0;slot<3;slot++)
+        {
+            for(var i=0;i<clients.Length;i++)clients[i].EchoSummon((uint)slot+1,handles[i][slot]);
+            await Poll(()=>clients.All(c=>c.EchoLoadouts.TryGetValue(c.LocalSpawn.EntityId,out var loadout)&&loadout.Slots.Count==slot+1),clients);
+        }
+    }
 
     [Fact]
     public async Task TwoLossyClientsTravelWithoutGhostsOrSocialLeakAndOldEpochCannotMoveDestination()
@@ -69,6 +80,7 @@ public sealed class RegionalNetworkTests
         {
             // Baseline spawns/rosters can precede RegionActivated under loss; commands are still gated then.
             await Poll(() => a.Active && b.Active && a.Spawns.Count == 2 && b.Spawns.Count == 2 && a.SocialRosters.Count == 2 && b.SocialRosters.Count == 2, a, b);
+            await SummonThree(a,b);
             var original = a.LocalSpawn; var oldEpoch = a.Region!.Value.Epoch;
             a.Social(new(1, SocialKind.Party, SocialAction.Create, 0, 0, 0, 0, false, ""));
             await Poll(() => a.SocialResults.Any(r=>r.Operation==1), a, b);
@@ -125,6 +137,7 @@ public sealed class RegionalNetworkTests
         try
         {
             await Poll(() => a.Spawns.Count == 1 && a.PvpStates.Count == 1, a);
+            await SummonThree(a);
             if (combat)
             {
                 a.Pvp(new(1, PvpAction.Mode, PvpMode.Voluntary, false, 0));
@@ -186,7 +199,8 @@ public sealed class RegionalNetworkTests
             Assert.Single(client.Entries); Assert.Equal("prototype", store.SingleState.RegionId);
             Assert.False(store.IsHeld); Assert.Empty(worlds.Worlds[1].Players);
             await using var restored = await store.OpenAsync(token, worlds.Primary.CreateInitialCharacter(), default);
-            Assert.Equal("prototype", restored.State.RegionId); Assert.Equal(3, restored.State.Echoes!.Active.Length);
+            Assert.Equal("prototype", restored.State.RegionId);Assert.Empty(restored.State.Echoes!.Active);
+            Assert.Equal(3,restored.State.OwnedEchoes!.Count);Assert.All(restored.State.OwnedEchoes,e=>Assert.Equal(SavedEchoAvailability.Ready,e.Availability));
         }
         finally { gate?.TrySetResult(); await server.StopAsync(default); }
     }
@@ -235,13 +249,15 @@ public sealed class RegionalNetworkTests
             {
                 using var client = new Client(port, token);
                 await Poll(() => client.Region?.Region == "outskirts" && client.Spawns.Count == 1 && client.Inventories.Count == 1, client);
-                // The real executable has companions disabled, including previously saved owners.
-                Assert.Empty(client.Echoes); Assert.Empty(client.EchoLoadouts);
+                // Enabled combat runtime does not grant or automatically re-summon companions after a crash.
+                Assert.Empty(client.Echoes);Assert.All(client.EchoLoadouts.Values,loadout=>Assert.Empty(loadout.Slots));
                 Assert.Equal(new Vector2(-12, 10), client.LocalSpawn.Position); Assert.Equal(1, store.Count);
             }
             finally { if (!restarted.HasExited) restarted.Kill(entireProcessTree: true); await restarted.WaitForExitAsync(); }
         }
         await using var preserved = await store.OpenAsync(token, worlds.Primary.CreateInitialCharacter(), default);
-        Assert.Equal(3, preserved.State.Echoes!.Active.Length);
+        Assert.Empty(preserved.State.Echoes!.Active);
+        Assert.Equal(3,preserved.State.OwnedEchoes!.Count);
+        Assert.All(preserved.State.OwnedEchoes,echo=>Assert.Equal(SavedEchoAvailability.Ready,echo.Availability));
     }
 }

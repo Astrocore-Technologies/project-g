@@ -2,6 +2,7 @@ using System.Numerics;
 using Content.Shared.Network;
 using Content.Shared.Navigation;
 using Content.Server.Stats;
+using Content.Server.Persistence;
 
 namespace Content.Server.World;
 
@@ -24,4 +25,8 @@ public sealed class ServerPlayer(
     internal uint? LastPathRequestTick { get; set; }
     public uint LastProcessedSequence { get; internal set; }
     internal BaseStats BaseStats { get; set; }
+    // Preserve owned combat records while the companion feature is disabled or its coordinator is not loaded.
+    // Each record keeps its own saved clock; character checkpoints must not restart an inactive effect's lifetime.
+    internal IReadOnlyList<SavedEchoCombat>? RetainedEchoCombat {get;set;}
+    internal IReadOnlyList<SavedCombatEffect> RetainedEchoEffects {get;set;}=[];
 }

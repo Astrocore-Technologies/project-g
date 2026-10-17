@@ -14,25 +14,27 @@ public sealed partial class CombatSimulation
     }
 
     internal bool ApplyStatusControl(NetworkEntityId source,NetworkEntityId target,ushort definition,ulong execution,
-        CrowdControlKind kind,double duration,double strength=1,ReleasedSourceSnapshot? releasedSource=null)
+        CrowdControlKind kind,double duration,double strength=1,ReleasedSourceSnapshot? releasedSource=null,
+        Content.Server.Data.ControlRemovalDefinition? removal=null)
     {
         if(kind is CrowdControlKind.Knockup or CrowdControlKind.Knockback or CrowdControlKind.Pull)
             throw new ArgumentException("Displacement controls require validated geometry.");
         if(!_actors.TryGetValue(target,out var actor) || actor.Health<=0 || !actor.Active ||
-            (releasedSource is not null ? !CanReleasedTarget(releasedSource,target) : source.IsValid && !CanTarget(source,target)) ||
-            kind==CrowdControlKind.Stun && !actor.CanBeStunned) return false;
-        var resistance=actor.ControlResistance.Factor(kind);
-        if(resistance<=0) return false;
-        var npcTaunt=kind==CrowdControlKind.Taunt && IsNpc(actor.Kind);
+            (releasedSource is not null ? !CanReleasedTarget(releasedSource,target) : source.IsValid && !CanTarget(source,target))) return false;
+        if(!ControlResistanceAllows(actor,source,definition,ref execution,kind,releasedSource,out var resistance,
+            kind==CrowdControlKind.Stun && !actor.CanBeStunned))return false;
+        var npcTaunt=kind==CrowdControlKind.Taunt && IsAiUnit(actor);
         var strengthBased=kind is CrowdControlKind.Slow or CrowdControlKind.Blind || kind==CrowdControlKind.Taunt && !npcTaunt;
         var origin=_actors.TryGetValue(source,out var author) ? author.Position : releasedSource?.Position ?? actor.Position;
         var applied=actor.Controls.Apply(new(releasedSource?.Identity ?? SourceIdentity(source),definition,kind),execution==0 ? AllocateExecution() : execution,
-            strengthBased ? duration : duration*resistance,strengthBased ? strength*resistance : 1,_time,npcTaunt,origin);
+            strengthBased ? duration : duration*resistance,strengthBased ? strength*resistance : 1,_time,npcTaunt,origin,
+            ContributionIdentity(releasedSource?.Identity ?? SourceIdentity(source),releasedSource?.ContributionCredit),
+            resistance<1 ? ControlMitigation.Resistance : ControlMitigation.None,removal);
         if(!applied.Accepted) return false;
         RecordJournal(source,target,CombatJournalKind.Control,duration:applied.Duration,strength:applied.Strength,skill:definition,control:kind);
         _controlled.Add(target); _defenseDirty.Add(target);
         RefreshControlModifiers(actor); RefreshHardControl(actor);
-        ReportHostileContact(source,target);
+        ReportHostileContact(source,target,releasedSource?.Kind==CombatEntityKind.Echo?releasedSource.ContributionCredit:null);
         switch(kind)
         {
             case CrowdControlKind.Stun: case CrowdControlKind.Freeze: case CrowdControlKind.Sleep:
@@ -47,11 +49,18 @@ public sealed partial class CombatSimulation
                 if(actor.Control!=CombatControlPhase.Airborne)
                 { actor.Control=CombatControlPhase.KnockedDown; actor.ControlUntil=Math.Max(actor.ControlUntil,_time+applied.Duration); }
                 break;
-            case CrowdControlKind.Root: StopForControl?.Invoke(target); break;
+            case CrowdControlKind.Root:
+                Inputs.Invalidate(target,ActionCapability.Movement);StopForControl?.Invoke(target);
+                CapabilityInterruptRequested?.Invoke(target,ActionCapability.Movement);break;
             case CrowdControlKind.Silence:
+                StopBasic(target,ActionStopReason.EnemyInterrupt,capabilities:ActionCapability.Magical);
+                StopSummon(target,ActionStopReason.EnemyInterrupt,capabilities:ActionCapability.Magical);
+                Inputs.Invalidate(target,ActionCapability.Magical);
                 CapabilityInterruptRequested?.Invoke(target,ActionCapability.Magical);
                 break;
             case CrowdControlKind.Disarm:
+                StopBasic(target,ActionStopReason.EnemyInterrupt,capabilities:ActionCapability.Weapon);
+                Inputs.Invalidate(target,ActionCapability.Weapon);
                 StopContinuousBasic(target);
                 CapabilityInterruptRequested?.Invoke(target,ActionCapability.Weapon);
                 break;
@@ -69,9 +78,13 @@ public sealed partial class CombatSimulation
     }
 
     internal bool RemoveControl(NetworkEntityId target,CrowdControlKind kind)
+        =>RemoveControlInstances(target,kind,false,null)>0;
+
+    private int RemoveControlInstances(NetworkEntityId target,CrowdControlKind kind,bool cleanse,string[]? tags)
     {
         var actor=_actors[target];
-        if(!actor.Controls.Remove(kind,_time)) return false;
+        var removed=actor.Controls.RemoveMatching(kind,_time,cleanse,tags);
+        if(removed==0)return 0;
         RefreshHardControl(actor); RefreshControlModifiers(actor); _defenseDirty.Add(target);
         if(kind==CrowdControlKind.Fear) UpdateFear(actor);
         if(kind is CrowdControlKind.Knockup or CrowdControlKind.Knockdown)
@@ -91,6 +104,6 @@ public sealed partial class CombatSimulation
         if(kind is CrowdControlKind.Knockback or CrowdControlKind.Pull && actor.Control==CombatControlPhase.Displaced &&
             !actor.Controls.Has(CrowdControlKind.Knockback) && !actor.Controls.Has(CrowdControlKind.Pull))
         {StopForControl?.Invoke(target);actor.Control=CombatControlPhase.None;actor.ControlUntil=0;}
-        return true;
+        return removed;
     }
 }

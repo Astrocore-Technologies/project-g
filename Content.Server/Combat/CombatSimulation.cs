@@ -14,7 +14,6 @@ namespace Content.Server.Combat;
 public sealed partial class CombatSimulation
 {
     private readonly Dictionary<NetworkEntityId, Combatant> _actors = new();
-    private readonly Dictionary<NetworkEntityId, AttackCommand> _pending = new();
     private readonly Dictionary<NetworkEntityId, AttackResult> _results = new();
     private readonly List<AttackEvent> _events = new();
     private readonly HashSet<NetworkEntityId> _candidates = new();
@@ -25,9 +24,10 @@ public sealed partial class CombatSimulation
     private readonly Func<double> _roll;
     private readonly string _playerDefinition;
     private readonly string _targetDefinition;
-    private readonly double _minimumInterval;
-    private readonly float _halfAngle;
     private readonly float _maxQueryRange;
+    internal float MaximumHurtboxReach { get; }
+    internal ulong HurtboxRevision {get;private set;}
+    private void OnHurtboxChanged()=>HurtboxRevision=unchecked(HurtboxRevision+1);
     private double _time;
 
     public CombatSimulation(ContentCatalog catalog, SpatialIndex spatial, NavigationGrid navigation,
@@ -37,6 +37,7 @@ public sealed partial class CombatSimulation
             options.HalfAngleDegrees is <= 0 or > 180 || !catalog.Creatures.ContainsKey(options.PlayerDefinitionId) ||
             !catalog.Creatures.ContainsKey(options.TargetDefinitionId) ||
             !double.IsFinite(options.HealthRecoveryIntervalSeconds) || options.HealthRecoveryIntervalSeconds is <= 0 or > 60 ||
+            !double.IsFinite(options.ManaRecoveryIntervalSeconds) || options.ManaRecoveryIntervalSeconds is <= 0 or > 60 ||
             !double.IsFinite(options.ContinuousAttackLeaseSeconds) || options.ContinuousAttackLeaseSeconds is < .3 or > 2)
             throw new ArgumentException("Invalid prototype combat settings or definition references.");
         _catalog = catalog;
@@ -45,11 +46,14 @@ public sealed partial class CombatSimulation
         _navigation = navigation;
         _playerDefinition = options.PlayerDefinitionId;
         _targetDefinition = options.TargetDefinitionId;
-        _minimumInterval = 1d / tickRate;
         _healthRecoveryInterval = options.HealthRecoveryIntervalSeconds;
+        _manaRecoveryInterval = options.ManaRecoveryIntervalSeconds;
+        DrainMana=DrainActorMana;RestoreMana=RestoreActorMana;
         _continuousBasicLease = options.ContinuousAttackLeaseSeconds;
-        _halfAngle = options.HalfAngleDegrees * MathF.PI / 180;
         _maxQueryRange = cellSize * 32;
+        MaximumHurtboxReach = catalog.Creatures.Values.Max(c => c.Hurtbox.MaximumHorizontalReach);
+        if (MaximumHurtboxReach >= _maxQueryRange)
+            throw new ArgumentException("Creature hurtbox exceeds the spatial query budget.");
         _roll = criticalRoll ?? (() => Random.Shared.NextDouble());
         _hitRoll = hitRoll ?? (() => Random.Shared.NextDouble());
         CombatClock=()=>_time;
@@ -69,9 +73,10 @@ public sealed partial class CombatSimulation
         if(source==target||!_actors.TryGetValue(target,out var victim)||victim.Health<=0||!victim.Active)return false;
         // Server-owned environment damage may have no actor; a specified actor must remain active.
         if(source.IsValid&&(!_actors.TryGetValue(source,out var actor)||!actor.Active))return false;
-        if(origin is {} position&&victim.Kind==CombatEntityKind.Player&&DamageOriginPermission?.Invoke(position)==false)return false;
+        if(SamePlayerFamily(source,victim))return false;
+        if(origin is {} position&&IsPlayerUnit(victim)&&DamageOriginPermission?.Invoke(position)==false)return false;
         if(DamagePermission is not null)return DamagePermission(source,target);
-        return _actors.TryGetValue(source,out var owner)&&IsNpc(owner.Kind)?victim.Kind==CombatEntityKind.Player:IsHostileTarget(victim.Kind);
+        return _actors.TryGetValue(source,out var owner)&&IsNpc(owner.Kind)?IsPlayerUnit(victim):IsHostileTarget(victim.Kind);
     }
     internal event Action<NetworkEntityId>? Defeated;
     private void NotifyDamage(NetworkEntityId source,NetworkEntityId target,double amount, bool direct=true,bool unknownSource=false)
@@ -84,17 +89,17 @@ public sealed partial class CombatSimulation
         if(direct)DirectlyDamaged?.Invoke(target);
         if (_actors[target].Health <= 0) CompleteDeath(target,source,unknownSource);
     }
-    internal void ResetSession(NetworkEntityId id){StopContinuousBasic(id);var a=_actors[id];a.LastSequence=0;a.LastAbilitySequence=0;a.LastRequestTick=null;_pending.Remove(id);_results.Remove(id);if(_defense.TryGetValue(id,out var d)){d.Sequence=0;d.RequestTick=null;SetDefenseConnected(id,true);}}
+    internal void ResetSession(NetworkEntityId id){StopContinuousBasic(id);ResetSummonSession(id);var a=_actors[id];a.LastAbilitySequence=0;a.LastRequestTick=null;a.LastBasicControlTick=null;_basicControls.Remove(id);Inputs.Clear(id);_results.Remove(id);if(_defense.TryGetValue(id,out var d)){d.Sequence=0;d.RequestTick=null;SetDefenseConnected(id,true);}}
     internal void Respawn(NetworkEntityId id)
     {
         var actor=_actors[id];ClearControl(id);RefreshControlModifiers(actor);
         actor.Health=double.Epsilon;RefreshPassiveConditions(id);
         actor.Health=Math.Max(double.Epsilon,actor.Stats.MaxHealth*(actor.Kind==CombatEntityKind.Player?_catalog.Lifecycle.RespawnHealthFraction:1));
         actor.HealthRecoveryElapsed=0;actor.Action=null;actor.StunnedUntil=actor.SlowUntil=0;
-        StopContinuousBasic(id);_pending.Remove(id);_equipmentDirty.Add(id);
+        StopContinuousBasic(id);Inputs.Clear(id);_equipmentDirty.Add(id);
         SetDefenseConnected(id,true);
         if(_defense.TryGetValue(id,out var defense))
-        {defense.Stamina=_catalog.Defense.MaxStamina*_catalog.Lifecycle.RespawnStaminaFraction;_defenseDirty.Add(id);}
+        {defense.Stamina=Math.Max(0,actor.Stats.MaxStamina)*_catalog.Lifecycle.RespawnStaminaFraction;_defenseDirty.Add(id);}
         RefreshHealthRecovery(id);
         ResetLifeAfterRevival(actor);Revived?.Invoke(id);
         RecordJournal(id,id,CombatJournalKind.Respawn,actor.Health);
@@ -109,23 +114,30 @@ public sealed partial class CombatSimulation
     private readonly HashSet<NetworkEntityId> _equipmentDirty = new();
     public IReadOnlyCollection<NetworkEntityId> EquipmentDirty => _equipmentDirty;
 
-    internal (DerivedStats Stats, WeaponDefinition Weapon, double Interval) PrepareEquipment(BaseStats primary, IReadOnlyList<ItemDefinition> equipment)
+    internal CombatEquipmentProfile PrepareEquipment(BaseStats primary, IReadOnlyList<ItemDefinition> equipment)
     {
         var creature = _catalog.Creatures[_playerDefinition] with { Stats = primary };
-        var stats = _calculator.Calculate(creature); var weapon = _catalog.UnarmedWeapon;
+        var stats = _calculator.Calculate(creature); var weapon = _catalog.UnarmedWeapon;var hasShield=false;
         foreach (var item in equipment)
         {
             stats = item.Modifiers.Apply(stats);
             if (item.WeaponId is { } weaponId) weapon = _catalog.Weapons[weaponId];
+            hasShield|=item.Slot==EquipmentSlot.Offhand;
         }
+        if(hasShield && weapon.TwoHanded)throw new ArgumentException("A two-handed weapon cannot be equipped with a shield.");
         ValidateProfile(creature with { WeaponId = weapon.Id });
-        return (stats, weapon, Math.Max(_minimumInterval, _calculator.AttackInterval(weapon.AttackIntervalSeconds, stats)));
+        return new(stats, weapon, _calculator.AttackInterval(weapon.AttackIntervalSeconds, stats),hasShield,
+            equipment.Where(item=>!item.ControlResistance.IsEmpty).Select(item=>item.ControlResistance).ToArray());
     }
 
     internal void ApplyEquipment(NetworkEntityId id, (DerivedStats Stats, WeaponDefinition Weapon, double Interval) profile)
+        =>ApplyEquipment(id,new CombatEquipmentProfile(profile.Stats,profile.Weapon,profile.Interval,_actors[id].HasShield));
+
+    internal void ApplyEquipment(NetworkEntityId id,CombatEquipmentProfile profile)
     {
         var actor = _actors[id];
-        actor.BaseDerivedStats = profile.Stats; actor.Weapon = profile.Weapon;
+        actor.BaseDerivedStats = profile.Stats; actor.Weapon = profile.Weapon;actor.HasShield=profile.HasShield;
+        if(profile.ControlResistance is not null)actor.EquipmentControlResistance=profile.ControlResistance;
         RefreshEffectStats(id,notify:false);
         RefreshBlockPermission(id);
         // Changing maxima cannot heal; existing ReadyAt is deliberately preserved.
@@ -149,13 +161,6 @@ public sealed partial class CombatSimulation
     /// <summary>Authoritative spell damage; the training policy remains separate from geometry.</summary>
     public double ApplyAbilityDamage(NetworkEntityId targetId, double power, NetworkEntityId source=default)
         => ResolveDirectHit(source, targetId, Vector2.UnitY, power, magic: true).Damage;
-    internal double ApplyEchoDamage(NetworkEntityId targetId, double power, NetworkEntityId source=default, Vector2? origin=null)
-    {
-        var target = _actors[targetId];
-        if (!CanTarget(source,targetId,origin)) return 0;
-        return ApplyHealthDamage(SourceIdentity(source),source,targetId,_calculator.ApplyDefense(power,target.Stats.PhysicalDefense),DamageOrigin.Direct,EffectDamageFamily.Physical);
-    }
-
     public static bool IsHostileTarget(CombatEntityKind kind) => kind is CombatEntityKind.TrainingTarget or CombatEntityKind.Monster or CombatEntityKind.Boss;
     public static bool IsNpc(CombatEntityKind kind) => kind is CombatEntityKind.Monster or CombatEntityKind.Boss;
 
@@ -168,75 +173,78 @@ public sealed partial class CombatSimulation
         ValidateProfile(definition);
         var stats = _calculator.Calculate(baseStats is { } saved ? definition with { Stats = saved } : definition);
         var weapon = _catalog.Weapons[definition.WeaponId];
+        DodgeProfileDefinition? dodge=null;
+        foreach(var skill in definition.AbilityIds)
+            if(_catalog.Abilities[skill] is {Kind:AbilityKind.Dash} dash){dodge=dash.AuthoredDodgeProfile();break;}
         if (_navigation.Surface is { } surface && surface.TryLocate(new(position.X,height,position.Y),.35f,out var located)) height=located.Position.Y;
         _actors.Add(id, new Combatant(id, kind, position, stats, weapon,
-            Math.Max(_minimumInterval, _calculator.AttackInterval(weapon.AttackIntervalSeconds, stats)),_catalog.Control)
-            { Height = height, CanBleed = definition.CanBleed && kind != CombatEntityKind.TrainingTarget,
+            _calculator.AttackInterval(weapon.AttackIntervalSeconds, stats),_catalog.Control,definition.Id)
+            { Height = height, HurtboxProfile = definition.Hurtbox, HurtboxChanged=OnHurtboxChanged,BaseDodge=dodge,
+                CanBleed = definition.CanBleed && kind != CombatEntityKind.TrainingTarget,
                 CanBeStunned = definition.CanBeStunned && kind != CombatEntityKind.TrainingTarget,ControlResistance=definition.ControlResistance });
-        BindSource(id,new(kind==CombatEntityKind.Player ? CombatSourceKind.Character : CombatSourceKind.NpcLife,Guid.NewGuid()));
-        if (kind==CombatEntityKind.Player) _defense.Add(id,new DefenseActor { Stamina=_catalog.Defense.MaxStamina });
-        else SetCreaturePassives(id,definition);
+        ObserveControls(id);
+        if(IsNpc(kind))_encounters.Add(id,new(definition.Threat){Home=position});
+        BindSource(id,new(kind==CombatEntityKind.Player ? CombatSourceKind.Character : kind==CombatEntityKind.Echo ? CombatSourceKind.Echo : CombatSourceKind.NpcLife,Guid.NewGuid()));
+        _defense.Add(id,new DefenseActor { Resources=_actors[id].Resources });
+        if (kind!=CombatEntityKind.Player) SetCreaturePassives(id,definition);
     }
 
     public void Remove(NetworkEntityId id)
     {
+        RemoveCompanionBinding(id);
+        RemoveEncounterActor(id);
+        _basicControls.Remove(id);
+        StopBasic(id,ActionStopReason.Departure);
+        StopSummon(id,ActionStopReason.Departure);ResetSummonSession(id);
         UnscheduleLife(_actors[id]);_lifeDirty.Remove(id);
         ClearControl(id);
+        _actors[id].Controls.Changed=null;
+        _dodges.Remove(id);
         _sourceActors.Remove(_actors[id].SourceIdentity);
         _combatTagged.Remove(id);_combatPresenceDirty.Remove(id);
         RemoveActorEffects(id); _effectDirty.Remove(id);
         StopContinuousBasic(id); _suppressedBasicInputs.Remove(id);
-        _actors.Remove(id); _damageSerial.Remove(id); _pending.Remove(id); _results.Remove(id); _equipmentDirty.Remove(id);
-        _defense.Remove(id); _defenseActive.Remove(id); _defensePending.Remove(id); _defenseDirty.Remove(id);
+        _actors.Remove(id); _damageSerial.Remove(id); Inputs.Clear(id); _results.Remove(id); _equipmentDirty.Remove(id);
+        _defense.Remove(id); _defenseActive.Remove(id); Inputs.Clear(id); _defenseDirty.Remove(id);
         _swords.Remove(id);
         _recoveringHealth.Remove(id); _healthRecovered.Remove(id);
+        _recoveringMana.Remove(id);
     }
 
     public void Move(NetworkEntityId id, Vector2 position, float height = 0) { _actors[id].Position = position; _actors[id].Height = height; }
 
     public void Simulate(float delta, uint tick)
     {
-        if (!float.IsFinite(delta) || delta <= 0)
-            throw new ArgumentException("Simulation delta must be finite and positive.");
-        _events.Clear();
-        _effectEvents.Clear();
-        _time = StatMath.Add(_time, delta);
-        AdvanceCombatPresence();
-        AdvanceLife();
-        AdvanceEffects();
-        RecoverHealth(delta);
-        SimulateControl();
-        SimulateDefense(delta);
-        foreach (var (id, command) in _pending)
-        {
-            var actor = _actors[id];
-            var outcome = !BasicStateAvailable(id, actor) || _suppressedBasicInputs.Contains(id) ? AttackOutcome.InvalidState
-                : _time < actor.ReadyAt ? AttackOutcome.Cooldown : AttackOutcome.Accepted;
-            // Holding waits on the same weapon interval; a heartbeat never attacks.
-            if (outcome == AttackOutcome.Cooldown && command.Mode == BasicAttackMode.BeginContinuous)
-            { _results[id] = new(command.Sequence, tick, AttackOutcome.Accepted); continue; }
-            _results[id] = new(command.Sequence, tick, outcome);
-            if (outcome != AttackOutcome.Accepted)
-            { StopContinuousBasic(id); continue; }
-            actor.ReadyAt = StatMath.Add(_time, actor.AttackInterval);
-            PlayerAction?.Invoke(id); Resolve(actor, command, tick);
-        }
-        SimulateContinuousBasic(tick);
-        _pending.Clear();
-        _suppressedBasicInputs.Clear();
+        SimulateFrame(delta,tick);
     }
 
-    public void ClearResults() { _results.Clear(); _equipmentDirty.Clear(); _defenseDirty.Clear(); _healthRecovered.Clear(); _effectDirty.Clear(); _combatPresenceDirty.Clear();_lifeDirty.Clear(); }
+    private void AdvanceState(double delta,double from)
+    {
+        AdvanceCombatPresence();
+        AdvanceLife();
+        AdvanceDodges();
+        AdvanceEffects();
+        RecoverHealth(delta);
+        RecoverMana(delta);
+        AdvanceDefense(delta,from);
+        SimulateControl();
+    }
+
+    public void ClearResults() { _results.Clear();_summonResults.Clear(); _equipmentDirty.Clear(); _defenseDirty.Clear(); _healthRecovered.Clear(); _effectDirty.Clear(); _combatPresenceDirty.Clear();_lifeDirty.Clear(); }
 
     /// <summary>Server AI only; no client command can select a monster actor.</summary>
     public bool ExecuteNpcAttack(NetworkEntityId id, uint sequence, Vector2 direction, uint tick)
+        =>_actors.TryGetValue(id,out var actor) && IsNpc(actor.Kind) && ExecuteAiBasic(id,sequence,direction,tick);
+
+    internal bool ExecuteAiBasic(NetworkEntityId id,uint sequence,Vector2 direction,uint tick,float directionY=0)
     {
-        if (!_actors.TryGetValue(id, out var actor) || !IsNpc(actor.Kind) || actor.Health <= 0 ||
-            !BasicAttackShape.IsValidDirection(direction) || !MovementSimulation.IsSequenceNewer(sequence, actor.LastSequence) ||
-            _time < actor.ReadyAt || IsActionLocked(id) || BlocksAction(id,actor.Weapon.Capabilities)) return false;
+        if (!_actors.TryGetValue(id, out var actor) || !(IsNpc(actor.Kind) || actor.Kind==CombatEntityKind.Echo && actor.CompanionOwner.IsValid) ||
+            !actor.Active || actor.Health <= 0 ||
+            !BasicAttackShape.IsValidDirection3D(direction,directionY) || !MovementSimulation.IsSequenceNewer(sequence, actor.LastSequence) ||
+            _time < actor.ReadyAt || actor.Action is {Finished:false} || IsActionLocked(id) || BlocksAction(id,actor.Weapon.Capabilities)) return false;
         actor.LastSequence = sequence;
-        actor.ReadyAt = StatMath.Add(_time, actor.AttackInterval);
-        Resolve(actor, new(sequence, tick, direction), tick);
+        if(actor.Kind==CombatEntityKind.Echo)PlayerAction?.Invoke(id);
+        StartBasic(actor, new(sequence, tick, direction,DirectionY:directionY), tick);
         return true;
     }
 
@@ -244,85 +252,40 @@ public sealed partial class CombatSimulation
     {
         var actor = _actors[id];
         return new(id, tick, actor.Kind, actor.Position, actor.Health, actor.Stats.MaxHealth,
-            actor.AttackInterval, (float)actor.Weapon.Range, _halfAngle, actor.Height);
+            actor.AttackInterval, (float)actor.Weapon.Range, actor.Weapon.BasicVolume?.HalfAngleRadians??0, actor.Height,
+            new(CombatBodyShape.Capsule,actor.HurtboxProfile.Height,actor.HurtboxProfile.Radius),
+            actor.Weapon.BasicProjectile?.OriginHeight??actor.Weapon.BasicVolume!.OriginHeight,actor.Weapon.BasicVolume?.Thickness??0,
+            actor.Weapon.BasicDelivery,actor.Weapon.BasicProjectile?.Speed??0,actor.Weapon.BasicProjectile?.Radius??0);
     }
 
-    /// <summary>One server-only area strike; each living player in the spatial query is hit at most once.</summary>
+    /// <summary>Server AI intent. The shared ability runner owns validation, timing, payment and damage.</summary>
     public bool ExecuteNpcArea(NetworkEntityId id, uint sequence, Vector2 center, AbilityDefinition ability, uint tick, float height=0)
     {
-        var foot = new Vector3(center.X,height,center.Y);
-        if (!_actors.TryGetValue(id, out var actor) || actor.Kind != CombatEntityKind.Boss || actor.Health <= 0 ||
-            BlocksAction(id,ability.Action.Capabilities) || IsActionLocked(id) ||
-            !MovementSimulation.IsSequenceNewer(sequence, actor.LastSequence) || _time < actor.ReadyAt ||
-            Vector3.DistanceSquared(actor.Foot, foot) > ability.Range * ability.Range ||
-            !_navigation.IsOnSurface(foot) || !_navigation.ClearAttack(actor.Foot, foot)) return false;
-        actor.LastSequence = sequence;
-        actor.ReadyAt = StatMath.Add(_time, ability.CooldownSeconds);
-        var execution = AllocateExecution();
-        _spatial.Query(center, (float)ability.Radius, _candidates);
-        var power = Math.Max(0, StatMath.Add(ability.Power, StatMath.Multiply(actor.Stats.MagicAttack, ability.MagicAttackScale)));
-        foreach (var candidateId in _candidates)
-        {
-            if (!_actors.TryGetValue(candidateId, out var target) || target.Kind != CombatEntityKind.Player || target.Health <= 0 ||
-                !target.Active || Vector3.DistanceSquared(foot,target.Foot)>ability.Radius*ability.Radius || !_navigation.ClearAttack(foot,target.Foot)) continue;
-            var hit = ResolveDirectHit(id, target.Id, Vector2.UnitY, power, magic: true,
-                blockable: ability.HitRules.Blockable,parryable: ability.HitRules.Parryable,pressureScale: ability.HitRules.PressureScale);
-            _events.Add(new(id, sequence, tick, center, Vector2.UnitY, (float)ability.Radius, target.Id,
-                hit.Damage, target.Health, hit.Critical, hit.Guard, execution, hit.Evaded));
-        }
-        return true;
+        return ability.GroundVolume is not null && _actors.TryGetValue(id,out var actor) && IsNpc(actor.Kind) &&
+            InputAbilities?.QueueAiAbility(id, new(sequence, tick, ability.NetworkId, center, AimHeight: height), tick) == true;
     }
 
-    private void Resolve(Combatant actor, AttackCommand command, uint tick)
+    private void Resolve(Combatant actor, AttackCommand command, uint tick,ulong execution=0,WeaponDefinition? weapon=null,
+        bool notifyAction=true,bool endWeapon=true)
     {
-        OrdinaryActionAccepted?.Invoke(actor.Id,Content.Shared.Combat.CombatActionCategory.BasicAttack);
-        SettleWeaponBoundary(actor.Id);
-        var execution=AllocateExecution();var usesWeapon=(actor.Weapon.Capabilities&ActionCapability.Weapon)!=0;
-        if(usesWeapon)BeginWeaponUse(actor.Id,execution);
-        var direction = Vector2.Normalize(command.Direction);
-        var range = (float)actor.Weapon.Range;
-        _spatial.Query(actor.Position, range, _candidates);
-        Combatant? target = null;
-        var nearest = float.MaxValue;
-        foreach (var id in _candidates)
-        {
-            if (!_actors.TryGetValue(id, out var candidate) ||
-                !CanTarget(actor.Id,candidate.Id) ||
-                candidate.Health <= 0 || !BasicAttackShape.Contains(actor.Position, direction, candidate.Position, range, _halfAngle) ||
-                Vector3.DistanceSquared(actor.Foot, candidate.Foot) > range * range || !_navigation.ClearAttack(actor.Foot, candidate.Foot))
-                continue;
-            var distance = Vector3.DistanceSquared(actor.Foot, candidate.Foot);
-            if (distance < nearest || (distance == nearest && (target is null || id.Value < target.Id.Value)))
-            {
-                target = candidate;
-                nearest = distance;
-            }
-        }
-        var damage = 0d;
-        var critical = false;
-        var evaded = false;
-        var guard = GuardImpact.None;
-        var focus = ConsumeFocus(actor.Id);
-        if (target is not null)
-        {
-            var power = _calculator.WeaponPower(actor.Weapon, actor.Stats);
-            power = CombatBalanceMath.BasicPower(power, IsSwordsman(actor.Id) ? _catalog.Swordsman!.BasicDamageBonus : 0, focus);
-            var rules=actor.Weapon.HitRules;
-            var hit = ResolveDirectHit(actor.Id, target.Id, direction, power, magic: false,
-                blockable: rules.Blockable, parryable: rules.Parryable,pressureScale: rules.PressureScale,weaponExecution:usesWeapon?execution:0);
-            damage = hit.Damage; critical = hit.Critical; evaded = hit.Evaded; guard = hit.Guard;
-        }
-        SwordHit(actor.Id, basic: true, success: damage > 0);
-        _events.Add(new(actor.Id, command.Sequence, tick, actor.Position, direction, range,
-            target?.Id ?? NetworkEntityId.Invalid, damage, target?.Health ?? 0, critical,guard, execution, evaded));
-        if(usesWeapon)EndWeaponUse(actor.Id,execution);
-        SettleWeaponBoundary(actor.Id);
+        if(notifyAction)OrdinaryActionAccepted?.Invoke(actor.Id,Content.Shared.Combat.CombatActionCategory.BasicAttack);
+        weapon??=actor.Weapon;
+        var startsExecution=execution==0;
+        if(startsExecution){SettleWeaponBoundary(actor.Id);execution=AllocateExecution();}
+        var usesWeapon=(weapon.Capabilities&ActionCapability.Weapon)!=0;
+        if(usesWeapon && startsExecution)BeginWeaponUse(actor.Id,execution);
+        var ownBatch=!_capturingContacts;
+        if(ownBatch)BeginContactBatch();
+        if(weapon.BasicProjectile is not null)ReleaseBasicProjectile(actor,command,weapon,execution,tick,endWeapon);
+        else CaptureBasicContact(actor,command,weapon,execution,tick,endWeapon);
+        if(ownBatch)ResolveContactBatch();
     }
 
     private void ValidateProfile(CreatureDefinition creature)
     {
         var weapon = _catalog.Weapons[creature.WeaponId];
-        if (weapon.Kind != WeaponKind.Melee || !float.IsFinite((float)weapon.Range) || weapon.Range > _maxQueryRange)
-            throw new ArgumentException("Prototype combat requires melee weapons with bounded spatial query range.");
+        if (!float.IsFinite((float)weapon.Range) || weapon.Range+MaximumHurtboxReach > _maxQueryRange ||
+            weapon.BasicProjectile is {} projectile && projectile.Radius+MaximumHurtboxReach>=_maxQueryRange)
+            throw new ArgumentException("Weapon basic geometry exceeds spatial query budgets.");
     }
 }

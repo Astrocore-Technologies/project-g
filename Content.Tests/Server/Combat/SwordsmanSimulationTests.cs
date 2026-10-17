@@ -42,7 +42,9 @@ public sealed class SwordsmanSimulationTests
         public void AddTarget(NetworkEntityId id,Vector2 at,bool flesh=true)
         {
             Combat.Add(id,at,CombatEntityKind.Monster); Spatial.Add(id,at);
-            var actor=Combat.Get(id); actor.Stats=actor.Stats with {MaxHealth=10000,PhysicalDefense=0}; actor.Health=10000; actor.CanBleed=flesh;
+            var actor=Combat.Get(id); actor.Stats=actor.Stats with {MaxHealth=10000,PhysicalDefense=0,HealthRecovery=0}; actor.Health=10000; actor.CanBleed=flesh;
+            // A controlled contact source for defense/passive tests, not the world NPC action runner.
+            actor.Weapon=actor.Weapon with {BasicAttack=null};
         }
         public void Position(NetworkEntityId id,Vector2 at) { Combat.Move(id,at); Spatial.Move(id,at); }
         public void Step(int count=1)
@@ -57,6 +59,7 @@ public sealed class SwordsmanSimulationTests
         public AttackEvent Swing(Vector2? direction=null)
         {
             Assert.True(Combat.Queue(Player,new(++AttackSequence,0,direction??Vector2.UnitY),Tick)); Step();
+            for(var i=0;i<40 && Combat.Events.Count==0;i++)Step();
             return Assert.Single(Combat.Events);
         }
         public void ParryActualHit()
@@ -244,15 +247,17 @@ public sealed class SwordsmanSimulationTests
         Assert.Equal(baseline/.7*.55,sword.Combat.Events[^1].Damage,6);
         sword.Combat.RestoreDefense(sword.Player,new(1,50,0,0));
         for(var i=0;i<40;i++) { sword.Guard(DefenseAction.Block); }
-        Assert.Equal(40,sword.Stamina,5); sword.Guard(DefenseAction.Release); var released=sword.Stamina; sword.Step(40); Assert.InRange(sword.Stamina,released+7.9,released+8.5);
+        Assert.Equal(40,sword.Stamina,5); sword.Guard(DefenseAction.Release); var released=sword.Stamina; sword.Step(40);
+        var recovery=sword.Combat.Get(sword.Player).Stats.StaminaRecovery;
+        Assert.InRange(sword.Stamina,released+recovery-.1,released+recovery+.5);
     }
 
     [Fact]
-    public void LongDashUsesOwnProfileFullCostForShortDistanceAndCannotBreakStun()
+    public void SwordsmanDodgeUsesApprovedProfileFullCostForShortDistanceAndCannotBreakStun()
     {
         var f=new Fight(); var dash=f.Abilities.Loadout(f.Player,0).Abilities.Single(a=>a.Form==AbilityForm.Dash);
-        Assert.Equal(20,dash.Range); Assert.Equal(35,dash.StaminaCost); Assert.Equal(20,dash.CooldownSeconds);
-        Assert.Equal(AbilityOutcome.Accepted,f.Cast(3,Vector2.UnitX,1)); Assert.Equal(65,f.Stamina);
+        Assert.Equal(3,dash.Range); Assert.Equal(20,dash.StaminaCost); Assert.Equal(3,dash.CooldownSeconds);
+        Assert.Equal(AbilityOutcome.Accepted,f.Cast(3,Vector2.UnitX,1)); Assert.Equal(80,f.Stamina);
         f.Step(4); Assert.Equal(AbilityOutcome.Cooldown,f.Cast(3));
         var stunned=new Fight(); stunned.Combat.Stun(stunned.Player,.4); Assert.Equal(AbilityOutcome.InvalidState,stunned.Cast(3)); Assert.Equal(100,stunned.Stamina);
     }
@@ -301,30 +306,30 @@ public sealed class SwordsmanSimulationTests
             }
         }
         var dash = new Fight().Abilities.Loadout(new(1), 0).Abilities.Single(a => a.Form == AbilityForm.Dash);
-        Assert.Equal(new AbilityArea(AbilityAreaShape.Corridor, 20, .45f), dash.Area);
+        Assert.Equal(new AbilityArea(AbilityAreaShape.Corridor, 3, .45f), dash.Area);
     }
 
     [Fact]
-    public void SwordDashBecomesAvailableAfterTwentySeconds()
+    public void SwordsmanDodgeBecomesAvailableAfterThreeSeconds()
     {
         var f = new Fight();
         Assert.Equal(AbilityOutcome.Accepted, f.Cast(3, Vector2.UnitX, 1));
-        f.Step(378); // 18.9 seconds after the accepted cast.
+        f.Step(38); // 1.9 seconds after the accepted cast.
         Assert.Equal(AbilityOutcome.Cooldown, f.Cast(3, Vector2.UnitX, 1));
         f.Step(21);
         Assert.Equal(AbilityOutcome.Accepted, f.Cast(3, Vector2.UnitX, 1));
     }
 
     [Fact]
-    public void TwentyMeterSwordDashRejectsLargerIntentsAndKeepsCooldownAndCost()
+    public void SwordsmanDodgeRejectsOversizedIntentsAndKeepsCooldownAndCost()
     {
         var f=new Fight(); f.Position(f.Player,new(-10,0));
-        Assert.Equal(AbilityOutcome.InvalidAim,f.Cast(3,Vector2.UnitX,20.01f)); Assert.Equal(100,f.Stamina);
-        Assert.Equal(AbilityOutcome.Accepted,f.Cast(3,Vector2.UnitX,20)); Assert.Equal(65,f.Stamina);
+        Assert.Equal(AbilityOutcome.InvalidAim,f.Cast(3,Vector2.UnitX,3.01f)); Assert.Equal(100,f.Stamina);
+        Assert.Equal(AbilityOutcome.Accepted,f.Cast(3,Vector2.UnitX,3)); Assert.Equal(80,f.Stamina);
         var effect=Assert.Single(f.Abilities.ActiveStates);
-        Assert.Equal(20,Vector2.Distance(effect.Origin,effect.Position),5);
-        Assert.Equal(AbilityOutcome.Busy,f.Cast(3)); f.Step(30);
+        Assert.Equal(3,Vector2.Distance(effect.Origin,effect.Position),5);
+        Assert.Equal(AbilityOutcome.Cooldown,f.Cast(3)); f.Step(30);
         Assert.Equal(AbilityOutcome.Cooldown,f.Cast(3));
-        Assert.Equal(20,f.Abilities.Loadout(f.Player,f.Tick).Abilities.Single(a=>a.Form==AbilityForm.Dash).CooldownSeconds);
+        Assert.Equal(3,f.Abilities.Loadout(f.Player,f.Tick).Abilities.Single(a=>a.Form==AbilityForm.Dash).CooldownSeconds);
     }
 }

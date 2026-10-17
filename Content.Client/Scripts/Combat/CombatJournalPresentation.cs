@@ -98,6 +98,7 @@ public partial class CombatJournalPresentation:CanvasLayer
             CombatJournalKind.ManaSteal=>$"Похищено +{e.Amount:0.#} MP",
             CombatJournalKind.HealthPrice=>$"Цена: −{e.Amount:0.#} HP",
             CombatJournalKind.Evasion=>"Числовое уклонение",
+            CombatJournalKind.Dodge=>"Уворот: урон предотвращён",
             CombatJournalKind.Parry=>"Парирование",
             CombatJournalKind.Absorbed=>"Без потери HP",
             CombatJournalKind.Control=>$"{ControlName(e.Control)} · {e.Duration:0.##} с"+
@@ -105,6 +106,10 @@ public partial class CombatJournalPresentation:CanvasLayer
             CombatJournalKind.ControlRemoved=>$"Снят контроль: {ControlName(e.Control)} · {e.Amount:0} эффект(а)",
             CombatJournalKind.EffectsCleansed=>$"Очищено отрицательных эффектов: {e.Amount:0}",
             CombatJournalKind.EffectsDispelled=>$"Рассеяно положительных эффектов: {e.Amount:0}",
+            CombatJournalKind.CooldownReset=>"Перезарядка сброшена · восстановлены все заряды",
+            CombatJournalKind.CooldownStarted=>$"Началось восстановление заряда · {e.Duration:0.##} с",
+            CombatJournalKind.StaminaSpent=>$"Расход выносливости: −{e.Amount:0.##}",
+            CombatJournalKind.ManaSpent=>$"Расход маны: −{e.Amount:0.##} MP",
             CombatJournalKind.PeriodicDamage=>$"Периодический урон −{e.Amount:0.#} HP",
             CombatJournalKind.ReflectedDamage=>$"Отражённый урон −{e.Amount:0.#} HP",
             CombatJournalKind.ActionActivated=>$"Активация · {e.Amount:0.#} MP",
@@ -117,9 +122,9 @@ public partial class CombatJournalPresentation:CanvasLayer
         if((e.Flags&CombatJournalFlags.GuardBroken)!=0)result+=" · БЛОК ПРОБИТ";
         if(e.Kind is CombatJournalKind.Damage or CombatJournalKind.PeriodicDamage or CombatJournalKind.ReflectedDamage)
             result+=(e.Flags&CombatJournalFlags.Magical)!=0?" · магический":" · физический";
-        return result;
+        return result+HitContextText.Suffix(e.HitTags);
     }
-    private static string ControlName(CrowdControlKind kind)=>kind switch
+    internal static string ControlName(CrowdControlKind kind)=>kind switch
     {CrowdControlKind.Stun=>"Оглушение",CrowdControlKind.Root=>"Обездвиживание",CrowdControlKind.Slow=>"Замедление",CrowdControlKind.Silence=>"Молчание",
         CrowdControlKind.Disarm=>"Разоружение",CrowdControlKind.Knockback=>"Отбрасывание",CrowdControlKind.Knockdown=>"Сбит с ног",CrowdControlKind.Fear=>"Страх",
         CrowdControlKind.Sleep=>"Сон",CrowdControlKind.Blind=>"Ослепление",CrowdControlKind.Taunt=>"Провокация",CrowdControlKind.Pull=>"Притягивание",CrowdControlKind.Freeze=>"Заморозка",_=>"Подброс"};

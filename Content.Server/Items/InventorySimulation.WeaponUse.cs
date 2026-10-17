@@ -4,11 +4,13 @@ namespace Content.Server.Items;
 
 public sealed partial class InventorySimulation
 {
-    private sealed class WeaponUse(Item item)
+    private sealed class WeaponUse(Guid item,int wear)
     {
-        internal readonly Item Item=item;
+        internal readonly Guid Item=item;
+        internal readonly int Wear=wear;
         internal bool Worn;
     }
+    private readonly Dictionary<(NetworkEntityId Actor,ulong Execution),WeaponUse> _weaponUses=new();
     private readonly HashSet<NetworkEntityId> _wearPending=new();
     private readonly List<NetworkEntityId> _wearCandidates=new();
 
@@ -18,29 +20,26 @@ public sealed partial class InventorySimulation
         foreach(var item in actor.Items)
             if(item.Saved.EquippedSlot==EquipmentSlot.Weapon && item.Saved.Condition is {Current:>0})
             {
-                if(!actor.WeaponUses.TryAdd(execution,new(item)))throw new InvalidOperationException("Duplicate weapon execution receipt.");
+                if(!_weaponUses.TryAdd((id,execution),new(item.Saved.InstanceId,item.Definition.Condition!.WearPerHit)))throw new InvalidOperationException("Duplicate weapon execution receipt.");
+                _wearLedger.Retain(item.Saved);
                 return;
             }
     }
     private void EndWeaponUse(NetworkEntityId id,ulong execution)
-    {if(_actors.TryGetValue(id,out var actor))actor.WeaponUses.Remove(execution);}
+    {if(_weaponUses.Remove((id,execution),out var receipt))_wearLedger.Release(receipt.Item);}
 
     private void QueueWear(NetworkEntityId id,ulong execution)
     {
-        if(!_actors.TryGetValue(id,out var actor) || !actor.WeaponUses.TryGetValue(execution,out var receipt) || receipt.Worn)return;
-        receipt.Worn=true;var item=receipt.Item;
-        if(item.Saved.Condition is not {Current:>0} state || item.Definition.Condition is not {} rule)return;
-        if(state.Revision==long.MaxValue)throw new InvalidOperationException("Item revision exhausted.");
-        // Only the private deferred debit changes. Current, its public revision and bonuses remain valid for this action.
-        var pending=Math.Min(state.Current,state.PendingWear+rule.WearPerHit);
-        if(pending==state.PendingWear)return;
-        item.Saved=item.Saved with {Condition=state with {PendingWear=pending}};_wearPending.Add(id);_dirty.Add(id);
+        if(!_weaponUses.TryGetValue((id,execution),out var receipt)||receipt.Worn)return;
+        receipt.Worn=true;_wearLedger.Debit(receipt.Item,receipt.Wear);
     }
 
-    internal void FlushWear(NetworkEntityId id)
+    internal void FlushWear(NetworkEntityId id)=>FlushWear(id,atPulse:false);
+    private void FlushPulseWear(NetworkEntityId id)=>FlushWear(id,atPulse:true);
+    private void FlushWear(NetworkEntityId id,bool atPulse)
     {
         if(!_wearPending.Contains(id) || !_actors.TryGetValue(id,out var actor) ||
-            combat.TryGet(id,out var combatant) && combatant.Action is {Finished:false})return;
+            !atPulse && combat.TryGet(id,out var combatant) && combatant.Action is {Finished:false})return;
         var changed=false;var broken=false;
         foreach(var item in actor.Items)
             if(item.Saved.Condition is {PendingWear:>0} state)

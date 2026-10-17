@@ -1,7 +1,12 @@
 [CmdletBinding()]
 param(
     [string]$GodotPath = 'D:/Godot_v4.7.1-stable_mono_win64/Godot_v4.7.1-stable_mono_win64_console.exe',
-    [int]$TimeoutSeconds = 90
+    [int]$TimeoutSeconds = 90,
+    [switch]$PhasedBasics,
+    [ValidateSet('Bow','Staff')][string]$RangedWeapon,
+    [string]$SurfacePackagePath,
+    [switch]$WeaponEquipment,
+    [ValidateSet(20,30)][int]$TickRate = 20
 )
 $ErrorActionPreference = 'Stop'
 $workspace = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
@@ -27,9 +32,12 @@ $server = $null
 $client = $null
 try {
     $testContent = Get-Content -LiteralPath (Join-Path $workspace 'Content.Server/Data/prototype.json') -Raw | ConvertFrom-Json -AsHashtable
+    # -PhasedBasics enables extended client assertions against the shipped weapon definitions.
     $projectile = $testContent.abilities | Where-Object { $_.id -eq 'test_projectile' }
     $projectile.maxCharges = 3
     $projectile.cooldownSeconds = 5
+    # Explicit fixture for buffer replacement: the running Cast accepts Esc/defense, but not another skill.
+    $projectile.action.preparation.cancel = 'Voluntary, Block, Parry, Dodge'
     $support = $testContent.abilities | Where-Object { $_.id -eq 'test_ground_area' }
     $support.contactDisposition = 'Support'
     $support.power = 0
@@ -96,14 +104,27 @@ try {
     $adventurer.abilityIds += 'smoke_toggle'
     $adventurer.abilityIds += 'smoke_passive'
     $adventurer.baseHealthRecovery = 0
+    if ($RangedWeapon) {
+        # Only the isolated fixture changes its starter item; production content is untouched.
+        $rangedItem = $testContent.items | Where-Object { $_.id -eq 'test_sword_item' }
+        $rangedItem.weaponId = if ($RangedWeapon -eq 'Bow') { 'training_bow' } else { 'training_staff' }
+    }
+    if ($WeaponEquipment) {
+        if ($RangedWeapon) { throw 'Choose either -RangedWeapon or -WeaponEquipment.' }
+        $adventurer.starterItemIds += @('training_daggers_item','training_twohand_item','training_shield')
+    }
     $testContent.balance.healthRecovery.vitality = 0
     $contentPath = Join-Path $runDirectory 'combat-content.json'
     $testContent | ConvertTo-Json -Depth 64 | Set-Content -LiteralPath $contentPath -Encoding utf8NoBOM
-    $server = Start-HiddenProcess 'dotnet' @(
+    $serverArguments = @(
         (Join-Path $workspace 'Content.Server/bin/Debug/net10.0/Content.Server.dll'),
-        "--Server:Port=$port", "--Balance:ContentPath=$contentPath", '--Server:StartingRegion=linvel_gardens', '--RegionExports:AutoExport=false',
+        "--Server:Port=$port", "--Server:TickRate=$TickRate", "--Balance:ContentPath=$contentPath", '--Server:StartingRegion=linvel_gardens', '--RegionExports:AutoExport=false',
         '--RegionExports:VerifySources=false', '--Persistence:Provider=Sqlite',
         "--Persistence:SqlitePath=$runDirectory/characters.db", '--Npc:Enabled=false', '--Boss:Actor:Enabled=false')
+    if ($SurfacePackagePath) {
+        $serverArguments += "--RegionExports:SurfacePackagePath=$((Resolve-Path -LiteralPath $SurfacePackagePath).Path)"
+    }
+    $server = Start-HiddenProcess 'dotnet' $serverArguments
     $serverDeadline = [DateTime]::UtcNow.AddSeconds(60)
     $ready = $false
     while (!$ready -and [DateTime]::UtcNow -lt $serverDeadline) {
@@ -112,8 +133,12 @@ try {
         if (!$ready) { Start-Sleep -Milliseconds 200 }
     }
     if (!$ready) { throw 'Isolated server did not open its UDP port.' }
-    $client = Start-HiddenProcess $GodotPath @('--headless', '--path', (Join-Path $workspace 'Content.Client'),
-        'res://Tests/UI/CombatInputSmoke.tscn', '--', "--server-port=$port", ('--identity=gdd01-' + $runId.Substring(0,12)))
+    $smokeScene = if ($WeaponEquipment) { 'res://Tests/UI/WeaponEquipmentSmoke.tscn' } elseif ($RangedWeapon) { 'res://Tests/UI/RangedInputSmoke.tscn' } else { 'res://Tests/UI/CombatInputSmoke.tscn' }
+    $combatClientArguments = @('--headless', '--path', (Join-Path $workspace 'Content.Client'),
+        $smokeScene, '--', "--server-port=$port", ('--identity=gdd01-' + $runId.Substring(0,12)))
+    if ($RangedWeapon) { $combatClientArguments += "--ranged-basic=$RangedWeapon" }
+    if ($PhasedBasics) { $combatClientArguments += '--phased-basics' }
+    $client = Start-HiddenProcess $GodotPath $combatClientArguments
     $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
     while (!$client.Process.HasExited -and [DateTime]::UtcNow -lt $deadline) {
         if ($server.Process.HasExited) { throw 'Isolated server exited before the client.' }
@@ -122,6 +147,11 @@ try {
     if (!$client.Process.HasExited) { throw 'Combat input smoke timed out.' }
     $clientOutput = $client.Output.GetAwaiter().GetResult()
     if ($client.Process.ExitCode -ne 0 -or !$clientOutput.Contains('COMBAT_INPUT_OK:')) { throw 'Combat input smoke failed; inspect the run logs.' }
+    if ($PhasedBasics -and !$RangedWeapon -and !$WeaponEquipment -and !$clientOutput.Contains('BASIC_PHASES_CONFIRMED:')) { throw 'Phased basic lifecycle was not observed.' }
+    if ($PhasedBasics -and !$RangedWeapon -and !$WeaponEquipment -and !$clientOutput.Contains('BASIC_CONTROL_CONFIRMED:')) { throw 'Owned basic controls were not observed.' }
+    if (!$RangedWeapon -and !$WeaponEquipment -and !$clientOutput.Contains('DODGE_CONFIRMED:')) { throw 'Approved Dodge input and profile were not observed.' }
+    if ($RangedWeapon -and !$clientOutput.Contains('RANGED_BASIC_INPUT_OK:')) { throw 'Ranged basic input was not observed.' }
+    if ($WeaponEquipment -and !$clientOutput.Contains('WEAPON_EQUIPMENT_OK:')) { throw 'Weapon equipment input was not observed.' }
     Write-Output 'COMBAT_INPUT_OK'
 }
 finally {

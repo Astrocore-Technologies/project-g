@@ -23,9 +23,12 @@ public sealed partial class AbilitySimulation
     private void ConsumeCooldown(AbilityEffect effect,bool startNow=false)
     {
         var actor=_actors[effect.ActorId];var index=CurrentAbilityIndex(actor,effect.Profile.Id);var slot=actor.Cooldowns[index];
+        var recovering=slot.Recovering;
         slot.Configure(ExecutionProfile(effect.ActorId,actor,index).CooldownSeconds,_time);
         var deferred=!startNow && effect.Definition.Channel?.CooldownStart==Content.Server.Data.ChannelCooldownStart.Completion;
         if(!(deferred?slot.ReserveUntilEnd(_time):slot.Consume(_time))) throw new InvalidOperationException("An exclusive action lost its validated charge before activation.");
+        if(!recovering&&slot.Recovering)_combat.RecordJournal(effect.ActorId,effect.ActorId,Content.Shared.Combat.CombatJournalKind.CooldownStarted,
+            duration:slot.State(_time).RechargeIn,skill:effect.Profile.Id);
         _dirty.Add(effect.ActorId);
         WakeCooldowns(effect.ActorId,actor);
     }
@@ -36,7 +39,13 @@ public sealed partial class AbilitySimulation
             effect.Action?.Activated!=true || !_actors.TryGetValue(effect.ActorId,out var actor))return;
         var index=CurrentAbilityIndex(actor,effect.Profile.Id);var slot=actor.Cooldowns[index];var now=endedAt ?? _time;
         slot.Configure(ExecutionProfile(effect.ActorId,actor,index).CooldownSeconds,now);
-        if(slot.FinishReservation(now)){_dirty.Add(effect.ActorId);WakeCooldowns(effect.ActorId,actor);}
+        var recovering=slot.Recovering;
+        if(slot.FinishReservation(now))
+        {
+            if(!recovering&&slot.Recovering)_combat.RecordJournal(effect.ActorId,effect.ActorId,Content.Shared.Combat.CombatJournalKind.CooldownStarted,
+                duration:slot.State(now).RechargeIn,skill:effect.Profile.Id);
+            _dirty.Add(effect.ActorId);WakeCooldowns(effect.ActorId,actor);
+        }
     }
 
     private static int CurrentAbilityIndex(AbilityActor actor,ushort skill)

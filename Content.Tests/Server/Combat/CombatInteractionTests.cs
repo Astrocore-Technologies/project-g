@@ -32,7 +32,8 @@ public sealed class CombatInteractionTests
         Assert.Equal(AbilityOutcome.Accepted,hit.Cast(22));
         var miss=new Fight(); Equip(miss,20,22); miss.Cast(20,-Vector2.UnitY); miss.Step(2);
         Assert.InRange(miss.Combat.RecoveryRemaining(miss.Player),.29,.31);
-        Assert.Equal(AbilityOutcome.Busy,miss.Cast(22));
+        Assert.Equal(AbilityOutcome.Buffered,miss.Cast(22));miss.Step(4);
+        Assert.Equal(AbilityOutcome.Busy,miss.Abilities.Results[miss.Player].Outcome);Assert.DoesNotContain(miss.Abilities.ActiveStates,s=>s.AbilityId==22);
     }
     [Fact]
     public void HeavyRecoveryCannotBeCancelledIntoParryDashOrBasicAttack()
@@ -41,9 +42,10 @@ public sealed class CombatInteractionTests
         Assert.True(f.Combat.RecoveryRemaining(f.Player)>.3);
         Assert.True(f.Combat.QueueDefense(f.Player,new(1,DefenseAction.Parry,Vector2.UnitY),f.Tick));
         Assert.True(f.Combat.Queue(f.Player,new(1,0,Vector2.UnitY),f.Tick)); f.Step();
-        Assert.Equal(DefenseOutcome.InvalidState,f.Combat.DefenseState(f.Player,f.Tick).Outcome);
+        Assert.Equal(DefenseOutcome.Buffered,f.Combat.DefenseState(f.Player,f.Tick).Outcome);
         Assert.Equal(AttackOutcome.InvalidState,f.Combat.Results[f.Player].Outcome);
-        Assert.Equal(AbilityOutcome.Busy,f.Cast(3));
+        var stamina=f.Stamina;Assert.Equal(AbilityOutcome.Buffered,f.Cast(3));f.Step(4);
+        Assert.Equal(AbilityOutcome.Busy,f.Abilities.Results[f.Player].Outcome);Assert.Equal(stamina,f.Stamina);
     }
     [Fact]
     public void SingleBufferedSkillRevalidatesAndNewIntentReplacesIt()
@@ -196,7 +198,8 @@ public sealed class CombatInteractionTests
     public void AirborneTargetUsesRealThreeDimensionalMeleeRange()
     {
         var f=new Fight(); f.Position(f.Target,new(1.9f,0));
-        Assert.True(f.Combat.Knockup(f.Target,.7,1,.6)); f.Step(7);
+        // Contact now follows the player's preparation; keep it near the flight apex.
+        Assert.True(f.Combat.Knockup(f.Target,.7,2,.6)); f.Step(3);
         Assert.Equal(0,f.Swing(Vector2.UnitX).Damage);
         f.Step(30); Assert.True(f.Swing(Vector2.UnitX).Damage>0);
     }

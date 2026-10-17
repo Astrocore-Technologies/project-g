@@ -18,7 +18,10 @@ public partial class AbilityPresentation : Node3D
     private double _pendingAt;
     private uint _sequence;
     private uint _pending;
+    private bool _pendingBuffered;
     private ushort _pendingToggleId;
+    private ushort _pendingSustainSkill;
+    private int _pendingSustainCharges;
     private bool _requestedToggleOn;
     private uint _cancelSequence;
     private uint _lastCancelTarget;
@@ -66,7 +69,7 @@ public partial class AbilityPresentation : Node3D
     public override void _UnhandledInput(InputEvent @event)
     {
         if(ProjectG.UI.GameUi.GameplayModalOpen) return;
-        if (!_player.IsAlive || !_network.RegionActive || @event is not InputEventKey { Pressed: true, Echo: false } key || _pending != 0 && _pendingToggleId==0 || IsAiming && _heldSequence==0 || _loadout.Abilities is null) return;
+        if (!_player.IsAlive || !_network.RegionActive || @event is not InputEventKey { Pressed: true, Echo: false } key || _pending != 0 && !_pendingBuffered && _pendingToggleId==0 || IsAiming && _heldSequence==0 || _loadout.Abilities is null) return;
         var index = Array.IndexOf(BarKeys,key.PhysicalKeycode);
         if (key.PhysicalKeycode != Key.Space && index < 0) return;
         if (key.PhysicalKeycode == Key.Space && _player.Control is CombatControlPhase.Airborne or CombatControlPhase.KnockedDown) return;
@@ -74,7 +77,7 @@ public partial class AbilityPresentation : Node3D
         foreach (var slot in _loadout.Abilities)
             if (key.PhysicalKeycode == Key.Space ? slot.Form == AbilityForm.Dash : slot.Id == _bar[index]) { selected = slot; break; }
         if (selected is not { } profile) return;
-        if(_pending!=0 && profile.Id!=_pendingToggleId)return;
+        if(_pending!=0 && !_pendingBuffered && profile.Id!=_pendingToggleId)return;
         if(IsAiming)CancelAim();
         _aimKey = key.PhysicalKeycode; _aimId = profile.Id;
         RefreshArea();
@@ -139,15 +142,16 @@ public partial class AbilityPresentation : Node3D
         aim = _player.PredictedPosition; aimHeight = foot.Y; direction = NumericsVector2.UnitY;
         directionY = dashDistance = 0; dashEnd = foot;
         if (profile.Area.Shape == AbilityAreaShape.Self) return true;
-        if (!_player.TryCursorSurface(out aim, out aimHeight)) return false;
+        if (!(profile.Form is AbilityForm.Projectile or AbilityForm.Melee ? _player.TryCursorCombatPoint(out aim,out aimHeight) : _player.TryCursorSurface(out aim, out aimHeight))) return false;
         var form = profile.Form;
         var offset = aim - _player.PredictedPosition;
         direction = offset.LengthSquared()<.000001f ? NumericsVector2.UnitY : NumericsVector2.Normalize(offset);
-        if (form == AbilityForm.Projectile)
+        if (form is AbilityForm.Projectile or AbilityForm.Melee)
         {
-            var length = MathF.Sqrt(offset.LengthSquared() + MathF.Pow(aimHeight - foot.Y, 2));
+            var originY=foot.Y+profile.AttackOriginHeight;
+            var length = MathF.Sqrt(offset.LengthSquared() + MathF.Pow(aimHeight - originY, 2));
             if (length < .0001f) return false;
-            direction = offset / length; directionY = (aimHeight - foot.Y) / length;
+            direction = offset / length; directionY = (aimHeight - originY) / length;
         }
         if (form == AbilityForm.Dash)
         {
@@ -165,7 +169,8 @@ public partial class AbilityPresentation : Node3D
         if (!TryAim(profile, out var aim, out var height, out var direction, out var dy, out _, out var dashEnd))
         { _area.HideArea(); _feedback = "Наведите курсор на поверхность"; return; }
         if (profile.Form == AbilityForm.GroundArea && !_player.CanAttack(new(aim.X, height, aim.Y), profile.Range)) reason = "Вне дальности или за препятствием";
-        _area.Show(profile, _player.Navigation, _player.PredictedFoot, new(aim.X, height, aim.Y), direction, dy, dashEnd, reason.Length == 0);
+        _combat??=_player.GetNodeOrNull<CombatPresentation>("CombatPresentation");
+        _area.Show(profile, _player.Navigation, _player.PredictedFoot, new(aim.X, height, aim.Y), direction, dy, dashEnd, reason.Length == 0,_combat?.Facing);
         _feedback = reason.Length > 0 ? reason : profile.Area.Shape == AbilityAreaShape.Self
             ? "На себя · отпустите клавишу · Esc/ПКМ отмена" : "Отпустите клавишу для применения · Esc/ПКМ отмена";
     }
@@ -175,10 +180,10 @@ public partial class AbilityPresentation : Node3D
         var toggle=profile.ExecutionForm==Content.Shared.Combat.CombatActionForm.Toggle;
         var sameToggle=toggle && _pendingToggleId==profile.Id;
         var deactivate=toggle && (sameToggle?_requestedToggleOn:profile.ToggleState!=Content.Shared.Combat.ToggleState.Off);
-        if (_pending!=0 && !sameToggle)return;
+        if (_pending!=0 && !_pendingBuffered && !sameToggle)return;
         if(deactivate)
         {
-            if(++_sequence==0)++_sequence;_pending=_sequence;_pendingAt=Now();
+            if(++_sequence==0)++_sequence;_pending=_sequence;_pendingAt=Now();_pendingBuffered=false;
             _pendingToggleId=profile.Id;_requestedToggleOn=false;
             _network.SendAbility(new(_sequence,_network.LatestServerTick,profile.Id,NumericsVector2.UnitY,Intent:AbilityIntent.Deactivate));return;
         }
@@ -192,21 +197,24 @@ public partial class AbilityPresentation : Node3D
         if (form == AbilityForm.Dash && !delayed && !_player.PredictDash(_sequence, direction, dashDistance, profile.Speed)) return;
         _combat ??= _player.GetNodeOrNull<CombatPresentation>("CombatPresentation");
         _combat?.CancelBasicAttack();
-        if (profile.Area.Stationary)
+        if (form!=AbilityForm.Dash && profile.Area.Stationary)
         {
             // Combat state can arrive after the player spawn; resolve once when the first stationary skill is used.
             _player.StopMovement();
         }
-        _pending = _sequence; _pendingAt = Now(); _feedback = "";
+        _pending = _sequence; _pendingAt = Now(); _pendingBuffered=false; _feedback = "";
+        _pendingSustainSkill=profile.ExecutionForm is Content.Shared.Combat.CombatActionForm.Channel or Content.Shared.Combat.CombatActionForm.Hold or Content.Shared.Combat.CombatActionForm.Toggle?profile.Id:(ushort)0;
+        _pendingSustainCharges=profile.Charges;
         _pendingToggleId=toggle?profile.Id:(ushort)0;_requestedToggleOn=toggle;
         if (!delayed) _player.SwordAnimation.PredictAbility(_sequence, profile.Id, direction,
-            form == AbilityForm.Dash ? dashDistance / profile.Speed : profile.CastSeconds);
-        ClearPreview();_prediction = new AbilityEffectVisual();
+            form == AbilityForm.Dash ? profile.DodgeDurationSeconds : profile.CastSeconds,directionY);
+        ClearPreview();_prediction = new AbilityEffectVisual{AimFacing=_combat?.Facing??NumericsVector2.UnitY};
         // World-space preview is replaced by the single confirmed effect, not duplicated.
         GetTree().CurrentScene.AddChild(_prediction);
         _prediction.Apply(new(1, _player.EntityId, _sequence, _network.LatestServerTick, profile.Id, form,
             AbilityPhase.Telegraph, position, form == AbilityForm.GroundArea ? aim : position, direction,
-            profile.Form == AbilityForm.Melee ? profile.Range : profile.Radius, profile.Speed, (float)profile.CastSeconds, _player.PredictedFoot.Y, form == AbilityForm.GroundArea ? aimHeight : _player.PredictedFoot.Y, directionY, profile.Area), predicted: true);
+            profile.Form == AbilityForm.Melee ? profile.Range : profile.Radius, profile.Speed, (float)profile.CastSeconds,
+            _player.PredictedFoot.Y+profile.AttackOriginHeight, form == AbilityForm.GroundArea ? aimHeight : _player.PredictedFoot.Y+profile.ProjectileLaunchHeight, directionY, profile.Area,profile.MeleeThickness,profile.GroundVolumeHeight), predicted: true);
         _network.SendAbility(new(_sequence, _network.LatestServerTick, profile.Id, form == AbilityForm.GroundArea ? aim : direction, dashDistance, form == AbilityForm.GroundArea ? aimHeight : 0, directionY));
         if(profile.ExecutionForm is Content.Shared.Combat.CombatActionForm.Charged or Content.Shared.Combat.CombatActionForm.Hold)
             _lastHeldAim=new(0,_sequence,_network.LatestServerTick,AbilityControlKind.Aim,form==AbilityForm.GroundArea?aim:direction,form==AbilityForm.GroundArea?aimHeight:0,directionY);
@@ -227,6 +235,7 @@ public partial class AbilityPresentation : Node3D
 
     public void Confirm(AbilityEffectState state)
     {
+        if(state.AbilityId==0)return; // Basic input has a separate sequence space and action acknowledgements.
         if(state.ActorId!=_player.EntityId) return;
         AdvanceSequenceFloor(state.Sequence);
         if(state.Phase==AbilityPhase.Finished)_lastFinishedSequence=state.Sequence;
@@ -252,11 +261,16 @@ public partial class AbilityPresentation : Node3D
 
     public void ApplyResult(AbilityResult result)
     {
+        // A funded channel may exhaust and finish before its first public state.
+        // The private loadout precedes this result; a spent charge proves activation.
+        var exhausted=result.Outcome is AbilityOutcome.NoMana or AbilityOutcome.NoStamina &&
+            (_sustainedSequences.ContainsKey(result.Sequence) || result.Sequence==_pending && _pendingSustainSkill!=0 &&
+                FindProfile(_pendingSustainSkill) is {} sustain && sustain.Charges<_pendingSustainCharges);
+        var exhaustionFeedback=result.Outcome==AbilityOutcome.NoMana?"Поддержание прекращено: закончилась мана":"Поддержание прекращено: закончилась выносливость";
         if(result.Sequence==_lastChargeSequence && result.Outcome is AbilityOutcome.NoMana or AbilityOutcome.NoStamina &&
             (result.Sequence==_executingSequence || _executingSequence==0 && result.Sequence==_lastFinishedSequence))
             _feedback=result.Outcome==AbilityOutcome.NoMana?"Зарядка сорвана: не хватает маны":"Зарядка сорвана: не хватает выносливости";
-        if(_sustainedSequences.ContainsKey(result.Sequence) && result.Outcome is AbilityOutcome.NoMana or AbilityOutcome.NoStamina)
-        {_feedback=result.Outcome==AbilityOutcome.NoMana?"Поддержание прекращено: закончилась мана":"Поддержание прекращено: закончилась выносливость";}
+        if(exhausted)_feedback=exhaustionFeedback;
         if(result.Outcome is AbilityOutcome.Cancelled or AbilityOutcome.CancelDenied)
         {
             if(result.Sequence!=_pending && result.Sequence!=_executingSequence && result.Sequence!=_lastCancelTarget) return;
@@ -271,12 +285,12 @@ public partial class AbilityPresentation : Node3D
             return;
         }
         if (result.Sequence != _pending) return;
-        if (result.Outcome == AbilityOutcome.Buffered) { _feedback="Действие подготовлено"; ClearPreview(); _player.SwordAnimation.RejectAbility(result.Sequence); return; }
+        if (result.Outcome == AbilityOutcome.Buffered) { _pendingBuffered=true; _feedback="Действие подготовлено"; ClearPreview(); _player.SwordAnimation.RejectAbility(result.Sequence); return; }
         if (result.Outcome == AbilityOutcome.Accepted) return; // Authoritative effect replaces the preview.
         if(_heldSequence==result.Sequence){_heldSequence=0;CancelAim();}
         _player.RejectDash(result.Sequence);
         _player.SwordAnimation.RejectAbility(result.Sequence);
-        _feedback = result.Outcome switch {AbilityOutcome.AlreadyActive=>"Навык уже включён",AbilityOutcome.NoMana=>"Не хватает маны", AbilityOutcome.NoStamina=>"Не хватает выносливости",AbilityOutcome.NeedsWeapon=>"Нужно надетое исправное оружие",AbilityOutcome.NeedsSword=>"Нужен надетый исправный меч",AbilityOutcome.NeedsParry=>"Нужно успешное парирование",AbilityOutcome.Cooldown=>"Навык перезаряжается",AbilityOutcome.Busy=>"Завершите текущее действие",AbilityOutcome.InvalidState=>"Сейчас нельзя применить навык",_=>"Навык сейчас недоступен" }; _pending = 0;
+        _feedback = exhausted?exhaustionFeedback:result.Outcome switch {AbilityOutcome.AlreadyActive=>"Навык уже включён",AbilityOutcome.NoHealth=>"Не хватает HP для оплаты навыка",AbilityOutcome.NoMana=>"Не хватает маны", AbilityOutcome.NoStamina=>"Не хватает выносливости",AbilityOutcome.NeedsWeapon=>"Нужно надетое исправное оружие",AbilityOutcome.NeedsSword=>"Нужен надетый исправный меч",AbilityOutcome.NeedsParry=>"Нужно успешное парирование",AbilityOutcome.Cooldown=>"Навык перезаряжается",AbilityOutcome.Busy=>"Завершите текущее действие",AbilityOutcome.InvalidState=>"Сейчас нельзя применить навык",_=>"Навык сейчас недоступен" }; _pending = 0;
         _pendingToggleId=0;
         ClearPreview();
     }

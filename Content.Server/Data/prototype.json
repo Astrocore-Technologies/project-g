@@ -1,6 +1,6 @@
 {
-  "schemaVersion": 10,
-  "balanceVersion": 5,
+  "schemaVersion": 24,
+  "balanceVersion": 19,
   "unarmedWeaponId": "unarmed",
   "lifecycle": { "inCombatSeconds": 30, "disconnectBodySeconds": 60, "corpseSeconds": 60,
     "respawnSeconds": 60, "respawnHealthFraction": 0.5, "respawnManaFraction": 0.5, "respawnStaminaFraction": 1 },
@@ -35,10 +35,6 @@
     "requiredDamage": 100,
     "interactionRange": 2.5,
     "dummyResetSeconds": 5,
-    "recoveryPerSecond": 8,
-    "dashRange": 20,
-    "dashCost": 35,
-    "dashCooldown": 20,
     "basicDamageBonus": 0.1,
     "rhythmHits": 3,
     "rhythmWindow": 4,
@@ -87,12 +83,9 @@
     "interactionRange": 2.5
   },
   "defense": {
-    "maxStamina": 100,
-    "recoveryPerSecond": 15,
     "recoveryDelay": 1,
     "blockCost": 10,
     "parryCost": 10,
-    "dodgeCost": 20,
     "parryWindow": 0.25,
     "parryCooldown": 0.5,
     "blockMovementMultiplier": 0.5,
@@ -107,6 +100,10 @@
     "frontalAngleDegrees": 120
   },
   "balance": {
+    "baseStamina": 100,
+    "baseStaminaRecovery": 15,
+    "stamina": {"strength":0,"agility":0,"vitality":0,"intelligence":0,"dexterity":0,"luck":0,"wisdom":0},
+    "staminaRecovery": {"strength":0,"agility":0,"vitality":0,"intelligence":0,"dexterity":0,"luck":0,"wisdom":0},
     "baseBlockDamage": 0.3,
     "meleeAttack": {
       "strength": 1,
@@ -182,14 +179,42 @@
   "weapons": [
     {
       "id": "training_sword",
+      "twoHanded": false,
+      "basicVolume": { "arcDegrees": 90, "thickness": 0.3, "originHeight": 1 },
       "kind": "Melee",
       "isSword": true,
       "attack": 10,
       "attackIntervalSeconds": 1,
-      "range": 2
+      "range": 2,
+      "basicAttack": {
+        "preparation": { "fraction": 0.2, "cancel": "Voluntary, Skill, Block, Parry, Dodge" },
+        "active": { "fraction": 0.1, "canTurn": false, "cancel": "Parry, Dodge" },
+        "recovery": { "fraction": 0.7, "cancel": "Voluntary, Skill, Block, Parry, Dodge" }
+      }
+    },
+    {
+      "id": "npc_claw",
+      "twoHanded": false,
+      "basicVolume": { "arcDegrees": 90, "thickness": 0.3, "originHeight": 1 },
+      "kind": "Melee",
+      "attack": 10,
+      "attackIntervalSeconds": 1,
+      "range": 2,
+      "basicAttack": {
+        "preparation": { "fraction": 0.5, "movementMultiplier": 0, "canTurn": false },
+        "active": { "fraction": 0.1, "movementMultiplier": 0, "canTurn": false },
+        "recovery": { "fraction": 0.4 }
+      }
     },
     {
       "id": "training_bow",
+      "twoHanded": true,
+      "basicProjectile": {"speed":20,"radius":0.1,"originHeight":1,"damageFamily":"Physical"},
+      "basicAttack": {
+        "preparation": {"fraction":0.3,"cancel":"Voluntary, Skill, Block, Parry, Dodge"},
+        "active": {"fraction":0.1,"canTurn":false,"cancel":"Parry, Dodge"},
+        "recovery": {"fraction":0.6,"cancel":"Voluntary, Skill, Block, Parry, Dodge"}
+      },
       "kind": "Ranged",
       "attack": 10,
       "attackIntervalSeconds": 1.2,
@@ -197,6 +222,13 @@
     },
     {
       "id": "training_staff",
+      "twoHanded": true,
+      "basicProjectile": {"speed":12,"radius":0.2,"originHeight":1,"damageFamily":"Magical"},
+      "basicAttack": {
+        "preparation": {"fraction":0.4,"cancel":"Voluntary, Skill, Block, Parry, Dodge"},
+        "active": {"fraction":0.1,"canTurn":false,"cancel":"Parry, Dodge"},
+        "recovery": {"fraction":0.5,"cancel":"Voluntary, Skill, Block, Parry, Dodge"}
+      },
       "kind": "Magic",
       "attack": 10,
       "attackIntervalSeconds": 1.5,
@@ -204,18 +236,54 @@
     },
     {
       "id": "boss_claw",
+      "twoHanded": false,
+      "basicVolume": { "arcDegrees": 90, "thickness": 0.3, "originHeight": 1 },
       "kind": "Melee",
       "attack": 12,
       "attackIntervalSeconds": 1.5,
-      "range": 2.5
+      "range": 2.5,
+      "basicAttack": {
+        "preparation": { "fraction": 0.6, "movementMultiplier": 0, "canTurn": false },
+        "active": { "fraction": 0.1, "movementMultiplier": 0, "canTurn": false },
+        "recovery": { "fraction": 0.3 }
+      }
     },
     {
       "id": "unarmed",
+      "twoHanded": false,
+      "basicVolume": { "arcDegrees": 90, "thickness": 0.3, "originHeight": 1 },
       "kind": "Melee",
       "capabilities": "None",
       "attack": 0,
       "attackIntervalSeconds": 1,
-      "range": 1
+      "range": 1,
+      "basicAttack": {
+        "preparation": { "fraction": 0.2, "cancel": "Voluntary, Skill, Block, Parry, Dodge" },
+        "active": { "fraction": 0.1, "canTurn": false, "cancel": "Parry, Dodge" },
+        "recovery": { "fraction": 0.7, "cancel": "Voluntary, Skill, Block, Parry, Dodge" }
+      }
+    },
+    {
+      "id": "training_daggers",
+      "kind": "Melee", "twoHanded": false,
+      "attack": 10, "attackIntervalSeconds": 0.7, "range": 1.5,
+      "basicVolume": {"arcDegrees":90,"thickness":0.3,"originHeight":1},
+      "basicAttack": {
+        "preparation": {"fraction":0.2,"cancel":"Voluntary, Skill, Block, Parry, Dodge"},
+        "active": {"fraction":0.1,"canTurn":false,"cancel":"Parry, Dodge"},
+        "recovery": {"fraction":0.7,"cancel":"Voluntary, Skill, Block, Parry, Dodge"}
+      }
+    },
+    {
+      "id": "training_twohand",
+      "kind": "Melee", "twoHanded": true,
+      "attack": 20, "attackIntervalSeconds": 1.5, "range": 3,
+      "basicVolume": {"arcDegrees":120,"thickness":0.3,"originHeight":1},
+      "basicAttack": {
+        "preparation": {"fraction":0.4,"cancel":"Voluntary, Skill, Block, Parry, Dodge"},
+        "active": {"fraction":0.1,"canTurn":false,"cancel":"Parry, Dodge"},
+        "recovery": {"fraction":0.5,"cancel":"Voluntary, Skill, Block, Parry, Dodge"}
+      }
     }
   ],
   "abilities": [
@@ -223,6 +291,7 @@
       "id": "test_projectile",
       "networkId": 1,
       "kind": "Projectile",
+      "projectileLaunchHeight": 1,
       "power": 15,
       "manaCost": 5,
       "cooldownSeconds": 2,
@@ -245,6 +314,7 @@
       "id": "test_ground_area",
       "networkId": 2,
       "kind": "GroundArea",
+      "groundVolume": { "shape": "Cylinder", "height": 2, "requiresConnectedSurface": false },
       "power": 10,
       "manaCost": 10,
       "cooldownSeconds": 5,
@@ -272,15 +342,17 @@
       "cooldownSeconds": 3,
       "range": 3,
       "radius": 0.45,
-      "speed": 15,
+      "speed": 0,
+      "staminaCost": 20,
+      "dodge": { "durationSeconds": 0.2, "protectionSeconds": 0.15, "protectedThreats": "All" },
       "magicAttackScale": 0,
       "action": {
         "form": "Instant",
         "category": "Dodge",
         "active": {
           "seconds": 0,
-          "speed": "CastSpeed",
-          "movementMultiplier": 1,
+          "speed": "None",
+          "movementMultiplier": 0,
           "canTurn": false
         },
         "capabilities": "Movement"
@@ -290,6 +362,7 @@
       "id": "boss_ground_area",
       "networkId": 4,
       "kind": "GroundArea",
+      "groundVolume": { "shape": "Cylinder", "height": 2, "requiresConnectedSurface": false },
       "power": 12,
       "manaCost": 0,
       "cooldownSeconds": 3,
@@ -313,6 +386,7 @@
       "id": "discovery_bolt",
       "networkId": 5,
       "kind": "Projectile",
+      "projectileLaunchHeight": 1,
       "power": 17,
       "manaCost": 5,
       "cooldownSeconds": 2,
@@ -380,6 +454,7 @@
       },
       "networkId": 6,
       "kind": "Projectile",
+      "projectileLaunchHeight": 1,
       "power": 20,
       "manaCost": 5,
       "cooldownSeconds": 2,
@@ -457,6 +532,8 @@
       "staminaCost": 8,
       "melee": {
         "damageFactor": 1.2,
+        "firstTargetOnly": true,
+        "originHeight": 1,
         "rangeFactor": 1.3333333,
         "narrowThrust": true,
         "hitRecoverySeconds": 0.2,
@@ -539,6 +616,8 @@
       "melee": {
         "damageFactor": 1,
         "arcDegrees": 140,
+        "originHeight": 1,
+        "thickness": 0.3,
         "firstTargetOnly": false,
         "hitRecoverySeconds": 0.25,
         "missRecoverySeconds": 0.25
@@ -624,6 +703,9 @@
       "melee": {
         "damageFactor": 0.8,
         "hitRecoverySeconds": 0.25,
+        "arcDegrees": 70,
+        "originHeight": 1,
+        "thickness": 0.3,
         "missRecoverySeconds": 0.3,
         "firstTargetOnly": true
       },
@@ -699,6 +781,10 @@
       "melee": {
         "damageFactor": 1.7,
         "hitRecoverySeconds": 0.45,
+        "arcDegrees": 70,
+        "firstTargetOnly": true,
+        "originHeight": 1,
+        "thickness": 0.3,
         "missRecoverySeconds": 0.45
       },
       "action": {
@@ -772,6 +858,10 @@
       "staminaCost": 12,
       "melee": {
         "damageFactor": 0.4,
+        "arcDegrees": 70,
+        "firstTargetOnly": true,
+        "originHeight": 1,
+        "thickness": 0.3,
         "rangeFactor": 0.7,
         "hitRecoverySeconds": 0.15,
         "missRecoverySeconds": 0.25
@@ -781,7 +871,7 @@
           "operation": "Control",
           "trigger": "HealthDamage",
           "target": "HitTarget",
-          "control": { "kind": "Stun", "durationSeconds": 0.4 }
+          "control": { "kind": "Stun", "durationSeconds": 0.4, "removal": {"cleansable":true,"tags":[]} }
         }
       ],
       "action": {
@@ -855,6 +945,10 @@
       "staminaCost": 12,
       "melee": {
         "damageFactor": 0.7,
+        "arcDegrees": 70,
+        "firstTargetOnly": true,
+        "originHeight": 1,
+        "thickness": 0.3,
         "hitRecoverySeconds": 0.2,
         "missRecoverySeconds": 0.25
       },
@@ -863,7 +957,7 @@
           "operation": "Control",
           "trigger": "HealthDamage",
           "target": "HitTarget",
-          "control": { "kind": "Slow", "durationSeconds": 2, "strength": 0.25 }
+          "control": { "kind": "Slow", "durationSeconds": 2, "strength": 0.25, "removal": {"cleansable":true,"tags":[]} }
         }
       ],
       "action": {
@@ -938,6 +1032,8 @@
       "melee": {
         "damageFactor": 1.7,
         "requiresParry": true,
+        "firstTargetOnly": true,
+        "originHeight": 1,
         "hitRecoverySeconds": 0.25,
         "missRecoverySeconds": 0.4,
         "narrowThrust": true
@@ -1013,6 +1109,8 @@
       "staminaCost": 24,
       "melee": {
         "damageFactor": 0.9,
+        "originHeight": 1,
+        "thickness": 0.3,
         "arcDegrees": 360,
         "firstTargetOnly": false,
         "stationary": true,
@@ -1024,7 +1122,7 @@
           "operation": "Control",
           "trigger": "HealthDamage",
           "target": "HitTarget",
-          "control": { "kind": "Knockback", "distance": 1, "speed": 8, "origin": "Source" }
+          "control": { "kind": "Knockback", "distance": 1, "speed": 8, "origin": "Source", "removal": {"cleansable":true,"tags":[]} }
         }
       ],
       "action": {
@@ -1098,6 +1196,7 @@
       "staminaCost": 0,
       "melee": {
         "damageFactor": 0,
+        "firstTargetOnly": true,
         "stationary": true,
         "restoreStamina": 25,
         "hitRecoverySeconds": 0,
@@ -1190,6 +1289,10 @@
       "staminaCost": 22,
       "melee": {
         "damageFactor": 1.5,
+        "arcDegrees": 70,
+        "firstTargetOnly": true,
+        "originHeight": 1,
+        "thickness": 0.3,
         "executeThreshold": 0.3,
         "executeFactor": 2.3,
         "hitRecoverySeconds": 0.45,
@@ -1267,6 +1370,9 @@
       "melee": {
         "damageFactor": 0.8,
         "rangeFactor": 0.85,
+        "firstTargetOnly": true,
+        "originHeight": 1,
+        "thickness": 0.3,
         "arcDegrees": 50,
         "hitRecoverySeconds": 0.25,
         "missRecoverySeconds": 0.4,
@@ -1277,7 +1383,7 @@
           "operation": "Control",
           "trigger": "HealthDamage",
           "target": "HitTarget",
-          "control": { "kind": "Knockup", "durationSeconds": 0.7, "height": 1, "downSeconds": 0.6 }
+          "control": { "kind": "Knockup", "durationSeconds": 0.7, "height": 1, "downSeconds": 0.6, "removal": {"cleansable":true,"tags":[]} }
         }
       ],
       "action": {
@@ -1291,8 +1397,28 @@
         },
         "capabilities": "Weapon"
       }
+    },
+    {
+      "id":"mira_signature", "networkId":40, "kind":"GroundArea", "manualOnly":true,
+      "groundVolume":{"shape":"Cylinder","height":2,"requiresConnectedSurface":false},
+      "power":0, "magicAttackScale":1, "manaCost":10, "cooldownSeconds":8,
+      "range":6, "radius":2, "speed":0,
+      "action":{"form":"Instant","category":"Skill","capabilities":"Magical"}
     }
   ],
+  "echoes": [
+    {
+      "id":"test_guardian_echo", "name":"Мира", "profileId":"mira_combat", "signatureId":"mira_signature",
+      "speed":5.5, "followDistance":1.5, "teleportDistance":30, "unreachableSeconds":3, "arrivalRadius":2, "combatRadius":7
+    }
+  ],
+  "echoSummon": {
+    "manaCost":20,
+    "action":{"form":"Cast","category":"Companion","capabilities":"Magical","interruptible":true,
+      "preparation":{"seconds":10,"speed":"None","movementMultiplier":0,"canTurn":true,
+        "cancel":"Voluntary, Skill, Block, Parry, Dodge"}}
+  },
+  "echoRecovery":{"sealItemId":"echo_restoration_seal","quantity":1},
   "items": [
     {
       "id": "test_sword_item",
@@ -1349,11 +1475,27 @@
       "weaponId": "training_sword",
       "bound": true,
       "modifiers": {}
+    },
+    {
+      "id":"training_daggers_item", "name":"Учебные кинжалы", "slot":"Weapon", "weaponId":"training_daggers"
+    },
+    {
+      "id":"training_twohand_item", "name":"Учебное двуручное", "slot":"Weapon", "weaponId":"training_twohand"
+    },
+    {
+      "id":"training_shield", "name":"Учебный щит", "slot":"Offhand", "modifiers":{"blockDamage":0.2}
+    },
+    {
+      "id":"echo_restoration_seal", "name":"Печать восстановления", "slot":"None", "useKind":"EchoRestoration"
     }
   ],
   "creatures": [
     {
       "id": "test_adventurer",
+      "avoidance": { "radius": 0.4, "lateralFraction": 0.35, "horizonSeconds": 0.1 },
+      "modifiers": {"maxStamina":0,"staminaRecovery":0},
+      "threat": { "damagePerHp": 1, "healingPerHp": 0.5 },
+      "hurtbox": { "shape": "Capsule", "height": 2, "radius": 0.4 },
       "stats": {
         "strength": 10,
         "agility": 10,
@@ -1380,6 +1522,10 @@
     },
     {
       "id": "test_creature",
+      "avoidance": { "radius": 0.4, "lateralFraction": 0.35, "horizonSeconds": 0.1 },
+      "modifiers": {"maxStamina":0,"staminaRecovery":0},
+      "threat": { "damagePerHp": 1, "healingPerHp": 0.5 },
+      "hurtbox": { "shape": "Capsule", "height": 2, "radius": 0.4 },
       "stats": {
         "strength": 5,
         "agility": 5,
@@ -1393,11 +1539,15 @@
       "baseMana": 20,
       "baseHealthRecovery": 0,
       "baseManaRecovery": 0,
-      "weaponId": "training_sword",
+      "weaponId": "npc_claw",
       "abilityIds": []
     },
     {
       "id": "test_boss",
+      "avoidance": { "radius": 0.7, "lateralFraction": 0.35, "horizonSeconds": 0.1 },
+      "modifiers": {"maxStamina":0,"staminaRecovery":0},
+      "threat": { "damagePerHp": 1, "healingPerHp": 0.5 },
+      "hurtbox": { "shape": "Capsule", "height": 2, "radius": 0.7 },
       "stats": {
         "strength": 8,
         "agility": 0,
@@ -1418,6 +1568,10 @@
     },
     {
       "id": "arena_dummy",
+      "avoidance": { "radius": 0.4, "lateralFraction": 0, "horizonSeconds": 0.1 },
+      "modifiers": {"maxStamina":0,"staminaRecovery":0},
+      "threat": { "damagePerHp": 1, "healingPerHp": 0.5 },
+      "hurtbox": { "shape": "Capsule", "height": 2, "radius": 0.4 },
       "stats": {
         "strength": 0,
         "agility": 0,
@@ -1435,6 +1589,14 @@
       "abilityIds": [],
       "canBleed": false,
       "canBeStunned": false
+    },
+    {
+      "id":"mira_combat",
+      "threat":{"damagePerHp":1,"healingPerHp":0.5},
+      "hurtbox":{"shape":"Capsule","height":2,"radius":0.4},
+      "stats":{"strength":10,"agility":10,"vitality":10,"intelligence":10,"dexterity":10,"luck":10,"wisdom":10},
+      "baseHealth":100, "baseMana":60, "baseHealthRecovery":1, "baseManaRecovery":1,
+      "weaponId":"training_sword", "abilityIds":["mira_signature"]
     }
   ],
   "progression": {
@@ -1459,6 +1621,8 @@
     {
       "id": 2,
       "name": "Мечник",
+      "dodge": { "range": 3, "durationSeconds": 0.2, "staminaCost": 20, "cooldownSeconds": 3,
+        "protectionSeconds": 0.15, "protectedThreats": "All" },
       "requiresTrainer": true,
       "skillId": "sword_thrust",
       "additionalSkills": [

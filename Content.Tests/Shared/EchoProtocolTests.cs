@@ -21,7 +21,7 @@ public sealed class EchoProtocolTests
         var spawn = new EchoSpawn(new(2), new(1), 1, 12, new(3, 4), "Мира");
         Check(NetworkProtocol.Write(spawn).CopyData(), reader => NetworkProtocol.TryReadEchoSpawn(reader, out _));
         Assert.True(NetworkProtocol.TryReadEchoSpawn(Body(NetworkProtocol.Write(spawn).CopyData()), out var parsed)); Assert.Equal(spawn, parsed);
-        var command = new EchoSignatureCommand(1, 10, 1, new(3, 4));
+        var command = new EchoSignatureCommand(1, 10, 1, new(3, 4),EntityId:new(55));
         Check(NetworkProtocol.Write(command).CopyData(), reader => NetworkProtocol.TryReadEchoSignatureCommand(reader, out _));
         Assert.True(NetworkProtocol.TryReadEchoSignatureCommand(Body(NetworkProtocol.Write(command).CopyData()), out var parsedCommand)); Assert.Equal(command, parsedCommand);
         var result = new EchoSignatureResult(1, 12, 1, EchoCommandOutcome.Accepted, 8);
@@ -41,11 +41,20 @@ public sealed class EchoProtocolTests
         Assert.Throws<ArgumentException>(() => NetworkProtocol.Write(new EchoSignatureCommand(1, 0, 4, default)));
         Assert.Throws<ArgumentException>(() => NetworkProtocol.Write(new EchoSignatureCommand(1, 0, 1, new(float.NaN, 0))));
         Assert.Throws<ArgumentException>(() => NetworkProtocol.Write(new EchoLoadout(new(1), 0, [new(1, new(2), 6, 2, 0), new(1, new(3), 6, 2, 0)])));
-        var command = NetworkProtocol.Write(new EchoSignatureCommand(1, 0, 1, default)).CopyData(); command[10] = 4;
+        var command = NetworkProtocol.Write(new EchoSignatureCommand(1, 0, 1, default,EntityId:new(55))).CopyData(); command[10] = 4;
         Assert.False(NetworkProtocol.TryReadEchoSignatureCommand(Body(command), out _));
         var result = NetworkProtocol.Write(new EchoSignatureResult(1, 0, 1, EchoCommandOutcome.Accepted, 0)).CopyData(); result[11] = 255;
         Assert.False(NetworkProtocol.TryReadEchoSignatureResult(Body(result), out _));
         var action = NetworkProtocol.Write(new EchoAction(new(1), 0, EchoActionKind.Signature, default, default, 2, 0, 0)).CopyData(); action[14] = 255;
         Assert.False(NetworkProtocol.TryReadEchoAction(Body(action), out _));
+    }
+    [Fact]public void SignatureRefusalAndPrivateResultRoundTripAndRejectInvalidBooleans()
+    {
+        var loadout=new EchoLoadout(new(1),9,[new(1,new(2),6,2,0,true)]);var bytes=NetworkProtocol.Write(loadout).CopyData();
+        Check(bytes,reader=>NetworkProtocol.TryReadEchoLoadout(reader,out _));
+        Assert.True(NetworkProtocol.TryReadEchoLoadout(Body(bytes),out var read));Assert.Equal(loadout.Slots,read.Slots);
+        bytes[^1]=2;Assert.False(NetworkProtocol.TryReadEchoLoadout(Body(bytes),out _));
+        var result=new EchoSignatureResult(4,9,1,EchoCommandOutcome.Refused,0);bytes=NetworkProtocol.Write(result).CopyData();
+        Assert.True(NetworkProtocol.TryReadEchoSignatureResult(Body(bytes),out var parsed));Assert.Equal(result,parsed);
     }
 }

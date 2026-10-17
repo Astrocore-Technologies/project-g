@@ -29,6 +29,9 @@ public sealed partial class CombatSimulation
     private void InterruptControl(NetworkEntityId id,bool stopMotion=true)
     {
         StopContinuousBasic(id);
+        StopBasic(id,ActionStopReason.EnemyInterrupt);
+        StopSummon(id,ActionStopReason.EnemyInterrupt);
+        Inputs.Invalidate(id);
         InterruptRequested?.Invoke(id); if(stopMotion) StopForControl?.Invoke(id);
         _landingRecover.Remove(id);
         if (_defense.TryGetValue(id, out var defense))
@@ -36,11 +39,14 @@ public sealed partial class CombatSimulation
     }
 
     internal bool Knockup(NetworkEntityId id, double seconds, float height, double downSeconds,
-        NetworkEntityId source=default,ushort definition=0,ulong execution=0,ReleasedSourceSnapshot? releasedSource=null)
+        NetworkEntityId source=default,ushort definition=0,ulong execution=0,ReleasedSourceSnapshot? releasedSource=null,
+        Content.Server.Data.ControlRemovalDefinition? removal=null)
     {
         var actor = _actors[id];
         // A second launch cannot restart a flight; a recovery roll still permits opposing control.
-        if (actor.Control is not (CombatControlPhase.None or CombatControlPhase.Recovering) || !actor.CanBeStunned || actor.Health<=0) return false;
+        if (actor.Control is not (CombatControlPhase.None or CombatControlPhase.Recovering) || actor.Health<=0) return false;
+        if(!ControlResistanceAllows(actor,source,definition,ref execution,CrowdControlKind.Knockup,releasedSource,out var resistance,
+            !actor.CanBeStunned))return false;
         var clippedHeight=height;
         if (_navigation.Visibility is { } visibility)
         {
@@ -50,10 +56,9 @@ public sealed partial class CombatSimulation
             clippedHeight*=lo;
         }
         if (clippedHeight <= .001f) return false;
-        var resistance=actor.ControlResistance.Factor(CrowdControlKind.Knockup);
-        if(resistance<=0) return false;
         var exposure=actor.Controls.Apply(new(releasedSource?.Identity ?? SourceIdentity(source),definition,CrowdControlKind.Knockup),execution==0 ? AllocateExecution() : execution,
-            (seconds+downSeconds)*resistance,1,_time);
+            (seconds+downSeconds)*resistance,1,_time,contributionCredit:ContributionIdentity(releasedSource?.Identity ?? SourceIdentity(source),releasedSource?.ContributionCredit),
+            mitigation:resistance<1 ? ControlMitigation.Resistance : ControlMitigation.None,removal:removal);
         if(!exposure.Accepted) return false;
         RecordJournal(source,id,CombatJournalKind.Control,duration:exposure.Duration,strength:1,skill:definition,control:CrowdControlKind.Knockup);
         var factor=exposure.Duration/(seconds+downSeconds);
@@ -64,41 +69,51 @@ public sealed partial class CombatSimulation
         actor.KnockdownSeconds = downSeconds * factor;
         // Clip the trajectory beneath a ceiling using the same server collision contract as attacks.
         actor.FlightHeight = clippedHeight;
-        ReportHostileContact(source,id);
+        ReportHostileContact(source,id,releasedSource?.Kind==CombatEntityKind.Echo?releasedSource.ContributionCredit:null);
         return true;
     }
 
     internal bool Knockback(NetworkEntityId id, Vector2 direction, float distance, float speed,
-        NetworkEntityId source=default,ushort definition=0,ulong execution=0,ReleasedSourceSnapshot? releasedSource=null)
-        => Displace(id,direction,distance,speed,CrowdControlKind.Knockback,source,definition,execution,releasedSource);
+        NetworkEntityId source=default,ushort definition=0,ulong execution=0,ReleasedSourceSnapshot? releasedSource=null,
+        Content.Server.Data.ControlRemovalDefinition? removal=null)
+        => Displace(id,direction,distance,speed,CrowdControlKind.Knockback,source,definition,execution,releasedSource,removal);
 
     internal bool Pull(NetworkEntityId id,Vector2 origin,float distance,float speed,NetworkEntityId source=default,ushort definition=0,ulong execution=0,
-        ReleasedSourceSnapshot? releasedSource=null)
+        ReleasedSourceSnapshot? releasedSource=null,Content.Server.Data.ControlRemovalDefinition? removal=null)
     {
         var offset=origin-_actors[id].Position; var length=offset.Length();
-        return length>.0001f && Displace(id,offset/length,MathF.Min(distance,length),speed,CrowdControlKind.Pull,source,definition,execution,releasedSource);
+        return length>.0001f && Displace(id,offset/length,MathF.Min(distance,length),speed,CrowdControlKind.Pull,source,definition,execution,releasedSource,removal);
     }
 
     private bool Displace(NetworkEntityId id,Vector2 direction,float distance,float speed,CrowdControlKind kind,
-        NetworkEntityId source,ushort definition,ulong execution,ReleasedSourceSnapshot? releasedSource=null)
+        NetworkEntityId source,ushort definition,ulong execution,ReleasedSourceSnapshot? releasedSource=null,
+        Content.Server.Data.ControlRemovalDefinition? removal=null)
     {
         var actor = _actors[id];
-        if (actor.Control is not (CombatControlPhase.None or CombatControlPhase.Recovering) || !actor.CanBeStunned || actor.Health <= 0 ||
+        if (actor.Control is not (CombatControlPhase.None or CombatControlPhase.Recovering) || actor.Health <= 0 ||
             !SurfaceDash.TryDestination(_navigation, actor.Foot, direction, distance, out var destination, out _)) return false;
-        var resistance=actor.ControlResistance.Factor(kind);
+        if(!ControlResistanceAllows(actor,source,definition,ref execution,kind,releasedSource,out var resistance,!actor.CanBeStunned))return false;
         var baseDuration=Vector2.Distance(actor.Position,destination)/speed*resistance;
         if(resistance<=0 || baseDuration<=0) return false;
         var quote=actor.Controls.Ledger.QuoteDuration(ControlCategory.Movement,baseDuration,_time);
-        if(!quote.Accepted || !SurfaceDash.TryDestination(_navigation,actor.Foot,direction,(float)quote.Duration*speed,out destination,out _)) return false;
+        if(!quote.Accepted)
+        {
+            actor.Controls.ReportRejected(new(releasedSource?.Identity ?? SourceIdentity(source),definition,kind),execution,
+                ControlMitigation.AdaptiveResistance,_time);
+            return false;
+        }
+        if(!SurfaceDash.TryDestination(_navigation,actor.Foot,direction,(float)quote.Duration*speed,out destination,out _))return false;
         if (StartControlDash?.Invoke(id, destination, speed) != true) return false;
         // Motion is already validated and accepted; interruption must not reset that newly created dash.
         InterruptControl(id,stopMotion:false);
-        var exposure=actor.Controls.Apply(new(releasedSource?.Identity ?? SourceIdentity(source),definition,kind),execution==0 ? AllocateExecution() : execution,baseDuration,1,_time);
+        var exposure=actor.Controls.Apply(new(releasedSource?.Identity ?? SourceIdentity(source),definition,kind),execution==0 ? AllocateExecution() : execution,baseDuration,1,_time,
+            contributionCredit:ContributionIdentity(releasedSource?.Identity ?? SourceIdentity(source),releasedSource?.ContributionCredit),
+            mitigation:resistance<1 ? ControlMitigation.Resistance : ControlMitigation.None,removal:removal);
         _controlled.Add(id); _defenseDirty.Add(id);
         actor.Control = CombatControlPhase.Displaced;
         actor.ControlUntil = _time + exposure.Duration;
         RecordJournal(source,id,CombatJournalKind.Control,duration:exposure.Duration,strength:1,skill:definition,control:kind);
-        ReportHostileContact(source,id);
+        ReportHostileContact(source,id,releasedSource?.Kind==CombatEntityKind.Echo?releasedSource.ContributionCredit:null);
         return true;
     }
 

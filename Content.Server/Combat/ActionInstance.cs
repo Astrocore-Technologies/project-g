@@ -36,6 +36,7 @@ internal sealed class ActionInstance
     internal bool Finished=>Phase==CombatActionPhase.Finished;
     internal float MovementMultiplier=>Finished ? 1 : PhaseDefinition.MovementMultiplier;
     internal bool CanTurn=>Finished || PhaseDefinition.CanTurn;
+    internal ActionCancelPermission AllowedCancels=>Finished ? ActionCancelPermission.None : PhaseDefinition.Cancel;
     private ActionPhaseDefinition PhaseDefinition=>Phase switch
     {
         CombatActionPhase.Preparation or CombatActionPhase.Activation=>Definition.Preparation,

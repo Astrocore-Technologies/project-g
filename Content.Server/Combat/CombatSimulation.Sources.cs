@@ -15,10 +15,13 @@ public sealed partial class CombatSimulation
     {
         if (!source.IsValid || source.Id == Guid.Empty) throw new ArgumentException("An actor requires a persistent source identity.");
         var actor = _actors[id];
+        if(_companionsByOwner.ContainsKey(id) && source.Kind!=CombatSourceKind.Character)
+            throw new ArgumentException("A companion owner must keep a character identity.");
         if (_sourceActors.TryGetValue(source, out var previous) && previous != id)
             throw new InvalidOperationException("Two actors cannot own the same effect source identity.");
         _sourceActors.Remove(actor.SourceIdentity);
         actor.SourceIdentity = source;
         _sourceActors[source] = id;
+        RefreshCompanionOwner(id,source);
     }
 }

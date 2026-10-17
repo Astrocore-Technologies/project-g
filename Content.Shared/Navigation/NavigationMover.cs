@@ -13,6 +13,16 @@ public sealed class NavigationMover
     private List<Vector2> _candidate = new();
     private int _waypoint;
     private readonly SurfaceMover? _surface;
+    private Vector2 _avoidance;
+    private readonly List<Vector3> _avoidanceCrossings=new();
+    private float _avoidanceHorizon=.25f;
+    public void SetAvoidance(Vector2 lateral,float horizonDistance=.25f)
+    {
+        if(!float.IsFinite(lateral.X)||!float.IsFinite(lateral.Y)||!float.IsFinite(horizonDistance)||horizonDistance<=0)
+            throw new ArgumentException("Invalid navigation steering.");
+        _avoidance=lateral;_avoidanceHorizon=horizonDistance;
+        if(_surface is not null){_surface.Avoidance=lateral;_surface.AvoidanceHorizon=horizonDistance;}
+    }
     public float Height => _surface?.Position.Y ?? 0;
     public float TargetHeight => _surface?.Target.Y ?? 0;
     public float DashHeight => _surface?.DashDestination.Y ?? 0;
@@ -24,6 +34,18 @@ public sealed class NavigationMover
     public Vector2 DashDestination { get; private set; }
     public float DashSpeed { get; private set; }
     public float WalkSpeed=>_settings.Speed;
+
+    public NavigationMotionSegment CurrentSegment(float movementMultiplier=1)
+    {
+        if(!float.IsFinite(movementMultiplier) || movementMultiplier<0)throw new ArgumentOutOfRangeException(nameof(movementMultiplier));
+        if(_surface is not null)return _surface.CurrentSegment(movementMultiplier);
+        if(IsDashing)return NavigationMotionSegment.Toward(Foot,new(DashDestination.X,0,DashDestination.Y),DashSpeed);
+        for(var i=_waypoint;i<_route.Count;i++)
+            if(_route[i]!=Position)
+                return NavigationSteering.Segment(_grid,Foot,new(_route[i].X,0,_route[i].Y),_settings.Speed*movementMultiplier,
+                    _avoidance,_avoidanceHorizon,_avoidanceCrossings);
+        return NavigationMotionSegment.Stationary;
+    }
 
     public NavigationMover(NavigationGrid grid, MovementSettings settings,
         NavigationPathfinder pathfinder, Vector2 spawn, float height = 0)
@@ -120,7 +142,11 @@ public sealed class NavigationMover
         {
             var offset = _route[_waypoint] - Position;
             var distance = offset.Length();
-            var next = distance <= budget ? _route[_waypoint] : Position + offset / distance * budget;
+            if(distance<.0001f){Position=_route[_waypoint];_waypoint++;continue;}
+            var segment=CurrentSegment();
+            var travelled=(float)Math.Min(budget,_settings.Speed*segment.Seconds);
+            var next=Position+new Vector2(segment.Velocity.X,segment.Velocity.Z)* (travelled/_settings.Speed);
+            if(_avoidance==Vector2.Zero && distance<=budget)next=_route[_waypoint];
             if (!_grid.CanTraverse(Position, next))
             {
                 // Defensive stop: route data never authorizes crossing solid geometry.
@@ -129,6 +155,13 @@ public sealed class NavigationMover
                 return;
             }
             Position = next;
+            if (_avoidance!=Vector2.Zero)
+            {
+                budget-=travelled;
+                if(Vector2.DistanceSquared(Position,_route[_waypoint])<.00000001f)_waypoint++;
+                if(travelled<=0)return;
+                continue;
+            }
             if (distance > budget)
                 return;
             budget -= distance;

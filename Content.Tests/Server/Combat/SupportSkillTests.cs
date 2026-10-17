@@ -116,7 +116,7 @@ public sealed class SupportSkillTests
             case "effectAndPower":payload["effectId"]="sword_bleed";break;
             case "damageInSupport":skill["power"]=1;break;
             case "zeroPower":payload["power"]!["flat"]=0;break;
-            case "unsupportedSupportShape":skill["kind"]="Projectile";break;
+            case "unsupportedSupportShape":skill["kind"]="Projectile";skill.AsObject().Remove("groundVolume");skill["projectileLaunchHeight"]=1;break;
             case "resurrectSelf":payload["operation"]="Resurrect";payload["target"]="Self";break;
         }
         var error=Assert.Throws<InvalidDataException>(()=>Parse(data));Assert.Contains("content",error.Message,StringComparison.OrdinalIgnoreCase);

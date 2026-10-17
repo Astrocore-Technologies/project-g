@@ -59,7 +59,7 @@ public sealed class HealthRecoveryTests
     }
 
     [Fact]
-    public void MaximumDeadOfflineAndNonPlayersNeverReceiveExtraHealth()
+    public void MaximumDeadAndOfflineNeverReceiveExtraHealthWhileInjuredCreaturesRecover()
     {
         var world = World(); var initial = world.CreateInitialCharacter();
         var full = world.AddPlayer(1, new(1));
@@ -76,8 +76,10 @@ public sealed class HealthRecoveryTests
         Assert.Equal(0, world.Combat.Get(dead.EntityId).Health);
         Assert.Equal(10, offlineHealth);
         Assert.False(world.Combat.TryGet(offline.EntityId, out _));
-        Assert.Equal(dummyHealth, world.Combat.Get(world.TrainingTargetId).Health);
-        Assert.Empty(world.Combat.HealthRecovered);
+        Assert.Equal(Math.Min(world.Combat.Get(world.TrainingTargetId).Stats.MaxHealth,
+            dummyHealth+5*world.Combat.Get(world.TrainingTargetId).Stats.HealthRecovery),world.Combat.Get(world.TrainingTargetId).Health,6);
+        Assert.DoesNotContain(full.EntityId,world.Combat.HealthRecovered);
+        Assert.DoesNotContain(dead.EntityId,world.Combat.HealthRecovered);
         Assert.Empty(world.PersistenceDirty);
     }
 

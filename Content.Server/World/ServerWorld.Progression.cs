@@ -111,8 +111,8 @@ public sealed partial class ServerWorld
         // Combat events are created exactly once by the authoritative simulation; no client reward RPC.
         foreach (var action in Combat!.Events) if (action.Damage > 0 && IsPlayer(action.AttackerId) && !IsPlayer(action.TargetId) && !_arenaDummies.Contains(action.TargetId)) GrantExperience(action.AttackerId,1);
         // Periodic ticks are not separate actions and must not multiply experience with server tick rate.
-        for (var i = Abilities!.DirectHitsStart; i < Abilities.Hits.Count; i++)
-        { var hit = Abilities.Hits[i]; if (hit.Damage > 0 && IsPlayer(hit.ActorId) && !IsPlayer(hit.TargetId) && !_arenaDummies.Contains(hit.TargetId)) GrantExperience(hit.ActorId,1); }
+        foreach(var hit in Abilities!.DirectHits)
+            if (hit.Damage > 0 && IsPlayer(hit.ActorId) && !IsPlayer(hit.TargetId) && !_arenaDummies.Contains(hit.TargetId)) GrantExperience(hit.ActorId,1);
         foreach (var use in Abilities.Practice)
         {
             RecordProfessionUse(use.ActorId);
@@ -201,6 +201,6 @@ public sealed partial class ServerWorld
         catch (ArgumentException) { return ProgressionOutcome.InvalidState; }
     }
     private static double[] DisplayStats(DerivedStats s) => [s.MeleeAttack,s.RangedAttack,s.MagicAttack,s.MeleeWeaponMultiplier,s.RangedWeaponMultiplier,
-        s.PhysicalDefense,s.MagicDefense,s.MaxHealth,s.MaxMana,s.HealthRecovery,s.ManaRecovery,s.HealthItemMultiplier,s.ManaItemMultiplier,
-        s.AttackSpeedMultiplier,s.CastSpeedMultiplier,s.CriticalChance,s.BlockDamage,s.Accuracy,s.Evasion,s.CriticalDamage,s.BlockStrength,Math.Clamp(s.CooldownReduction,0,1)];
+        s.PhysicalDefense,s.MagicDefense,s.MaxHealth,Math.Max(0,s.MaxMana),s.HealthRecovery,s.ManaRecovery,s.HealthItemMultiplier,s.ManaItemMultiplier,
+        s.AttackSpeedMultiplier,s.CastSpeedMultiplier,s.CriticalChance,s.BlockDamage,s.Accuracy,s.Evasion,s.CriticalDamage,s.BlockStrength,Math.Clamp(s.CooldownReduction,0,1),Math.Max(0,s.MaxStamina),s.StaminaRecovery];
 }

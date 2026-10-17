@@ -23,6 +23,18 @@ public partial class Main
         void Search(string query) { _search.Text = query; _search.EmitSignal(LineEdit.SignalName.TextChanged, query); }
         var original = _document.Text;
         foreach (var page in _pages) { Navigate(page.Key); if (!_catalogValid) throw new Exception("Invalid page: " + page.Key); }
+        Navigate("echo/test_guardian_echo");
+        var echoStars=_tabs.FindChildren("EchoStars","OptionButton",true,false).OfType<OptionButton>().Single();
+        var echoReaction=_tabs.FindChildren("EchoRefusalReaction","OptionButton",true,false).OfType<OptionButton>().Single();
+        var echoApply=_tabs.FindChildren("EchoRefusalApply","Button",true,false).OfType<Button>().Single();
+        echoStars.Select(5);echoStars.EmitSignal(OptionButton.SignalName.ItemSelected,5);
+        if(!echoApply.Disabled||echoReaction.Disabled)throw new Exception("Five-star refusal silently chose a reaction.");
+        echoReaction.Select(2);echoReaction.EmitSignal(OptionButton.SignalName.ItemSelected,2);echoApply.EmitSignal(Godot.Button.SignalName.Pressed);
+        if(_document.Catalog.Echoes["test_guardian_echo"].RefusalDuringAction!=Content.Server.Data.EchoRefusalActionReaction.InterruptAsEnemy)
+            throw new Exception("Per-Echo refusal reaction was not authored.");
+        if(!PageChanged(_page)||PageForPath(_page.RootPath+"/refusalDuringAction")?.Key!=_page.Key)
+            throw new Exception("Echo refusal edit was absent from changed pages or its authoring owner.");
+        Undo();if(_document.Text!=original)throw new Exception("Echo refusal was not one reversible edit.");
         Navigate("creatures/test_boss");
         _tabs.CurrentTab = Enumerable.Range(0, _tabs.GetTabCount()).Single(i => _tabs.GetTabTitle(i) == "Навыки");
         _tabs.FindChildren("*", "Button", true, false).OfType<Button>().Single(b => b.Text == "Область босса").EmitSignal(Godot.Button.SignalName.Pressed);
@@ -72,7 +84,7 @@ public partial class Main
         if (_tabs.GetTabTitle(_tabs.CurrentTab) != "Прокачка") throw new Exception("Table edit lost the selected tab.");
         Undo();
         Search("кровотечение");
-        if (!_treePages.ContainsKey("ability/sword_rend")) throw new Exception("Parameter search failed.");
+        if (!_treePages.ContainsKey("effect/sword_rend_bleed")) throw new Exception("Common Bleed effect search failed.");
         Search("");
         _workspace.Favorites.Add("professions/2/passives"); _favoritesOnly.ButtonPressed = true;
         if (_treePages.Count != 1) throw new Exception("Favorites failed.");

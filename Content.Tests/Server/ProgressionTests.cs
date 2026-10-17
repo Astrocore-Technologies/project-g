@@ -21,8 +21,9 @@ public sealed class ProgressionTests
         for (var i=0;i<40;i++) { Step(w); hits += w.Abilities!.Hits.Count; }
         Assert.Equal(2,hits); Assert.Equal(1,Skill(w,p,2).Practice); Assert.Equal(2,w.ProgressionState(p.EntityId,w.Tick).Experience);
         w.TryQueueAbility(42,new(2,0,3,Vector2.UnitX),0); Step(w);
+        Step(w,3); // The damage window ends before the Dodge action: death still cancels completion practice.
         w.Combat!.Move(w.Npc!.Id,p.Position - Vector2.UnitY * 0.5f);
-        Assert.True(w.Combat.ExecuteNpcAttack(w.Npc.Id,1,Vector2.UnitY,w.Tick));
+        w.Combat.ResolveDirectHit(w.Npc.Id,p.EntityId,Vector2.UnitY,10000,magic:false);
         Assert.Equal(0,w.Combat.Get(p.EntityId).Health); Step(w,12);
         Assert.Equal(0,Skill(w,p,3).Practice);
         w.TryQueueProgression(42,new(1,ProgressionAction.AssignSlot,0,1,8)); Step(w);

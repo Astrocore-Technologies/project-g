@@ -22,15 +22,19 @@ internal struct AbilityEffect
     public readonly Vector3 Foot => new(Position.X, Height, Position.Y);
     public float Remaining;
     public float DistanceLeft;
-    public float CompensationSeconds;
+    public double ProjectileStartedAt,ProjectileOffset,ProjectileEndsAt;
     public double FocusFactor;
     public double RecoveryEndsAt;
+    public double VisualEndsAt;
     public DirectHitSnapshot? HitSnapshot;
     public ReleasedSourceSnapshot? ReleasedSource;
     public ChannelTimeline? Channel;
     public ulong WeaponExecution;
     public double ChargeStartedAt,ChargeSeconds,ChargePower;
+    public double ChannelSkillPower;
+    public bool Combo;
+    public double FatalHealthPrice;
 
     public readonly AbilityEffectState State(uint tick) => new(Id, ActorId, Sequence, tick, Profile.Id, Profile.Form,
-        Phase, Origin, Position, Direction, Profile.Form == AbilityForm.Melee ? Profile.Range : Profile.Radius, Profile.Speed, Math.Max(0, Remaining), OriginHeight, Height, DirectionY, Profile.Area);
+        Phase, Origin, Position, Direction, Profile.Form == AbilityForm.Melee ? Profile.Range : Profile.Radius, Profile.Speed, Math.Max(0, Remaining), OriginHeight, Height, DirectionY, Profile.Area,Profile.MeleeThickness,Profile.GroundVolumeHeight);
 }

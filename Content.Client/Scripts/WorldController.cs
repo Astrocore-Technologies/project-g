@@ -58,6 +58,7 @@ public partial class WorldController : Node3D
         _network.NavigationReceived += OnNavigationReceived;
         _network.CombatStateReceived += OnCombatState;
         _network.AttackReceived += OnAttack;
+        _network.BasicActionReceived += OnBasicAction;
         _network.AvatarReceived += OnAvatar; // NC: public visual state for all visible players.
         _network.PvpPublicReceived+=OnPvpPublic;
         _network.AttackResultReceived += OnAttackResult;
@@ -66,6 +67,8 @@ public partial class WorldController : Node3D
         _network.AbilityEffectReceived += OnAbilityEffect;
         _network.AbilityHitReceived += OnAbilityHit;
         _network.CombatFeedbackReceived+=OnCombatFeedback;
+        _network.ControlFeedbackReceived+=OnControlFeedback;
+        _network.ControlStateReceived+=OnControlState;
         _network.NpcWindupReceived += OnNpcWindup;
         _network.NpcAreaReceived += OnNpcArea;
         _network.InventoryReceived += OnInventory;
@@ -99,6 +102,7 @@ public partial class WorldController : Node3D
         _network.NavigationReceived -= OnNavigationReceived;
         _network.CombatStateReceived -= OnCombatState;
         _network.AttackReceived -= OnAttack;
+        _network.BasicActionReceived -= OnBasicAction;
         _network.AvatarReceived -= OnAvatar;
         _network.PvpPublicReceived-=OnPvpPublic;
         _network.AttackResultReceived -= OnAttackResult;
@@ -107,6 +111,8 @@ public partial class WorldController : Node3D
         _network.AbilityEffectReceived -= OnAbilityEffect;
         _network.AbilityHitReceived -= OnAbilityHit;
         _network.CombatFeedbackReceived-=OnCombatFeedback;
+        _network.ControlFeedbackReceived-=OnControlFeedback;
+        _network.ControlStateReceived-=OnControlState;
         _network.NpcWindupReceived -= OnNpcWindup;
         _network.NpcAreaReceived -= OnNpcArea;
         _network.InventoryReceived -= OnInventory;
@@ -172,6 +178,7 @@ public partial class WorldController : Node3D
             // NC: preview the same modular appearance used by the world avatar.
             _progression.SetPreviewVisual(player.AppearanceScene);
             _hud = new(); AddChild(_hud); _hud.Initialize(_localEntityId,()=>_progression?.Toggle());
+            if(_network.LatestControlState is {} controls)_hud.Apply(controls);
             _lifePresentation=new();AddChild(_lifePresentation);_lifePresentation.Initialize(_network,_localEntityId);
             _combatJournal=new();AddChild(_combatJournal);_combatJournal.Initialize(_network,_localEntityId);
             _quests=new(); AddChild(_quests); _quests.Initialize(_network,player);
@@ -206,7 +213,7 @@ public partial class WorldController : Node3D
         _echoControls?.Remove(despawn.EntityId);
         _combat.Remove(despawn.EntityId);
         _pvpLabels.Remove(despawn.EntityId);
-        if (_echoes.Remove(despawn.EntityId, out var echo)) echo.QueueFree();
+        if (_echoes.Remove(despawn.EntityId, out var echo) && !_targets.ContainsKey(despawn.EntityId)) echo.QueueFree();
         if (_players.Remove(despawn.EntityId, out var player))
             player.QueueFree();
         if (_targets.Remove(despawn.EntityId, out var target))
@@ -227,6 +234,11 @@ public partial class WorldController : Node3D
             if (!_players.TryGetValue(state.EntityId, out var player))
                 return;
             actor = player;
+        }
+        else if(state.Kind==CombatEntityKind.Echo)
+        {
+            if(!_echoes.TryGetValue(state.EntityId,out var echo))return;
+            echo.BindCombat(state,_network.Navigation!);actor=echo;_targets.Add(state.EntityId,echo);
         }
         else
         {
@@ -276,14 +288,22 @@ public partial class WorldController : Node3D
             actor.Confirm(action);
         if(_targets.TryGetValue(action.AttackerId,out var attacking) && attacking is NpcPresentation animatedNpc)
             animatedNpc.Animation.Confirm(action);
+        else if(_echoes.TryGetValue(action.AttackerId,out var animatedEcho))animatedEcho.Animation.Confirm(action);
         if (action.TargetId.IsValid && _combat.TryGetValue(action.TargetId, out var target))
             target.ApplyDamage(action);
         RefreshAlive(action.TargetId);
-        if(action.Damage > 0 || action.Guard != GuardImpact.None)
+        if(action.Damage > 0 || action.Guard is not (GuardImpact.None or GuardImpact.Dodged))
         {
-            if (_players.TryGetValue(action.TargetId, out var victim)) victim.Animator.Hit(new Vector3(action.Direction.X,0,action.Direction.Y), action.Guard);
-            else ApplyTargetHit(action.TargetId,new Vector3(action.Direction.X,0,action.Direction.Y),action.Guard);
+            if (_players.TryGetValue(action.TargetId, out var victim)) victim.Animator.Hit(new Vector3(action.Direction.X,action.DirectionY,action.Direction.Y), action.Guard);
+            else ApplyTargetHit(action.TargetId,new Vector3(action.Direction.X,action.DirectionY,action.Direction.Y),action.Guard);
         }
+    }
+
+    private void OnBasicAction(BasicActionState state)
+    {
+        if(_combat.TryGetValue(state.ActorId,out var actor))actor.ApplyBasicAction(state);
+        if(_targets.TryGetValue(state.ActorId,out var target) && target is NpcPresentation npc)npc.Animation.Basic(state);
+        else if(_echoes.TryGetValue(state.ActorId,out var echo))echo.Animation.Basic(state);
     }
 
     private void OnAttackResult(AttackResult result)
@@ -292,7 +312,7 @@ public partial class WorldController : Node3D
             local.ApplyResult(result);
     }
 
-    private void OnAbilityLoadout(AbilityLoadout value) { _abilities?.ApplyLoadout(value); _hud?.Apply(value); }
+    private void OnAbilityLoadout(AbilityLoadout value) { _abilities?.ApplyLoadout(value); _hud?.Apply(value); _echoControls?.ApplySignatureProfile(value); }
     private void OnAbilityResult(AbilityResult value) => _abilities?.ApplyResult(value);
     private void OnInventory(InventoryState value)
     {
@@ -310,17 +330,22 @@ public partial class WorldController : Node3D
     {
         if (_combat.TryGetValue(value.TargetId, out var target)) target.ApplyAbilityDamage(value);
         RefreshAlive(value.TargetId);
-        if (_players.TryGetValue(value.TargetId, out var victim) && (value.Damage > 0 || value.Guard != GuardImpact.None))
+        if (_players.TryGetValue(value.TargetId, out var victim) && (value.Damage > 0 || value.Guard is not (GuardImpact.None or GuardImpact.Dodged)))
             victim.Animator.Hit(Vector3.Forward, value.Guard);
-        else if(value.Damage > 0 || value.Guard != GuardImpact.None)
+        else if(value.Damage > 0 || value.Guard is not (GuardImpact.None or GuardImpact.Dodged))
             ApplyTargetHit(value.TargetId,Vector3.Forward,value.Guard);
     }
 
     private void OnCombatFeedback(CombatFeedback value)
     {if(_combat.TryGetValue(value.TargetId,out var target))target.ApplyFeedback(value);}
 
+    private void OnControlFeedback(ControlFeedback value)
+    {if(_combat.TryGetValue(value.TargetId,out var target))target.ApplyControlFeedback(value);}
+    private void OnControlState(ControlState value)=>_hud?.Apply(value);
+
     private void ApplyTargetHit(NetworkEntityId id,Vector3 direction,GuardImpact guard)
     {
+        if(_echoes.TryGetValue(id,out var echo)){echo.Visual.Hit(direction,guard);return;}
         if(!_targets.TryGetValue(id,out var target)) return;
         if(target is NpcPresentation npc) npc.Visual.Hit(direction,guard);
         else
@@ -331,7 +356,13 @@ public partial class WorldController : Node3D
     }
 
     private void OnAvatar(AvatarState value)
-    { if (_players.TryGetValue(value.EntityId, out var player)) player.Animator.Apply(value); }
+    {
+        if(_combat.TryGetValue(value.EntityId,out var body))body.ApplyBodyFacing(value);
+        if (_players.TryGetValue(value.EntityId, out var player)) player.Animator.Apply(value);
+        else if(_targets.TryGetValue(value.EntityId,out var target) && target is NpcPresentation npc)
+        {npc.Visual.Apply(value);npc.Animation.Facing(value);}
+        else if(_echoes.TryGetValue(value.EntityId,out var echo)){echo.Visual.Apply(value);echo.Animation.Facing(value);}
+    }
 
     private void RefreshAlive(NetworkEntityId id)
     {
@@ -346,6 +377,7 @@ public partial class WorldController : Node3D
             if(target is NpcPresentation npc) npc.Animation.SetAlive(npcState.IsAlive);
             else target.GetNodeOrNull<ProjectG.Actors.DummyReaction>("Dummy")?.SetAlive(npcState.IsAlive);
         }
+        if(_echoes.TryGetValue(id,out var echo) && _combat.TryGetValue(id,out var echoState))echo.Animation.SetAlive(echoState.IsAlive);
     }
     private void OnNpcWindup(NpcWindup windup)
     {
@@ -361,17 +393,25 @@ public partial class WorldController : Node3D
     private void OnAbilityEffect(AbilityEffectState value)
     {
         _abilities?.Confirm(value);
-        if (_players.TryGetValue(value.ActorId, out var animated) && animated.IsAlive)
+        _echoControls?.ConfirmSignature(value);
+        if (value.AbilityId!=0 && _players.TryGetValue(value.ActorId, out var animated) && animated.IsAlive)
         {
             if(value.Phase==AbilityPhase.Sustaining)animated.SwordAnimation.ReleaseAbility(value.Sequence);
             else animated.SwordAnimation.ApplyAbility(value);
         }
         if (value.Phase == AbilityPhase.Finished)
         {
+            if(_echoes.TryGetValue(value.ActorId,out var finishedEcho))finishedEcho.Animation.Ability(value);
+            else if(_targets.TryGetValue(value.ActorId,out var finishedTarget)&&finishedTarget is NpcPresentation finishedNpc)finishedNpc.Animation.Ability(value);
             if (_effects.Remove(value.EffectId, out var old) && GodotObject.IsInstanceValid(old)) old.QueueFree();
             return;
         }
-        if (!_players.TryGetValue(value.ActorId,out var caster) && value.Phase!=AbilityPhase.Flying) return;
+        Node3D? caster=null;NpcPresentation? nonplayer=null;
+        if(_players.TryGetValue(value.ActorId,out var avatar))caster=avatar;
+        else if(_echoes.TryGetValue(value.ActorId,out var echo))caster=nonplayer=echo;
+        else if(_targets.TryGetValue(value.ActorId,out var target) && target is NpcPresentation npc)caster=nonplayer=npc;
+        if(caster is null && value.Phase!=AbilityPhase.Flying)return;
+        nonplayer?.Animation?.Ability(value);
         if (!_effects.TryGetValue(value.EffectId, out var visual) || !GodotObject.IsInstanceValid(visual))
         {
             // Bounded presentation cache; reliable lifecycle plus TTL provides cleanup.
@@ -379,13 +419,15 @@ public partial class WorldController : Node3D
             visual = new AbilityEffectVisual(); AddChild(visual);
             _effects[value.EffectId] = visual;
         }
-        visual.Caster=caster; visual.Apply(value);
+        visual.Caster=caster;if(_combat.TryGetValue(value.ActorId,out var combat))visual.AimFacing=combat.Facing;
+        visual.Apply(value);
     }
 
     private void OnSnapshotReceived(WorldSnapshot snapshot)
     {
         foreach (var entity in snapshot.Entities)
         {
+            if(_combat.TryGetValue(entity.EntityId,out var body))body.ApplyBodyControl(entity.Control,snapshot.ServerTick);
             if (_players.TryGetValue(entity.EntityId, out var player))
                 player.ApplySnapshot(entity, snapshot.ServerTick);
             else if (_targets.TryGetValue(entity.EntityId, out var actor) && actor is NpcPresentation npc)
@@ -417,6 +459,7 @@ public partial class WorldController : Node3D
             DetachPresentation(player);
 
         _players.Clear();
+        foreach(var id in _echoes.Keys)_targets.Remove(id);
         foreach (var target in _targets.Values)
             DetachPresentation(target);
         _targets.Clear();
@@ -454,7 +497,7 @@ public partial class WorldController : Node3D
     {
         if (_echoes.ContainsKey(value.EntityId)) return;
         var echo = new EchoPresentation(); AddChild(echo); echo.Initialize(value, _network.Navigation!); _echoes.Add(value.EntityId, echo);
-        var mesh=echo.GetChildren().OfType<MeshInstance3D>().First(); _echoControls?.Observe(value,mesh.Mesh,mesh.MaterialOverride);
+        var mesh=echo.PreviewBody; _echoControls?.Observe(value,mesh.Mesh,mesh.MaterialOverride,echo);
     }
     private void OnEchoLoadout(EchoLoadout value) { if (value.OwnerId == _localEntityId) _echoControls?.Apply(value); }
     private void OnEchoResult(EchoSignatureResult value) => _echoControls?.Result(value);

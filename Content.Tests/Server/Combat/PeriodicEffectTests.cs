@@ -126,7 +126,7 @@ public sealed class PeriodicEffectTests
     {
         var world=World(false,Shield("shield",10,5)); var player=world.AddPlayer(42,new(1)); var source=world.AddPlayer(43,new(2));
         var combat=world.Combat!; combat.Move(source.EntityId,combat.Get(player.EntityId).Position+Vector2.UnitY);
-        combat.QueueDefense(player.EntityId,new(1,DefenseAction.Block,Vector2.UnitY),0); combat.Simulate(.05f,1);
+        combat.QueueDefense(player.EntityId,new(1,DefenseAction.Block,Vector2.UnitY),0); world.Simulate(.05f);
         combat.ApplyEffect(default,player.EntityId,"shield"); var actor=combat.Get(player.EntityId);
         var calculator=new StatCalculator(world.RegionContent!.Balance);
         var postMitigation=calculator.ApplyDefense(30,actor.Stats.PhysicalDefense)*(1-Math.Clamp(actor.Stats.BlockDamage,0,1));

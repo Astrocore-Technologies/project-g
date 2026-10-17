@@ -11,12 +11,12 @@ internal sealed class CombatJournalState
     internal IReadOnlyList<SavedDeathLog> Deaths=>_deaths;
     internal ulong LastId=>_serial;
     internal CombatJournalEntry Record(long at,CombatJournalKind kind,string source,string target,double amount=0,
-        double duration=0,double strength=0,ushort skill=0,CrowdControlKind control=default,CombatJournalFlags flags=0)
+        double duration=0,double strength=0,ushort skill=0,CrowdControlKind control=default,CombatJournalFlags flags=0,CombatHitTags hitTags=CombatHitTags.None)
     {
         if(_serial==ulong.MaxValue)throw new InvalidOperationException("Combat journal ordinal exhausted.");
         // A server wall-clock correction cannot reverse recorded evidence or expand its death window.
         if(_recent.Count>0)at=Math.Max(at,_lastTime);
-        var entry=new CombatJournalEntry(++_serial,at,kind,source,target,amount,duration,strength,skill,control,flags);
+        var entry=new CombatJournalEntry(++_serial,at,kind,source,target,amount,duration,strength,skill,control,flags,hitTags);
         if(!entry.IsValid)throw new InvalidOperationException("Invalid combat journal observation.");
         if(_recent.Count==300)_recent.Dequeue();_recent.Enqueue(entry);_lastTime=at;return entry;
     }

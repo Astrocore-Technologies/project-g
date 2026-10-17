@@ -63,12 +63,22 @@ public sealed class SurfaceVisibility
         }
     }
 
-    public bool Clear(Vector3 start, Vector3 end)
+    public bool Clear(Vector3 start,Vector3 end)=>!Trace(start,end,false,out _);
+    public bool TryFirstHit(Vector3 start,Vector3 end,out float fraction)=>Trace(start,end,true,out fraction);
+    public bool TryFirstHit(Vector3 start,Vector3 end,float radius,out float fraction)
     {
-        if (!Finite(start) || !Finite(end) || Vector3.DistanceSquared(start, end) > 128 * 128) return false;
+        if(!float.IsFinite(radius) || radius<=0 || radius>128)throw new ArgumentOutOfRangeException(nameof(radius));
+        return Trace(start,end,true,out fraction,radius);
+    }
+
+    private bool Trace(Vector3 start, Vector3 end,bool includeEndpoint,out float fraction,float radius=0)
+    {
+        fraction=0;
+        if (!Finite(start) || !Finite(end) || Vector3.DistanceSquared(start, end) > 128 * 128) return true;
+        fraction=1;var blocked=false;
         if (_generation == int.MaxValue) { Array.Clear(_seen); _generation = 0; }
         _generation++;
-        var min = Vector3.Min(start, end); var max = Vector3.Max(start, end);
+        var min = Vector3.Min(start, end)-new Vector3(radius); var max = Vector3.Max(start, end)+new Vector3(radius);
         for (var z = Tile(min.Z); z <= Tile(max.Z); z++)
         for (var x = Tile(min.X); x <= Tile(max.X); x++)
         {
@@ -80,20 +90,27 @@ public sealed class SurfaceVisibility
                 if (id >= _boxes.Length)
                 {
                     var triangle = _ground[id - _boxes.Length];
-                    if (IntersectsTriangle(start, end - start, triangle.A, triangle.B, triangle.C)) return false;
+                    var intersects=radius>0 ? SphereSweep.Triangle(start,end-start,triangle.A,triangle.B,triangle.C,radius,out var hit)
+                        : IntersectsTriangle(start, end - start, triangle.A, triangle.B, triangle.C,includeEndpoint,out hit);
+                    if (intersects)
+                    {fraction=Math.Min(fraction,hit);blocked=true;}
                     continue;
                 }
                 var box = _boxes[id];
                 var a = Vector3.Transform(start - box.Center, box.Inverse);
                 var b = Vector3.Transform(end - box.Center, box.Inverse);
-                if (Intersects(a, b - a, box.HalfSize)) return false;
+                var boxHit=radius>0 ? SphereSweep.Box(a,b-a,box.HalfSize,radius,out var enter)
+                    : Intersects(a, b - a, box.HalfSize,out enter);
+                if (boxHit)
+                {fraction=Math.Min(fraction,enter);blocked=true;}
             }
         }
-        return true;
+        return blocked;
     }
 
-    private static bool IntersectsTriangle(Vector3 start, Vector3 direction, Vector3 a, Vector3 b, Vector3 c)
+    private static bool IntersectsTriangle(Vector3 start, Vector3 direction, Vector3 a, Vector3 b, Vector3 c,bool includeEndpoint,out float fraction)
     {
+        fraction=0;
         // Two-sided segment/triangle test, including the underside of bridges.
         // Endpoint epsilon avoids treating a ray starting on a surface as an obstruction.
         var edge1 = b - a; var edge2 = c - a;
@@ -108,11 +125,12 @@ public sealed class SurfaceVisibility
         var v = Vector3.Dot(direction, q) * inverse;
         if (v < -.00001f || u + v > 1.00001f) return false;
         var t = Vector3.Dot(edge2, q) * inverse;
-        return t > .0001f && t < .9999f;
+        fraction=t;return t > .0001f && (includeEndpoint ? t<=1 : t<.9999f);
     }
 
-    private static bool Intersects(Vector3 start, Vector3 direction, Vector3 half)
+    private static bool Intersects(Vector3 start, Vector3 direction, Vector3 half,out float fraction)
     {
+        fraction=0;
         var enter = 0f; var exit = 1f;
         for (var axis = 0; axis < 3; axis++)
         {
@@ -125,7 +143,7 @@ public sealed class SurfaceVisibility
             enter = MathF.Max(enter, a); exit = MathF.Min(exit, b);
             if (enter > exit) return false;
         }
-        return exit >= 0 && enter <= 1;
+        fraction=enter;return exit >= 0 && enter <= 1;
     }
 
     private static int Tile(float value) => (int)MathF.Floor(value / TileSize);

@@ -12,6 +12,7 @@ public sealed partial class CombatSimulation
     private readonly Dictionary<Guid,(NetworkEntityId Target,TimedEffectInstance Effect)> _effectInstances = new();
     private readonly HashSet<NetworkEntityId> _effectDirty = new();
     private readonly List<Guid> _removeEffects = new();
+    private readonly List<Guid> _boundaryEffectExpiries=new();
     private ulong _effectOrder;
     private double? _effectEvaluationTime;
     private double EffectTime=>_effectEvaluationTime ?? _time;
@@ -40,13 +41,13 @@ public sealed partial class CombatSimulation
         else if(source.IsValid && (!_actors.TryGetValue(source,out var author) || !author.Active || author.Health<=0 ||
             (definition.Disposition==EffectDisposition.Harmful ? !CanTarget(source,target) : !CanSupport(source,target,allowOtherPlayers)))) return false;
         foreach(var active in actor.Effects.Values)
-            if(active.EndsAt>_time && EnvironmentAllows(actor,active.Definition))
+            if(active.EndsAt>=_time && EnvironmentAllows(actor,active.Definition))
                 foreach(var tag in definition.Tags)
                     if(Array.IndexOf(active.Definition.ImmuneTags,tag)>=0) return false;
         var sourceId=releasedSource?.Identity ?? SourceIdentity(source); var key=new TimedEffectKey(sourceId,definitionId);
         var end=_time+definition.DurationSeconds;
         if(!double.IsFinite(end) || end<=_time) throw new ArgumentException("Effect expiry cannot be represented on the simulation clock.");
-        if(actor.Effects.TryGetValue(key,out var previous) && previous.EndsAt<=_time) { RemoveEffect(previous.Id); previous=null; }
+        if(actor.Effects.TryGetValue(key,out var previous) && previous.EndsAt<_time) { RemoveEffect(previous.Id); previous=null; }
         if(_effectOrder==ulong.MaxValue) throw new InvalidOperationException("Effect application order exhausted.");
         if(previous is not null)
         {
@@ -54,6 +55,7 @@ public sealed partial class CombatSimulation
             previous.EndsAt=end; previous.AppliedOrder=++_effectOrder;
             previous.Stacks=(ushort)Math.Min(definition.MaxStacks,(int)previous.Stacks+definition.StackIncrement);
             previous.PowerScale=powerScale; previous.Snapshot=SnapshotEffect(source,definition.Periodic,powerScale,releasedSource);
+            previous.ContributionCredit=ContributionIdentity(key.Source,releasedSource?.ContributionCredit);
             if(execution!=0) previous.ExecutionId=execution;
             if(definition.Shield is {} shield)
             {
@@ -67,6 +69,7 @@ public sealed partial class CombatSimulation
             var effect=new TimedEffectInstance(Guid.NewGuid(),key,definition,end,1,++_effectOrder)
             {
                 Snapshot=SnapshotEffect(source,definition.Periodic,powerScale,releasedSource),PowerScale=powerScale,ExecutionId=execution,
+                ContributionCredit=ContributionIdentity(key.Source,releasedSource?.ContributionCredit),
                 NextTickAt=definition.Periodic is {} periodic ? NextPeriodicTime(_time,periodic.IntervalSeconds) : null,
                 ShieldRemaining=definition.Shield is {} shield ? StatMath.Multiply(EffectPowerAtSource(source,shield.Power,releasedSource),powerScale) : 0
             };
@@ -157,8 +160,9 @@ public sealed partial class CombatSimulation
     private void RefreshEffectStats(NetworkEntityId id,bool notify=true)
     {
         var actor=_actors[id];RefreshPassivePermissions(actor);actor.Stats=WithEffects(id,actor.BaseDerivedStats);
-        actor.AttackInterval=Math.Max(_minimumInterval,_calculator.AttackInterval(actor.Weapon.AttackIntervalSeconds,actor.Stats));
+        actor.AttackInterval=_calculator.AttackInterval(actor.Weapon.AttackIntervalSeconds,actor.Stats);
         actor.Health=Math.Min(actor.Health,actor.Stats.MaxHealth); RefreshHealthRecovery(id); _equipmentDirty.Add(id);
+        RefreshResourceStats(id);
         if(notify) EffectStatsChanged?.Invoke(id);
     }
 
@@ -170,14 +174,22 @@ public sealed partial class CombatSimulation
             {
                 var scheduled=_effectExpiries.Min; _effectExpiries.Remove(scheduled); _effectEvaluationTime=scheduled.At;
                 if(!_effectInstances.TryGetValue(scheduled.Id,out var entry)) continue;
-                if(!scheduled.Tick) { RemoveEffect(scheduled.Id); continue; }
-                TickEffect(entry.Target,entry.Effect);
+                // D100: the endpoint belongs to the common contacts, then the effect expires.
+                if(!scheduled.Tick) { _boundaryEffectExpiries.Add(scheduled.Id); continue; }
+                CapturePeriodicTick(entry.Target,entry.Effect);
                 if(!_effectInstances.ContainsKey(scheduled.Id)) continue;
                 entry.Effect.NextTickAt=NextPeriodicTime(entry.Effect.NextTickAt!.Value,entry.Effect.Definition.Periodic!.IntervalSeconds);
                 ScheduleTick(entry.Effect);
             }
         }
         finally { _effectEvaluationTime=null; }
+    }
+
+    private void ExpireEffectsAtBoundary()
+    {
+        foreach(var id in _boundaryEffectExpiries)
+            if(_effectInstances.TryGetValue(id,out var entry) && entry.Effect.EndsAt<=_time)RemoveEffect(id);
+        _boundaryEffectExpiries.Clear();
     }
 
     private void ScheduleEffect(TimedEffectInstance effect)

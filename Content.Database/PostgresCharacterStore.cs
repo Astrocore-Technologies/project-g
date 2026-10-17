@@ -30,7 +30,7 @@ public sealed partial class PostgresCharacterStore(string connectionString) : IC
         await setup.ExecuteNonQueryAsync(cancellationToken);
         await using var version = new NpgsqlCommand("SELECT COALESCE(max(version), 0) FROM project_g_schema", connection, transaction);
         var current = (int)(await version.ExecuteScalarAsync(cancellationToken))!;
-        if (current is < 0 or > 10) throw new InvalidDataException("Unsupported database schema version.");
+        if (current is < 0 or > 12) throw new InvalidDataException("Unsupported database schema version.");
         if (current == 0)
         {
             using var resource = typeof(PostgresCharacterStore).Assembly.GetManifestResourceStream(
@@ -114,6 +114,22 @@ public sealed partial class PostgresCharacterStore(string connectionString) : IC
             using var resource=typeof(PostgresCharacterStore).Assembly.GetManifestResourceStream("Content.Database.Migrations.0010_death_logs.sql")??throw new InvalidOperationException("Migration is missing.");
             using var reader=new StreamReader(resource);await using var query=new NpgsqlCommand(await reader.ReadToEndAsync(cancellationToken),connection,transaction);
             await query.ExecuteNonQueryAsync(cancellationToken);query.CommandText="INSERT INTO project_g_schema VALUES(10)";await query.ExecuteNonQueryAsync(cancellationToken);
+        }
+        if (current < 11)
+        {
+            using var resource = typeof(PostgresCharacterStore).Assembly.GetManifestResourceStream("Content.Database.Migrations.0011_owned_echoes.sql") ?? throw new InvalidOperationException("Migration is missing.");
+            using var reader = new StreamReader(resource);
+            await using var query = new NpgsqlCommand(await reader.ReadToEndAsync(cancellationToken), connection, transaction);
+            await query.ExecuteNonQueryAsync(cancellationToken);
+            query.CommandText = "INSERT INTO project_g_schema VALUES (11)"; await query.ExecuteNonQueryAsync(cancellationToken);
+        }
+        if(current<12)
+        {
+            using var resource=typeof(PostgresCharacterStore).Assembly.GetManifestResourceStream("Content.Database.Migrations.0012_item_weapon_wear.sql")??throw new InvalidOperationException("Migration is missing.");
+            using var reader=new StreamReader(resource);
+            await using var query=new NpgsqlCommand(await reader.ReadToEndAsync(cancellationToken),connection,transaction);
+            await query.ExecuteNonQueryAsync(cancellationToken);
+            query.CommandText="INSERT INTO project_g_schema VALUES(12)";await query.ExecuteNonQueryAsync(cancellationToken);
         }
         await transaction.CommitAsync(cancellationToken);
     }
@@ -202,9 +218,10 @@ public sealed partial class PostgresCharacterStore(string connectionString) : IC
             }
             if(inventoryCreated && initialInventoryItems is { } initialItems) { OwnershipValidation.Items(initialItems,8); foreach(var item in initialItems.Order()) await EnsureItemOwnerAsync(connection,transaction,item,"c:"+characterId,cancellationToken); }
             var effects = await ReadEffectsAsync(connection, transaction, characterId, cancellationToken);
+            var ownedEchoes = await ReadOwnedEchoesAsync(connection, transaction, characterId, cancellationToken);
             var deaths=await ReadDeathLogsAsync(connection,transaction,characterId,cancellationToken);
             await transaction.CommitAsync(cancellationToken);
-            return new Session(characterId, ownerId, revision, state, inventoryState, echoState, issued, connection, lockKey) { Progression = progressionState, Effects = effects,DeathLogs=deaths };
+            return new Session(characterId, ownerId, revision, state, inventoryState, echoState, issued, connection, lockKey) { Progression = progressionState, Effects = effects,DeathLogs=deaths, OwnedEchoes=ownedEchoes };
         }
         catch
         {
@@ -218,11 +235,15 @@ public sealed partial class PostgresCharacterStore(string connectionString) : IC
     public Task SaveWithWorldAsync(IReadOnlyList<DatabaseSave> changes, DatabaseWorldSave? world, CancellationToken cancellationToken) => SaveCheckpointAsync(changes,world,null,cancellationToken);
     public Task SaveCheckpointAsync(IReadOnlyList<DatabaseSave> changes, DatabaseWorldSave? world, DatabaseSocialSave? social, CancellationToken cancellationToken) =>
         SaveRegionalCheckpointAsync(changes, world is null ? [] : [world], social, cancellationToken);
-    public async Task SaveRegionalCheckpointAsync(IReadOnlyList<DatabaseSave> changes, IReadOnlyList<DatabaseWorldSave> worlds, DatabaseSocialSave? social, CancellationToken cancellationToken)
+    public Task SaveRegionalCheckpointAsync(IReadOnlyList<DatabaseSave> changes,IReadOnlyList<DatabaseWorldSave> worlds,DatabaseSocialSave? social,CancellationToken token)
+        =>SaveCombatCheckpointAsync(changes,worlds,social,[],token);
+    public async Task SaveCombatCheckpointAsync(IReadOnlyList<DatabaseSave> changes,IReadOnlyList<DatabaseWorldSave> worlds,
+        DatabaseSocialSave? social,IReadOnlyList<DatabaseItemWear> wear,CancellationToken cancellationToken)
     {
         WorldStorageValidation.Batch(worlds, social);
+        ItemWearStorageValidation.Writes(wear);
         if (changes.Count > 64) throw new InvalidDataException("Regional checkpoint exceeds the session budget.");
-        if (changes.Count == 0 && worlds.Count == 0 && social is null) return;
+        if (changes.Count == 0 && worlds.Count == 0 && social is null && wear.Count==0) return;
         // Verify dedicated ownership connections before writing via the shared batch connection.
         foreach (var change in changes)
         {
@@ -246,6 +267,9 @@ public sealed partial class PostgresCharacterStore(string connectionString) : IC
             if (await command.ExecuteNonQueryAsync(cancellationToken) != 1)
                 throw new InvalidOperationException("Character ownership/revision conflict; checkpoint aborted.");
             if (change.Effects is { } effects) await WriteEffectsAsync(connection, transaction, change.Session.CharacterId, effects, cancellationToken);
+            if(change.OwnedEchoes is not null&&change.EchoChanges is not null)throw new InvalidDataException("Echo replacement and changes are mutually exclusive.");
+            if (change.OwnedEchoes is { } ownedEchoes) await WriteOwnedEchoesAsync(connection, transaction, change.Session.CharacterId, ownedEchoes, cancellationToken);
+            if(change.EchoChanges is {} echoChanges)await WriteOwnedEchoChangesAsync(connection,transaction,change.Session.CharacterId,echoChanges,cancellationToken);
             if(change.DeathLogs is {} deaths)await WriteDeathLogsAsync(connection,transaction,change.Session.CharacterId,deaths,cancellationToken);
             if (change.Echoes is { } echoState)
             {
@@ -283,6 +307,7 @@ public sealed partial class PostgresCharacterStore(string connectionString) : IC
         }
         foreach (var world in worlds) await WriteWorldAsync(connection, transaction, world, cancellationToken);
         await SyncOwnershipAsync(connection,transaction,changes,worlds,cancellationToken);
+        await WriteItemWearAsync(connection,transaction,wear,cancellationToken);
         if(social is not null) await WriteSocialAsync(connection,transaction,social,cancellationToken);
         // One transaction publishes all changed characters from a simulation tick, or none.
         await transaction.CommitAsync(cancellationToken);

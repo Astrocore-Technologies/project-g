@@ -39,7 +39,8 @@ public sealed class RiverCityTests
         var placements=JsonSerializer.Deserialize<Dictionary<string,float[]>>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory,"Data/Regions/river-city-placements.json")))!;
         var initial=city.CreateInitialCharacter(); var pathfinder=new NavigationPathfinder(city.Navigation); var path=new List<Vector2>();
         foreach(var (name,p) in placements) Assert.True(pathfinder.TryFindPath(new(initial.X,initial.Z),new(p[0],p[1]),path),name);
-        var player=city.AddPlayer(1,new(1),initial); var other=city.AddPlayer(2,new(2),initial with {X=1});
+        var player=city.AddPlayer(1,new(1),initial); var other=city.AddPlayer(2,new(2),initial with {X=1,Inventory=initial.Inventory! with
+            {Items=initial.Inventory.Items.Select(i=>i with {InstanceId=Guid.NewGuid()}).ToArray()}});
         Assert.False(city.TryQueueWorldNode(1,new(1,WorldNodeAction.Repair)));
         Assert.Equal(PvpOutcome.Protected,PvpTests.Command(city,2,1,PvpMode.Voluntary));
         Assert.Equal(0,city.Combat!.ApplyAbilityDamage(other.EntityId,10,player.EntityId));

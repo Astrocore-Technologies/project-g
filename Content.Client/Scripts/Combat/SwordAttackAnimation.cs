@@ -18,13 +18,17 @@ public partial class SwordAttackAnimation : Node3D
     private ulong _effect;
     private ulong _basicExecution;
     private bool _ability, _waiting, _predicted, _active;
+    private bool _authoritativeBasic;
     private double _elapsed, _duration, _age;
     private float _from;
+    private float _directionY,_idleYaw;
     // NC: production actors sample their own editable animation library; the standalone legacy test rig stays usable.
     private ProjectG.Actors.ActorVisual? _character;
     private bool _sounded;
     public void Bind(ProjectG.Actors.ActorVisual character) { _character=character; }
     public bool IsAnimating => _active;
+    public void SetFacing(NumericsVector2 facing){if(facing!=NumericsVector2.Zero)_idleYaw=Mathf.Atan2(facing.X,facing.Y);}
+    private float AimYaw(NumericsVector2 direction)=>direction==NumericsVector2.Zero?_idleYaw:Mathf.Atan2(direction.X,direction.Y);
     public StringName Clip { get; private set; } = "";
     public float ClipPosition { get; private set; }
 
@@ -36,15 +40,17 @@ public partial class SwordAttackAnimation : Node3D
         Visible = false; SetProcess(false);
     }
 
-    public void PredictBasic(uint sequence, NumericsVector2 direction, double interval)
+    public void PredictBasic(uint sequence, NumericsVector2 direction, double interval,float directionY=0)
     {
         // An automatic basic request rejected during a skill must not interrupt that skill's pose.
         if (_active && _ability) return;
         Begin(sequence % 2 == 0 ? "basic_left" : "basic_right", sequence, false, direction, Math.Min(.12, interval * .3), true);
+        _directionY=directionY;Sample(0);
     }
 
     public void ConfirmBasic(AttackEvent hit)
     {
+        if(hit.Delivery==Content.Shared.Combat.BasicAttackDelivery.Projectile)return;
         // A delayed basic acknowledgement may arrive after the next skill was locally started.
         if (_active && _ability && _waiting) return;
         var predicted = _active && !_ability && _predicted && _sequence == hit.Sequence;
@@ -53,16 +59,54 @@ public partial class SwordAttackAnimation : Node3D
             Begin((hit.ExecutionId == 0 ? hit.Sequence : hit.ExecutionId) % 2 == 0 ? "basic_left" : "basic_right",
                 hit.Sequence, false, hit.Direction, 0, false);
         _basicExecution = hit.ExecutionId;
+        _directionY=hit.DirectionY;
         Contact(); // Confirm the predicted swing once; don't restart its wind-up.
+    }
+
+    public void ApplyBasic(BasicActionState state)
+    {
+        if(state.Delivery==Content.Shared.Combat.BasicAttackDelivery.Projectile)
+        {if(_active && !_ability)Stop();return;}
+        if(state.Phase==Content.Shared.Combat.CombatActionPhase.Finished)
+        {if(!_ability && _basicExecution==state.ExecutionId)Stop();return;}
+        if(_active && _ability && _waiting)return;
+        var entered=!_active || _ability || _basicExecution!=state.ExecutionId;
+        if(entered)
+            Begin(state.ExecutionId%2==0?"basic_left":"basic_right",state.Sequence,false,state.Direction,state.RemainingSeconds,false);
+        _basicExecution=state.ExecutionId;_authoritativeBasic=true;_predicted=false;_elapsed=0;
+        _directionY=state.DirectionY;Rotation=new(0,AimYaw(state.Direction),0);
+        if(state.Phase==Content.Shared.Combat.CombatActionPhase.Preparation)
+        {
+            _waiting=true;_duration=Math.Max(.001,state.RemainingSeconds);
+            _from=ContactTime*(float)Math.Clamp(1-state.RemainingSeconds/Math.Max(double.Epsilon,state.PreparationSeconds),0,1);
+        }
+        else
+        {
+            if(state.Phase==Content.Shared.Combat.CombatActionPhase.Active)Contact();
+            else if(entered)_sounded=true;
+            _waiting=false;
+            var post=state.ActiveSeconds+state.RecoverySeconds;
+            var remaining=state.RemainingSeconds+(state.Phase==Content.Shared.Combat.CombatActionPhase.Active?state.RecoverySeconds:0);
+            _from=ContactTime+(1-ContactTime)*(float)Math.Clamp(1-remaining/Math.Max(double.Epsilon,post),0,1);
+            _duration=Math.Max(.001,remaining);
+        }
+        Sample(_from);
     }
 
     public void RejectBasic(uint sequence)
     { if (_active && !_ability && _sequence == sequence && _predicted) Stop(); }
 
-    public void PredictAbility(uint sequence, ushort ability, NumericsVector2 direction, double seconds)
+    public void AimBasic(uint sequence,NumericsVector2 direction,float directionY=0)
+    {
+        if(_active && !_ability && _sequence==sequence && _waiting)
+        {_directionY=directionY;Rotation=new(0,AimYaw(direction),0);}
+    }
+
+    public void PredictAbility(uint sequence, ushort ability, NumericsVector2 direction, double seconds,float directionY=0)
     {
         var clip = AbilityClip(ability); if (clip.Length == 0) return;
         Begin(clip, sequence, true, direction, seconds, true);
+        _directionY=directionY;Sample(0);
         _weapon.Visible = ability != 3;
     }
 
@@ -82,10 +126,11 @@ public partial class SwordAttackAnimation : Node3D
             Begin(clip, state.Sequence, true, state.Direction, state.RemainingSeconds, false);
             _weapon.Visible = state.AbilityId != 3;
         }
-        _effect = state.EffectId; _predicted = false;
+        _effect = state.EffectId; _predicted = false;_directionY=state.DirectionY;
+        Rotation=new(0,AimYaw(state.Direction),0);
         _charging=state.Phase is AbilityPhase.Charging or AbilityPhase.Channeling;
         if(_charging)
-        {Rotation=new(0,Mathf.Atan2(state.Direction.X,state.Direction.Y),0);_age=0;}
+        {Rotation=new(0,AimYaw(state.Direction),0);_age=0;}
         if (state.Phase == AbilityPhase.Impact || state.Phase == AbilityPhase.Recovery) Contact();
         if (state.Phase == AbilityPhase.Recovery)
         { _from=ClipPosition; _elapsed=0; _duration=Math.Max(.001,state.RemainingSeconds); }
@@ -109,7 +154,7 @@ public partial class SwordAttackAnimation : Node3D
         if(clip=="breath" && _character is not null) { _character.SwingCue(clip); _sounded=true; }
         _elapsed = _age = 0; _duration = Math.Max(.001, windup); _from = 0; _effect = 0;
         _basicExecution = 0;
-        Rotation = new(0, Mathf.Atan2(direction.X, direction.Y), 0);
+        _directionY=0;Rotation = new(0,AimYaw(direction),0);
         Clip = clip;
         if (_animation.HasAnimation(Clip)) { _animation.Play(Clip); _animation.Pause(); }
         _weapon.Visible = _character is null; Visible = true; SetProcess(true); Sample(0);
@@ -129,7 +174,7 @@ public partial class SwordAttackAnimation : Node3D
     {
         _age += delta; _elapsed += delta;
         // Missing confirmations or lost lifecycle messages cannot leave a stuck pose.
-        if ((_predicted && _age > 2) || !_charging && _age > 12) { Stop(); return; }
+        if ((_predicted && _age > 2) || !_charging && !_authoritativeBasic && _age > 12) { Stop(); return; }
         var t = (float)Math.Clamp(_elapsed / _duration, 0, 1);
         Sample(Mathf.Lerp(_from, _waiting ? ContactTime : 1, t));
         if (!_waiting && t >= 1) Stop();
@@ -141,17 +186,21 @@ public partial class SwordAttackAnimation : Node3D
         if (_character is not null)
         {
             _weapon.Visible = false;
+            _character.SetAttackPitch(_directionY);
             _character.Attack(Clip.ToString(), time, Rotation.Y, _waiting);
             if (!_sounded && time >= .24f) { _sounded = true; _character.SwingCue(Clip.ToString()); }
             return;
         }
         _animation.Seek(time, update: true);
         // Only the render mesh receives the pose; the player, camera and navigation remain untouched.
-        _body.Transform = new Transform3D(Basis * _pose.Basis * _rest.Basis, _rest.Origin + Basis * _pose.Position);
+        var tilt=new Basis(Vector3.Right,-Mathf.Asin(Math.Clamp(_directionY,-1,1)));
+        _body.Transform = new Transform3D(Basis * tilt * _pose.Basis * _rest.Basis, _rest.Origin + Basis * tilt * _pose.Position);
     }
 
     public void Stop()
     {
+        _authoritativeBasic=false;
+        _directionY=0;
         _charging=false;
         _active = false; Visible = false; SetProcess(false);
         _character?.EndAttack();

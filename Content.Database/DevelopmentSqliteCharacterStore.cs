@@ -57,7 +57,7 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
         command.ExecuteNonQuery();
         command.CommandText = "SELECT COALESCE(max(version), 0) FROM schema_version";
         var version = (long)command.ExecuteScalar()!;
-        if (version is < 0 or > 10) throw new InvalidDataException("Unsupported SQLite schema version.");
+        if (version is < 0 or > 12) throw new InvalidDataException("Unsupported SQLite schema version.");
         if (version == 0)
         {
             using var resource = typeof(DevelopmentSqliteCharacterStore).Assembly.GetManifestResourceStream(
@@ -128,6 +128,19 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
             using var resource=typeof(DevelopmentSqliteCharacterStore).Assembly.GetManifestResourceStream("Content.Database.Migrations.0010_death_logs.sqlite.sql")??throw new InvalidOperationException("Migration is missing.");
             using var reader=new StreamReader(resource);command.CommandText=reader.ReadToEnd();command.ExecuteNonQuery();
             command.CommandText="INSERT INTO schema_version VALUES(10)";command.ExecuteNonQuery();
+        }
+        if (version < 11)
+        {
+            using var resource = typeof(DevelopmentSqliteCharacterStore).Assembly.GetManifestResourceStream("Content.Database.Migrations.0011_owned_echoes.sqlite.sql") ?? throw new InvalidOperationException("Migration is missing.");
+            using var reader = new StreamReader(resource);
+            command.CommandText = reader.ReadToEnd(); command.ExecuteNonQuery();
+            command.CommandText = "INSERT INTO schema_version VALUES (11)"; command.ExecuteNonQuery();
+        }
+        if(version<12)
+        {
+            using var resource=typeof(DevelopmentSqliteCharacterStore).Assembly.GetManifestResourceStream("Content.Database.Migrations.0012_item_weapon_wear.sqlite.sql")??throw new InvalidOperationException("Migration is missing.");
+            using var reader=new StreamReader(resource);command.CommandText=reader.ReadToEnd();command.ExecuteNonQuery();
+            command.CommandText="INSERT INTO schema_version VALUES(12)";command.ExecuteNonQuery();
         }
         cancellationToken.ThrowIfCancellationRequested();
         transaction.Commit();
@@ -203,9 +216,10 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
             }
             if(inventoryCreated && initialInventoryItems is { } initialItems) { OwnershipValidation.Items(initialItems,8); foreach(var item in initialItems) EnsureItemOwner(connection,transaction,item,"c:"+id); }
             var effects = ReadEffects(connection, transaction, id);
+            var ownedEchoes = ReadOwnedEchoes(connection, transaction, id);
             var deaths=ReadDeathLogs(connection,transaction,id);
             cancellationToken.ThrowIfCancellationRequested(); transaction.Commit();
-            return new Session(id, owner, revision, state, inventoryState, echoState, issued, held) { Progression = progressionState, Effects = effects,DeathLogs=deaths };
+            return new Session(id, owner, revision, state, inventoryState, echoState, issued, held) { Progression = progressionState, Effects = effects,DeathLogs=deaths, OwnedEchoes=ownedEchoes };
         }
         catch { held.Dispose(); throw; }
     }, cancellationToken);
@@ -214,11 +228,15 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
     public Task SaveWithWorldAsync(IReadOnlyList<DatabaseSave> changes, DatabaseWorldSave? world, CancellationToken cancellationToken) => SaveCheckpointAsync(changes,world,null,cancellationToken);
     public Task SaveCheckpointAsync(IReadOnlyList<DatabaseSave> changes, DatabaseWorldSave? world, DatabaseSocialSave? social, CancellationToken cancellationToken) =>
         SaveRegionalCheckpointAsync(changes, world is null ? [] : [world], social, cancellationToken);
-    public Task SaveRegionalCheckpointAsync(IReadOnlyList<DatabaseSave> changes, IReadOnlyList<DatabaseWorldSave> worlds, DatabaseSocialSave? social, CancellationToken cancellationToken) => Task.Run(() =>
+    public Task SaveRegionalCheckpointAsync(IReadOnlyList<DatabaseSave> changes,IReadOnlyList<DatabaseWorldSave> worlds,DatabaseSocialSave? social,CancellationToken token)
+        =>SaveCombatCheckpointAsync(changes,worlds,social,[],token);
+    public Task SaveCombatCheckpointAsync(IReadOnlyList<DatabaseSave> changes,IReadOnlyList<DatabaseWorldSave> worlds,
+        DatabaseSocialSave? social,IReadOnlyList<DatabaseItemWear> wear,CancellationToken cancellationToken) => Task.Run(() =>
     {
         WorldStorageValidation.Batch(worlds, social);
+        ItemWearStorageValidation.Writes(wear);
         if (changes.Count > 64) throw new InvalidDataException("Regional checkpoint exceeds the session budget.");
-        if (changes.Count == 0 && worlds.Count == 0 && social is null) return;
+        if (changes.Count == 0 && worlds.Count == 0 && social is null && wear.Count==0) return;
         using var connection = Connect(); using var transaction = connection.BeginTransaction();
         foreach (var change in changes)
         {
@@ -236,6 +254,9 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
             command.Parameters.AddWithValue("$revision", change.ExpectedRevision);
             if (command.ExecuteNonQuery() != 1) throw new InvalidOperationException("Ownership/revision conflict; SQLite checkpoint aborted.");
             if (change.Effects is { } effects) WriteEffects(connection, transaction, session.CharacterId, effects, cancellationToken);
+            if(change.OwnedEchoes is not null&&change.EchoChanges is not null)throw new InvalidDataException("Echo replacement and changes are mutually exclusive.");
+            if (change.OwnedEchoes is { } ownedEchoes) WriteOwnedEchoes(connection, transaction, session.CharacterId, ownedEchoes, cancellationToken);
+            if(change.EchoChanges is {} echoChanges)WriteOwnedEchoChanges(connection,transaction,session.CharacterId,echoChanges,cancellationToken);
             if(change.DeathLogs is {} deaths)WriteDeathLogs(connection,transaction,session.CharacterId,deaths,cancellationToken);
             if (change.Echoes is { } echoState)
             {
@@ -275,6 +296,7 @@ public sealed partial class DevelopmentSqliteCharacterStore : ICharacterDatabase
         }
         foreach (var world in worlds) WriteWorld(connection, transaction, world);
         SyncOwnership(connection,transaction,changes,worlds);
+        WriteItemWear(connection,transaction,wear,cancellationToken);
         if(social is not null) WriteSocial(connection,transaction,social,cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
         transaction.Commit();

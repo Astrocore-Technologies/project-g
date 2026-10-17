@@ -12,7 +12,8 @@ public sealed class SocialCombatTests
         SocialTests.Command(s,ai,SocialAction.Create);SocialTests.Command(s,ai,SocialAction.Invite,target:bi);SocialTests.Command(s,bi,SocialAction.Accept,invite:Assert.Single(s.Invitations(bi)));
         PvpTests.Command(w,42,1,PvpMode.Criminal);PvpTests.Command(w,43,1,PvpMode.Voluntary);var hp=w.Combat!.Get(b.EntityId).Health;var xp=w.CaptureCharacter(42).Progression!.Experience;
         Assert.True(w.TryQueueAbility(42,new(1,w.Tick,skill,skill==1?Vector2.UnitY:b.Position),0));for(var i=0;i<80;i++)w.Simulate(.05f);
-        Assert.Equal(hp,w.Combat.Get(b.EntityId).Health);Assert.Equal(0,w.Combat.ApplyEchoDamage(b.EntityId,100,a.EntityId,a.Position));Assert.Equal(0,w.Combat.ApplyAbilityDamage(b.EntityId,100,a.EntityId));Assert.Equal(xp,w.CaptureCharacter(42).Progression!.Experience);Assert.Equal(0,w.PrivatePvp(a.EntityId).Pk);Assert.Equal(0,w.PrivatePvp(a.EntityId).Reputation);
+        var echo=EchoTests.BindCombatBody(w,a.EntityId);
+        Assert.Equal(hp,w.Combat.Get(b.EntityId).Health);Assert.Equal(0,w.Combat.ApplyAbilityDamage(b.EntityId,100,echo));Assert.Equal(0,w.Combat.ApplyAbilityDamage(b.EntityId,100,a.EntityId));Assert.Equal(xp,w.CaptureCharacter(42).Progression!.Experience);Assert.Equal(0,w.PrivatePvp(a.EntityId).Pk);Assert.Equal(0,w.PrivatePvp(a.EntityId).Reputation);
         Assert.True(w.Combat.ApplyAbilityDamage(b.EntityId,1,w.Npc!.Id)>0);
     }
     [Fact]public void GuildAloneDoesNotBlockPlayerDamage()

@@ -68,11 +68,23 @@ public sealed class TerrainIntegrationTests
 
     [Theory]
     [InlineData(10,8,0,8,false)]
-    [InlineData(10,6,0,8,true)]
+    [InlineData(10,6,0,8,false)]
     [InlineData(10,8,8,0,false)]
-    [InlineData(10,6,8,0,true)]
+    [InlineData(10,6,8,0,false)]
+    [InlineData(10,6,0,0,true)]
+    [InlineData(10,6,8,8,true)]
     [InlineData(2,0,0,8,false)]
-    public void RealBasicAttackRangeIncludesHeightInBothDirections(float range,float horizontal,float sourceHeight,float targetHeight,bool hits)
+    public void HorizontalBasicUsesItsActualVolumeWithoutAutomaticVerticalCorrection(float range,float horizontal,float sourceHeight,float targetHeight,bool hits)
+        =>Assert.Equal(hits,BasicContact(range,horizontal,sourceHeight,targetHeight,false));
+
+    [Theory]
+    [InlineData(10,6,0,8,true)][InlineData(10,6,8,0,true)]
+    [InlineData(8,6,0,8,false)][InlineData(8,6,8,0,false)]
+    [InlineData(8,0,0,8,true)][InlineData(8,0,8,0,true)]
+    public void AnExplicitBasicPitchCanReachAnElevatedOrLowerBodyWithinItsVolume(float range,float horizontal,float sourceHeight,float targetHeight,bool hits)
+        =>Assert.Equal(hits,BasicContact(range,horizontal,sourceHeight,targetHeight,true));
+
+    private static bool BasicContact(float range,float horizontal,float sourceHeight,float targetHeight,bool manualPitch)
     {
         var map=new SurfaceGeometry {
             ScenePath="res://Scenes/Regions/Test.tscn",SourceHash=new string('A',64),
@@ -87,8 +99,10 @@ public sealed class TerrainIntegrationTests
         combat.Add(new(2),new(horizontal,0),CombatEntityKind.TrainingTarget,height:targetHeight);
         spatial.Add(new(1),Vector2.Zero);spatial.Add(new(2),new(horizontal,0));
         var before=combat.Get(new(2)).Health;
-        Assert.True(combat.Queue(new(1),new(1,0,Vector2.UnitX),0));combat.Simulate(.05f,1);
-        Assert.Equal(hits,combat.Get(new(2)).Health<before);
+        var direction=manualPitch?Vector3.Normalize(new(horizontal,targetHeight-sourceHeight,0)):Vector3.UnitX;
+        Assert.True(combat.Queue(new(1),new(1,0,new(direction.X,direction.Z),DirectionY:direction.Y),0));combat.Simulate(.05f,1);
+        Assert.Equal(before,combat.Get(new(2)).Health);combat.Simulate(.25f,2);
+        return combat.Get(new(2)).Health<before;
     }
 
     [Fact]
