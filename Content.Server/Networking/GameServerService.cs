@@ -286,7 +286,21 @@ public sealed partial class GameServerService : BackgroundService
                 if (!_movementInputs.TryGetValue(peer.Id, out var window) || window.Owner != owner)
                     _movementInputs[peer.Id] = window = new(owner, _options.TickRate);
                 if (!window.Accept(command, Environment.TickCount64)) return;
-                BufferIntentions(peer.Id).Move = command;
+                var navigation = BufferIntentions(peer.Id);
+                if (navigation.Follow is { } pending && !Content.Shared.Movement.MovementSimulation.IsSequenceNewer(command.InputOrder, pending.InputOrder)) return;
+                navigation.Follow = null; navigation.Move = command;
+                return;
+            }
+            if (messageType == NetworkMessageType.FollowCommand && deliveryMethod == DeliveryMethod.ReliableOrdered &&
+                NetworkProtocol.TryReadFollowCommand(reader, out var follow))
+            {
+                var owner = world.GetPlayer(peer.Id).EntityId;
+                if (!_movementInputs.TryGetValue(peer.Id, out var window) || window.Owner != owner)
+                    _movementInputs[peer.Id] = window = new(owner, _options.TickRate);
+                if (!window.Accept(new(follow.Sequence, follow.ClientTick, default, InputOrder: follow.InputOrder), Environment.TickCount64)) return;
+                var navigation = BufferIntentions(peer.Id);
+                if (navigation.Move is { } pending && !Content.Shared.Movement.MovementSimulation.IsSequenceNewer(follow.InputOrder, pending.InputOrder)) return;
+                navigation.Move = null; navigation.Follow = follow;
                 return;
             }
             if (messageType == NetworkMessageType.InventoryCommand && deliveryMethod == DeliveryMethod.ReliableOrdered &&
@@ -488,6 +502,8 @@ public sealed partial class GameServerService : BackgroundService
             if(world.TryGetOwnedEntity(peer.Id,out var ownerId) && world.WorldNodeResults.TryGetValue(ownerId,out var nodeResult)) SendGame(peer, NetworkProtocol.Write(nodeResult),DeliveryMethod.ReliableOrdered);
         }
         world.UpdateInterest(peer.Id, view);
+        if (world.FollowFor(peer.Id) is { } follow && view.SentFollow != follow)
+        { SendGame(peer, NetworkProtocol.Write(follow), DeliveryMethod.ReliableOrdered); view.SentFollow = follow; }
         world.UpdateGroundInterest(peer.Id, view);
         world.UpdateResourceInterest(peer.Id,view);
         foreach(var id in view.ResourceLeft) SendGame(peer, NetworkProtocol.Write(new ResourceNodeDespawn(id,world.Tick)),DeliveryMethod.ReliableOrdered);

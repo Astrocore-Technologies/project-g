@@ -7,7 +7,14 @@ namespace ProjectG.Economy;
 public partial class EconomyPresentation:CanvasLayer
 {
     private NetworkClient _network=null!;private PlayerController _player=null!;
-    private UiWindow _panel=null!;private VBoxContainer _body=null!;
+    private UiWindow _panel=null!;
+    private VBoxContainer _forgeItems=null!,_listings=null!,_sellItems=null!;
+    private Control _workspace=null!,_confirmation=null!;
+    private Label _coins=null!,_statusLabel=null!,_forgeName=null!,_forgeDescription=null!,_materialsLabel=null!,_quoteDetails=null!,_risk=null!;
+    private TextureRect _forgeIcon=null!;
+    private Button _evolve=null!,_enhance=null!,_sellOre=null!,_claim=null!,_confirm=null!;
+    private SpinBox _priceInput=null!,_oreInput=null!;
+    private ulong _selectedItem;
     private EconomyState _state;private InventoryState _inventory;private CraftState _materials;private MarketState _market;
     private readonly Dictionary<ulong,ItemConditionEntry> _conditions=new();
     private EconomyCommand? _pending;private EconomyQuote? _quote;private double _clock,_sentAt;private Vector2 _lastViewport;
@@ -16,12 +23,22 @@ public partial class EconomyPresentation:CanvasLayer
     {
         _network=network;_player=player;Layer=7;
         _panel=new UiWindow { ToggleKey=Key.J }; AddChild(_panel); _panel.Build("Кузница и местный рынок",new(1080,650)); _panel.CloseRequested+=_panel.Close;
-        _body=UiComposition.Scroll(_panel.Body);
+        var view=GD.Load<PackedScene>("res://UI/Screens/EconomyView.tscn").Instantiate<Control>(); _panel.Body.AddChild(view);
+        _forgeItems=view.GetNode<VBoxContainer>("%ForgeItemsRows"); _listings=view.GetNode<VBoxContainer>("%ListingsRows"); _sellItems=view.GetNode<VBoxContainer>("%SellItemsRows");
+        _workspace=view.GetNode<Control>("%Workspace"); _confirmation=view.GetNode<Control>("%Confirmation");
+        _coins=view.GetNode<Label>("%Coins"); _statusLabel=view.GetNode<Label>("%Status"); _forgeName=view.GetNode<Label>("%ForgeName"); _forgeDescription=view.GetNode<Label>("%ForgeDescription");
+        _materialsLabel=view.GetNode<Label>("%Materials"); _quoteDetails=view.GetNode<Label>("%QuoteDetails"); _risk=view.GetNode<Label>("%Risk"); _forgeIcon=view.GetNode<TextureRect>("%ForgeIcon");
+        _evolve=view.GetNode<Button>("%Evolve"); _enhance=view.GetNode<Button>("%Enhance"); _sellOre=view.GetNode<Button>("%SellOre"); _claim=view.GetNode<Button>("%Claim"); _confirm=view.GetNode<Button>("%Confirm");
+        _priceInput=view.GetNode<SpinBox>("%Price"); _oreInput=view.GetNode<SpinBox>("%OreQuantity");
+        _priceInput.ValueChanged+=value=>_price=(int)value; _oreInput.ValueChanged+=value=>_oreQuantity=(int)value;
+        _evolve.Pressed+=()=>Request(EconomyAction.Evolve,SelectedItem()); _enhance.Pressed+=()=>Request(EconomyAction.Enhance,SelectedItem());
+        _sellOre.Pressed+=()=>Request(EconomyAction.SellOre,quantity:(ushort)_oreQuantity); _claim.Pressed+=()=>Request(EconomyAction.Claim); _confirm.Pressed+=Confirm;
+        view.GetNode<Button>("%Cancel").Pressed+=()=> { _quote=null;_pending=null;_status="Расчёт отменён без списания.";Render(); };
         network.EconomyStateReceived+=State;network.EconomyQuoteReceived+=Quote;network.EconomyResultReceived+=Result;network.MarketStateReceived+=Market;
         network.InventoryReceived+=Inventory;network.CraftStateReceived+=Materials;network.ItemConditionReceived+=Condition;Render();
     }
     public override void _ExitTree(){if(_network is null)return;_network.EconomyStateReceived-=State;_network.EconomyQuoteReceived-=Quote;_network.EconomyResultReceived-=Result;_network.MarketStateReceived-=Market;_network.InventoryReceived-=Inventory;_network.CraftStateReceived-=Materials;_network.ItemConditionReceived-=Condition;}
-    public override void _UnhandledKeyInput(InputEvent e){if(e is InputEventKey{Pressed:true,Echo:false,PhysicalKeycode:Key.J}){if(GameUi.GameplayModalOpen)return; Toggle();GetViewport().SetInputAsHandled();Render();}}
+    public override void _UnhandledInput(InputEvent e){if(PcInput.Pressed("market",e)){if(GameUi.GameplayModalOpen)return; Toggle();GetViewport().SetInputAsHandled();Render();}}
     public override void _Process(double delta)
     {
         _clock+=delta;
@@ -49,8 +66,7 @@ public partial class EconomyPresentation:CanvasLayer
     internal static string Outcome(CraftOutcome o)=>o switch{CraftOutcome.Accepted=>"готово",CraftOutcome.AlreadyProcessed=>"уже выполнено",CraftOutcome.InvalidOperation=>"расчёт устарел или изменился",CraftOutcome.InvalidState=>"персонаж не может действовать",CraftOutcome.Busy=>"завершите движение, каст или обмен",CraftOutcome.TooFar=>"подойдите ближе",CraftOutcome.Blocked=>"путь к месту закрыт",CraftOutcome.Unavailable=>"действие сейчас недоступно",CraftOutcome.MissingMaterials=>"не хватает материалов или монет",CraftOutcome.InventoryFull=>"нет места в инвентаре или достигнут лимит объявлений",CraftOutcome.MaterialFull=>"достигнут лимит монет или выручки",CraftOutcome.RateLimited=>"слишком много действий",CraftOutcome.Cooldown=>"подождите",_=>"ресурс недоступен"};
     private static string Effect(EconomyEffect e)=>e switch{EconomyEffect.Evolved=>"оружие развито",EconomyEffect.Enhanced=>"заточка успешна",EconomyEffect.Failed=>"заточка не удалась, максимум прочности уменьшен",EconomyEffect.Destroyed=>"оружие уничтожено",EconomyEffect.SoldOre=>"руда продана",EconomyEffect.Listed=>"вещь выставлена",EconomyEffect.Bought=>"вещь куплена",EconomyEffect.Cancelled=>"вещь возвращена",EconomyEffect.Claimed=>"выручка получена",_=>"уже обработано"};
     private string MaterialName(ushort id)=>_network.CraftRecipes.Values.SelectMany(r=>r.Costs).FirstOrDefault(m=>m.Id==id).Name??("Материал "+id);
-    private void Text(string text)=>_body.AddChild(new Label(){Text=text,AutowrapMode=TextServer.AutowrapMode.WordSmart});
-    private void Button(string text,Action action,bool disabled=false){var b=new Button(){Text=text,Disabled=disabled||_pending is not null||!_player.IsAlive};b.Pressed+=action;_body.AddChild(b);}
+    private EconomyItem SelectedItem()=>(_state.Items??[]).FirstOrDefault(item=>item.Handle==_selectedItem);
     private void Request(EconomyAction action,EconomyItem item=default,ulong listing=0,ushort quantity=0,int price=0)
     {
         if(_pending is not null||_state.OwnerId!=_player.EntityId)return;
@@ -60,46 +76,53 @@ public partial class EconomyPresentation:CanvasLayer
     {if(_quote is not {} q)return;_pending=q.Command;_quote=null;_sentAt=_clock;_status="Ожидаем сохранения результата…";_network.SendEconomy(q.Command);Render();}
     private void Render()
     {
-        if(_body is null)return;foreach(var c in _body.GetChildren()){_body.RemoveChild(c);c.QueueFree();}
-        Text("Кузница и местный рынок — J | верстак (-10, 2)");Text("Монеты: "+_state.Coins+" | Выручка к получению: "+_market.Credit);Text(_status);if(_state.LastOperation>0)Text("Последняя сохранённая операция: "+Effect(_state.LastEffect));
-        if(_quote is {} q)
+        if(_forgeItems is null)return;
+        foreach(var list in new[]{_forgeItems,_listings,_sellItems}) UiRows.Clear(list);
+        var busy=_pending is not null || !_player.IsAlive || _state.OwnerId!=_player.EntityId;
+        _statusLabel.Text=_status; _coins.Text=_state.OwnerId==_player.EntityId?$"Монеты: {_state.Coins:N0}   ·   Выручка: {_market.Credit:N0}":"Сведения загружаются…";
+        _workspace.Visible=_quote is null; _confirmation.Visible=_quote is not null;
+        _priceInput.Editable=!busy; _oreInput.Editable=!busy; _sellOre.Disabled=busy; _claim.Disabled=busy || _market.Credit==0;
+        _materialsLabel.Text=(_materials.Materials??[]).Count>0?"Материалы: "+string.Join(", ",(_materials.Materials??[]).Select(m=>MaterialName(m.Id)+" × "+m.Quantity)):"Материалов пока нет";
+        var eligible=(_inventory.Items??[]).Where(item=>(_state.Items??[]).Any(info=>info.Handle==item.Handle)&&_conditions.ContainsKey(item.Handle)).ToArray();
+        if(!eligible.Any(item=>item.Handle==_selectedItem)) _selectedItem=eligible.FirstOrDefault().Handle;
+        foreach(var item in eligible)
         {
-            Text("Действие: "+ActionName(q.Command.Action)+" → "+q.OutputName);
-            foreach(var cost in q.Costs)Text("Стоимость: "+MaterialName(cost.Id)+" × "+cost.Quantity);
-            if(q.Command.Action==EconomyAction.List)Text("Цена продажи: "+q.Command.Price+" монет. Без комиссии.");
-            if(q.CoinChange!=0)Text("Монеты: "+(q.CoinChange>0?"+":"")+q.CoinChange);
-            if(q.Command.Action==EconomyAction.Enhance)
-            {
-                Text("Шанс успеха: "+q.Chance+"%. Успех: ATK +"+q.AttackGain+". LUK не влияет.");
-                var condition=_conditions.GetValueOrDefault(q.Command.ItemHandle);
-                Text("Провал: максимум прочности −"+q.DurabilityLoss+". Ремонт его не вернёт. При максимуме 0 оружие уничтожается.");
-                if(condition.Maximum<=q.DurabilityLoss)Text("ВНИМАНИЕ: провал этой попытки уничтожит оружие.");
-            }
-            else if(q.AttackGain>0)Text("ATK +"+q.AttackGain+"; экземпляр и прочность сохраняются.");
-            var confirm=new Button(){Text="Подтвердить цену и последствия",Disabled=!_player.IsAlive};confirm.Pressed+=Confirm;_body.AddChild(confirm);
-            var cancel=new Button(){Text="Отменить расчёт"};cancel.Pressed+=()=>{_quote=null;_pending=null;_status="Расчёт отменён без списания.";Render();};_body.AddChild(cancel);return;
+            var selected=item; var condition=_conditions[item.Handle];
+            UiRows.Action(_forgeItems,item.Name,$"Прочность {condition.Current}/{condition.Maximum}",UiAssets.EquipmentKey(item.Slot),item.Handle==_selectedItem?"Выбрано":"Выбрать",()=> { _selectedItem=selected.Handle; Render(); },busy);
         }
-        Text("Материалы: "+string.Join(", ",(_materials.Materials??[]).Select(m=>MaterialName(m.Id)+" × "+m.Quantity)));
-        Text("Оружие (эволюция и заточка сохраняют этот экземпляр):");
-        foreach(var i in _inventory.Items??[])
+        var current=eligible.FirstOrDefault(item=>item.Handle==_selectedItem); var info=SelectedItem();
+        _forgeName.Text=current.Handle==0?"Нет оружия для кузницы":current.Name;
+        _forgeDescription.Text=current.Handle==0?"Получите оружие, чтобы увидеть доступные действия.":$"Атака +{current.AttackBonus:0.##} · Защита +{current.DefenseBonus:0.##}\nПрочность {_conditions[current.Handle].Current}/{_conditions[current.Handle].Maximum}";
+        _forgeIcon.Texture=UiAssets.Texture(current.Handle==0?"equipment.unknown":UiAssets.EquipmentKey(current.Slot));
+        _evolve.Disabled=busy || current.Handle==0; _enhance.Disabled=busy || current.Handle==0 || info.Enhancement>=5;
+        if(eligible.Length==0) UiRows.Note(_forgeItems,"Подходящих предметов пока нет.");
+        foreach(var item in _inventory.Items??[])
         {
-            var info=(_state.Items??[]).FirstOrDefault(s=>s.Handle==i.Handle);if(info.Handle==0)continue;
-            if(_conditions.TryGetValue(i.Handle,out var condition))
-            {Text(i.Name+" | прочность "+condition.Current+"/"+condition.Maximum);Button("Развить "+i.Name,()=>Request(EconomyAction.Evolve,info));Button("Заточить "+i.Name,()=>Request(EconomyAction.Enhance,info),info.Enhancement>=5);}
+            if(item.Equipped)continue; var sellInfo=(_state.Items??[]).FirstOrDefault(value=>value.Handle==item.Handle);
+            if(sellInfo.Handle==0)continue;
+            UiRows.Action(_sellItems,item.Name,"Не экипировано",UiAssets.EquipmentKey(item.Slot),"Выставить",()=>Request(EconomyAction.List,sellInfo,price:_price),busy);
         }
-        Text("Скупщик у верстака: 1 монета за единицу руды.");
-        var amount=new SpinBox(){MinValue=1,MaxValue=999,Step=1,Value=_oreQuantity,Editable=_pending is null};amount.ValueChanged+=v=>_oreQuantity=(int)v;_body.AddChild(amount);
-        Button("Рассчитать продажу руды",()=>Request(EconomyAction.SellOre,quantity:(ushort)_oreQuantity));
-        Text("Выставить неснаряжённую вещь. Цена в игровых монетах:");
-        var price=new SpinBox(){MinValue=1,MaxValue=1000000,Step=1,Value=_price,Editable=_pending is null};price.ValueChanged+=v=>_price=(int)v;_body.AddChild(price);
-        foreach(var i in _inventory.Items??[])
-        {if(i.Equipped)continue;var info=(_state.Items??[]).FirstOrDefault(s=>s.Handle==i.Handle);if(info.Handle>0)Button("Выставить "+i.Name,()=>Request(EconomyAction.List,info,price:_price));}
-        Text("Местный рынок: до 2 ваших объявлений, до 8 в регионе. Без комиссии.");
+        if(_sellItems.GetChildCount()==0) UiRows.Note(_sellItems,"Нет неснаряжённых вещей для продажи.");
         foreach(var listing in _market.Listings??[])
         {
-            var l=listing;var item=l.Item;Text(item.Name+" | ATK +"+item.Attack+" DEF +"+item.Defense+" HP +"+item.Health+(item.Maximum>0?" | прочность "+item.Current+"/"+item.Maximum:"")+" | "+l.Price+" монет");
-            Button(l.Own?"Снять и вернуть вещь":"Рассчитать покупку",()=>Request(l.Own?EconomyAction.Cancel:EconomyAction.Buy,listing:l.Id));
+            var currentListing=listing; var item=listing.Item;
+            UiRows.Action(_listings,item.Name,$"Атака +{item.Attack} · Защита +{item.Defense} · HP +{item.Health}\n{listing.Price:N0} монет"+(item.Maximum>0?$" · Прочность {item.Current}/{item.Maximum}":""),UiAssets.EquipmentKey(item.Slot),listing.Own?"Снять":"Рассчитать покупку",()=>Request(currentListing.Own?EconomyAction.Cancel:EconomyAction.Buy,listing:currentListing.Id),busy);
         }
-        Button("Рассчитать получение выручки",()=>Request(EconomyAction.Claim),_market.Credit==0);
+        if((_market.Listings??[]).Count==0) UiRows.Note(_listings,"Известных объявлений пока нет. Рынок доступен рядом с верстаком.");
+        if(_quote is not {} quote)return;
+        var text=new System.Text.StringBuilder(); text.AppendLine("Действие: "+ActionName(quote.Command.Action)+" → "+quote.OutputName);
+        foreach(var cost in quote.Costs) text.AppendLine("Стоимость: "+MaterialName(cost.Id)+" × "+cost.Quantity);
+        if(quote.Command.Action==EconomyAction.List) text.AppendLine("Цена продажи: "+quote.Command.Price+" монет. Без комиссии.");
+        if(quote.CoinChange!=0) text.AppendLine("Монеты: "+(quote.CoinChange>0?"+":"")+quote.CoinChange);
+        _risk.Text="";
+        if(quote.Command.Action==EconomyAction.Enhance)
+        {
+            text.AppendLine("Шанс успеха: "+quote.Chance+"%. Успех: ATK +"+quote.AttackGain+". LUK не влияет.");
+            var condition=_conditions.GetValueOrDefault(quote.Command.ItemHandle);
+            _risk.Text="Провал: максимум прочности −"+quote.DurabilityLoss+". Ремонт его не вернёт. При максимуме 0 оружие уничтожается.";
+            if(condition.Maximum<=quote.DurabilityLoss) _risk.Text+="\nВНИМАНИЕ: провал этой попытки уничтожит оружие.";
+        }
+        else if(quote.AttackGain>0) text.AppendLine("ATK +"+quote.AttackGain+"; экземпляр и прочность сохраняются.");
+        _quoteDetails.Text=text.ToString(); _confirm.Disabled=!_player.IsAlive;
     }
 }

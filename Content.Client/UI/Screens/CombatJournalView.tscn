@@ -1,0 +1,58 @@
+[gd_scene format=3]
+[ext_resource type="Theme" path="res://UI/Theme/rework-theme.tres" id="Theme"]
+[node name="CombatJournalView" type="VBoxContainer"]
+theme = ExtResource("Theme")
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="Actions" type="HBoxContainer" parent="."]
+[node name="Current" type="Button" parent="Actions"]
+unique_name_in_owner = true
+text = "Текущий бой"
+[node name="Refresh" type="Button" parent="Actions"]
+unique_name_in_owner = true
+text = "Обновить"
+[node name="Hint" type="Label" parent="Actions"]
+text = "Доступен только вам · время местное"
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Muted"
+[node name="Status" type="Label" parent="."]
+unique_name_in_owner = true
+text = ""
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Muted"
+[node name="Columns" type="HBoxContainer" parent="."]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="History" type="VBoxContainer" parent="Columns"]
+custom_minimum_size = Vector2(240, 0)
+size_flags_horizontal = 3
+size_flags_vertical = 3
+size_flags_stretch_ratio = 0.7
+[node name="HistoryTitle" type="Label" parent="Columns/History"]
+text = "Последние смерти"
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 22
+[node name="Deaths" type="ScrollContainer" parent="Columns/History"]
+size_flags_vertical = 3
+size_flags_horizontal = 3
+horizontal_scroll_mode = 0
+[node name="DeathsRows" type="VBoxContainer" parent="Columns/History/Deaths"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+[node name="VSeparator" type="VSeparator" parent="Columns"]
+[node name="Events" type="ScrollContainer" parent="Columns"]
+size_flags_vertical = 3
+size_flags_horizontal = 3
+horizontal_scroll_mode = 0
+[node name="EventsRows" type="VBoxContainer" parent="Columns/Events"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+[node name="CombatJournalText" type="Label" parent="Columns/Events/EventsRows"]
+unique_name_in_owner = true
+text = "Событий пока нет."
+autowrap_mode = 3
+size_flags_horizontal = 3

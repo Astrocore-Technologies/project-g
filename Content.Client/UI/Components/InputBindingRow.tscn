@@ -1,0 +1,16 @@
+[gd_scene format=3]
+[node name="InputBindingRow" type="HBoxContainer"]
+size_flags_horizontal = 3
+theme_override_constants/separation = 12
+[node name="Title" type="Label" parent="."]
+custom_minimum_size = Vector2(250, 42)
+size_flags_horizontal = 3
+text = "Действие"
+autowrap_mode = 3
+[node name="Binding" type="Button" parent="."]
+custom_minimum_size = Vector2(210, 42)
+text = "Назначить"
+[node name="Clear" type="Button" parent="."]
+custom_minimum_size = Vector2(42, 42)
+text = "×"
+tooltip_text = "Убрать назначение"

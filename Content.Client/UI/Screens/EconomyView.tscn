@@ -1,0 +1,192 @@
+[gd_scene format=3]
+[ext_resource type="Theme" path="res://UI/Theme/rework-theme.tres" id="Theme"]
+[node name="EconomyView" type="VBoxContainer"]
+theme = ExtResource("Theme")
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="Coins" type="Label" parent="."]
+unique_name_in_owner = true
+text = "Сведения загружаются…"
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 18
+[node name="Workspace" type="TabContainer" parent="."]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="Кузница" type="HBoxContainer" parent="Workspace"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="ForgeList" type="VBoxContainer" parent="Workspace/Кузница"]
+custom_minimum_size = Vector2(300, 0)
+size_flags_horizontal = 3
+size_flags_vertical = 3
+size_flags_stretch_ratio = 1
+[node name="ForgeItems" type="ScrollContainer" parent="Workspace/Кузница/ForgeList"]
+size_flags_vertical = 3
+size_flags_horizontal = 3
+horizontal_scroll_mode = 0
+[node name="ForgeItemsRows" type="VBoxContainer" parent="Workspace/Кузница/ForgeList/ForgeItems"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+[node name="ForgeDetail" type="VBoxContainer" parent="Workspace/Кузница"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+size_flags_stretch_ratio = 1.5
+[node name="ForgeIcon" type="TextureRect" parent="Workspace/Кузница/ForgeDetail"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 150)
+expand_mode = 1
+stretch_mode = 5
+size_flags_horizontal = 4
+mouse_filter = 2
+[node name="ForgeName" type="Label" parent="Workspace/Кузница/ForgeDetail"]
+unique_name_in_owner = true
+text = "Выберите оружие"
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 22
+[node name="ForgeDescription" type="Label" parent="Workspace/Кузница/ForgeDetail"]
+unique_name_in_owner = true
+text = ""
+autowrap_mode = 3
+size_flags_horizontal = 3
+[node name="Fill" type="Control" parent="Workspace/Кузница/ForgeDetail"]
+size_flags_vertical = 3
+[node name="Evolve" type="Button" parent="Workspace/Кузница/ForgeDetail"]
+unique_name_in_owner = true
+text = "Развить"
+[node name="Enhance" type="Button" parent="Workspace/Кузница/ForgeDetail"]
+unique_name_in_owner = true
+text = "Заточить"
+[node name="StationHint" type="Label" parent="Workspace/Кузница/ForgeDetail"]
+text = "Кузница доступна у верстака. Цена и последствия подтверждаются перед списанием."
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Muted"
+[node name="Рынок" type="HBoxContainer" parent="Workspace"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="MarketList" type="VBoxContainer" parent="Workspace/Рынок"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+size_flags_stretch_ratio = 1.5
+[node name="MarketHeading" type="Label" parent="Workspace/Рынок/MarketList"]
+text = "Местные объявления"
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 22
+[node name="Listings" type="ScrollContainer" parent="Workspace/Рынок/MarketList"]
+size_flags_vertical = 3
+size_flags_horizontal = 3
+horizontal_scroll_mode = 0
+[node name="ListingsRows" type="VBoxContainer" parent="Workspace/Рынок/MarketList/Listings"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+[node name="Sell" type="VBoxContainer" parent="Workspace/Рынок"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+size_flags_stretch_ratio = 1
+custom_minimum_size = Vector2(280, 0)
+[node name="SellTitle" type="Label" parent="Workspace/Рынок/Sell"]
+text = "Продать вещь"
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 22
+[node name="PriceLabel" type="Label" parent="Workspace/Рынок/Sell"]
+text = "Цена в игровых монетах"
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Muted"
+[node name="Price" type="SpinBox" parent="Workspace/Рынок/Sell"]
+unique_name_in_owner = true
+min_value = 1
+max_value = 1000000
+step = 1
+value = 10
+[node name="SellItems" type="ScrollContainer" parent="Workspace/Рынок/Sell"]
+size_flags_vertical = 3
+size_flags_horizontal = 3
+horizontal_scroll_mode = 0
+[node name="SellItemsRows" type="VBoxContainer" parent="Workspace/Рынок/Sell/SellItems"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+[node name="Claim" type="Button" parent="Workspace/Рынок/Sell"]
+unique_name_in_owner = true
+text = "Рассчитать получение выручки"
+[node name="Скупщик" type="VBoxContainer" parent="Workspace"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="OreHeading" type="Label" parent="Workspace/Скупщик"]
+text = "Продажа руды"
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 22
+[node name="OreHint" type="Label" parent="Workspace/Скупщик"]
+text = "Скупщик у верстака: 1 монета за единицу руды."
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Muted"
+[node name="Materials" type="Label" parent="Workspace/Скупщик"]
+unique_name_in_owner = true
+text = "Материалы загружаются…"
+autowrap_mode = 3
+size_flags_horizontal = 3
+[node name="OreQuantity" type="SpinBox" parent="Workspace/Скупщик"]
+unique_name_in_owner = true
+min_value = 1
+max_value = 999
+step = 1
+value = 1
+[node name="SellOre" type="Button" parent="Workspace/Скупщик"]
+unique_name_in_owner = true
+text = "Рассчитать продажу руды"
+[node name="Confirmation" type="VBoxContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="QuoteTitle" type="Label" parent="Confirmation"]
+text = "Подтверждение операции"
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 22
+[node name="QuoteScroll" type="ScrollContainer" parent="Confirmation"]
+size_flags_vertical = 3
+size_flags_horizontal = 3
+horizontal_scroll_mode = 0
+[node name="QuoteScrollRows" type="VBoxContainer" parent="Confirmation/QuoteScroll"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+[node name="QuoteDetails" type="Label" parent="Confirmation/QuoteScroll/QuoteScrollRows"]
+unique_name_in_owner = true
+text = ""
+autowrap_mode = 3
+size_flags_horizontal = 3
+[node name="Risk" type="Label" parent="Confirmation"]
+unique_name_in_owner = true
+text = ""
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.94, 0.68, 0.45, 1)
+[node name="QuoteActions" type="HBoxContainer" parent="Confirmation"]
+[node name="Confirm" type="Button" parent="Confirmation/QuoteActions"]
+unique_name_in_owner = true
+text = "Подтвердить цену и последствия"
+size_flags_horizontal = 3
+[node name="Cancel" type="Button" parent="Confirmation/QuoteActions"]
+unique_name_in_owner = true
+text = "Отменить расчёт"
+theme_type_variation = &"QuietButton"
+[node name="Status" type="Label" parent="."]
+unique_name_in_owner = true
+text = ""
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Muted"

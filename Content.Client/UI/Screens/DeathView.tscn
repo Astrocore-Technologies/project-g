@@ -1,0 +1,31 @@
+[gd_scene format=3]
+[ext_resource type="Theme" path="res://UI/Theme/rework-theme.tres" id="Theme"]
+[node name="DeathView" type="VBoxContainer"]
+theme = ExtResource("Theme")
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="Timer" type="Label" parent="."]
+unique_name_in_owner = true
+text = ""
+autowrap_mode = 3
+size_flags_horizontal = 3
+[node name="Status" type="Label" parent="."]
+unique_name_in_owner = true
+text = ""
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Muted"
+[node name="Space" type="Control" parent="."]
+size_flags_vertical = 3
+[node name="RespawnButton" type="Button" parent="."]
+unique_name_in_owner = true
+text = "Возродиться"
+[node name="Hint" type="Label" parent="."]
+text = "Возрождение возвращает 50% HP и MP. Перезарядки сохраняются."
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Muted"
+[node name="DeathLog" type="Button" parent="."]
+unique_name_in_owner = true
+text = "Разбор смерти"
+theme_type_variation = &"QuietButton"

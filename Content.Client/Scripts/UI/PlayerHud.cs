@@ -14,6 +14,7 @@ public partial class PlayerHud : CanvasLayer
     private DefenseState _defense;
     private double _defenseReceived;
     private readonly Label[] _slotNames = new Label[9], _slotTimers = new Label[9];
+    private readonly Label[] _slotKeys = new Label[9];
     private readonly PanelContainer[] _slots = new PanelContainer[9];
     private readonly TextureRect[] _slotArt = new TextureRect[9];
     private readonly ushort[] _shownArt = new ushort[9];
@@ -50,7 +51,6 @@ public partial class PlayerHud : CanvasLayer
         _xpText = _root.GetNode<Label>("%ExperienceText");
         _defenseText = _root.GetNode<Label>("%DefenseText");
         InitializeControls(_root);
-        string[] keys = ["Q", "W", "E", "R", "A", "S", "D", "F", "Space"];
         for (var i = 0; i < _slots.Length; i++)
         {
             var slot = _root.GetNode<PanelContainer>($"Hotbar/Skill{i}");
@@ -58,14 +58,17 @@ public partial class PlayerHud : CanvasLayer
             _slotArt[i] = slot.GetNode<TextureRect>("Content/Icon");
             _slotNames[i] = slot.GetNode<Label>("Content/SkillName");
             _slotTimers[i] = slot.GetNode<Label>("Content/Timer");
-            slot.GetNode<Label>("Content/Key").Text = keys[i];
+            _slotKeys[i] = slot.GetNode<Label>("Content/Key");
         }
+        PcInput.Changed += RefreshBindings; RefreshBindings();
     }
+    private void RefreshBindings(){for(var i=0;i<_slotKeys.Length;i++)_slotKeys[i].Text=PcInput.Label(i==8?PcInput.Dodge:PcInput.Skills[i]);}
 
     public void SetPortrait(Texture2D? portrait) => _portraitArt.Texture = portrait;
     private void OpenCharacter() => _openCharacter?.Invoke();
     public override void _ExitTree()
     {
+        PcInput.Changed -= RefreshBindings;
         if (_portrait is not null) _portrait.Pressed -= OpenCharacter;
         _openCharacter = null;
     }
@@ -79,7 +82,7 @@ public partial class PlayerHud : CanvasLayer
         _staminaText.Text=$"{state.Stamina:0} / {state.MaxStamina:0}";
         _stamina.TooltipText="Выносливость: "+_staminaText.Text;
         Value(_stamina,state.Stamina,state.MaxStamina);
-        _defenseText.TooltipText=$"Блок урона: {state.BlockDamage*100:0.#}%\nПарирование: {state.ParryCost:0} выносливости\nРывок: {state.DodgeCost:0} выносливости\nSpace при падении: Quick Recover, {state.QuickRecoverCost:0} выносливости, до {state.QuickRecoverRange:0.#} м. Удерживать — прицел, отпустить — перекат.";
+        _defenseText.TooltipText=$"Блок урона: {state.BlockDamage*100:0.#}%\nПарирование: {state.ParryCost:0} выносливости\nРывок: {state.DodgeCost:0} выносливости\n{PcInput.Label(PcInput.Dodge)} при падении: Quick Recover, {state.QuickRecoverCost:0} выносливости, до {state.QuickRecoverRange:0.#} м. Удерживать — прицел, отпустить — перекат.";
     }
     public void Apply(AbilityLoadout loadout)
     { if (loadout.EntityId != _owner) return; _loadout = loadout; _received = Time.GetTicksMsec()/1000d; _manaText.Text = $"{loadout.Mana:0} / {loadout.MaxMana:0}"; _mana.TooltipText="Мана: "+_manaText.Text; Value(_mana,loadout.Mana,loadout.MaxMana); UpdateSlots(); }
@@ -99,9 +102,9 @@ public partial class PlayerHud : CanvasLayer
         _combatText.Visible=inCombat>0;
         _combatText.Text=inCombat>0 ? $"В БОЮ · {inCombat:0.0} с" : "";
         var parry=Math.Max(0,_defense.ParryCooldown-(Time.GetTicksMsec()/1000d-_defenseReceived));
-        _defenseText.Text=(_defense.Blocking ? "Tab · БЛОК" : "Tab · блок")+(parry>0 ? $"   Shift · {parry:0.0} с" : "   Shift · парирование");
+        _defenseText.Text=(_defense.Blocking ? PcInput.Label(PcInput.Block)+" · БЛОК" : PcInput.Label(PcInput.Block)+" · блок")+(parry>0 ? $"   {PcInput.Label(PcInput.Parry)} · {parry:0.0} с" : "   "+PcInput.Label(PcInput.Parry)+" · парирование");
         var guardBreak=Math.Max(0,_defense.GuardBreakRemaining-(Time.GetTicksMsec()/1000d-_defenseReceived));
-        if (guardBreak>0) _defenseText.Text=$"Блок пробит · {guardBreak:0.0} с"+(parry>0 ? $"   Shift · {parry:0.0} с" : "   Shift · парирование");
+        if (guardBreak>0) _defenseText.Text=$"Блок пробит · {guardBreak:0.0} с"+(parry>0 ? $"   {PcInput.Label(PcInput.Parry)} · {parry:0.0} с" : "   "+PcInput.Label(PcInput.Parry)+" · парирование");
         var quick=Math.Max(0,_defense.QuickRecoverCooldown-(Time.GetTicksMsec()/1000d-_defenseReceived));
         _defenseText.Visible=inCombat>0 || _defense.Blocking || parry>0 || guardBreak>0 || quick>0;
         if(quick>0) _defenseText.Text+=$"   Подъём · {quick:0.0} с";
@@ -121,7 +124,7 @@ public partial class PlayerHud : CanvasLayer
             if (skill.Form==AbilityForm.Dash)
             {
                 _slotNames[i].Text="Уворот";
-                _slots[i].TooltipText=$"Уворот\nВыносливость: {skill.StaminaCost:0}\nДо {skill.Range:0.#} м за {skill.DodgeDurationSeconds:0.##} с · перезарядка {skill.CooldownSeconds:0.#} с\nЗащита: первые {skill.DodgeProtectionSeconds:0.##} с — {DodgeThreatLabels(skill.DodgeProtectedThreats)}\nSpace · до курсора. Контроль проходит по обычным правилам.";
+                _slots[i].TooltipText=$"Уворот\nВыносливость: {skill.StaminaCost:0}\nДо {skill.Range:0.#} м за {skill.DodgeDurationSeconds:0.##} с · перезарядка {skill.CooldownSeconds:0.#} с\nЗащита: первые {skill.DodgeProtectionSeconds:0.##} с — {DodgeThreatLabels(skill.DodgeProtectedThreats)}\n{PcInput.Label(PcInput.Dodge)} · до курсора. Контроль проходит по обычным правилам.";
             }
             if (skill.Id is >=20 and <=30) _slots[i].TooltipText=$"{GameUi.SkillName(skill.Id)}\n{SwordsmanUi.Description(skill.Id)}\nТекущий расход: {skill.StaminaCost:0}; перезарядка: {skill.CooldownSeconds:0.#} с";
             if (skill.RecoverySeconds>0) _slots[i].TooltipText+=$"\nВосстановление после удара: до {skill.RecoverySeconds:0.##} с";

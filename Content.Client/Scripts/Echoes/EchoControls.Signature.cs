@@ -21,7 +21,7 @@ public partial class EchoControls
     private PlayerController? _signaturePlayer;
     private Window? _signatureWindow;
     private byte _signatureAimSlot;
-    private Key _signatureAimKey;
+    private string? _signatureAimAction;
     private uint _signatureControlSequence;
     private readonly uint[] _issuedSignatureBySlot=new uint[NetworkConstants.MaxActiveEchoes];
     private readonly bool[] _pendingSignatureSlots=new bool[NetworkConstants.MaxActiveEchoes];
@@ -70,12 +70,12 @@ public partial class EchoControls
         foreach(var id in _signatureProfiles.Keys.ToArray())
             if(_loadout.Slots is null||!_loadout.Slots.Any(s=>s.EntityId==id))ForgetSignature(id);
     }
-    private void BeginSignatureAim(byte slot,Key key)
+    private void BeginSignatureAim(byte slot,string action)
     {
         if(!TrySignatureSlot(slot,out var echo)||!_signatureProfiles.TryGetValue(echo.EntityId,out var profile))
         {_status.Text="Сведения о способности загружаются…";return;}
         if(_pendingSignatureSlots[slot-1]||!_alive||!_network.RegionActive)return;
-        _signatureAimSlot=slot;_signatureAimKey=key;
+        _signatureAimSlot=slot;_signatureAimAction=action;
         if(profile.ExecutionForm==CombatActionForm.Toggle){CommitSignature(slot);ClearSignatureAim();return;}
         if(profile.ExecutionForm is CombatActionForm.Charged or CombatActionForm.Hold)
         {
@@ -86,23 +86,22 @@ public partial class EchoControls
     }
     public override void _Input(InputEvent input)
     {
-        if(input is InputEventKey {Pressed:true,PhysicalKeycode:Key.Escape} ||
-            input is InputEventMouseButton {Pressed:true,ButtonIndex:MouseButton.Right})
+        if(PcInput.Pressed(PcInput.Cancel,input) || PcInput.Pressed(PcInput.Move,input))
         {
             if(_signatureAimSlot!=0||_heldSignatures.Count>0){CancelSignatureInput();GetViewport().SetInputAsHandled();}
-            else if(input is InputEventKey && !GameUi.GameplayModalOpen && TrySignatureSlot(_selected,out var selected) && _signatureExecutions.ContainsKey(selected.EntityId))
+            else if(PcInput.Pressed(PcInput.Cancel,input) && !GameUi.GameplayModalOpen && TrySignatureSlot(_selected,out var selected) && _signatureExecutions.ContainsKey(selected.EntityId))
             {SendSignatureControl(selected.EntityId,EchoSignatureControlKind.Cancel);GetViewport().SetInputAsHandled();}
             return;
         }
-        if(input is not InputEventKey {Pressed:false} key)return;
-        byte slot=key.PhysicalKeycode switch {Key.T=>1,Key.Y=>2,Key.U=>3,_=>0};
+        byte slot=0;
+        for(var i=0;i<PcInput.Echoes.Length;i++)if(PcInput.Released(PcInput.Echoes[i],input)){slot=(byte)(i+1);break;}
         if(slot==0)return;
         if(TrySignatureSlot(slot,out var echo)&&_heldSignatures.ContainsKey(echo.EntityId))
         {
             SendSignatureControl(echo.EntityId,EchoSignatureControlKind.Release);_heldSignatures.Remove(echo.EntityId);
             if(_signatureAimSlot==slot)ClearSignatureAim();GetViewport().SetInputAsHandled();return;
         }
-        if(_signatureAimSlot==slot&&key.PhysicalKeycode==_signatureAimKey)
+        if(_signatureAimSlot==slot&&_signatureAimAction is not null&&PcInput.Released(_signatureAimAction,input))
         {CommitSignature(slot);ClearSignatureAim();GetViewport().SetInputAsHandled();}
     }
     private bool TrySignatureAim(NetworkEntityId id,AbilityProfile profile,out V3 foot,out V2 aim,out float height,
@@ -160,7 +159,7 @@ public partial class EchoControls
         if(++_signatureControlSequence==0)++_signatureControlSequence;
         _network.SendEchoControl(new(_signatureControlSequence,id,sequence,execution,_network.LatestServerTick,kind,aim,height,dy));
     }
-    private void ClearSignatureAim(){_signatureAimSlot=0;_signatureAimKey=Key.None;_signatureArea?.HideArea();}
+    private void ClearSignatureAim(){_signatureAimSlot=0;_signatureAimAction=null;_signatureArea?.HideArea();}
     private void CancelSignatureInput()
     {
         foreach(var id in _heldSignatures.Keys)SendSignatureControl(id,EchoSignatureControlKind.Cancel);

@@ -1,0 +1,71 @@
+[gd_scene format=3]
+[ext_resource type="Theme" path="res://UI/Theme/rework-theme.tres" id="Theme"]
+[node name="PvpView" type="HBoxContainer"]
+theme = ExtResource("Theme")
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="Summary" type="VBoxContainer" parent="."]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+size_flags_stretch_ratio = 1.2
+[node name="Heading" type="Label" parent="Summary"]
+text = "Состояние персонажа"
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 22
+[node name="DetailsScroll" type="ScrollContainer" parent="Summary"]
+size_flags_vertical = 3
+size_flags_horizontal = 3
+horizontal_scroll_mode = 0
+[node name="DetailsScrollRows" type="VBoxContainer" parent="Summary/DetailsScroll"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+[node name="Details" type="Label" parent="Summary/DetailsScroll/DetailsScrollRows"]
+unique_name_in_owner = true
+text = "Сведения загружаются…"
+autowrap_mode = 3
+size_flags_horizontal = 3
+[node name="Respawn" type="Button" parent="Summary"]
+unique_name_in_owner = true
+text = "Возродиться в городе"
+[node name="Modes" type="VBoxContainer" parent="."]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+size_flags_stretch_ratio = 1
+[node name="ModesTitle" type="Label" parent="Modes"]
+text = "Режим PvP"
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 22
+[node name="Peace" type="Button" parent="Modes"]
+unique_name_in_owner = true
+text = "Выключить PvP после окончания тега"
+[node name="PeaceHelp" type="Label" parent="Modes"]
+text = "Режим изменится только после подтверждения сервера."
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Muted"
+[node name="Voluntary" type="Button" parent="Modes"]
+unique_name_in_owner = true
+text = "Включить PvP и тег (120 секунд)"
+[node name="Acknowledge" type="CheckBox" parent="Modes"]
+unique_name_in_owner = true
+text = "Понимаю последствия нападения на мирных"
+[node name="Criminal" type="Button" parent="Modes"]
+unique_name_in_owner = true
+text = "Разрешить нападение на мирных"
+[node name="Rules" type="Label" parent="Modes"]
+text = "PvP-смерть: может выпасть 1 экипированный предмет. Bound защищён; legendary без bound может выпасть. Подбор доступен игрокам с PvP-тегом и занимает 5 секунд. Через 30 минут вещь уничтожается. Город защищён; вход во время боя разрешён."
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Muted"
+[node name="Space" type="Control" parent="Modes"]
+size_flags_vertical = 3
+[node name="Status" type="Label" parent="Modes"]
+unique_name_in_owner = true
+text = ""
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Muted"

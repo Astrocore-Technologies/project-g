@@ -27,22 +27,20 @@ public partial class EchoControls : CanvasLayer
     private Label _status = null!;
     private bool _alive = true, _pending;
     private uint _sequence;
-    private static readonly string[] Keys = ["T", "Y", "U"];
     public void Initialize(NetworkClient network,NetworkEntityId owner)
     {
         _network=network; _owner=owner; Layer=22;
         var root=new Control { Theme=GameUi.CreateTheme(),MouseFilter=Control.MouseFilterEnum.Ignore }; AddChild(root); root.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        var panel=new VBoxContainer { Name="CompanionHud",Visible=false,AnchorLeft=1,AnchorRight=1,OffsetLeft=-172,OffsetRight=-24,OffsetTop=300 }; root.AddChild(panel); _hud=panel;
+        var panel=GD.Load<PackedScene>("res://UI/Components/EchoCommandHud.tscn").Instantiate<VBoxContainer>();root.AddChild(panel); _hud=panel;
         for(var i=0;i<_buttons.Length;i++)
         {
-            var slot=(byte)(i+1); var button=new Button { Visible=false,CustomMinimumSize=new(144,62),FocusMode=Control.FocusModeEnum.None,Icon=UiAssets.Texture("icon.star"),ExpandIcon=true };
-            button.AddThemeConstantOverride("icon_max_width",14); button.Pressed+=()=> { _selected=slot; Toggle(); }; panel.AddChild(button); _buttons[i]=button;
+            var slot=(byte)(i+1); var button=panel.GetNode<Button>("%Slot"+slot);button.Icon=UiAssets.Texture("icon.star");
+            button.Pressed+=()=> { _selected=slot; Toggle(); }; _buttons[i]=button;
         }
-        _status=UiComposition.Paragraph(panel,"T / Y / U — способности\nF3 — Эхо Прошлого",12); _status.AddThemeConstantOverride("outline_size",4); _status.AddThemeColorOverride("font_outline_color",new Color(0,0,0,.8f));
+        _status=panel.GetNode<Label>("%Status");
         _window=new UiWindow { ToggleKey=Key.F3 }; root.AddChild(_window); _window.Build("Эхо Прошлого",new(1180,656)); _window.CloseRequested+=_window.Close;
         var view=GD.Load<PackedScene>("res://UI/Screens/EchoView.tscn").Instantiate<Control>(); _window.Body.AddChild(view);
         _empty=view.GetNode<Control>("%Empty"); _owned=view.GetNode<Control>("%Owned");
-        view.GetNode<TextureRect>("%Emblem").Texture=UiAssets.Texture("icon.star");
         _list=view.GetNode<VBoxContainer>("%List"); _preview=view.GetNode<UiModelPreview>("%Preview");
         _name=view.GetNode<Label>("%EchoName"); _readiness=view.GetNode<Label>("%Readiness"); _details=view.GetNode<Label>("%Details");
         _network.EchoRosterReceived+=ApplyRoster;_network.EchoSummonReceived+=ApplySummon;_network.EchoRecallReceived+=ApplyRecall;
@@ -66,7 +64,7 @@ public partial class EchoControls : CanvasLayer
         _preview.Visible=true; _preview.SetMesh(echo.Mesh,echo.Material);
         _name.Text=echo.State.Name;
         var ability=_loadout.Slots?.FirstOrDefault(s=>s.Slot==_selected);
-        _details.Text=$"Активный спутник · место {_selected}\n\nОсобая способность · {Keys[_selected-1]}\n"+(ability is {} a && a.Slot!=0?$"Дальность: {a.Range:0.#} м\nРадиус: {a.Radius:0.#} м":"Сведения о способности загружаются…")+"\n\nВ бою направьте курсор в мир и нажмите клавишу спутника.";
+        _details.Text=$"Активный спутник · место {_selected}\n\nОсобая способность · {PcInput.Label(PcInput.Echoes[_selected-1])}\n"+(ability is {} a && a.Slot!=0?$"Дальность: {a.Range:0.#} м\nРадиус: {a.Radius:0.#} м":"Сведения о способности загружаются…")+"\n\nВ бою направьте курсор в мир и нажмите клавишу спутника.";
     }
     public void Apply(EchoLoadout value)
     {
@@ -111,17 +109,17 @@ public partial class EchoControls : CanvasLayer
         {
             _cooldowns[i] = Math.Max(0, _cooldowns[i] - delta);
             _buttons[i].Disabled=false;
-            _buttons[i].Text =  $"{(_known.TryGetValue((byte)(i+1),out var echo)?echo.State.Name:$"Эхо {i+1}")}\n{Keys[i]} · "+(_refused[i]?"Отказ":_cooldowns[i]>0 ? $"{_cooldowns[i]:0.0}с" : "Готово");
+            _buttons[i].Text =  $"{(_known.TryGetValue((byte)(i+1),out var echo)?echo.State.Name:$"Эхо {i+1}")}\n{PcInput.Label(PcInput.Echoes[i])} · "+(_refused[i]?"Отказ":_cooldowns[i]>0 ? $"{_cooldowns[i]:0.0}с" : "Готово");
         }
     }
     public override void _UnhandledInput(InputEvent input)
     {
         if(GameUi.GameplayModalOpen) return;
-        if (input is not InputEventKey { Pressed: true, Echo: false } key) return;
-        if(key.PhysicalKeycode==Key.F3) { Toggle(); GetViewport().SetInputAsHandled(); return; }
-        byte slot = key.PhysicalKeycode switch { Key.T => 1, Key.Y => 2, Key.U => 3, _ => 0 };
+        if (PcInput.Blocked(this)) return;
+        if(PcInput.Pressed("echo",input)) { Toggle(); GetViewport().SetInputAsHandled(); return; }
+        byte slot = (byte)PcInput.EchoIndex(input);
         if (slot == 0) return;
-        BeginSignatureAim(slot,key.PhysicalKeycode); GetViewport().SetInputAsHandled();
+        BeginSignatureAim(slot,PcInput.Echoes[slot-1]); GetViewport().SetInputAsHandled();
     }
     private void Request(byte slot)
     {

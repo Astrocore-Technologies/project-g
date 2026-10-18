@@ -508,6 +508,7 @@ public sealed class NetworkMovementIntegrationTests
         public int LargestPacket { get; private set; }
         public Action<int>? PacketObserved { get; set; }
         public Action<WorldSnapshot>? SnapshotObserved { get; set; }
+        public List<FollowState> Follows { get; } = new();
 
         public void SendGame(LiteNetLib.Utils.NetDataWriter payload, DeliveryMethod method, ulong? epoch = null)
         {
@@ -817,6 +818,8 @@ public sealed class NetworkMovementIntegrationTests
                             Assert.True(NetworkProtocol.TryReadPickupResult(reader, out var pickupResult));
                             PickupResults.Add(pickupResult);
                             break;
+                        case NetworkMessageType.FollowState:
+                            Assert.True(NetworkProtocol.TryReadFollowState(reader,out var follow));Follows.Add(follow);break;
                         case NetworkMessageType.WorldSnapshot:
                             Assert.True(NetworkProtocol.TryReadWorldSnapshot(reader, out var snapshot));
                             SnapshotObserved?.Invoke(snapshot);

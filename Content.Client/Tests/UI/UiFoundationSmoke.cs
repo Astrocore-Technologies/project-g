@@ -24,16 +24,16 @@ public partial class UiFoundationSmoke : Node
             await Frames(3);
             Check(regular.Size.IsEqualApprox(new(64,64)) && compact.Size.IsEqualApprox(regular.Size/2),"Compact icon is not half the default slot size.");
             Check(compact.FocusMode==Control.FocusModeEnum.None,"Binding reset the caller's focus mode.");
-            var regularArt=regular.GetChildren().OfType<TextureRect>().Single(); var compactArt=compact.GetChildren().OfType<TextureRect>().Single();
+            var regularArt=regular.FindChildren("Art","TextureRect",true,false).OfType<TextureRect>().Single(); var compactArt=compact.FindChildren("Art","TextureRect",true,false).OfType<TextureRect>().Single();
             Check(compactArt.Size.IsEqualApprox(regularArt.Size/2),"Compact artwork did not preserve half-size proportions.");
             icons.QueueFree(); await Frames(2);
             var workbench=GD.Load<PackedScene>("res://UI/Workbench.tscn").Instantiate<UiWorkbench>(); AddChild(workbench); await Frames(4);
-            foreach(var screen in Enum.GetValues<UiScreenKind>())
+            foreach(var screen in UiWorkbench.Screens)
             {
-                workbench.Select(screen); await Frames(4);
-                var layout=workbench.FindChildren("*","",true,false).OfType<UiScreenLayout>().Single();
-                Check(layout.Slots.Count>=5,$"Missing slots in {screen}");
-                foreach(var slot in layout.Slots.Values) Check(slot.Size.X>0 && slot.Size.Y>0,$"Collapsed {screen}/{slot.Name}");
+                workbench.ShowScene(screen); await Frames(4);
+                var layout=workbench.CurrentView!;
+                Check(layout.SceneFilePath=="res://UI/Screens/"+screen+".tscn",$"Workbench replaced working scene {screen}");
+                Check(layout.GetChildCount()>0 && layout.Size.X>0 && layout.Size.Y>0,$"Collapsed working scene {screen}");
                 await Capture("layout-"+screen);
             }
             workbench.ShowComponents(); await Frames(4); await Capture("source-kit-components");
@@ -43,11 +43,12 @@ public partial class UiFoundationSmoke : Node
             var viewport=preview.GetChildren().OfType<SubViewport>().Single(); Check(viewport.OwnWorld3D,"Preview reused gameplay world.");
             await Capture("workbench-character");
             GetWindow().Size=new(1920,1080); await Frames(4); await Capture("workbench-1920");
+            workbench.QueueFree(); await Frames(3);
             var root=new Control(); AddChild(root); root.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
             var original=GameUi.Button("Original focus",()=>{}); root.AddChild(original); original.GrabFocus(); await Frames(1);
             var modal=new UiWindow(); root.AddChild(modal); modal.Build("Modal smoke",new(640,400)); modal.CloseRequested+=modal.Close;
             var second=new UiWindow(); root.AddChild(second);
-            var round=new UiRoundFrame(); workbench.AddChild(round); round.Content.AddChild(new ColorRect { Color=Colors.White }); await Frames(2);
+            var round=new UiRoundFrame(); root.AddChild(round); round.Content.AddChild(new ColorRect { Color=Colors.White }); await Frames(2);
             Check(modal.Open() && GameUi.GameplayModalOpen,"Modal did not register."); Check(!second.Open(),"Two modals were opened.");
             var activated=false; var action=GameUi.Button("Keyboard action",()=>activated=true); modal.Body.AddChild(action); await Frames(2); action.GrabFocus();
             Input.ParseInputEvent(new InputEventKey { PhysicalKeycode=Key.Enter,Keycode=Key.Enter,Pressed=true }); await Frames(1);
@@ -57,8 +58,9 @@ public partial class UiFoundationSmoke : Node
             modal.Open(); Input.ParseInputEvent(new InputEventKey { PhysicalKeycode=Key.Escape,Keycode=Key.Escape,Pressed=true }); await Frames(2);
             Check(!modal.Visible && !GameUi.GameplayModalOpen,"Escape did not close modal.");
             modal.Open(); modal.QueueFree(); await Frames(2); Check(!GameUi.GameplayModalOpen,"Freed modal leaked gameplay lock.");
-            root.QueueFree(); workbench.QueueFree(); await Frames(3);
-            GD.Print("UI_FOUNDATION_OK: catalog validation, fallbacks, cached themes, eight layouts, resize, isolated model, modal exclusivity, Escape, focus and teardown."); GetTree().Quit();
+            root.QueueFree(); await Frames(3);
+            UiReviewEvidence.Record("foundation","PASS: all working scenes offline, catalog, isolated model, focus, keyboard, Escape, modal exclusivity and cleanup");
+            GD.Print("UI_FOUNDATION_OK: catalog, cached themes, all production scene previews, resize, isolated model, modal exclusivity, Escape, focus and teardown."); GetTree().Quit();
         }
         catch(Exception error) { GD.PushError(error.ToString()); GetTree().Quit(1); }
     }

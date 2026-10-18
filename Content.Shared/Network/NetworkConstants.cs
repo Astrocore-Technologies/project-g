@@ -4,7 +4,7 @@ public static class NetworkConstants
 {
     public const int Port = 9050;
     public const string ConnectionKey = "project-g-dev";
-    public const ushort ProtocolVersion = 76; // Reliable destinations/stops and sparse-input prediction acknowledgement.
+    public const ushort ProtocolVersion = 77; // Reliable owner-scoped Follow commands/state.
     public const int CharacterStatCount = 24;
     public const int MaxControlKinds = 14; // Public kinds, not a gameplay cap on control instances.
     public const double ContinuousAttackHeartbeatSeconds = .1;

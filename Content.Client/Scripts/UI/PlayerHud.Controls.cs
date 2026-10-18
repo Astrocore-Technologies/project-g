@@ -76,6 +76,6 @@ public partial class PlayerHud
     {
         var cooldown=Math.Max(0,_defense.QuickRecoverCooldown-(Time.GetTicksMsec()/1000d-_defenseReceived));
         return cooldown>0 ? $"Quick Recover · ещё {cooldown:0.0} с" : _defense.Stamina<_defense.QuickRecoverCost
-            ? $"Quick Recover · нужно {_defense.QuickRecoverCost:0} выносливости" : "Space: удержать для прицела, отпустить для Quick Recover.";
+            ? $"Quick Recover · нужно {_defense.QuickRecoverCost:0} выносливости" : $"{PcInput.Label(PcInput.Dodge)}: удержать для прицела, отпустить для Quick Recover.";
     }
 }

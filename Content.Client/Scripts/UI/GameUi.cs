@@ -8,6 +8,7 @@ public static class GameUi
     public static bool QuestWindowOpen { get; set; }
     private static readonly HashSet<Control> Modals = new();
     private static Theme? _dark, _paper;
+    private static PackedScene? _buttonScene, _textScene;
     private static readonly Dictionary<string,Action> Routes = new();
     public static void RegisterRoute(string id, Action open) => Routes[id]=open;
     public static void ClearRoutes() => Routes.Clear();
@@ -77,8 +78,8 @@ public static class GameUi
         return theme;
     }
     public static Label Text(string text,int size=16)
-    { var label=new Label { Text=text,MouseFilter=Control.MouseFilterEnum.Ignore }; label.AddThemeFontSizeOverride("font_size",size); if(size>=22 && UiAssets.Skin.HeadingFont is {} font) label.AddThemeFontOverride("font",font); return label; }
-    public static Button Button(string text,Action action) { var button=new Button { Text=text }; button.Pressed+=action; return button; }
+    { var label=(_textScene??=GD.Load<PackedScene>("res://UI/Components/ListNote.tscn")).Instantiate<Label>();label.Text=text;label.MouseFilter=Control.MouseFilterEnum.Ignore; label.AddThemeFontSizeOverride("font_size",size); if(size>=22 && UiAssets.Skin.HeadingFont is {} font) label.AddThemeFontOverride("font",font); return label; }
+    public static Button Button(string text,Action action) { var button=(_buttonScene??=GD.Load<PackedScene>("res://UI/Components/ActionButton.tscn")).Instantiate<Button>();button.Text=text;button.Pressed+=action; return button; }
     public static string SkillName(ushort id) => id switch { 1=>"Снаряд",2=>"Область",3=>"Рывок",5=>"Болт открытия",6=>"Импульс",
         >=600 and <=633 => CombatTestUi.Name(id), _=>SwordsmanUi.Name(id) };
 }

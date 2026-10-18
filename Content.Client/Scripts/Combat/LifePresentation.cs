@@ -19,14 +19,12 @@ public partial class LifePresentation:CanvasLayer
     public void Initialize(NetworkClient network,NetworkEntityId owner)
     {
         _network=network;_owner=owner;Layer=35;
-        _window=new UiWindow();AddChild(_window);_window.Build("Вы погибли",new(580,300));
+        _window=new UiWindow();AddChild(_window);_window.Build("Вы погибли",new(620,420));
         _window.CloseRequested+=_window.Close;
-        _open=GameUi.Button("Вы погибли · Возрождение",()=>_window.Open());_open.Position=new(16,242);_open.Visible=false;AddChild(_open);
-        _timer=GameUi.Text("",18);_window.Body.AddChild(_timer);
-        _status=GameUi.Text("",14);_window.Body.AddChild(_status);
-        _respawn=GameUi.Button("Возродиться",Request);_respawn.Name="RespawnButton";_window.Body.AddChild(_respawn);
-        _window.Body.AddChild(GameUi.Text("Возрождение возвращает 50% HP и MP. Перезарядки сохраняются.",14));
-        _window.Body.AddChild(GameUi.Button("Разбор смерти",()=>{_window.Close();GameUi.Navigate("death-log");}));
+        _open=GD.Load<PackedScene>("res://UI/Components/DeathReopen.tscn").Instantiate<Button>();AddChild(_open);_open.Pressed+=()=>_window.Open();
+        var view=GD.Load<PackedScene>("res://UI/Screens/DeathView.tscn").Instantiate<Control>();_window.Body.AddChild(view);
+        _timer=view.GetNode<Label>("%Timer");_status=view.GetNode<Label>("%Status");_respawn=view.GetNode<Button>("%RespawnButton");_respawn.Pressed+=Request;
+        view.GetNode<Button>("%DeathLog").Pressed+=()=>{_window.Close();GameUi.Navigate("death-log");};
         network.LifeReceived+=Apply;network.RespawnReceived+=Result;
         if(network.KnownLife.TryGetValue(owner,out var life))Apply(life);
     }

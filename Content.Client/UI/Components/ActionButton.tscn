@@ -1,0 +1,7 @@
+[gd_scene format=3]
+[ext_resource type="Theme" path="res://UI/Theme/rework-theme.tres" id="Theme"]
+[node name="ActionButton" type="Button"]
+theme = ExtResource("Theme")
+custom_minimum_size = Vector2(0, 36)
+theme_override_font_sizes/font_size = 14
+text_overrun_behavior = 3

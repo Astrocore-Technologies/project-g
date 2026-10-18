@@ -35,7 +35,7 @@ public partial class PlayerHudSmoke : Node
             if (OS.GetCmdlineUserArgs().Contains("--format-only"))
             { GD.Print("STAT_PERCENTAGES_OK: positive, negative, zero, rounding, fractions, probability and absolute values."); GetTree().Quit(); return; }
             GetWindow().Mode=Window.ModeEnum.Windowed; await Frames(2); GetWindow().Size=new(1280,720); await Frames(3);
-            var world=GD.Load<PackedScene>("res://Scenes/World.tscn").Instantiate<WorldController>(); world.AutoConnect=false;
+            var world=GD.Load<PackedScene>("res://Scenes/World.tscn").Instantiate<WorldController>(); world.AutoConnect=false; world.UiSettingsPath="res://../.artifacts/ui-final-2026-10-18/review-settings.cfg";
             var network=world.GetNode<NetworkClient>("NetworkClient");
             var reviewPort=0;
             if(UseReviewServer)
@@ -94,6 +94,7 @@ public partial class PlayerHudSmoke : Node
             if (_state.Stats[4]!=original.Stats[4]+1 || _state.Stats[3]!=original.Stats[3]) throw new Exception("Batch applied wrong stats.");
             character.Toggle(); GetWindow().Size=new(1920,1080); await Frames(5); await Capture("hud-1920");
             world.QueueFree(); await Frames(2);
+            UiReviewEvidence.Record("player-hud","PASS: real portrait/click, resources, draft preview/cancel/atomic apply, resize, cleanup");
             GD.Print("PLAYER_HUD_OK: character portrait/click, resources, draft preview, cancellation, atomic apply, resize, cleanup."); GetTree().Quit();
         }
         catch(Exception error) { GD.PushError(error.ToString()); GetTree().Quit(1); }

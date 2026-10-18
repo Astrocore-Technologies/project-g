@@ -16,6 +16,7 @@ public partial class WorldController : Node3D
 
     // NC: standalone world scenes retain automatic login; the menu starts it explicitly.
     [Export] public bool AutoConnect { get; set; } = true;
+    [Export(PropertyHint.File,"*.cfg")] public string UiSettingsPath { get; set; } = "user://client-settings.cfg";
     public event Action? WorldReady;
     private bool _worldReady;
 
@@ -202,7 +203,8 @@ public partial class WorldController : Node3D
             if(_worldNode is not null) ProjectG.UI.GameUi.RegisterRoute("keeper",_worldNode.Toggle);
             if(_pvp is not null) ProjectG.UI.GameUi.RegisterRoute("pvp",_pvp.Toggle);
             if(_social is not null) { ProjectG.UI.GameUi.RegisterRoute("party",()=>_social.Toggle(SocialKind.Party)); ProjectG.UI.GameUi.RegisterRoute("clan",()=>_social.Toggle(SocialKind.Guild)); }
-            _uiNavigation=new(); AddChild(_uiNavigation); _uiNavigation.Initialize(_network,_localEntityId);
+            _uiNavigation=new(); AddChild(_uiNavigation); _uiNavigation.Initialize(_network,_localEntityId,UiSettingsPath);
+            var follow=new ProjectG.UI.FollowPresentation();player.AddChild(follow);follow.Initialize(player,_network,_players);
 
             // NC: emotes use the same server-confirmed public stream for the owner and observers.
             var emotes = new ProjectG.Animation.EmoteMenu(); player.AddChild(emotes); emotes.Initialize(_network, player);

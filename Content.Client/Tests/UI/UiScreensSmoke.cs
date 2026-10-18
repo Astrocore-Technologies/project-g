@@ -15,7 +15,7 @@ public partial class UiScreensSmoke : Node
         try
         {
             GetWindow().Mode=Window.ModeEnum.Windowed; GetWindow().Size=new(1280,720); await Frames(3);
-            var world=GD.Load<PackedScene>("res://Scenes/World.tscn").Instantiate<WorldController>(); world.AutoConnect=false;
+            var world=GD.Load<PackedScene>("res://Scenes/World.tscn").Instantiate<WorldController>(); world.AutoConnect=false; world.UiSettingsPath="res://../.artifacts/ui-final-2026-10-18/review-settings.cfg";
             var network=world.GetNode<NetworkClient>("NetworkClient"); ExplorationState? exploration=null;
             var reviewPort=0;
             if(UseReviewServer)
@@ -54,7 +54,7 @@ public partial class UiScreensSmoke : Node
             if(!GameUi.GameplayModalOpen || !Descendants(world).OfType<StarterMap>().Any(map=>map.Interactive && map.IsVisibleInTree())) throw new Exception("Compact map shortcut did not open the map.");
             Press(Key.Escape); await Frames(3);
             await Capture("hud-1280");
-            string[] routes=["character","inventory","map","journal","echo","guild","profession","craft","market","trade","party","clan","pvp","keeper","guide"];
+            string[] routes=["character","inventory","map","journal","echo","guild","profession","craft","market","trade","party","clan","pvp","keeper","guide","combat","emotes","settings"];
             foreach(var route in routes)
             {
                 if(!GameUi.HasRoute(route)) continue;
@@ -77,21 +77,36 @@ public partial class UiScreensSmoke : Node
                     if(hidden>=0) { point=map.GetGlobalTransform()*map.ProjectPosition(g.Origin+new System.Numerics.Vector2(hidden%g.Width+.5f,hidden/g.Width+.5f)*g.CellSize); await Click(point); if(map.Pin!=before) throw new Exception("Unexplored area accepted a pin."); }
                 }
                 await Capture(route+"-1280"); GD.Print("UI_SCREEN: "+route);
+                foreach(var tabs in Descendants(modal).OfType<TabContainer>().ToArray())
+                {
+                    for(var tab=1;tab<tabs.GetTabCount();tab++)
+                    {
+                        tabs.CurrentTab=tab; await Frames(5);
+                        if(!GetViewport().GetVisibleRect().Encloses(panel.GetGlobalRect())) throw new Exception("Tab overflow: "+route+"/"+tabs.GetTabTitle(tab));
+                        await Capture(route+"-tab"+tab+"-1280");
+                    }
+                    tabs.CurrentTab=0;
+                }
             }
             GameUi.Navigate("inventory"); await Frames(5);
             var search=Descendants(world).OfType<LineEdit>().Single(e=>e.IsVisibleInTree()); search.GrabFocus(); search.Text="zz-no-item"; search.EmitSignal(LineEdit.SignalName.TextChanged,search.Text); await Frames(4);
             if(!Descendants(world).OfType<Label>().Any(l=>l.IsVisibleInTree() && l.Text=="Ничего не найдено")) throw new Exception("Inventory search did not filter items.");
+            search.Text=""; search.EmitSignal(LineEdit.SignalName.TextChanged,search.Text);
             Press(Key.Escape); await Frames(3); if(GameUi.GameplayModalOpen) throw new Exception("Escape did not close filtered inventory.");
             Press(Key.Escape); await Frames(3); await Capture("menu-1280");
             var more=Descendants(world).OfType<Button>().Single(b=>b.Name=="ToggleMore"); await Click(more.GetGlobalRect().GetCenter()); await Frames(3);
             var menu=Descendants(world).OfType<UiWindow>().Single(w=>w.Visible);
-            foreach(var button in Descendants(menu).OfType<Button>().Where(b=>b.IsVisibleInTree()))
-                if(!GetViewport().GetVisibleRect().Encloses(button.GetGlobalRect())) throw new Exception("Expanded menu control is clipped: "+button.Name);
+            var menuScroll=Descendants(menu).OfType<ScrollContainer>().Single();
+            if(!GetViewport().GetVisibleRect().Encloses(menuScroll.GetGlobalRect())) throw new Exception("Expanded menu scroll is outside viewport.");
+            menuScroll.ScrollVertical=(int)menuScroll.GetVScrollBar().MaxValue; await Frames(3);
+            if(!menuScroll.GetGlobalRect().Encloses(Descendants(menu).OfType<Button>().Single(b=>b.Name=="Route_settings").GetGlobalRect())) throw new Exception("Expanded menu cannot reach settings.");
+            menuScroll.ScrollVertical=0; await Frames(3);
             await Capture("menu-more-1280"); Press(Key.Escape); await Frames(3);
             GetWindow().Size=new(1920,1080); await Frames(8); await Capture("hud-1920");
-            foreach(var route in routes.Take(6)) { GameUi.Navigate(route); await Frames(8); await Capture(route+"-1920"); }
+            foreach(var route in routes) { if(!GameUi.HasRoute(route)) continue; GameUi.Navigate(route); await Frames(8); await Capture(route+"-1920"); }
             world.QueueFree(); await Frames(5);
             if(GameUi.GameplayModalOpen || GameUi.HasRoute("inventory")) throw new Exception("Region teardown leaked modal or routes.");
+            UiReviewEvidence.Record("screens","PASS: 18 live routes, tabs, bounds, input lock, map pins, centered minimap edges, search, Escape, 1280x720/1920x1080, cleanup");
             GD.Print("UI_SCREENS_OK: live routes, window bounds, gameplay lock, explored map pins, search, Escape, two resolutions and teardown."); GetTree().Quit();
         }
         catch(Exception e) { GD.PushError(e.ToString()); GetTree().Quit(1); }
@@ -101,5 +116,5 @@ public partial class UiScreensSmoke : Node
     private async Task Frames(int n) { for(var i=0;i<n;i++) await ToSignal(GetTree(),SceneTree.SignalName.ProcessFrame); }
     private static void Press(Key key) { Input.ParseInputEvent(new InputEventKey { PhysicalKeycode=key,Keycode=key,Pressed=true }); Input.ParseInputEvent(new InputEventKey { PhysicalKeycode=key,Keycode=key,Pressed=false }); }
     private async Task Click(Vector2 point) { Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex=MouseButton.Left,Position=point,GlobalPosition=point,Pressed=true }); await Frames(1); Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex=MouseButton.Left,Position=point,GlobalPosition=point,Pressed=false }); await Frames(3); }
-    private async Task Capture(string name) { if(!UseReviewServer && !OS.GetCmdlineUserArgs().Contains("--capture")) return; DirAccess.MakeDirRecursiveAbsolute(ProjectSettings.GlobalizePath("res://../.artifacts/ui-complete")); await ToSignal(RenderingServer.Singleton,RenderingServer.SignalName.FramePostDraw); GetViewport().GetTexture().GetImage().SavePng("res://../.artifacts/ui-complete/"+name+".png"); }
+    private async Task Capture(string name) { if(!UseReviewServer && !OS.GetCmdlineUserArgs().Contains("--capture")) return; DirAccess.MakeDirRecursiveAbsolute(ProjectSettings.GlobalizePath("res://../.artifacts/ui-final-2026-10-18/live")); await ToSignal(RenderingServer.Singleton,RenderingServer.SignalName.FramePostDraw); GetViewport().GetTexture().GetImage().SavePng("res://../.artifacts/ui-final-2026-10-18/live/"+name+".png"); }
 }

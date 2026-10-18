@@ -114,6 +114,21 @@ public partial class PlayerController : CharacterBody3D
 
 	public NetworkEntityId EntityId { get; private set; } = NetworkEntityId.Invalid;
 	public uint ClientTick => _clientTick;
+	internal uint NavigationOrder => _navigationOrder;
+	public void RequestFollow(NetworkEntityId target)
+	{
+		if (!_isLocal || !IsAlive || _network?.RegionActive != true) return;
+		_rightHeld = false; _pendingMoveKind = null;
+		if (++_sequence == 0) ++_sequence;
+		_network.SendFollow(new(_sequence, _clientTick, _network.NextInputOrder(), target));
+	}
+	public bool ConfirmFollow(uint order)
+	{
+		if (NavigationCancelled(order) || MovementSimulation.IsSequenceNewer(_navigationOrder, order)) return false;
+		_navigationOrder = order; _navigationKind = MovementCommandKind.Destination;
+		_rightHeld = false; _pendingMoveKind = null;
+		return true;
+	}
 	public NumericsVector2 PredictedPosition => _predictedPosition;
 	public bool IsAlive { get; private set; } = true;
 	public ProjectG.Combat.SwordAttackAnimation SwordAnimation { get; private set; } = null!;
@@ -183,11 +198,10 @@ public partial class PlayerController : CharacterBody3D
 
 	public override void _UnhandledInput(InputEvent @event)
 	{
-		if (ProjectG.UI.GameUi.GameplayModalOpen) return;
-		if (!_isLocal || !IsAlive ||
-			@event is not InputEventMouseButton mouseEvent ||
-			mouseEvent.ButtonIndex != MouseButton.Right ||
-			!mouseEvent.Pressed)
+		if (PcInput.Blocked(this)) return;
+		if (_isLocal && IsAlive && PcInput.Pressed(PcInput.Stop,@event))
+		{ StopMovement(); GetViewport().SetInputAsHandled(); return; }
+		if (!_isLocal || !IsAlive || !PcInput.Pressed(PcInput.Move,@event))
 		{
 			return;
 		}
@@ -196,8 +210,9 @@ public partial class PlayerController : CharacterBody3D
 		if (camera is null)
 			return;
 
-		_tapTargetValid = TryCursorSurface(out _tapTarget, out _tapHeight, mouseEvent.Position);
-		if (TryCursorDirection(out var cursorPoint, mouseEvent.Position) && MoveCursorTo(cursorPoint, begin: true))
+		var cursor = (@event as InputEventMouseButton)?.Position ?? GetViewport().GetMousePosition();
+		_tapTargetValid = TryCursorSurface(out _tapTarget, out _tapHeight, cursor);
+		if (TryCursorDirection(out var cursorPoint, cursor) && MoveCursorTo(cursorPoint, begin: true))
 		{ _rightHeld=true; _rightPressedAt=NowSeconds(); _cursorRefresh=0; ManualMoveRequested?.Invoke(); }
 
 	}
@@ -206,7 +221,7 @@ public partial class PlayerController : CharacterBody3D
 	{
 		if (_isLocal && _rightHeld)
 		{
-			if (!Input.IsMouseButtonPressed(MouseButton.Right) || !GetWindow().HasFocus() || ProjectG.UI.GameUi.GameplayModalOpen)
+			if (!PcInput.Held(PcInput.Move) || !GetWindow().HasFocus() || PcInput.Blocked(this))
 			{
 				var tap = GetWindow().HasFocus() && !ProjectG.UI.GameUi.GameplayModalOpen &&
 					NowSeconds() - _rightPressedAt < CursorHoldThresholdSeconds;

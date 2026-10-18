@@ -26,15 +26,12 @@ public partial class WorldNodePresentation : Node3D
     {
         _network=network; _player=player;
         _ui=new CanvasLayer { Layer=23 }; AddChild(_ui);
-        _rumor=new Label { Position=new(24,410),Size=new(300,52),AutowrapMode=TextServer.AutowrapMode.WordSmart,Text="H — поговорить с хранителем переправы",MouseFilter=Control.MouseFilterEnum.Ignore }; _ui.AddChild(_rumor); _rumor.Hide();
         _panel=new UiWindow { ToggleKey=Key.H }; _ui.AddChild(_panel); _panel.Build("Хранитель переправы",new(900,580)); _panel.CloseRequested+=_panel.Close;
-        var list=UiComposition.Scroll(_panel.Body);
-        list.AddChild(new Label { Text="Переправа • общий сюжет мира" });
-        _line=new Label { CustomMinimumSize=new(425,0),AutowrapMode=TextServer.AutowrapMode.WordSmart }; list.AddChild(_line);
-        _repair=new Button { Text="Помочь ремонту" }; _repair.Pressed+=()=>Send(WorldNodeAction.Repair); list.AddChild(_repair);
-        _patrol=new Button { Text="Помочь дозору (после боя с восточным монстром)" }; _patrol.Pressed+=()=>Send(WorldNodeAction.Patrol); list.AddChild(_patrol);
-        _result=new Label { CustomMinimumSize=new(425,0),AutowrapMode=TextServer.AutowrapMode.WordSmart }; list.AddChild(_result);
-        var close=new Button { Text="Закрыть" }; close.Pressed+=()=>_panel.Close(); list.AddChild(close);
+        var view=GD.Load<PackedScene>("res://UI/Screens/KeeperView.tscn").Instantiate<Control>(); _panel.Body.AddChild(view);
+        _line=view.GetNode<Label>("%Line"); _rumor=view.GetNode<Label>("%Rumor"); _result=view.GetNode<Label>("%Result");
+        _repair=view.GetNode<Button>("%Repair"); _patrol=view.GetNode<Button>("%Patrol");
+        _repair.Pressed+=()=>Send(WorldNodeAction.Repair); _patrol.Pressed+=()=>Send(WorldNodeAction.Patrol);
+        view.GetNode<Button>("%Close").Pressed+=_panel.Close;
         var actor=new Node3D(); AddChild(actor);
         actor.AddChild(ProjectG.Actors.ActorScenes.Load("KeeperFigure").Instantiate<Node3D>());
         actor.AddChild(new MeshInstance3D { Position=new(0,0.05f,0),Mesh=new CylinderMesh { TopRadius=1.1f,BottomRadius=1.1f,Height=0.06f },MaterialOverride=new StandardMaterial3D { AlbedoColor=new(0.15f,0.45f,0.7f) } });
@@ -46,7 +43,7 @@ public partial class WorldNodePresentation : Node3D
         if(_state is { } old && state.Revision<=old.Revision) return;
         _state=state; Position=ProjectG.Regions.PublicSurfaceAnchors.Position(_network,state.Position);
         _keeper.Text=state.KeeperName+"\n"+state.KeeperLine;
-        _line.Text=state.KeeperLine; _rumor.Text="Слух: "+state.Rumor+"  •  H — хранитель";
+        _line.Text=state.KeeperLine; _rumor.Text="Слух: "+state.Rumor;
     }
     public void ApplyAlive(bool alive) { _alive=alive; if(!alive) _panel.Close(); }
     public override void _Process(double delta)
@@ -58,7 +55,7 @@ public partial class WorldNodePresentation : Node3D
     }
     public override void _UnhandledInput(InputEvent input)
     {
-        if(input is InputEventKey { Pressed:true,Echo:false,Keycode:Key.H })
+        if(PcInput.Pressed("keeper",input))
         { if(GameUi.GameplayModalOpen)return; Toggle(); if(_panel.Visible) _result.Text="Для участия остановитесь рядом с хранителем. Ваш вклад учитывается один раз."; GetViewport().SetInputAsHandled(); }
     }
     public void Toggle() { if(_panel.Visible) _panel.Close(); else _panel.Open(); }

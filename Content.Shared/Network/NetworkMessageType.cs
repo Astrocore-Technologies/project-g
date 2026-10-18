@@ -105,4 +105,6 @@ public enum NetworkMessageType : ushort
     EchoRestoreCommand=121,
     EchoRestoreResult=122,
     EchoSignatureControlCommand=123,
+    FollowCommand=124,
+    FollowState=125,
 }

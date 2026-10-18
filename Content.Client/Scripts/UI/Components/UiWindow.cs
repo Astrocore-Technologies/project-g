@@ -51,9 +51,9 @@ public partial class UiWindow : Control
     }
     public override void _Input(InputEvent ev)
     {
-        if(!Visible || ev is not InputEventKey { Pressed:true } key) return;
-        if(key.PhysicalKeycode!=Key.Escape && (ToggleKey==Key.None || key.PhysicalKeycode!=ToggleKey)) return;
-        if(!key.Echo) CloseRequested?.Invoke();
+        if(!Visible || PcInput.Capturing) return;
+        if(!ev.IsActionPressed("ui_cancel") && !PcInput.WindowPressed(ToggleKey,ev)) return;
+        CloseRequested?.Invoke();
         GetViewport().SetInputAsHandled();
     }
     public override void _UnhandledKeyInput(InputEvent ev)

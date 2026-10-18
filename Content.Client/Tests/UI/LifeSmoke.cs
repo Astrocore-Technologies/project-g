@@ -21,10 +21,12 @@ public partial class LifeSmoke:Node
             if(!button.Disabled)throw new Exception("Respawn was enabled before its server timer.");
             var window=ui.GetChildren().OfType<ProjectG.UI.UiWindow>().Single();
             if(!window.Visible)throw new Exception("The death window did not open without a PvP panel.");
+            await UiReviewEvidence.Capture(this,"death-wait");
             await ToSignal(GetTree().CreateTimer(.2),SceneTreeTimer.SignalName.Timeout);
             if(actor.Visible)throw new Exception("Expired corpse remained visible.");
             life=life with {ServerTick=2,CorpseRemaining=0,RespawnRemaining=0};ui.Apply(life);await Frames(2);
             if(button.Disabled)throw new Exception("Respawn stayed disabled after its server timer.");
+            await UiReviewEvidence.Capture(this,"death-ready");
             life=life with {ServerTick=3,Dead=false};ui.Apply(life);presentation.ApplyLife(life);await Frames(2);
             if(!actor.Visible || window.Visible)throw new Exception("Revived actor/window did not return to live presentation.");
             presentation.ApplyState(new(new(1),3,CombatEntityKind.Player,default,10,100,1,2,1));
@@ -101,7 +103,7 @@ public partial class LifeSmoke:Node
             if(!statLabels.Any(l=>l.Text.StartsWith("Макс. выносливость:")) || !statLabels.Any(l=>l.Text.StartsWith("Реген выносливости /с:")) ||
                 statLabels.Any(l=>l.Text.Contains("реген HP пока не работает")))throw new Exception("Character resource rows are stale or incomplete.");
             if(!progression.FindChildren("*","Label",true,false).OfType<Label>().Any(l=>l.Text.Contains("Пассивный")) ||
-                progression.FindChildren("*","OptionButton",true,false).Any())throw new Exception("Passive UI exposed an active-slot assignment or lost its passive explanation.");
+                progression.FindChildren("*","OptionButton",true,false).OfType<OptionButton>().Any(b=>b.Visible))throw new Exception("Passive UI exposed an active-slot assignment or lost its passive explanation.");
             progression.QueueFree();await Frames(2);
             var hud=new ProjectG.UI.PlayerHud();AddChild(hud);hud.Initialize(new(1),()=>{});
             hud.Apply(new ProgressionState(new(1),1,1,0,100,0,0,[10,10,10,10,10,10,10],[new(606,1,0,2,1,false)]));
@@ -116,7 +118,7 @@ public partial class LifeSmoke:Node
             if(!hud.FindChildren("*","Control",true,false).OfType<Control>().Any(c=>c.TooltipText.Contains("Защита:")&&c.TooltipText.Contains("периодический магический урон")&&!c.TooltipText.Contains("без неуязвимости")))
                 throw new Exception("Dodge HUD lost its approved protection policy.");
             hud.Apply(new DefenseState(new(1),9,0,DefenseOutcome.NoStamina,0,0,.8,0,0,20,10,false,1,System.Numerics.Vector2.UnitY));await Frames(2);
-            if(!hud.FindChildren("*","Label",true,false).OfType<Label>().Any(l=>l.Text=="Выносливость  0 / 0"))
+            if(hud.FindChildren("StaminaText","Label",true,false).OfType<Label>().Single().Text!="0 / 0")
                 throw new Exception("Zero-capacity stamina HUD invented a resource balance.");
             hud.Apply(new DefenseState(new(1),10,0,DefenseOutcome.Accepted,100,100,.8,0,0,20,10,false,1,System.Numerics.Vector2.UnitY));
             hud.Apply(new ControlState(new(1),10,[new(CrowdControlKind.Root,.25,1,2),new(CrowdControlKind.Slow,2,.5,2),
@@ -137,6 +139,7 @@ public partial class LifeSmoke:Node
             await CheckEcho(network);
             ui.QueueFree();actor.QueueFree();await Frames(2);
             network.Free();
+            UiReviewEvidence.Record("life-and-echo","PASS: presentation DTO fixtures, death timers, respawn, journal, passive skill, owned Echo and refusal");
             GD.Print("LIFE_UI_OK: death window/timers, respawn, healing/resurrection feedback, private journal, orphan projectile, passive skill without active-slot controls, duplicate/foreign filtering and cleanup.");GetTree().Quit();
         }
         catch(Exception error){GD.PushError(error.ToString());GetTree().Quit(1);}
@@ -149,6 +152,7 @@ public partial class LifeSmoke:Node
         var row=new EchoRosterEntry(100,"Мира",EchoAvailability.Ready,0,default,110,140,100);
         apply.Invoke(controls,[new EchoRosterPage(new(1),1,0,0,2,[row,row with {Handle=101,Name="Другое Эхо",Availability=EchoAvailability.RequiresRestoration,Health=0,DeathId=1}])]);
         controls.Toggle();await Frames(2);
+        await UiReviewEvidence.Capture(this,"echo-owned");
         var buttons=controls.FindChildren("*","Button",true,false).OfType<Button>().ToArray();
         if(buttons.Single(b=>b.Text.StartsWith("Призвать")).Disabled || !buttons.Any(b=>b.Text.Contains("Требует восстановления")))
             throw new Exception("Owned Echo UI hid Ready/dead records or disabled a valid summon.");

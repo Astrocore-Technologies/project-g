@@ -15,7 +15,7 @@ public partial class GroundItemPresentation : Node3D
     private readonly StandardMaterial3D _material = new() { AlbedoColor = new Color(1, .8f, .2f) };
     public void Initialize(NetworkClient network){_network=network;network.PvpLootReceived+=Loot;}
     public override void _ExitTree(){if(_network is not null)_network.PvpLootReceived-=Loot;}
-    private void Loot(PvpLootState s){if(_items.TryGetValue(s.Handle,out var n)&&n.GetChild(1) is Label3D label)label.Text+="\nPvP-тег • G: 5 секунд • исчезнет через "+Math.Ceiling(s.RemainingSeconds/60)+" мин";}
+    private void Loot(PvpLootState s){if(_items.TryGetValue(s.Handle,out var n)&&n.GetChild(1) is Label3D label)label.Text+=$"\nPvP-тег • {PcInput.Label("pickup")}: 5 секунд • исчезнет через "+Math.Ceiling(s.RemainingSeconds/60)+" мин";}
     public void Spawn(GroundItemSpawn state)
     {
         if (_items.ContainsKey(state.Handle)) return;
@@ -25,7 +25,7 @@ public partial class GroundItemPresentation : Node3D
         item.AddChild(new MeshInstance3D { Mesh = _mesh, MaterialOverride = _material });
         item.AddChild(new Label3D
         {
-            Text = $"{state.Name} [G]", Position = new(0, .65f, 0), FontSize = 28,
+            Text = $"{state.Name} [{PcInput.Label("pickup")}]", Position = new(0, .65f, 0), FontSize = 28,
             Billboard = BaseMaterial3D.BillboardModeEnum.Enabled, NoDepthTest = false
         });
     }
@@ -39,7 +39,7 @@ public partial class GroundItemPresentation : Node3D
     }
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (@event is not InputEventKey { Pressed: true, Echo: false, Keycode: Key.G } || _pending is not null) return;
+        if (!PcInput.Pressed("pickup",@event) || _pending is not null) return;
         var player=GetParent().GetChildren().OfType<ProjectG.Gameplay.PlayerController>().FirstOrDefault(p=>p.GetNode<Camera3D>("CameraRig/Camera3D").Current);
         if(player is null || !player.TryCursorSurface(out var point,out var height))return;
         var cursor=new Vector3(point.X,height+.2f,point.Y);

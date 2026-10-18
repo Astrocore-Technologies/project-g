@@ -45,7 +45,7 @@ public partial class EchoControls
             if(_known.TryGetValue(selected.Slot,out var body)){_preview.Visible=true;_preview.SetMesh(body.Mesh,body.Material);}
         }
         _details.Text=$"{AvailabilityText(selected.Availability)}\nHP {selected.Health:0.#} · MP {selected.Mana:0.#} · Stamina {selected.Stamina:0.#}\n\n"+
-            (selected.Availability==EchoAvailability.Active?$"Особая способность · {Keys[selected.Slot-1]}\nНаправьте курсор в мир и нажмите клавишу спутника.":
+            (selected.Availability==EchoAvailability.Active?$"Особая способность · {PcInput.Label(PcInput.Echoes[selected.Slot-1])}\nНаправьте курсор в мир и нажмите клавишу спутника.":
                 selected.Availability==EchoAvailability.RequiresRestoration?"Для восстановления нужна Печать восстановления. После восстановления потребуется обычный призыв.":
                 selected.Availability==EchoAvailability.Summoning?"Идёт призыв. Эхо появится после завершения подготовки.":"Призыв: 10 секунд и 20 MP. Одновременно могут быть активны три Эхо.")+"\n\n"+_rosterNotice;
         if((selected.Refusal&EchoRefusal.Basic)!=0)_details.Text+="\nСейчас отказывается от обычных атак.";

@@ -1,0 +1,9 @@
+{
+  "date": "2026-10-18",
+  "generator": "OpenAI built-in image_gen",
+  "asset": "Content.Client/Assets/UI/Backgrounds/forest-ruins.png",
+  "source": "exec-6f6dffff-9332-42c7-8d69-c5fe209f4b97.png",
+  "reference": "04-other-screens.png",
+  "prompt": "Generate one production decorative illustration for Project G fantasy game UI, using the supplied approved concept sheet only as visual style reference. Wide landscape canvas, roughly 2:1. A quiet old stone path through a sunlit green forest, low weathered stone ruins and two slender broken pillars on the far left and far right, ivy, delicate small ivory and lavender wildflowers, soft atmosphere. Refined stylized hand-painted anime 3D fantasy rendering, painterly edges, warm ivory stone, cool muted deep teal shadows, restrained antique gold sunlight. Midsection and upper middle have quiet low-detail shaded greenery so editable UI text can sit over it. This is only a non-geographic decorative book-page illustration; no named landmarks, no secret objects, no treasure. No characters, no creatures, no interface, no text, no symbols, no icons, no frames, no logos, no bars, no numbers. Similar environment art quality to the background behind the lower-left Echo window of the reference. Do not copy any UI or content from other windows. A single continuous painted landscape, no grid and no panels.",
+  "purpose": "Decorative illustration only; no gameplay geography or undiscovered locations. Maps continue to render real public geometry with server exploration."
+}

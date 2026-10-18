@@ -39,6 +39,7 @@ public sealed partial class GameServerService
         public WorldNodeCommand? Node;
         public WorldNodeCommand? NodeSecond;
         public MoveCommand? Move;
+        public FollowCommand? Follow;
         public EmoteCommand? Emote; // NC: bounded cosmetic intention, no persistence payload.
         public QuestCommand? Quest;
         public LogoutCommand? Logout;
@@ -139,6 +140,7 @@ public sealed partial class GameServerService
             if (intentions.Node is { } node) world.TryQueueWorldNode(connection,node);
             if (intentions.NodeSecond is { } nodeSecond) world.TryQueueWorldNode(connection,nodeSecond);
             if (intentions.Move is { } move) world.ApplyReceivedMove(connection, move);
+            if (intentions.Follow is { } follow) world.TryStartFollow(connection, follow);
             if (intentions.Emote is { } emote) world.TryQueueEmote(connection,emote);
             if (intentions.Quest is { } quest) world.TryQueueQuest(connection,quest);
             if(intentions.Journal is {} journal)world.TryQueueJournalRequest(connection,journal);

@@ -36,10 +36,9 @@ public partial class AbilityPresentation : Node3D
     private double _chargeStartedAt,_heldAimRefresh;
     private AbilityEffectVisual? _prediction;
     private string _feedback = "";
-    private static readonly Key[] BarKeys = [Key.Q,Key.W,Key.E,Key.R,Key.A,Key.S,Key.D,Key.F];
     private readonly ushort[] _bar = new ushort[8];
     private readonly AbilityAreaVisual _area = new();
-    private Key _aimKey;
+    private string? _aimAction;
     private ushort _aimId;
     private double _areaRefresh;
     private CombatPresentation? _combat;
@@ -68,18 +67,18 @@ public partial class AbilityPresentation : Node3D
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if(ProjectG.UI.GameUi.GameplayModalOpen) return;
-        if (!_player.IsAlive || !_network.RegionActive || @event is not InputEventKey { Pressed: true, Echo: false } key || _pending != 0 && !_pendingBuffered && _pendingToggleId==0 || IsAiming && _heldSequence==0 || _loadout.Abilities is null) return;
-        var index = Array.IndexOf(BarKeys,key.PhysicalKeycode);
-        if (key.PhysicalKeycode != Key.Space && index < 0) return;
-        if (key.PhysicalKeycode == Key.Space && _player.Control is CombatControlPhase.Airborne or CombatControlPhase.KnockedDown) return;
+        if(PcInput.Blocked(this)) return;
+        if (!_player.IsAlive || !_network.RegionActive || _pending != 0 && !_pendingBuffered && _pendingToggleId==0 || IsAiming && _heldSequence==0 || _loadout.Abilities is null) return;
+        var index = PcInput.SkillIndex(@event); var dodge = PcInput.Pressed(PcInput.Dodge,@event);
+        if (!dodge && index < 0) return;
+        if (dodge && _player.Control is CombatControlPhase.Airborne or CombatControlPhase.KnockedDown) return;
         AbilityProfile? selected = null;
         foreach (var slot in _loadout.Abilities)
-            if (key.PhysicalKeycode == Key.Space ? slot.Form == AbilityForm.Dash : slot.Id == _bar[index]) { selected = slot; break; }
+            if (dodge ? slot.Form == AbilityForm.Dash : slot.Id == _bar[index]) { selected = slot; break; }
         if (selected is not { } profile) return;
         if(_pending!=0 && !_pendingBuffered && profile.Id!=_pendingToggleId)return;
         if(IsAiming)CancelAim();
-        _aimKey = key.PhysicalKeycode; _aimId = profile.Id;
+        _aimAction = dodge ? PcInput.Dodge : PcInput.Skills[index]; _aimId = profile.Id;
         RefreshArea();
         if(profile.ExecutionForm==Content.Shared.Combat.CombatActionForm.Toggle){Commit(profile);CancelAim();}
         if(profile.ExecutionForm is Content.Shared.Combat.CombatActionForm.Charged or Content.Shared.Combat.CombatActionForm.Hold)
@@ -93,8 +92,8 @@ public partial class AbilityPresentation : Node3D
 
     public override void _Input(InputEvent @event)
     {
-        if(!IsAiming && @event is InputEventKey {Pressed:true,Echo:false,PhysicalKeycode:Key.Escape} &&
-            !ProjectG.UI.GameUi.GameplayModalOpen && _network.RegionActive && _player.IsAlive)
+        if(!IsAiming && PcInput.Pressed(PcInput.Cancel,@event) &&
+            !PcInput.Blocked(this) && _network.RegionActive && _player.IsAlive)
         {
             var sequence=_pending!=0 ? _pending : _executingSequence;
             if(sequence==0) return;
@@ -102,10 +101,9 @@ public partial class AbilityPresentation : Node3D
             GetViewport().SetInputAsHandled(); return;
         }
         if (!IsAiming) return;
-        if (@event is InputEventKey { Pressed: true, PhysicalKeycode: Key.Escape } ||
-            @event is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Right })
+        if (PcInput.Pressed(PcInput.Cancel,@event) || PcInput.Pressed(PcInput.Move,@event))
         { CancelAim(); GetViewport().SetInputAsHandled(); return; }
-        if (@event is not InputEventKey { Pressed: false } key || key.PhysicalKeycode != _aimKey) return;
+        if (_aimAction is null || !PcInput.Released(_aimAction,@event)) return;
         var id = _aimId;var charged=_heldSequence;
         if(charged!=0 && FindProfile(id) is {} chargedProfile)SendHeldControl(chargedProfile,AbilityControlKind.Release);
         _heldSequence=0;CancelAim();
@@ -172,7 +170,7 @@ public partial class AbilityPresentation : Node3D
         _combat??=_player.GetNodeOrNull<CombatPresentation>("CombatPresentation");
         _area.Show(profile, _player.Navigation, _player.PredictedFoot, new(aim.X, height, aim.Y), direction, dy, dashEnd, reason.Length == 0,_combat?.Facing);
         _feedback = reason.Length > 0 ? reason : profile.Area.Shape == AbilityAreaShape.Self
-            ? "На себя · отпустите клавишу · Esc/ПКМ отмена" : "Отпустите клавишу для применения · Esc/ПКМ отмена";
+            ? $"На себя · отпустите кнопку · {PcInput.Label(PcInput.Cancel)}/{PcInput.Label(PcInput.Move)} отмена" : $"Отпустите кнопку для применения · {PcInput.Label(PcInput.Cancel)}/{PcInput.Label(PcInput.Move)} отмена";
     }
 
     private void Commit(AbilityProfile profile)
@@ -302,7 +300,7 @@ public partial class AbilityPresentation : Node3D
                 if(_heldSequence!=0 && FindProfile(_aimId) is {} profile)
                 {
                     _feedback=profile.ExecutionForm==Content.Shared.Combat.CombatActionForm.Hold ? "Удержание · отпустите клавишу для завершения" :
-                        $"Зарядка {Math.Clamp((Now()-_chargeStartedAt)/profile.ChargeSeconds,0,1):P0} · отпустите клавишу · Esc/ПКМ отмена";
+                        $"Зарядка {Math.Clamp((Now()-_chargeStartedAt)/profile.ChargeSeconds,0,1):P0} · отпустите клавишу · {PcInput.Label(PcInput.Cancel)}/{PcInput.Label(PcInput.Move)} отмена";
                     if((_heldAimRefresh+=.05)>=.1 && (profile.ChargeCanTurn || profile.SustainCanTurn))
                     {_heldAimRefresh=0;SendHeldControl(profile,AbilityControlKind.Aim);}
                 }
@@ -325,7 +323,7 @@ public partial class AbilityPresentation : Node3D
     {
         if(_heldSequence!=0)
         {CancelServerAction(_heldSequence);_heldSequence=0;}
-        _aimId = 0; _aimKey = Key.None; _area.HideArea(); _feedback = "";
+        _aimId = 0; _aimAction = null; _area.HideArea(); _feedback = "";
     }
     private void CancelServerAction(uint sequence)
     {

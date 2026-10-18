@@ -1,7 +1,6 @@
 [gd_resource type="Theme" format=3]
+[ext_resource type="FontFile" path="res://Assets/UI/Fonts/Noto/NotoSans.ttf" id="Bundled_Font"]
 
-[sub_resource type="SystemFont" id="Font"]
-font_names = PackedStringArray("Arial", "Liberation Sans", "DejaVu Sans")
 
 [sub_resource type="StyleBoxFlat" id="Panel"]
 content_margin_left = 10.0
@@ -81,7 +80,7 @@ corner_radius_bottom_left = 32
 corner_radius_bottom_right = 32
 
 [resource]
-default_font = SubResource("Font")
+default_font = ExtResource("Bundled_Font")
 default_font_size = 13
 Label/colors/font_color = Color(1, 0.976, 0.918, 1)
 Label/colors/font_shadow_color = Color(0.01, 0.02, 0.02, 1)

@@ -1,0 +1,32 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://Scripts/UI/InputBindingsPanel.cs" id="1"]
+[ext_resource type="Theme" path="res://UI/Theme/rework-theme.tres" id="2"]
+[node name="InputBindings" type="VBoxContainer"]
+theme = ExtResource("2")
+script = ExtResource("1")
+custom_minimum_size = Vector2(570, 0)
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+[node name="Title" type="Label" parent="."]
+visible = false
+text = "Управление на PC"
+theme_override_font_sizes/font_size = 24
+[node name="Hint" type="Label" parent="."]
+text = "Выберите действие и нажмите новую кнопку. Назначения сохраняются на этом компьютере."
+autowrap_mode = 3
+[node name="Scroll" type="ScrollContainer" parent="."]
+custom_minimum_size = Vector2(0, 64)
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+[node name="BindingRows" type="VBoxContainer" parent="Scroll"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+[node name="BindingFeedback" type="Label" parent="."]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+text = "Stop и Follow можно назначить на свободную кнопку. Escape закрывает окно."
+autowrap_mode = 3
+[node name="ResetBindings" type="Button" parent="."]
+unique_name_in_owner = true
+text = "Восстановить стандартное управление"

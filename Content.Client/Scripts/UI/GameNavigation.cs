@@ -14,11 +14,13 @@ public partial class GameNavigation : CanvasLayer
     private Button _notice=null!;
     private string _noticeRoute="";
     private double _noticeUntil;
+    private UiWindow _settings = null!;
+    private readonly Dictionary<Button,string> _bindingLabels = new();
 
     private Label _questTitle=null!,_questText=null!,_rewards=null!;
     private Button _logout=null!;
     private Label _logoutStatus=null!;
-    public void Initialize(NetworkClient network,NetworkEntityId owner)
+    public void Initialize(NetworkClient network,NetworkEntityId owner,string settingsPath="user://client-settings.cfg")
     {
         _network=network; _owner=owner; Layer=40;
         var root=new Control { Theme=GameUi.CreateTheme(),MouseFilter=Control.MouseFilterEnum.Ignore }; AddChild(root); root.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
@@ -28,17 +30,24 @@ public partial class GameNavigation : CanvasLayer
         {
             var button=navigation.GetNode<Button>("%"+item.Node); button.Icon=UiAssets.Texture(item.Icon); button.TooltipText=item.Label;
             button.Disabled=item.Route!="guild" && !GameUi.HasRoute(item.Route); button.Pressed+=()=>GameUi.Navigate(item.Route);
+            _bindingLabels[button]=item.Route;
         }
         var menuButton=navigation.GetNode<Button>("%Menu"); menuButton.Icon=UiAssets.Texture("nav.menu"); menuButton.TooltipText="Меню · Esc"; menuButton.Pressed+=ToggleMenu;
         _notice=navigation.GetNode<Button>("%Notice"); _notice.Pressed+=()=>GameUi.Navigate(_noticeRoute);
         network.TradeStateReceived+=TradeNotice; network.SocialInvitesReceived+=InviteNotice; network.ProfessionReceived+=ProfessionNotice;
         _menu=new UiWindow { ToggleKey=Key.Escape }; root.AddChild(_menu); _menu.Build("Меню путешественника",new(730,620)); _menu.CloseRequested+=_menu.Close;
         var menuView=GD.Load<PackedScene>("res://UI/Screens/PauseMenuView.tscn").Instantiate<Control>(); _menu.Body.AddChild(menuView);
-        string[] routes=["character","inventory","echo","guild","map","journal","combat","profession","craft","trade","market","party","clan","pvp","keeper","guide"];
+        _settings=new UiWindow();root.AddChild(_settings);_settings.Build("Настройки",new(760,680));
+        var settingsView=GD.Load<PackedScene>("res://UI/Screens/InGameSettingsView.tscn").Instantiate<ClientSettingsPanel>();settingsView.SettingsPath=settingsPath;_settings.Body.AddChild(settingsView);
+        settingsView.CloseRequested+=()=>{settingsView.Commit();_settings.Close();};
+        _settings.CloseRequested+=()=>{settingsView.Commit();_settings.Close();};
+        GameUi.RegisterRoute("settings",()=>_settings.Open());
+        string[] routes=["character","inventory","echo","guild","map","journal","combat","profession","craft","trade","market","party","clan","pvp","keeper","guide","settings","emotes"];
         foreach(var route in routes)
         {
-            var id=route; var button=menuView.GetNode<Button>("%Route_"+id); button.Visible=GameUi.HasRoute(id) || id=="guild";
+            var id=route; var button=menuView.GetNode<Button>("%Route_"+id); button.Visible=GameUi.HasRoute(id) || id is "guild" or "emotes";
             button.Pressed+=()=>GameUi.Navigate(id);
+            if(PcInput.Actions.Any(a=>a.Id==id))_bindingLabels[button]=id;
         }
         var more=menuView.GetNode<Control>("%More"); menuView.GetNode<Button>("%ToggleMore").Pressed+=()=>more.Visible=!more.Visible;
         menuView.GetNode<Button>("%Continue").Pressed+=_menu.Close;
@@ -53,6 +62,16 @@ public partial class GameNavigation : CanvasLayer
         guildView.GetNode<Button>("%PrimaryAction").Pressed+=()=>GameUi.Navigate("journal");
         guildView.GetNode<Button>("%SecondaryAction").Pressed+=()=>GameUi.Navigate("map");
         GameUi.RegisterRoute("guild",ToggleGuild); network.QuestJournalReceived+=Quest; Refresh();
+        PcInput.Changed+=RefreshBindings;RefreshBindings();
+    }
+    private void RefreshBindings()
+    {
+        foreach(var pair in _bindingLabels)
+        {
+            var title=PcInput.Actions.First(a=>a.Id==pair.Value).Title;
+            if(pair.Key.Text.Length!=0)pair.Key.Text=title+" · "+PcInput.Label(pair.Value);
+            pair.Key.TooltipText=title+" · "+PcInput.Label(pair.Value);
+        }
     }
     private void Notice(string text,string route)
     {
@@ -82,9 +101,9 @@ public partial class GameNavigation : CanvasLayer
     public override void _Process(double delta) { _hud.Visible=!GameUi.GameplayModalOpen; _notice.Visible=_noticeUntil>Time.GetTicksMsec()/1000d; }
     public override void _UnhandledInput(InputEvent ev)
     {
-        if(GameUi.GameplayModalOpen || ev is not InputEventKey { Pressed:true,Echo:false } key) return;
-        if(key.PhysicalKeycode==Key.Escape) { ToggleMenu(); GetViewport().SetInputAsHandled(); }
-        if(key.PhysicalKeycode==Key.G) { ToggleGuild(); GetViewport().SetInputAsHandled(); }
+        if(PcInput.Blocked(this)) return;
+        if(PcInput.Pressed("menu",ev)) { ToggleMenu(); GetViewport().SetInputAsHandled(); }
+        if(PcInput.Pressed("guild",ev)) { ToggleGuild(); GetViewport().SetInputAsHandled(); }
     }
-    public override void _ExitTree() { GameUi.ClearRoutes(); if(_network is not null) { _network.LogoutReceived-=Logout;_network.QuestJournalReceived-=Quest; _network.TradeStateReceived-=TradeNotice; _network.SocialInvitesReceived-=InviteNotice; _network.ProfessionReceived-=ProfessionNotice; } }
+    public override void _ExitTree() { PcInput.Changed-=RefreshBindings;GameUi.ClearRoutes(); if(_network is not null) { _network.LogoutReceived-=Logout;_network.QuestJournalReceived-=Quest; _network.TradeStateReceived-=TradeNotice; _network.SocialInvitesReceived-=InviteNotice; _network.ProfessionReceived-=ProfessionNotice; } }
 }

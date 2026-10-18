@@ -1,0 +1,111 @@
+[gd_scene format=3]
+[ext_resource type="Theme" path="res://UI/Theme/rework-theme.tres" id="Theme"]
+[node name="CraftingView" type="HBoxContainer"]
+theme = ExtResource("Theme")
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="Sidebar" type="VBoxContainer" parent="."]
+custom_minimum_size = Vector2(220, 0)
+size_flags_stretch_ratio = 0.7
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="MaterialsTitle" type="Label" parent="Sidebar"]
+text = "Материалы"
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 22
+[node name="Materials" type="ScrollContainer" parent="Sidebar"]
+size_flags_vertical = 3
+size_flags_horizontal = 3
+horizontal_scroll_mode = 0
+[node name="MaterialsRows" type="VBoxContainer" parent="Sidebar/Materials"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+[node name="Help" type="Label" parent="Sidebar"]
+text = "Подойдите к ресурсу или верстаку и остановитесь перед действием."
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Muted"
+[node name="Main" type="VBoxContainer" parent="."]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+size_flags_stretch_ratio = 2.2
+[node name="Tabs" type="TabContainer" parent="Main"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="Сбор" type="VBoxContainer" parent="Main/Tabs"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="РесурсыHint" type="Label" parent="Main/Tabs/Сбор"]
+text = "Общий запас ресурсов обновляется сервером."
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Muted"
+[node name="Ресурсы" type="ScrollContainer" parent="Main/Tabs/Сбор"]
+size_flags_vertical = 3
+size_flags_horizontal = 3
+horizontal_scroll_mode = 0
+[node name="РесурсыRows" type="VBoxContainer" parent="Main/Tabs/Сбор/Ресурсы"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+[node name="Рецепты" type="VBoxContainer" parent="Main/Tabs"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="RecipesHint" type="Label" parent="Main/Tabs/Рецепты"]
+text = "Известные рецепты верстака. Готовые вещи появятся в инвентаре."
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Muted"
+[node name="Recipes" type="ScrollContainer" parent="Main/Tabs/Рецепты"]
+size_flags_vertical = 3
+size_flags_horizontal = 3
+horizontal_scroll_mode = 0
+[node name="RecipesRows" type="VBoxContainer" parent="Main/Tabs/Рецепты/Recipes"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+[node name="Ремонт" type="VBoxContainer" parent="Main/Tabs"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="RepairsHint" type="Label" parent="Main/Tabs/Ремонт"]
+text = "Ремонт восстанавливает текущую максимальную прочность."
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Muted"
+[node name="Repairs" type="ScrollContainer" parent="Main/Tabs/Ремонт"]
+size_flags_vertical = 3
+size_flags_horizontal = 3
+horizontal_scroll_mode = 0
+[node name="RepairsRows" type="VBoxContainer" parent="Main/Tabs/Ремонт/Repairs"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+[node name="RepairConfirmation" type="VBoxContainer" parent="Main"]
+unique_name_in_owner = true
+visible = false
+[node name="QuoteTitle" type="Label" parent="Main/RepairConfirmation"]
+text = "Подтвердите ремонт"
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 22
+[node name="RepairCost" type="Label" parent="Main/RepairConfirmation"]
+unique_name_in_owner = true
+text = ""
+autowrap_mode = 3
+size_flags_horizontal = 3
+[node name="Actions" type="HBoxContainer" parent="Main/RepairConfirmation"]
+[node name="ConfirmRepair" type="Button" parent="Main/RepairConfirmation/Actions"]
+unique_name_in_owner = true
+text = "Подтвердить расход и ремонт"
+size_flags_horizontal = 3
+[node name="CancelRepair" type="Button" parent="Main/RepairConfirmation/Actions"]
+unique_name_in_owner = true
+text = "Отменить ремонт"
+theme_type_variation = &"QuietButton"
+[node name="Status" type="Label" parent="Main"]
+unique_name_in_owner = true
+text = "Сведения загружаются…"
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Muted"

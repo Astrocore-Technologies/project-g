@@ -7,6 +7,7 @@ public partial class ClientSettingsPanel : PanelContainer
 {
     public event Action? CloseRequested;
     [Export(PropertyHint.File, "*.cfg")] public string SettingsPath { get; set; } = "user://client-settings.cfg";
+    [Export] public bool ShowHeading { get; set; } = true;
     private CheckButton _fullscreen = null!;
     private HSlider _volume = null!;
     private Label _volumeValue = null!, _feedback = null!;
@@ -14,6 +15,7 @@ public partial class ClientSettingsPanel : PanelContainer
 
     public override void _Ready()
     {
+        GetNode<Label>("Content/Title").Visible=ShowHeading;
         _fullscreen = GetNode<CheckButton>("%Fullscreen");
         _volume = GetNode<HSlider>("%Volume");
         _volumeValue = GetNode<Label>("%VolumeValue");

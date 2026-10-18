@@ -117,7 +117,7 @@ public partial class ProgressionPresentation : CanvasLayer
         if(_window.Open()) { GameUi.CharacterWindowOpen=true; Invalidate(); }
     }
     public override void _UnhandledInput(InputEvent ev)
-    { if (ev is InputEventKey { Pressed:true,Echo:false,PhysicalKeycode:Key.K }) { Toggle(); GetViewport().SetInputAsHandled(); } }
+    { if (PcInput.Pressed("character",ev)) { Toggle(); GetViewport().SetInputAsHandled(); } }
     public override void _Process(double delta)
     {
         if (_pending != 0 && Now()-_sentAt > 10)

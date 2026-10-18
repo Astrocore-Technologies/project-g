@@ -57,21 +57,20 @@ public partial class DefensePresentation : Node
     }
     public override void _Input(InputEvent ev)
     {
-        if (_quickHeld && (ev is InputEventKey { Pressed:true, PhysicalKeycode:Key.Escape } ||
-            ev is InputEventMouseButton { Pressed:true, ButtonIndex:MouseButton.Right }))
+        if (_quickHeld && (PcInput.Pressed(PcInput.Cancel,ev) || PcInput.Pressed(PcInput.Move,ev)))
         { CancelQuick(); GetViewport().SetInputAsHandled(); return; }
-        if (_quickHeld && ev is InputEventKey { Pressed:false, PhysicalKeycode:Key.Space })
+        if (_quickHeld && PcInput.Released(PcInput.Dodge,ev))
         { CancelQuick(); Send(DefenseAction.QuickRecover); GetViewport().SetInputAsHandled(); return; }
         // Releases must reach us even when the pointer or keyboard focus moved into UI.
-        if (ev is InputEventKey { Pressed:false, PhysicalKeycode:Key.Tab } && _held) Release();
+        if (PcInput.Released(PcInput.Block,ev) && _held) Release();
     }
     public override void _UnhandledInput(InputEvent ev)
     {
-        if (!_player.IsAlive || GameUi.GameplayModalOpen || ev is not InputEventKey { Pressed:true, Echo:false } key) return;
-        if (key.PhysicalKeycode==Key.Space && _player.Control is CombatControlPhase.Airborne or CombatControlPhase.KnockedDown)
+        if (!_player.IsAlive || PcInput.Blocked(this)) return;
+        if (PcInput.Pressed(PcInput.Dodge,ev) && _player.Control is CombatControlPhase.Airborne or CombatControlPhase.KnockedDown)
         { _quickHeld=true; ShowQuick(); GetViewport().SetInputAsHandled(); return; }
-        if (key.PhysicalKeycode==Key.Tab) { _held=true; _blockDenied=false; Send(DefenseAction.Block); }
-        else if (key.PhysicalKeycode==Key.Shift) Send(DefenseAction.Parry);
+        if (PcInput.Pressed(PcInput.Block,ev)) { _held=true; _blockDenied=false; Send(DefenseAction.Block); }
+        else if (PcInput.Pressed(PcInput.Parry,ev)) Send(DefenseAction.Parry);
         else return;
         _player.DefenseHeld=true;
         GetViewport().SetInputAsHandled();
@@ -92,11 +91,11 @@ public partial class DefensePresentation : Node
     {
         if (_quickHeld)
         {
-            if (!_player.IsAlive || !_network.RegionActive || GameUi.GameplayModalOpen ||
+            if (!_player.IsAlive || !_network.RegionActive || !GetWindow().HasFocus() || PcInput.Blocked(this) ||
                 _player.Control is not (CombatControlPhase.Airborne or CombatControlPhase.KnockedDown)) CancelQuick();
             else ShowQuick();
         }
-        if (_held && (!Input.IsPhysicalKeyPressed(Key.Tab) || !_player.IsAlive || !GetWindow().HasFocus() || GameUi.GameplayModalOpen)) Release();
+        if (_held && (!PcInput.Held(PcInput.Block) || !_player.IsAlive || !GetWindow().HasFocus() || PcInput.Blocked(this))) Release();
         if (_held && !_player.IsDashing && Now()>=_heartbeat) Send(DefenseAction.Block,captureAim:false);
         _player.DefenseHeld=!_player.IsDashing && (_held && !_blockDenied || Now()<_parryUntil);
         _guard.Visible=_player.DefenseHeld && _player.IsAlive;
@@ -116,7 +115,7 @@ public partial class DefensePresentation : Node
             Area:new(AbilityAreaShape.Corridor,_state.QuickRecoverRange,_player.Navigation.AgentRadius));
         _quickArea.Show(profile,_player.Navigation,origin,origin,_facing,0,new(end.X,height,end.Y),
             valid && Now()>=_quickReadyAt && _state.Stamina>=_state.QuickRecoverCost);
-        _quickLabel.Text="Quick Recover · отпустите Space для переката";
+        _quickLabel.Text=$"Quick Recover · отпустите {PcInput.Label(PcInput.Dodge)} для переката";
     }
     private static double Now()=>Time.GetTicksMsec()/1000d;
 }

@@ -1,0 +1,5 @@
+[gd_scene format=3]
+[ext_resource type="PackedScene" path="res://UI/Screens/Settings.tscn" id="1"]
+[node name="InGameSettingsView" instance=ExtResource("1")]
+theme_type_variation = &"SettingsContent"
+ShowHeading = false

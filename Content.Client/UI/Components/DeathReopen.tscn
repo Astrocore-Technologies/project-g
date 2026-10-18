@@ -1,0 +1,10 @@
+[gd_scene format=3]
+[ext_resource type="Theme" path="res://UI/Theme/rework-theme.tres" id="Theme"]
+[node name="DeathReopen" type="Button"]
+theme = ExtResource("Theme")
+visible = false
+offset_left = 16.0
+offset_top = 242.0
+offset_right = 300.0
+offset_bottom = 286.0
+text = "Вы погибли · Возрождение"

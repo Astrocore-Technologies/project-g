@@ -183,6 +183,7 @@ public sealed partial class ServerWorld
     public void ClearPvpResults(){_pvpDirty.Clear();_pvpResults.Clear();}
     private void RemovePvp(int connection,NetworkEntityId id){_pvp.Remove(id);_pvpIdentities.Remove(id);_pvpPending.Remove(connection);_pvpRequests.Remove(connection);_pvpDirty.Remove(id);_pvpTimed.Remove(id);_lethal.Remove(id);_pvpResults.Remove(id);}
     public void DisconnectPvp(int connection){if(!_playersByConnection.TryGetValue(connection,out var p))return;
+        RemoveFollowActor(p);
         ResetLogoutSession(connection);
         ResetLifeSession(connection);
         ResetQuestSession(p.EntityId);

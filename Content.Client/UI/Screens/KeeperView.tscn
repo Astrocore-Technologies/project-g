@@ -1,0 +1,75 @@
+[gd_scene format=3]
+[ext_resource type="Theme" path="res://UI/Theme/rework-theme.tres" id="Theme"]
+[node name="KeeperView" type="HBoxContainer"]
+theme = ExtResource("Theme")
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="Story" type="VBoxContainer" parent="."]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+size_flags_stretch_ratio = 1.4
+[node name="Heading" type="Label" parent="Story"]
+text = "Переправа"
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 22
+[node name="Subtitle" type="Label" parent="Story"]
+text = "Общий сюжет мира"
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Muted"
+[node name="StoryScroll" type="ScrollContainer" parent="Story"]
+size_flags_vertical = 3
+size_flags_horizontal = 3
+horizontal_scroll_mode = 0
+[node name="StoryScrollRows" type="VBoxContainer" parent="Story/StoryScroll"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+[node name="Line" type="Label" parent="Story/StoryScroll/StoryScrollRows"]
+unique_name_in_owner = true
+text = "Сведения загружаются…"
+autowrap_mode = 3
+size_flags_horizontal = 3
+[node name="Rumor" type="Label" parent="Story/StoryScroll/StoryScrollRows"]
+unique_name_in_owner = true
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Muted"
+[node name="Choices" type="VBoxContainer" parent="."]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+size_flags_stretch_ratio = 1
+[node name="ChoicesTitle" type="Label" parent="Choices"]
+text = "Помощь хранителю"
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 22
+[node name="Hint" type="Label" parent="Choices"]
+text = "Для участия остановитесь рядом с хранителем. Ваш вклад учитывается один раз."
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Muted"
+[node name="Repair" type="Button" parent="Choices"]
+unique_name_in_owner = true
+text = "Помочь ремонту"
+[node name="Patrol" type="Button" parent="Choices"]
+unique_name_in_owner = true
+text = "Помочь дозору"
+[node name="PatrolHelp" type="Label" parent="Choices"]
+text = "После боя с восточным монстром."
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Muted"
+[node name="Result" type="Label" parent="Choices"]
+unique_name_in_owner = true
+text = ""
+autowrap_mode = 3
+size_flags_horizontal = 3
+[node name="Space" type="Control" parent="Choices"]
+size_flags_vertical = 3
+[node name="Close" type="Button" parent="Choices"]
+unique_name_in_owner = true
+text = "Закрыть"
+theme_type_variation = &"QuietButton"

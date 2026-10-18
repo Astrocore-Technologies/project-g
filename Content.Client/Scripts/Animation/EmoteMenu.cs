@@ -15,14 +15,14 @@ public partial class EmoteMenu : CanvasLayer
     public void Initialize(NetworkClient network, PlayerController owner)
     {
         _network=network; _owner=owner;
-        var root=new Control(); AddChild(root);
+        var root=new Control { MouseFilter=Control.MouseFilterEnum.Ignore }; AddChild(root); root.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         _window=new UiWindow { ToggleKey=Key.F4 }; root.AddChild(_window);
-        _window.Build("Эмоции · F4",new(480,510)); _window.CloseRequested+=_window.Close;
+        _window.Build("Эмоции",new(840,480)); _window.CloseRequested+=_window.Close;
+        var view=GD.Load<PackedScene>("res://UI/Screens/EmoteView.tscn").Instantiate<Control>();_window.Body.AddChild(view);
         (AvatarGesture Gesture,string Label)[] entries=[(AvatarGesture.Wave,"Помахать"),(AvatarGesture.Nod,"Кивнуть"),
             (AvatarGesture.No,"Отказаться"),(AvatarGesture.Bow,"Поклониться"),(AvatarGesture.Point,"Указать"),
             (AvatarGesture.Cheer,"Порадоваться"),(AvatarGesture.Clap,"Поаплодировать"),(AvatarGesture.Sit,"Сесть"),(AvatarGesture.None,"Закончить / встать")];
-        foreach(var entry in entries) _window.Body.AddChild(GameUi.Button(entry.Label,()=>Send(entry.Gesture)));
-        _window.Body.AddChild(GameUi.Text("Движение и бой прерывают эмоцию.",14));
+        foreach(var entry in entries) { var gesture=entry.Gesture; view.GetNode<Button>("%"+gesture).Pressed+=()=>Send(gesture); }
         GameUi.RegisterRoute("emotes",()=>_window.Open());
     }
     private void Send(AvatarGesture gesture)
@@ -34,7 +34,7 @@ public partial class EmoteMenu : CanvasLayer
     }
     public override void _UnhandledInput(InputEvent ev)
     {
-        if(ev is InputEventKey { Pressed:true,Echo:false,PhysicalKeycode:Key.F4 } && !_window.Visible && _owner.IsAlive)
+        if(PcInput.Pressed("emote",ev) && !_window.Visible && _owner.IsAlive)
         { _window.Open();GetViewport().SetInputAsHandled(); }
     }
 }

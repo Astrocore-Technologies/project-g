@@ -1,0 +1,61 @@
+[gd_scene format=3]
+[ext_resource type="Theme" path="res://UI/Theme/rework-theme.tres" id="Theme"]
+[node name="EmoteView" type="HBoxContainer"]
+theme = ExtResource("Theme")
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="Grid" type="GridContainer" parent="."]
+columns = 3
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="Wave" type="Button" parent="Grid"]
+unique_name_in_owner = true
+text = "Помахать"
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 72)
+[node name="Nod" type="Button" parent="Grid"]
+unique_name_in_owner = true
+text = "Кивнуть"
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 72)
+[node name="No" type="Button" parent="Grid"]
+unique_name_in_owner = true
+text = "Отказаться"
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 72)
+[node name="Bow" type="Button" parent="Grid"]
+unique_name_in_owner = true
+text = "Поклониться"
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 72)
+[node name="Point" type="Button" parent="Grid"]
+unique_name_in_owner = true
+text = "Указать"
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 72)
+[node name="Cheer" type="Button" parent="Grid"]
+unique_name_in_owner = true
+text = "Порадоваться"
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 72)
+[node name="Clap" type="Button" parent="Grid"]
+unique_name_in_owner = true
+text = "Поаплодировать"
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 72)
+[node name="Sit" type="Button" parent="Grid"]
+unique_name_in_owner = true
+text = "Сесть"
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 72)
+[node name="None" type="Button" parent="Grid"]
+unique_name_in_owner = true
+text = "Закончить / встать"
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 72)
+[node name="Hint" type="Label" parent="."]
+text = "Движение и бой прерывают эмоцию."
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Muted"
+custom_minimum_size = Vector2(190, 0)

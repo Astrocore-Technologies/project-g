@@ -1,19 +1,33 @@
 [gd_scene format=3]
+[ext_resource type="Texture2D" path="res://Assets/UI/Backgrounds/forest-ruins.png" id="Scenery"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Hud/echo-compass.svg" id="Compass"]
 [ext_resource type="Theme" path="res://UI/Theme/rework-theme.tres" id="EditorTheme"]
 [ext_resource type="Script" path="res://Scripts/UI/Components/UiModelPreview.cs" id="1"]
-[node name="EchoView" type="VBoxContainer"]
+[node name="EchoView" type="Control"]
 theme = ExtResource("EditorTheme")
 size_flags_horizontal = 3
 size_flags_vertical = 3
+[node name="Backdrop" type="TextureRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("Scenery")
+expand_mode = 1
+stretch_mode = 6
+modulate = Color(0.65, 0.75, 0.7, 0.27)
 [node name="Empty" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
 unique_name_in_owner = true
 size_flags_vertical = 3
 theme_override_constants/separation = 20
 [node name="TopSpace" type="Control" parent="Empty"]
 size_flags_vertical = 3
 [node name="Emblem" type="TextureRect" parent="Empty"]
+texture = ExtResource("Compass")
 unique_name_in_owner = true
-custom_minimum_size = Vector2(120, 120)
+custom_minimum_size = Vector2(160, 160)
 size_flags_horizontal = 4
 expand_mode = 1
 stretch_mode = 5
@@ -33,6 +47,7 @@ size_flags_vertical = 3
 theme_override_constants/separation = 24
 
 [node name="Slot0" type="PanelContainer" parent="Empty/Slots"]
+theme_type_variation = &"EchoEmptySlot"
 custom_minimum_size = Vector2(0, 94)
 size_flags_horizontal = 3
 mouse_filter = 2
@@ -44,6 +59,7 @@ theme_override_font_sizes/font_size = 30
 theme_override_colors/font_color = Color(0.725, 0.608, 0.384, 0.6)
 
 [node name="Slot1" type="PanelContainer" parent="Empty/Slots"]
+theme_type_variation = &"EchoEmptySlot"
 custom_minimum_size = Vector2(0, 94)
 size_flags_horizontal = 3
 mouse_filter = 2
@@ -55,6 +71,7 @@ theme_override_font_sizes/font_size = 30
 theme_override_colors/font_color = Color(0.725, 0.608, 0.384, 0.6)
 
 [node name="Slot2" type="PanelContainer" parent="Empty/Slots"]
+theme_type_variation = &"EchoEmptySlot"
 custom_minimum_size = Vector2(0, 94)
 size_flags_horizontal = 3
 mouse_filter = 2
@@ -66,6 +83,9 @@ theme_override_font_sizes/font_size = 30
 theme_override_colors/font_color = Color(0.725, 0.608, 0.384, 0.6)
 
 [node name="Owned" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
 unique_name_in_owner = true
 visible = false
 size_flags_vertical = 3

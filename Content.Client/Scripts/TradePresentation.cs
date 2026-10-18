@@ -9,13 +9,17 @@ public partial class TradePresentation:CanvasLayer
     private NetworkClient _network=null!;
     private PlayerController _player=null!;
     private UiWindow _panel=null!;
-    private VBoxContainer _body=null!;
-    private Label _status=null!;
+    private VBoxContainer _players=null!,_ownItems=null!,_partnerItems=null!,_selections=null!;
+    private Control _playersPanel=null!,_offers=null!,_invitation=null!,_active=null!;
+    private Label _status=null!,_phase=null!,_invitationText=null!,_ownTitle=null!,_partnerTitle=null!;
+    private Button _acceptInvite=null!,_offer=null!,_accept=null!,_cancel=null!;
+    private string _feedback="";
     private InventoryState _inventory;
     private CraftState _materials;
     private TradeState? _trade;
     private uint _sequence;
     private bool _waiting;
+    private double _clock,_waitingSince;
     private bool _invitedByMe;
     private readonly HashSet<ulong> _selected=new();
     private readonly Dictionary<ushort,ushort> _quantities=new();
@@ -23,7 +27,16 @@ public partial class TradePresentation:CanvasLayer
     {
         _network=network; _player=player; Layer=6;
         _panel=new UiWindow { ToggleKey=Key.B }; AddChild(_panel); _panel.Build("Обмен с игроком",new(1080,650)); _panel.CloseRequested+=_panel.Close;
-        _body=UiComposition.Scroll(_panel.Body);
+        var view=GD.Load<PackedScene>("res://UI/Screens/TradeView.tscn").Instantiate<Control>(); _panel.Body.AddChild(view);
+        _players=view.GetNode<VBoxContainer>("%PlayersRows"); _ownItems=view.GetNode<VBoxContainer>("%OwnItemsRows");
+        _partnerItems=view.GetNode<VBoxContainer>("%PartnerItemsRows"); _selections=view.GetNode<VBoxContainer>("%SelectionsRows");
+        _playersPanel=view.GetNode<Control>("%PlayersPanel"); _offers=view.GetNode<Control>("%Offers");
+        _invitation=view.GetNode<Control>("%Invitation"); _active=view.GetNode<Control>("%Active");
+        _status=view.GetNode<Label>("%Status"); _phase=view.GetNode<Label>("%Phase"); _invitationText=view.GetNode<Label>("%InvitationText");
+        _ownTitle=view.GetNode<Label>("%OwnTitle"); _partnerTitle=view.GetNode<Label>("%PartnerTitle");
+        _acceptInvite=view.GetNode<Button>("%AcceptInvite"); _accept=view.GetNode<Button>("%Accept"); _cancel=view.GetNode<Button>("%Cancel"); _offer=view.GetNode<Button>("%Offer");
+        _acceptInvite.Pressed+=()=>Current(TradeAction.Accept); _accept.Pressed+=()=>Current(TradeAction.Accept); _cancel.Pressed+=()=>Current(TradeAction.Cancel);
+        _offer.Pressed+=()=> { if(_trade is {} t) Send(TradeAction.Offer,t.PartnerId,t.SessionId,t.Revision,_selected.Order().ToArray(),_quantities.Where(q=>q.Value>0).Select(q=>new MaterialAmount(q.Key,q.Value)).ToArray()); };
         _network.InventoryReceived+=Inventory; _network.CraftStateReceived+=Materials;
         _network.TradeStateReceived+=State; _network.TradeResultReceived+=Result;
         _network.PlayerSpawned+=Spawn; _network.PlayerDespawned+=Despawn;
@@ -36,8 +49,8 @@ public partial class TradePresentation:CanvasLayer
         _network.TradeStateReceived-=State; _network.TradeResultReceived-=Result;
         _network.PlayerSpawned-=Spawn; _network.PlayerDespawned-=Despawn;
     }
-    public override void _UnhandledKeyInput(InputEvent e)
-    { if(e is InputEventKey {Pressed:true,Echo:false,PhysicalKeycode:Key.B}) { if(GameUi.GameplayModalOpen)return; Toggle(); GetViewport().SetInputAsHandled(); Render(); } }
+    public override void _UnhandledInput(InputEvent e)
+    { if(PcInput.Pressed("trade",e)) { if(GameUi.GameplayModalOpen)return; Toggle(); GetViewport().SetInputAsHandled(); Render(); } }
     public void Toggle() { if(_panel.Visible) _panel.Close(); else _panel.Open(); }
     private void Inventory(InventoryState s){if(s.EntityId!=_player.EntityId)return; _inventory=s; _selected.RemoveWhere(h=>!s.Items.Any(i=>i.Handle==h&&!i.Equipped));Render();}
     private void Materials(CraftState s){if(s.OwnerId!=_player.EntityId)return;_materials=s;Render();}
@@ -50,65 +63,67 @@ public partial class TradePresentation:CanvasLayer
         if(s.Phase is TradePhase.Completed or TradePhase.Cancelled){_selected.Clear();_quantities.Clear();_invitedByMe=false;}
         Render();
     }
-    private void Result(TradeResult r){if(r.Sequence!=_sequence)return;_waiting=false;Render();if(r.Outcome!=CraftOutcome.Accepted && (_trade is null || _trade.Value.Phase is TradePhase.Completed or TradePhase.Cancelled))_invitedByMe=false;_status.Text="Ответ сервера: "+ProjectG.Economy.EconomyPresentation.Outcome(r.Outcome);}
+    private void Result(TradeResult r){if(r.Sequence!=_sequence)return;_waiting=false;if(r.Outcome!=CraftOutcome.Accepted && (_trade is null || _trade.Value.Phase is TradePhase.Completed or TradePhase.Cancelled))_invitedByMe=false;_feedback="Ответ сервера: "+ProjectG.Economy.EconomyPresentation.Outcome(r.Outcome);Render();}
     private void Send(TradeAction action,NetworkEntityId partner,ulong session,uint revision,IReadOnlyList<ulong>? items=null,IReadOnlyList<MaterialAmount>? materials=null)
     {
         if(_waiting)return;
-        _waiting=true;
+        _waiting=true; _waitingSince=_clock; _feedback="";
         if(action==TradeAction.Invite)_invitedByMe=true;
         _network.SendTrade(new(++_sequence,action,session,partner,revision,items??Array.Empty<ulong>(),materials??Array.Empty<MaterialAmount>()));
         Render();
     }
-    private void Text(string text){_body.AddChild(new Label(){Text=text,AutowrapMode=TextServer.AutowrapMode.WordSmart});}
-    private void Button(string text,Action action,bool disabled=false){var b=new Button(){Text=text,Disabled=disabled||_waiting};b.Pressed+=action;_body.AddChild(b);}
+    private void Current(TradeAction action)
+    { if(_trade is {} trade) Send(action,trade.PartnerId,trade.SessionId,trade.Revision); }
+    public override void _Process(double delta)
+    {
+        _clock+=delta;
+        if(!_waiting || _clock-_waitingSince<12)return;
+        _waiting=false;_feedback="Нет ответа сервера. Проверьте соединение и состояние обмена перед повтором.";Render();
+    }
+    private string MaterialName(ushort id)=>_network.CraftRecipes.Values.SelectMany(r=>r.Costs).FirstOrDefault(c=>c.Id==id).Name??"Материал";
     private void Render()
     {
-        if(_body is null)return;
-        foreach(var c in _body.GetChildren()){_body.RemoveChild(c);c.QueueFree();}
-        Text("Обмен — B. Партнёр должен находиться рядом и стоять на месте.");
-        _status=new Label(){Text=_waiting?"Ожидание сервера…":"Предложение меняется только после ответа сервера."};_body.AddChild(_status);
-        if(_trade is not { } t || t.Phase is TradePhase.Completed or TradePhase.Cancelled)
+        if(_players is null)return;
+        foreach(var list in new[]{_players,_ownItems,_partnerItems,_selections}) UiRows.Clear(list);
+        _status.Text=_waiting?"Ожидание сервера…":_feedback.Length>0?_feedback:"Предложение меняется только после ответа сервера.";
+        var ongoing=_trade is {} open && open.Phase is not (TradePhase.Completed or TradePhase.Cancelled);
+        _playersPanel.Visible=!ongoing; _offers.Visible=ongoing;
+        _phase.Text=_trade is {} phase?phase.Phase switch {TradePhase.Completed=>"Обмен завершён",TradePhase.Cancelled=>"Обмен отменён",TradePhase.Invited=>"Приглашение к обмену",_=>"Проверьте обе стороны обмена"}:"Обмен с игроком";
+        if(!ongoing)
         {
-            if(_trade is {} closed)Text(closed.Phase==TradePhase.Completed?"Обмен завершён.":"Обмен отменён.");
-            foreach(var p in _network.KnownPlayers.Values.Where(p=>p.EntityId!=_player.EntityId).OrderBy(p=>p.PlayerId.Value))
-            { var id=p.EntityId;Button("Пригласить игрока "+p.PlayerId.Value,()=>Send(TradeAction.Invite,id,0,0)); }
+            var players=_network.KnownPlayers.Values.Where(p=>p.EntityId!=_player.EntityId).OrderBy(p=>p.PlayerId.Value).ToArray();
+            foreach(var player in players) { var id=player.EntityId; UiRows.Action(_players,"Игрок "+player.PlayerId.Value,"Партнёр должен стоять рядом.","nav.character","Пригласить",()=>Send(TradeAction.Invite,id,0,0),_waiting); }
+            if(players.Length==0) UiRows.Note(_players,"Рядом нет доступных игроков. Подойдите к партнёру, чтобы начать обмен.");
             return;
         }
-        Text(t.Phase==TradePhase.Invited?"Приглашение к обмену":"Каждый игрок отдельно подтверждает оба показанных предложения.");
-        Text("Изменение предложения снимает подтверждения. Экипировка, крафт и ремонт во время обмена заблокированы.");
-        if(t.Phase==TradePhase.Invited)
+        var t=_trade!.Value; var invited=t.Phase==TradePhase.Invited;
+        _invitation.Visible=invited; _active.Visible=!invited;
+        _invitationText.Text=_invitedByMe?"Приглашение отправлено. Ожидаем согласия партнёра.":"Игрок предлагает обмен. Проверьте предложения перед подтверждением.";
+        _acceptInvite.Visible=!_invitedByMe; _acceptInvite.Disabled=_waiting; _cancel.Disabled=_waiting;
+        _ownTitle.Text="Ваше предложение"+(t.OwnAccepted?" · подтверждено":"");
+        _partnerTitle.Text="Предложение партнёра"+(t.PartnerAccepted?" · подтверждено":"");
+        Preview(_ownItems,t.OwnItems,t.OwnMaterials); Preview(_partnerItems,t.PartnerItems,t.PartnerMaterials);
+        _offer.Disabled=_waiting; _accept.Disabled=_waiting || t.OwnAccepted;
+        if(invited)return;
+        foreach(var item in _inventory.Items??Array.Empty<InventoryEntry>())
         {
-            if(_invitedByMe)Text("Приглашение отправлено. Ожидаем согласия партнёра.");
-            else Button("Принять приглашение",()=>Send(TradeAction.Accept,t.PartnerId,t.SessionId,t.Revision));
+            if(item.Equipped)continue;
+            var handle=item.Handle; CheckBox? box=null;
+            box=UiRows.Selection(_selections,item.Name,_selected.Contains(handle),_waiting,on=>
+            { if(on&&_selected.Count<4)_selected.Add(handle);else _selected.Remove(handle);box!.SetPressedNoSignal(_selected.Contains(handle)); });
         }
-        else
+        foreach(var material in _materials.Materials??Array.Empty<MaterialAmount>())
         {
-            Text("Ваше предложение: "+(t.OwnAccepted?"ПОДТВЕРЖДЕНО":"не подтверждено"));
-            Preview(t.OwnItems,t.OwnMaterials);
-            Text("Предложение партнёра: "+(t.PartnerAccepted?"ПОДТВЕРЖДЕНО":"не подтверждено"));
-            Preview(t.PartnerItems,t.PartnerMaterials);
-            Text("Выберите до 4 неснаряжённых вещей и до 4 видов материалов:");
-            foreach(var i in _inventory.Items??Array.Empty<InventoryEntry>())
-            {
-                if(i.Equipped)continue;
-                var handle=i.Handle;var box=new CheckBox(){Text=i.Name,ButtonPressed=_selected.Contains(handle),Disabled=_waiting};
-                box.Toggled+=on=>{if(on&&_selected.Count<4)_selected.Add(handle);else _selected.Remove(handle);box.SetPressedNoSignal(_selected.Contains(handle));};_body.AddChild(box);
-            }
-            foreach(var m in _materials.Materials??Array.Empty<MaterialAmount>())
-            {
-                var id=m.Id;Text("Материал "+id+" (доступно "+m.Quantity+")");
-                var count=new SpinBox(){MinValue=0,MaxValue=m.Quantity,Step=1,Value=Math.Min(_quantities.GetValueOrDefault(id),m.Quantity),Editable=!_waiting};
-                count.ValueChanged+=v=>{if(v==0)_quantities.Remove(id);else if(_quantities.ContainsKey(id)||_quantities.Count<4)_quantities[id]=(ushort)v;else count.SetValueNoSignal(0);};_body.AddChild(count);
-            }
-            Button("Отправить выбранное предложение",()=>Send(TradeAction.Offer,t.PartnerId,t.SessionId,t.Revision,_selected.Order().ToArray(),_quantities.Where(q=>q.Value>0).Select(q=>new MaterialAmount(q.Key,q.Value)).ToArray()));
-            Button("Подтвердить показанное предложение",()=>Send(TradeAction.Accept,t.PartnerId,t.SessionId,t.Revision),t.OwnAccepted);
+            var id=material.Id; SpinBox? amount=null;
+            amount=UiRows.Amount(_selections,MaterialName(id)+" · доступно "+material.Quantity,material.Quantity,Math.Min(_quantities.GetValueOrDefault(id),material.Quantity),!_waiting,value=>
+            { if(value==0)_quantities.Remove(id);else if(_quantities.ContainsKey(id)||_quantities.Count<4)_quantities[id]=(ushort)value;else amount!.SetValueNoSignal(0); });
         }
-        Button("Отменить обмен",()=>Send(TradeAction.Cancel,t.PartnerId,t.SessionId,t.Revision));
+        if(_selections.GetChildCount()==0) UiRows.Note(_selections,"Нет неснаряжённых вещей или материалов.");
     }
-    private void Preview(IReadOnlyList<TradeItem> items,IReadOnlyList<MaterialAmount> materials)
+    private void Preview(Node parent,IReadOnlyList<TradeItem> items,IReadOnlyList<MaterialAmount> materials)
     {
-        if(items.Count+materials.Count==0)Text("Пусто");
-        foreach(var i in items)Text(i.Name+" | ATK +"+i.Attack+" DEF +"+i.Defense+" HP +"+i.Health+(i.Maximum>0?" | прочность "+i.Current+"/"+i.Maximum:""));
-        foreach(var m in materials)Text("Материал "+m.Id+" × "+m.Quantity);
+        if(items.Count+materials.Count==0) UiRows.Note(parent,"Предложение пусто");
+        foreach(var item in items) UiRows.Action(parent,item.Name,$"Атака +{item.Attack} · Защита +{item.Defense} · HP +{item.Health}"+(item.Maximum>0?$"\nПрочность {item.Current}/{item.Maximum}":""),UiAssets.EquipmentKey(item.Slot));
+        foreach(var material in materials) UiRows.Note(parent,MaterialName(material.Id)+" × "+material.Quantity);
     }
 }

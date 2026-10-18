@@ -135,14 +135,14 @@ public partial class CombatPresentation : Node3D
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (!_local || !IsAlive || ProjectG.UI.GameUi.GameplayModalOpen || @event is not InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } mouse)
+        if (!_local || !IsAlive || PcInput.Blocked(this) || !(PcInput.Pressed(PcInput.Basic,@event) || PcInput.Pressed(PcInput.Manual,@event)))
             return;
         if (!_basicInputReady || _network?.RegionActive != true ||
-            _player?.Control != CombatControlPhase.None || !TryBasicDirection(mouse.Position, out var direction,out var directionY)) return;
+            _player?.Control != CombatControlPhase.None || !TryBasicDirection((@event as InputEventMouseButton)?.Position, out var direction,out var directionY)) return;
         CancelBasicAttack();
         // A tap produces one swing, a held button requests server-timed repetition.
         // The existing Ctrl chord remains an explicit single-swing input.
-        _continuousHeld = !mouse.CtrlPressed;
+        _continuousHeld = PcInput.Pressed(PcInput.Basic,@event);
         Swing(direction,directionY, _continuousHeld ? BasicAttackMode.BeginContinuous : BasicAttackMode.Manual);
         GetViewport().SetInputAsHandled();
     }
@@ -150,9 +150,9 @@ public partial class CombatPresentation : Node3D
     public override void _Input(InputEvent @event)
     {
         // Receive release even if UI consumed the press/focus moved afterwards.
-        if (_local && @event is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: false }) CancelBasicAttack();
-        if(_local && IsAlive && _network?.RegionActive==true && !ProjectG.UI.GameUi.GameplayModalOpen &&
-            @event is InputEventKey {Pressed:true,Echo:false,PhysicalKeycode:Key.Escape} && _ownBasicSequence!=0)
+        if (_local && (PcInput.Released(PcInput.Basic,@event) || PcInput.Released(PcInput.Manual,@event))) CancelBasicAttack();
+        if(_local && IsAlive && _network?.RegionActive==true && !PcInput.Blocked(this) &&
+            PcInput.Pressed(PcInput.Cancel,@event) && _ownBasicSequence!=0)
         {
             CancelBasicAttack();
             SendBasicControl(BasicControlKind.Cancel,_basicDirection);
@@ -246,7 +246,7 @@ public partial class CombatPresentation : Node3D
             }
         }
         if (!_local || !_continuousHeld || _player is null) return;
-        if (!Input.IsMouseButtonPressed(MouseButton.Left) || !IsAlive || !GetWindow().HasFocus() ||
+        if (!PcInput.Held(PcInput.Basic) || !IsAlive || !GetWindow().HasFocus() ||
             _network?.RegionActive != true || ProjectG.UI.GameUi.GameplayModalOpen || _player.DefenseHeld ||
             _player.IsDashing || _player.Control != CombatControlPhase.None || _player.RecoveryRemaining > 0)
         { CancelBasicAttack(); return; }

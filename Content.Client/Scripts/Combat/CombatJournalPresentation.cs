@@ -16,13 +16,9 @@ public partial class CombatJournalPresentation:CanvasLayer
     public void Initialize(NetworkClient network,NetworkEntityId owner)
     {
         _network=network;_owner=owner;Layer=35;_window=new();AddChild(_window);_window.Build("Журнал боя и разбор смерти",new(1180,656));_window.CloseRequested+=_window.Close;
-        var actions=new HBoxContainer();_window.Body.AddChild(actions);
-        actions.AddChild(GameUi.Button("Текущий бой",()=>Select(0)));actions.AddChild(GameUi.Button("Обновить",()=>Select(_selected)));
-        actions.AddChild(GameUi.Text("Доступен только вам · время местное",14));
-        _status=GameUi.Text("",14);_window.Body.AddChild(_status);
-        var columns=new HBoxContainer{SizeFlagsVertical=Control.SizeFlags.ExpandFill};_window.Body.AddChild(columns);
-        var history=UiComposition.Card(columns,260);history.AddChild(GameUi.Text("Последние смерти",18));_deaths=UiComposition.Scroll(history);
-        var content=UiComposition.Card(columns,650);_text=UiComposition.Paragraph(UiComposition.Scroll(content),"Событий пока нет.",14);_text.Name="CombatJournalText";
+        var view=GD.Load<PackedScene>("res://UI/Screens/CombatJournalView.tscn").Instantiate<Control>();_window.Body.AddChild(view);
+        view.GetNode<Button>("%Current").Pressed+=()=>Select(0);view.GetNode<Button>("%Refresh").Pressed+=()=>Select(_selected);
+        _status=view.GetNode<Label>("%Status");_deaths=view.GetNode<VBoxContainer>("%DeathsRows");_text=view.GetNode<Label>("%CombatJournalText");
         network.CombatJournalIndexReceived+=Apply;network.CombatJournalChunkReceived+=Apply;network.CombatJournalResultReceived+=Result;
         if(network.LatestCombatJournalIndex is {} index)Apply(index);
     }

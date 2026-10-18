@@ -28,6 +28,7 @@ public sealed partial class ServerWorld
     private void CancelNavigationForAction(NetworkEntityId id, uint inputOrder)
     {
         if (!_playersByEntity.TryGetValue(id, out var player) || inputOrder == 0) return;
+        EndFollow(id, FollowReason.Action, false);
         // Cancellation happens at actual execution start, including a command that waited in the combat buffer.
         if (player.NavigationOrder != 0 && MovementSimulation.IsSequenceNewer(player.NavigationOrder, inputOrder))
             inputOrder = player.NavigationOrder;

@@ -16,20 +16,15 @@ public partial class PvpPresentation:CanvasLayer
         _network=network;_player=player;Layer=8;
         _hud=GD.Load<PackedScene>("res://UI/Components/PvpStatus.tscn").Instantiate<Label>();AddChild(_hud);
         _panel=new UiWindow { ToggleKey=Key.V }; AddChild(_panel); _panel.Build("PvP, репутация и смерть",new(960,600)); _panel.CloseRequested+=_panel.Close;
-        var body=UiComposition.Scroll(_panel.Body);
-        _details=new(){AutowrapMode=TextServer.AutowrapMode.WordSmart};body.AddChild(_details);
-        _status=new(){AutowrapMode=TextServer.AutowrapMode.WordSmart};body.AddChild(_status);
-        _peace=Button(body,"Выключить PvP после окончания тега",()=>Mode(PvpMode.Peaceful));
-        _voluntary=Button(body,"Включить PvP и тег (120 секунд)",()=>Mode(PvpMode.Voluntary));
-        _ack=new(){Text="Понимаю последствия нападения на мирных",TooltipText="Нападение снижает репутацию; убийство начисляет PK."};body.AddChild(_ack);
-        _criminal=Button(body,"Разрешить нападение на мирных",()=>Mode(PvpMode.Criminal));
-        body.AddChild(new Label(){Text="PvP-смерть: может выпасть 1 экипированный предмет. Bound защищён; legendary без bound может выпасть.\nПодбор сразу для всех с PvP-тегом, занимает 5 секунд. Через 30 минут вещь уничтожается.\nГород защищён; вход во время боя разрешён.",AutowrapMode=TextServer.AutowrapMode.WordSmart});
-        _respawn=Button(body,"Возродиться в городе",()=>Request(new(_state.LastSequence+1,PvpAction.Respawn,PvpMode.Peaceful,false,_state.DeathId)));
+        var view=GD.Load<PackedScene>("res://UI/Screens/PvpView.tscn").Instantiate<Control>(); _panel.Body.AddChild(view);
+        _details=view.GetNode<Label>("%Details"); _status=view.GetNode<Label>("%Status"); _ack=view.GetNode<CheckBox>("%Acknowledge");
+        _peace=view.GetNode<Button>("%Peace"); _voluntary=view.GetNode<Button>("%Voluntary"); _criminal=view.GetNode<Button>("%Criminal"); _respawn=view.GetNode<Button>("%Respawn");
+        _peace.Pressed+=()=>Mode(PvpMode.Peaceful); _voluntary.Pressed+=()=>Mode(PvpMode.Voluntary); _criminal.Pressed+=()=>Mode(PvpMode.Criminal);
+        _respawn.Pressed+=()=>Request(new(_state.LastSequence+1,PvpAction.Respawn,PvpMode.Peaceful,false,_state.DeathId));
         network.PvpStateReceived+=State;network.PvpResultReceived+=Result;network.PickupChannelReceived+=Channel;
     }
-    private static Button Button(VBoxContainer parent,string text,Action press){var b=new Button(){Text=text};b.Pressed+=press;parent.AddChild(b);return b;}
     public override void _ExitTree(){if(_network is null)return;_network.PvpStateReceived-=State;_network.PvpResultReceived-=Result;_network.PickupChannelReceived-=Channel;}
-    public override void _UnhandledKeyInput(InputEvent e){if(e is InputEventKey{Pressed:true,Echo:false,PhysicalKeycode:Key.V}){if(GameUi.GameplayModalOpen)return; Toggle();GetViewport().SetInputAsHandled();}}
+    public override void _UnhandledInput(InputEvent e){if(PcInput.Pressed("pvp",e)){if(GameUi.GameplayModalOpen)return; Toggle();GetViewport().SetInputAsHandled();}}
     public void Toggle() { if(_panel.Visible) _panel.Close(); else _panel.Open(); }
     private void Mode(PvpMode mode){if(mode==PvpMode.Criminal&&!_ack.ButtonPressed)return;Request(new(_state.LastSequence+1,PvpAction.Mode,mode,mode==PvpMode.Criminal,0));}
     private void Request(PvpCommand c){if(_pending is not null||_state.OwnerId!=_player.EntityId)return;_pending=c;_sent=_clock;_status.Text="Ожидаем сохранения…";_network.SendPvp(c);}

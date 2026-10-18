@@ -1,11 +1,16 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://Scripts/UI/ClientSettingsPanel.cs" id="1"]
-[ext_resource type="Theme" path="res://UI/Theme/menu-theme.tres" id="2"]
+[ext_resource type="Theme" path="res://UI/Theme/rework-theme.tres" id="2"]
+[ext_resource type="PackedScene" path="res://UI/Screens/InputBindingsView.tscn" id="3"]
+
 
 [node name="Settings" type="PanelContainer"]
+theme_type_variation = &"WindowPanel"
 theme = ExtResource("2")
 script = ExtResource("1")
+size_flags_horizontal = 3
+size_flags_vertical = 3
 
 [node name="Content" type="VBoxContainer" parent="."]
 layout_mode = 2
@@ -16,31 +21,47 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 26
 text = "Настройки"
 
-[node name="Fullscreen" type="CheckButton" parent="Content"]
+[node name="Scroll" type="ScrollContainer" parent="Content"]
+custom_minimum_size = Vector2(0, 200)
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+[node name="Preferences" type="TabContainer" parent="Content/Scroll"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(600, 280)
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Экран и звук" type="VBoxContainer" parent="Content/Scroll/Preferences"]
+theme_override_constants/separation = 16
+
+[node name="Fullscreen" type="CheckButton" parent="Content/Scroll/Preferences/Экран и звук"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 text = "Полный экран"
 
-[node name="VolumeHeader" type="HBoxContainer" parent="Content"]
+[node name="VolumeHeader" type="HBoxContainer" parent="Content/Scroll/Preferences/Экран и звук"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="Content/VolumeHeader"]
+[node name="Label" type="Label" parent="Content/Scroll/Preferences/Экран и звук/VolumeHeader"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Громкость"
 
-[node name="VolumeValue" type="Label" parent="Content/VolumeHeader"]
+[node name="VolumeValue" type="Label" parent="Content/Scroll/Preferences/Экран и звук/VolumeHeader"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "100%"
 
-[node name="Volume" type="HSlider" parent="Content"]
+[node name="Volume" type="HSlider" parent="Content/Scroll/Preferences/Экран и звук"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
 value = 100.0
 step = 1.0
+
+[node name="Управление" parent="Content/Scroll/Preferences" instance=ExtResource("3")]
 
 [node name="SettingsFeedback" type="Label" parent="Content"]
 unique_name_in_owner = true

@@ -1,0 +1,17 @@
+[gd_scene format=3]
+[ext_resource type="Theme" path="res://UI/Theme/rework-theme.tres" id="Theme"]
+[node name="PartyHud" type="ScrollContainer"]
+theme = ExtResource("Theme")
+visible = false
+offset_left = 16.0
+offset_top = 180.0
+offset_right = 244.0
+offset_bottom = 430.0
+horizontal_scroll_mode = 0
+[node name="Content" type="VBoxContainer" parent="."]
+size_flags_horizontal = 3
+[node name="Members" type="Label" parent="Content"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+autowrap_mode = 3
+theme_type_variation = &"Muted"

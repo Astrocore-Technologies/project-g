@@ -10,19 +10,23 @@ namespace ProjectG.Tests.UI;
 /// <summary>Real dialog/journal controls against an isolated server and development identity.</summary>
 public partial class QuestSmoke : Node
 {
+    [Export] public bool UseReviewServer {get;set;}
     public override async void _Ready()
     {
         try
         {
             GetWindow().Mode = Window.ModeEnum.Windowed; GetWindow().Size = new(1280, 720);
             var world = GD.Load<PackedScene>("res://Scenes/World.tscn").Instantiate<WorldController>();
-            world.AutoConnect = false; AddChild(world);
+            world.AutoConnect = false;world.UiSettingsPath="res://../.artifacts/ui-final-2026-10-18/review-settings.cfg";
             var network = world.GetNode<NetworkClient>("NetworkClient");
+            var port=NetworkConstants.Port;var profile="ui-quest-"+Guid.NewGuid().ToString("N")[..10];
+            if(UseReviewServer){using var config=System.Text.Json.JsonDocument.Parse(Godot.FileAccess.GetFileAsString("res://../.artifacts/ui-redesign/live.json"));port=config.RootElement.GetProperty("port").GetInt32();network.DevelopmentIdentityProfile=profile;}
+            AddChild(world);
             QuestReply? reply = null; network.QuestReplyReceived += value => reply = value;
-            network.ConnectToServer(); await Wait(() => network.LatestQuestJournal is not null, "journal login"); await Delay(.5);
+            network.ConnectToServerAt(port); await Wait(() => network.LatestQuestJournal is not null, "journal login"); await Delay(.5);
             var player = world.GetChildren().OfType<PlayerController>().Single(p => p.GetNode<Camera3D>("CameraRig/Camera3D").Current);
             var ui = world.GetChildren().OfType<QuestPresentation>().Single();
-            await Walk(player, new(-15, 18));
+            await Walk(player, UseReviewServer?network.QuestNpcs.Values.Single(n=>n.Name=="Лада").Position:new(-15,18));
             Press(Key.F2); await Wait(() => reply is { Choices: 1 }, "giver dialog");
             await Capture("quest-dialog");
             await Click(ui, "Взяться за доставку");
@@ -52,10 +56,11 @@ public partial class QuestSmoke : Node
             Press(Key.Escape); Press(Key.L); await Delay(.4); await Capture("quest-complete");
             world.QueueFree(); await Delay(.5);
             if (GameUi.QuestWindowOpen) throw new Exception("Quest modal state was not cleared on teardown.");
-            var restored = GD.Load<PackedScene>("res://Scenes/World.tscn").Instantiate<WorldController>(); restored.AutoConnect = false; AddChild(restored);
-            var next = restored.GetNode<NetworkClient>("NetworkClient"); next.ConnectToServer();
+            var restored = GD.Load<PackedScene>("res://Scenes/World.tscn").Instantiate<WorldController>(); restored.AutoConnect = false;restored.UiSettingsPath="res://../.artifacts/ui-final-2026-10-18/review-settings.cfg";
+            var next = restored.GetNode<NetworkClient>("NetworkClient");if(UseReviewServer)next.DevelopmentIdentityProfile=profile;AddChild(restored); next.ConnectToServerAt(port);
             await Wait(() => next.LatestQuestJournal is { Status: QuestStatus.Completed }, "durable quest reconnect");
             restored.QueueFree(); await Delay(.2);
+            UiReviewEvidence.Record("quest-dialogue","PASS: real F2/NPC dialogue, accept, journal, modal input, deliver, durable reconnect, cleanup");
             GD.Print("QUEST_SMOKE_OK: F2 dialog, accept button, L journal, modal input, deliver button, durable reconnect, cleanup.");
             GetTree().Quit();
         }
@@ -84,9 +89,10 @@ public partial class QuestSmoke : Node
     }
     private async Task Capture(string name)
     {
-        if (!OS.GetCmdlineUserArgs().Contains("--capture")) return;
+        if (!UseReviewServer && !OS.GetCmdlineUserArgs().Contains("--capture")) return;
+        DirAccess.MakeDirRecursiveAbsolute(ProjectSettings.GlobalizePath("res://../.artifacts/ui-final-2026-10-18/dialogue"));
         await ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
-        GetViewport().GetTexture().GetImage().SavePng("res://../.artifacts/" + name + ".png");
+        GetViewport().GetTexture().GetImage().SavePng("res://../.artifacts/ui-final-2026-10-18/dialogue/" + name + ".png");
     }
     private async Task Delay(double seconds) => await ToSignal(GetTree().CreateTimer(seconds), SceneTreeTimer.SignalName.Timeout);
     private async Task Wait(Func<bool> predicate, string stage)

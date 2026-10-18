@@ -7,7 +7,12 @@ namespace ProjectG.Social;
 public partial class SocialPresentation : CanvasLayer
 {
     private NetworkClient network=null!; private PlayerController player=null!;
-    private UiWindow panel=null!; private VBoxContainer body=null!; private Label hud=null!,status=null!;
+    private UiWindow panel=null!; private Label hud=null!,status=null!,rosterTitle=null!;
+    private VBoxContainer memberRows=null!,inviteRows=null!,nearbyRows=null!;
+    private Control create=null!,disband=null!;
+    private Button createGroup=null!,resize=null!,leave=null!,disbandGroup=null!;
+    private LineEdit guildNameEdit=null!;
+    private CheckBox acknowledge=null!;
     private ScrollContainer partyHud=null!;
     private readonly Dictionary<SocialKind,SocialRoster> rosters=new();
     private readonly Dictionary<(SocialKind,byte),SocialMember[]> pages=new();
@@ -18,19 +23,28 @@ public partial class SocialPresentation : CanvasLayer
     {
         network=n;player=p;Layer=9;
         var root=new Control { Theme=GameUi.CreateTheme(),MouseFilter=Control.MouseFilterEnum.Ignore }; AddChild(root); root.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        partyHud=new() { AnchorTop=1,AnchorBottom=1,OffsetLeft=16,OffsetRight=290,OffsetTop=-206,OffsetBottom=-16,Visible=false,HorizontalScrollMode=ScrollContainer.ScrollMode.Disabled }; root.AddChild(partyHud);
-        hud=GameUi.Text("",13); hud.AutowrapMode=TextServer.AutowrapMode.WordSmart; partyHud.AddChild(hud);
+        partyHud=GD.Load<PackedScene>("res://UI/Components/PartyHud.tscn").Instantiate<ScrollContainer>(); root.AddChild(partyHud);
+        hud=partyHud.GetNode<Label>("%Members");
         panel=new UiWindow(); root.AddChild(panel); panel.Build("Группа и гильдия игроков",new(1180,656)); panel.CloseRequested+=panel.Close;
-        var page=UiComposition.Page(panel,"clan");
-        var tabs=new HBoxContainer(); page.AddChild(tabs);
-        tabs.AddChild(GameUi.Button("Группа · N",()=> { selected=SocialKind.Party; Render(); }));
-        tabs.AddChild(GameUi.Button("Гильдия игроков · O",()=> { selected=SocialKind.Guild; Render(); }));
-        status=UiComposition.Paragraph(page,"",14); body=UiComposition.Scroll(page);
+        var view=GD.Load<PackedScene>("res://UI/Screens/SocialView.tscn").Instantiate<Control>(); panel.Body.AddChild(view);
+        view.GetNode<Button>("%Party").Pressed+=()=> { selected=SocialKind.Party;Render(); };
+        view.GetNode<Button>("%Clan").Pressed+=()=> { selected=SocialKind.Guild;Render(); };
+        status=view.GetNode<Label>("%Status"); rosterTitle=view.GetNode<Label>("%RosterTitle");
+        memberRows=view.GetNode<VBoxContainer>("%MembersRows"); inviteRows=view.GetNode<VBoxContainer>("%InvitesRows"); nearbyRows=view.GetNode<VBoxContainer>("%NearbyRows");
+        create=view.GetNode<Control>("%Create"); disband=view.GetNode<Control>("%Disband"); guildNameEdit=view.GetNode<LineEdit>("%GuildName");
+        createGroup=view.GetNode<Button>("%CreateGroup"); resize=view.GetNode<Button>("%Resize"); leave=view.GetNode<Button>("%Leave"); disbandGroup=view.GetNode<Button>("%DisbandGroup"); acknowledge=view.GetNode<CheckBox>("%Acknowledge");
+        guildNameEdit.TextChanged+=value=>guildName=value;
+        createGroup.Pressed+=()=>Request(SocialAction.Create,name:selected==SocialKind.Guild?guildName:"");
+        resize.Pressed+=()=> { if(rosters.TryGetValue(selected,out var roster))Request(SocialAction.Resize,capacity:(byte)(roster.Capacity==6?20:6)); };
+        leave.Pressed+=()=>Request(SocialAction.Leave);
+        acknowledge.Toggled+=on=>disbandGroup.Disabled=pending is not null || !on;
+        disbandGroup.Pressed+=()=> { if(acknowledge.ButtonPressed)Request(SocialAction.Disband,acknowledge:true); };
+        Render();
         n.SocialRosterReceived+=Roster;n.SocialInvitesReceived+=Invites;n.SocialResultReceived+=Result;n.PartyPresenceReceived+=Presence;
     }
     public override void _ExitTree(){if(network is null)return;network.SocialRosterReceived-=Roster;network.SocialInvitesReceived-=Invites;network.SocialResultReceived-=Result;network.PartyPresenceReceived-=Presence;}
-    public override void _UnhandledKeyInput(InputEvent e)
-    { if(rosters.Count>0 && e is InputEventKey{Pressed:true,Echo:false} k&&k.PhysicalKeycode is Key.N or Key.O) { if(GameUi.GameplayModalOpen)return; Toggle(k.PhysicalKeycode==Key.N?SocialKind.Party:SocialKind.Guild);GetViewport().SetInputAsHandled(); } }
+    public override void _UnhandledInput(InputEvent e)
+    { if(rosters.Count>0 && !PcInput.Blocked(this) && (PcInput.Pressed("party",e)||PcInput.Pressed("clan",e))) { Toggle(PcInput.Pressed("party",e)?SocialKind.Party:SocialKind.Guild);GetViewport().SetInputAsHandled(); } }
     public void Toggle(SocialKind kind) { selected=kind; panel.ToggleKey=kind==SocialKind.Party?Key.N:Key.O; if(panel.Visible) panel.Close(); else { Render(); panel.Open(); } }
     private void Roster(SocialRoster r)
     {
@@ -53,39 +67,44 @@ public partial class SocialPresentation : CanvasLayer
         var c=new SocialCommand(++operation,invite?.Kind??selected,action,target,action==SocialAction.Create?0:invite?.Revision??r.Revision,invite?.Token??0,capacity,acknowledge,name);
         pending=c;sent=clock;status.Text="Ожидаем сохранения…";network.SendSocial(c);Render();
     }
-    private void Button(string label,Action action){var b=new Button(){Text=label,Disabled=pending is not null};b.Pressed+=action;body.AddChild(b);}
-    private void Text(string text)=>body.AddChild(new Label(){Text=text,AutowrapMode=TextServer.AutowrapMode.WordSmart});
     private SocialMember[] Members(SocialKind kind)=>pages.Where(p=>p.Key.Item1==kind).OrderBy(p=>p.Key.Item2).SelectMany(p=>p.Value).ToArray();
+    private static string RoleName(SocialRole role)=>role switch {SocialRole.Leader=>"Лидер",SocialRole.Officer=>"Офицер",_=>"Участник"};
     private void Render()
     {
-        if(body is null)return;foreach(var child in body.GetChildren()){body.RemoveChild(child);child.QueueFree();}
-        Text(selected==SocialKind.Party?"Группа — N | Гильдия — O":"Гильдия — O | Группа — N");
-        if(!rosters.TryGetValue(selected,out var r)){Text("Ожидаем состояния сервера…");return;}
-        if(r.Id==0)
+        if(memberRows is null)return;
+        foreach(var list in new[]{memberRows,inviteRows,nearbyRows}) UiRows.Clear(list);
+        panel.Title.Text=selected==SocialKind.Party?"Группа":"Гильдия игроков";
+        var known=rosters.TryGetValue(selected,out var r); var exists=known&&r.Id!=0;
+        var members=Members(selected); var own=members.FirstOrDefault(m=>m.Handle==r.Self); var leader=exists&&own.Role==SocialRole.Leader;
+        create.Visible=known&&!exists; guildNameEdit.Visible=selected==SocialKind.Guild;
+        createGroup.Text=selected==SocialKind.Party?"Создать группу на 6":"Создать гильдию"; createGroup.Disabled=pending is not null;
+        resize.Visible=leader&&selected==SocialKind.Party; resize.Text=r.Capacity==6?"Расширить до 20":"Сократить до 6"; resize.Disabled=pending is not null;
+        leave.Visible=exists&&(selected==SocialKind.Party||!leader); leave.Disabled=pending is not null;
+        disband.Visible=leader&&selected==SocialKind.Guild&&r.Total==1; disbandGroup.Disabled=pending is not null||!acknowledge.ButtonPressed;
+        rosterTitle.Text=!known?"Состав загружается…":!exists?(selected==SocialKind.Party?"Вы пока не в группе":"Вы пока не в гильдии"):(selected==SocialKind.Guild?r.Name:"Группа")+$" · {r.Total}/{r.Capacity}";
+        if(!exists) UiRows.Note(memberRows,known?"Создайте объединение или примите приглашение.":"Ожидаем состояния сервера…");
+        foreach(var member in exists?members:[])
         {
-            if(selected==SocialKind.Guild){var edit=new LineEdit(){PlaceholderText="Название гильдии",Text=guildName,MaxLength=96};edit.TextChanged+=v=>guildName=v;body.AddChild(edit);}
-            Button(selected==SocialKind.Party?"Создать группу на 6":"Создать гильдию",()=>Request(SocialAction.Create,name:selected==SocialKind.Guild?guildName:""));
+            var target=member.Handle;
+            var canKick=target!=r.Self&&(leader||selected==SocialKind.Guild&&own.Role==SocialRole.Officer&&member.Role==SocialRole.Member);
+            var row=UiRows.Action(memberRows,"Игрок #"+target+(target==r.Self?" · вы":""),RoleName(member.Role)+(member.Online?" · в сети":" · не в сети"),"nav.character",canKick?"Исключить":"",canKick?()=>Request(SocialAction.Kick,target):null,pending is not null);
+            if(target==r.Self||!leader)continue;
+            UiRows.Secondary(row,"Передать лидерство",()=>Request(SocialAction.Transfer,target),pending is not null);
+            if(selected==SocialKind.Guild) UiRows.Button(row.GetNode<VBoxContainer>("%Actions"),member.Role==SocialRole.Officer?"Понизить":"Назначить офицером",()=>Request(member.Role==SocialRole.Officer?SocialAction.Demote:SocialAction.Promote,target),pending is not null);
         }
-        else
+        if(exists&&(leader||selected==SocialKind.Guild&&own.Role==SocialRole.Officer))
         {
-            Text((selected==SocialKind.Guild?r.Name:"Группа")+" #"+r.Id+" | "+r.Total+"/"+r.Capacity);
-            var members=Members(selected);var own=members.FirstOrDefault(m=>m.Handle==r.Self);var leader=own.Role==SocialRole.Leader;
-            foreach(var member in members)
-            {
-                Text("Игрок #"+member.Handle+" — "+member.Role+(member.Online?" | онлайн":" | офлайн")+(member.Handle==r.Self?" (вы)":""));
-                var target=member.Handle;
-                if(target==r.Self)continue;
-                if(leader||selected==SocialKind.Guild&&own.Role==SocialRole.Officer&&member.Role==SocialRole.Member)Button("Исключить #"+target,()=>Request(SocialAction.Kick,target));
-                if(leader){Button("Передать лидерство #"+target,()=>Request(SocialAction.Transfer,target));if(selected==SocialKind.Guild)Button(member.Role==SocialRole.Officer?"Понизить #"+target:"Назначить офицером #"+target,()=>Request(member.Role==SocialRole.Officer?SocialAction.Demote:SocialAction.Promote,target));}
-            }
-            if(leader&&selected==SocialKind.Party)Button(r.Capacity==6?"Расширить до 20":"Сократить до 6",()=>Request(SocialAction.Resize,capacity:(byte)(r.Capacity==6?20:6)));
-            if(selected==SocialKind.Party||!leader)Button("Покинуть",()=>Request(SocialAction.Leave));
-            if(selected==SocialKind.Guild&&leader&&r.Total==1){var ack=new CheckBox(){Text="Подтверждаю роспуск гильдии"};body.AddChild(ack);Button("Распустить",()=>{if(ack.ButtonPressed)Request(SocialAction.Disband,acknowledge:true);});}
-            if(leader||selected==SocialKind.Guild&&own.Role==SocialRole.Officer)
-            {Text("Пригласить видимого игрока:");foreach(var p in network.KnownPlayers.Values.Where(p=>p.EntityId!=player.EntityId).OrderBy(p=>p.EntityId.Value)){var target=p.EntityId.Value;Button("Пригласить игрока (entity #"+target+")",()=>Request(SocialAction.Invite,target));}}
+            foreach(var playerInfo in network.KnownPlayers.Values.Where(value=>value.EntityId!=player.EntityId).OrderBy(value=>value.EntityId.Value))
+            { var target=playerInfo.EntityId.Value; UiRows.Action(nearbyRows,"Игрок "+playerInfo.PlayerId.Value,"Видимый игрок","nav.character","Пригласить",()=>Request(SocialAction.Invite,target),pending is not null); }
         }
-        if(invites.Items is not null)foreach(var i in invites.Items){var invite=i;Text((i.Handoff?"Передача лидерства":"Приглашение")+" от #"+i.From+" в "+i.Kind+" "+i.Name+" (30 с)");Button("Принять",()=>Request(SocialAction.Accept,acknowledge:true,invite:invite));Button("Отклонить",()=>Request(SocialAction.Decline,invite:invite));}
-        Text("EXP личный. Лут подбирается вручную. Гильдия не защищает от PvP.");
+        if(nearbyRows.GetChildCount()==0) UiRows.Note(nearbyRows,exists?"Нет доступных игроков или прав на приглашение.":"Сначала создайте объединение.");
+        foreach(var entry in invites.Items??[])
+        {
+            var invite=entry;
+            var row=UiRows.Action(inviteRows,entry.Handoff?"Передача лидерства":"Приглашение",entry.Name+" · от #"+entry.From+" · 30 с","icon.guild","Принять",()=>Request(SocialAction.Accept,acknowledge:true,invite:invite),pending is not null);
+            UiRows.Secondary(row,"Отклонить",()=>Request(SocialAction.Decline,invite:invite),pending is not null);
+        }
+        if(inviteRows.GetChildCount()==0) UiRows.Note(inviteRows,"Приглашений пока нет.");
     }
     public override void _Process(double delta)
     {
@@ -93,7 +112,7 @@ public partial class SocialPresentation : CanvasLayer
         if(clock<refresh)return;refresh=clock+.5;
         hud.Text="Группа · N"; partyHud.Visible=!GameUi.GameplayModalOpen && rosters.TryGetValue(SocialKind.Party,out var party)&&party.Id!=0;
         if(rosters.TryGetValue(SocialKind.Party,out var r)&&r.Id!=0)
-        {foreach(var m in Members(SocialKind.Party)){var text="#"+m.Handle+": ";if(presence.TryGetValue(m.Handle,out var p)&&clock-p.At<3)text+=(p.State.Flags&1)==0?((p.State.Flags&4)!=0?"отключён в бою":"офлайн"):(p.State.Flags&2)!=0?"погиб":p.State.Health.ToString("0")+"/"+p.State.MaxHealth.ToString("0")+" | "+p.State.Position.X.ToString("0")+", "+p.State.Position.Y.ToString("0");else text+="нет свежих данных";hud.Text+="\n"+text;}}
+        {foreach(var m in Members(SocialKind.Party)){var text="#"+m.Handle+": ";if(presence.TryGetValue(m.Handle,out var p)&&clock-p.At<3)text+=(p.State.Flags&1)==0?((p.State.Flags&4)!=0?"отключён в бою":"офлайн"):(p.State.Flags&2)!=0?"погиб":p.State.Health.ToString("0")+"/"+p.State.MaxHealth.ToString("0");else text+="нет свежих данных";hud.Text+="\n"+text;}}
 
     }
 }

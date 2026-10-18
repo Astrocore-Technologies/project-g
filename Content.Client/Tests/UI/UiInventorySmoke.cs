@@ -14,7 +14,7 @@ public partial class UiInventorySmoke : Node
         try
         {
             GetWindow().Mode=Window.ModeEnum.Windowed; GetWindow().Size=new(1280,720);
-            var world=GD.Load<PackedScene>("res://Scenes/World.tscn").Instantiate<WorldController>(); world.AutoConnect=false;
+            var world=GD.Load<PackedScene>("res://Scenes/World.tscn").Instantiate<WorldController>(); world.AutoConnect=false; world.UiSettingsPath="res://../.artifacts/ui-final-2026-10-18/review-settings.cfg";
             var network=world.GetNode<NetworkClient>("NetworkClient"); InventoryState state=default;
             var reviewPort=0;
             if(UseReviewServer)
@@ -39,6 +39,7 @@ public partial class UiInventorySmoke : Node
             if(GameUi.GameplayModalOpen) throw new Exception("I did not close inventory.");
             inventory.Toggle(); world.QueueFree(); await Frames(4);
             if(GameUi.GameplayModalOpen) throw new Exception("Disconnect leaked inventory modal.");
+            UiReviewEvidence.Record("inventory","PASS: real owner inventory, equip acknowledgement, input close and cleanup");
             GD.Print("UI_INVENTORY_OK: real owner state, grid, equip acknowledgement, I close and teardown."); GetTree().Quit();
         }
         catch(Exception error) { GD.PushError(error.ToString()); GetTree().Quit(1); }

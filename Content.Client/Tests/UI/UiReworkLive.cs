@@ -16,7 +16,7 @@ public partial class UiReworkLive : Node
         try
         {
             var config=JsonDocument.Parse(Godot.FileAccess.GetFileAsString("res://../.artifacts/ui-redesign/live.json"));
-            _world=GD.Load<PackedScene>("res://Scenes/World.tscn").Instantiate<WorldController>(); _world.AutoConnect=false;
+            _world=GD.Load<PackedScene>("res://Scenes/World.tscn").Instantiate<WorldController>(); _world.AutoConnect=false; _world.UiSettingsPath="res://../.artifacts/ui-final-2026-10-18/review-settings.cfg";
             var network=_world.GetNode<NetworkClient>("NetworkClient"); network.DevelopmentIdentityProfile=config.RootElement.GetProperty("identity").GetString()!;
             _world.WorldReady+=()=> { ReadyForReview=true; GD.Print("UI_REWORK_REVIEW_READY"); };
             AddChild(_world); network.ConnectToServerAt(config.RootElement.GetProperty("port").GetInt32());

@@ -1,0 +1,128 @@
+[gd_scene format=3]
+[ext_resource type="Theme" path="res://UI/Theme/rework-theme.tres" id="Theme"]
+[node name="TradeView" type="VBoxContainer"]
+theme = ExtResource("Theme")
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="Phase" type="Label" parent="."]
+unique_name_in_owner = true
+text = "Обмен с игроком"
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 22
+[node name="Status" type="Label" parent="."]
+unique_name_in_owner = true
+text = "Выберите находящегося рядом игрока."
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Muted"
+[node name="Workspace" type="HBoxContainer" parent="."]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="PlayersPanel" type="VBoxContainer" parent="Workspace"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 0)
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="PlayersHeading" type="Label" parent="Workspace/PlayersPanel"]
+text = "Игроки рядом"
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 22
+[node name="Players" type="ScrollContainer" parent="Workspace/PlayersPanel"]
+size_flags_vertical = 3
+size_flags_horizontal = 3
+horizontal_scroll_mode = 0
+[node name="PlayersRows" type="VBoxContainer" parent="Workspace/PlayersPanel/Players"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+[node name="Offers" type="VBoxContainer" parent="Workspace"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+size_flags_vertical = 3
+size_flags_stretch_ratio = 2
+[node name="Invitation" type="VBoxContainer" parent="Workspace/Offers"]
+unique_name_in_owner = true
+[node name="InvitationText" type="Label" parent="Workspace/Offers/Invitation"]
+unique_name_in_owner = true
+text = ""
+autowrap_mode = 3
+size_flags_horizontal = 3
+[node name="AcceptInvite" type="Button" parent="Workspace/Offers/Invitation"]
+unique_name_in_owner = true
+text = "Принять приглашение"
+[node name="Active" type="VBoxContainer" parent="Workspace/Offers"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="OfferColumns" type="HBoxContainer" parent="Workspace/Offers/Active"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="Own" type="VBoxContainer" parent="Workspace/Offers/Active/OfferColumns"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="OwnTitle" type="Label" parent="Workspace/Offers/Active/OfferColumns/Own"]
+unique_name_in_owner = true
+text = "Ваше предложение"
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 22
+[node name="OwnItems" type="ScrollContainer" parent="Workspace/Offers/Active/OfferColumns/Own"]
+size_flags_vertical = 3
+size_flags_horizontal = 3
+horizontal_scroll_mode = 0
+[node name="OwnItemsRows" type="VBoxContainer" parent="Workspace/Offers/Active/OfferColumns/Own/OwnItems"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+[node name="Partner" type="VBoxContainer" parent="Workspace/Offers/Active/OfferColumns"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="PartnerTitle" type="Label" parent="Workspace/Offers/Active/OfferColumns/Partner"]
+unique_name_in_owner = true
+text = "Предложение партнёра"
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 22
+[node name="PartnerItems" type="ScrollContainer" parent="Workspace/Offers/Active/OfferColumns/Partner"]
+size_flags_vertical = 3
+size_flags_horizontal = 3
+horizontal_scroll_mode = 0
+[node name="PartnerItemsRows" type="VBoxContainer" parent="Workspace/Offers/Active/OfferColumns/Partner/PartnerItems"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+[node name="Selection" type="VBoxContainer" parent="Workspace/Offers/Active"]
+size_flags_vertical = 3
+[node name="SelectHeading" type="Label" parent="Workspace/Offers/Active/Selection"]
+text = "Выберите до 4 вещей и до 4 видов материалов"
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Muted"
+[node name="Selections" type="ScrollContainer" parent="Workspace/Offers/Active/Selection"]
+size_flags_vertical = 3
+size_flags_horizontal = 3
+horizontal_scroll_mode = 0
+[node name="SelectionsRows" type="VBoxContainer" parent="Workspace/Offers/Active/Selection/Selections"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+[node name="Actions" type="HBoxContainer" parent="Workspace/Offers/Active"]
+[node name="Offer" type="Button" parent="Workspace/Offers/Active/Actions"]
+unique_name_in_owner = true
+text = "Отправить выбранное предложение"
+size_flags_horizontal = 3
+[node name="Accept" type="Button" parent="Workspace/Offers/Active/Actions"]
+unique_name_in_owner = true
+text = "Подтвердить показанное предложение"
+size_flags_horizontal = 3
+[node name="Cancel" type="Button" parent="Workspace/Offers"]
+unique_name_in_owner = true
+text = "Отменить обмен"
+theme_type_variation = &"QuietButton"
+[node name="Safety" type="Label" parent="."]
+text = "Изменение предложения снимает подтверждения. Перед подтверждением проверьте обе стороны обмена."
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Muted"

@@ -1,0 +1,21 @@
+[gd_scene format=3]
+[ext_resource type="Theme" path="res://UI/Theme/rework-theme.tres" id="Theme"]
+[node name="GuideView" type="VBoxContainer"]
+theme = ExtResource("Theme")
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="GuideScroll" type="ScrollContainer" parent="."]
+size_flags_vertical = 3
+size_flags_horizontal = 3
+horizontal_scroll_mode = 0
+[node name="GuideScrollRows" type="VBoxContainer" parent="GuideScroll"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+[node name="GuideText" type="Label" parent="GuideScroll/GuideScrollRows"]
+unique_name_in_owner = true
+text = ""
+autowrap_mode = 3
+size_flags_horizontal = 3
+[node name="Continue" type="Button" parent="."]
+unique_name_in_owner = true
+text = "Продолжить путь"

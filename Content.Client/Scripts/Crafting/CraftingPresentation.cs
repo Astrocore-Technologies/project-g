@@ -10,7 +10,9 @@ public partial class CraftingPresentation : Node3D
     private NetworkClient _network=null!;
     private PlayerController _player=null!;
     private UiWindow _panel=null!;
-    private VBoxContainer _content=null!;
+    private VBoxContainer _materials=null!,_resources=null!,_recipes=null!,_repairs=null!;
+    private Control _repairConfirmation=null!;
+    private Label _repairCost=null!;
     private Label _status=null!;
     private CraftState? _state;
     private ItemConditionState? _condition;
@@ -29,8 +31,12 @@ public partial class CraftingPresentation : Node3D
         _network.ResourceNodeReceived+=Resource; _network.ResourceNodeLeft+=Remove;
         var canvas=new CanvasLayer { Layer=5 }; AddChild(canvas);
         _panel=new UiWindow { ToggleKey=Key.C }; canvas.AddChild(_panel); _panel.Build("Ремесло и материалы",new(1080,650)); _panel.CloseRequested+=_panel.Close;
-        _content=UiComposition.Scroll(_panel.Body);
-        _status=UiComposition.Paragraph(_panel.Body,"Ожидание сервера",14);
+        var view=GD.Load<PackedScene>("res://UI/Screens/CraftingView.tscn").Instantiate<Control>(); _panel.Body.AddChild(view);
+        _materials=view.GetNode<VBoxContainer>("%MaterialsRows"); _resources=view.GetNode<VBoxContainer>("%РесурсыRows");
+        _recipes=view.GetNode<VBoxContainer>("%RecipesRows"); _repairs=view.GetNode<VBoxContainer>("%RepairsRows");
+        _status=view.GetNode<Label>("%Status"); _repairCost=view.GetNode<Label>("%RepairCost");
+        _repairConfirmation=view.GetNode<Control>("%RepairConfirmation");
+        view.GetNode<Button>("%ConfirmRepair").Pressed+=ConfirmRepair; view.GetNode<Button>("%CancelRepair").Pressed+=CancelRepair;
         foreach(var resource in network.ResourceNodes.Values) Resource(resource);
         var station=network.CraftRecipes.Values.First();
         AddChild(new MeshInstance3D { Position=new(station.StationPosition.X,0.55f,station.StationPosition.Y),Mesh=new BoxMesh { Size=new(1.1f,0.2f,0.7f) },MaterialOverride=new StandardMaterial3D { AlbedoColor=new(0.55f,0.34f,0.16f) } });
@@ -61,7 +67,7 @@ public partial class CraftingPresentation : Node3D
         _status.Text=result.Outcome switch { CraftOutcome.Accepted=>"Предмет отремонтирован.",CraftOutcome.AlreadyProcessed=>"Ремонт уже выполнен; материалы повторно не списаны.",CraftOutcome.TooFar=>"Подойди к верстаку.",CraftOutcome.Busy=>"Остановись и закончи применение умения.",CraftOutcome.MissingMaterials=>"Недостаточно материалов для ремонта.",CraftOutcome.Unavailable=>"Состояние вещи изменилось или ремонт не нужен.",CraftOutcome.InvalidOperation=>"Предложение устарело. Запроси ремонт ещё раз.",_=>"Ремонт отклонён: "+result.Outcome }; Rebuild();
     }
     private void Apply(CraftState state)
-    { if(state.OwnerId!=_player.EntityId) return; _state=state; Rebuild(); }
+    { if(state.OwnerId!=_player.EntityId) return; if(_state is null) _status.Text=""; _state=state; Rebuild(); }
     private void Result(CraftResult result)
     {
         if(_pending is not { } command || result.Operation!=command.Operation) return;
@@ -89,40 +95,32 @@ public partial class CraftingPresentation : Node3D
     }
     private void Rebuild()
     {
-        if(_content is null) return;
-        foreach(var child in _content.GetChildren()) { _content.RemoveChild(child); child.QueueFree(); }
+        if(_resources is null) return;
+        foreach(var list in new[]{_materials,_resources,_recipes,_repairs}) UiRows.Clear(list);
         var names=new Dictionary<ushort,string>(); foreach(var recipe in _network.CraftRecipes.Values) foreach(var cost in recipe.Costs) names[cost.Id]=cost.Name;
-        _content.AddChild(new Label { Text="Материалы" });
-        if(_state is { } state && state.Materials.Count>0) foreach(var m in state.Materials) _content.AddChild(new Label { Text=$"{names.GetValueOrDefault(m.Id,"Материал")}: {m.Quantity}" });
-        else _content.AddChild(new Label { Text="Пока пусто" });
-        _content.AddChild(new Label { Text="Ближайшие ресурсы — общий запас" });
+        if(_state is { } state && state.Materials.Count>0)
+            foreach(var material in state.Materials) UiRows.Action(_materials,names.GetValueOrDefault(material.Id,"Материал"),$"В наличии: {material.Quantity}");
+        else UiRows.Note(_materials,_state is null?"Сведения загружаются…":"Материалов пока нет");
+        var busy=_pending is not null || _repairPending is not null || _state is null;
         foreach(var node in _network.ResourceNodes.Values.OrderBy(n=>n.Id))
         {
             var current=node;
-            var button=new Button { Text=$"{node.Name}: {node.Remaining} — собрать",Disabled=_pending is not null || _repairPending is not null || _state is null || node.Remaining==0 };
-            button.Pressed+=()=>Request(CraftAction.Gather,current.Id); _content.AddChild(button);
+            UiRows.Action(_resources,node.Name,$"Общий запас: {node.Remaining}","icon.ore","Собрать",()=>Request(CraftAction.Gather,current.Id),busy || node.Remaining==0);
         }
-        _content.AddChild(new Label { Text="У верстака" });
+        if(_network.ResourceNodes.Count==0) UiRows.Note(_resources,"Рядом нет известных ресурсов.");
         foreach(var recipe in _network.CraftRecipes.Values.OrderBy(r=>r.Id))
         {
-            var current=recipe; _content.AddChild(new Label { Text=string.Join(", ",recipe.Costs.Select(c=>$"{c.Name} ×{c.Quantity}")) });
-            var button=new Button { Text=recipe.Name+" → "+recipe.OutputName,Disabled=_pending is not null || _repairPending is not null || _state is null };
-            button.Pressed+=()=>Request(CraftAction.Make,current.Id); _content.AddChild(button);
+            var current=recipe;
+            UiRows.Action(_recipes,recipe.Name,string.Join(", ",recipe.Costs.Select(c=>$"{c.Name} ×{c.Quantity}"))+"\nРезультат: "+recipe.OutputName,"equipment.weapon","Создать",()=>Request(CraftAction.Make,current.Id),busy);
         }
-        _content.AddChild(new Label { Text="Ремонт у верстака" });
         if(_condition is { } conditions) foreach(var item in conditions.Items)
         {
             var current=item;
-            var button=new Button { Text=$"{_itemNames.GetValueOrDefault(item.Handle,"Оружие")}: {item.Current}/{item.Maximum} — ремонт",Disabled=_pending is not null || _repairPending is not null || item.Current==item.Maximum };
-            button.Pressed+=()=>RequestRepair(current); _content.AddChild(button);
+            UiRows.Action(_repairs,_itemNames.GetValueOrDefault(item.Handle,"Оружие"),$"Прочность: {item.Current}/{item.Maximum}","equipment.weapon","Рассчитать",()=>RequestRepair(current),busy || item.Current==item.Maximum);
         }
-        if(_repairQuote is { } quote)
-        {
-            _content.AddChild(new Label { Text=$"Стоимость: {names.GetValueOrDefault(quote.MaterialId,"Материал")} ×{quote.Quantity}. Восстановить до текущего максимума." });
-            var confirm=new Button { Text="Подтвердить расход и ремонт" }; confirm.Pressed+=ConfirmRepair; _content.AddChild(confirm);
-            var cancel=new Button { Text="Отменить ремонт" }; cancel.Pressed+=CancelRepair; _content.AddChild(cancel);
-        }
-        _content.AddChild(new Label { Text="Подойди и остановись перед действием. Готовые вещи — в I." });
+        if(_condition is null || _condition.Value.Items.Count==0) UiRows.Note(_repairs,"Нет предметов для ремонта.");
+        _repairConfirmation.Visible=_repairQuote is not null;
+        if(_repairQuote is { } quote) _repairCost.Text=$"Стоимость: {names.GetValueOrDefault(quote.MaterialId,"Материал")} ×{quote.Quantity}. Восстановить до текущего максимума.";
     }
     private void Resource(ResourceNodeState state)
     {
@@ -143,7 +141,7 @@ public partial class CraftingPresentation : Node3D
         { _retry+=delta; if(_retry>=2) { _retry=0; if(_pending is { } craft) _network.SendCraft(craft); else if(_repairPending is { } repair) _network.SendRepair(repair); } }
     }
     public override void _UnhandledInput(InputEvent input)
-    { if(input is InputEventKey { Pressed:true,Echo:false,Keycode:Key.C }) { if(GameUi.GameplayModalOpen)return; Toggle(); GetViewport().SetInputAsHandled(); } }
+    { if(PcInput.Pressed("craft",input)) { if(GameUi.GameplayModalOpen)return; Toggle(); GetViewport().SetInputAsHandled(); } }
     public void Toggle() { if(_panel.Visible) _panel.Close(); else _panel.Open(); }
     public override void _ExitTree()
     { if(_network is not null) { _network.ItemConditionReceived-=Condition; _network.InventoryReceived-=Inventory; _network.RepairQuoteReceived-=Quote; _network.RepairResultReceived-=RepairResult; _network.CraftStateReceived-=Apply; _network.CraftResultReceived-=Result; _network.ResourceNodeReceived-=Resource; _network.ResourceNodeLeft-=Remove; } }

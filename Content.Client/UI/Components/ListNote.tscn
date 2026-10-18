@@ -1,0 +1,7 @@
+[gd_scene format=3]
+[ext_resource type="Theme" path="res://UI/Theme/rework-theme.tres" id="Theme"]
+[node name="ListNote" type="Label"]
+theme = ExtResource("Theme")
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 14

@@ -1,6 +1,6 @@
 [gd_resource type="Theme" format=3]
-[sub_resource type="SystemFont" id="Font"]
-font_names = PackedStringArray("Georgia", "Liberation Serif", "DejaVu Serif")
+[ext_resource type="FontFile" path="res://Assets/UI/Fonts/Noto/NotoSerif.ttf" id="Bundled_Font"]
+
 [sub_resource type="StyleBoxFlat" id="Track"]
 bg_color = Color(0.022, 0.066, 0.075, 1)
 border_width_left = 1
@@ -16,7 +16,7 @@ bg_color = Color(0.24, 0.62, 0.77, 1)
 bg_color = Color(0.91, 0.66, 0.22, 1)
 [sub_resource type="StyleBoxEmpty" id="Empty"]
 [resource]
-default_font = SubResource("Font")
+default_font = ExtResource("Bundled_Font")
 default_font_size = 12
 Label/colors/font_color = Color(0.945, 0.914, 0.839, 1)
 Label/colors/font_shadow_color = Color(0.02, 0.04, 0.05, 0.6)

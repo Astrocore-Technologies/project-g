@@ -12,6 +12,9 @@ public partial class NetworkClient : Node
 {
     private uint _inputOrder;
     internal event Action<MoveCommand>? MovementSent;
+    public event Action<FollowState>? FollowReceived;
+    public void SendFollow(FollowCommand command)
+    { if (_handshakeComplete && RegionActive) SendGame(NetworkProtocol.Write(command), DeliveryMethod.ReliableOrdered); }
     internal uint NextInputOrder()
     {
         if (++_inputOrder == 0) ++_inputOrder;
@@ -645,6 +648,10 @@ public partial class NetworkClient : Node
                     }
                     else
                         DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.FollowState:
+                    if (_handshakeComplete && deliveryMethod == DeliveryMethod.ReliableOrdered && NetworkProtocol.TryReadFollowState(reader, out var follow)) FollowReceived?.Invoke(follow);
+                    else DisconnectMalformed(peer);
                     break;
                 case NetworkMessageType.WorldSnapshot:
                     if (NetworkProtocol.TryReadWorldSnapshot(reader, out var snapshot))

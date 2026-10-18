@@ -1,0 +1,104 @@
+[gd_scene format=3]
+[ext_resource type="Theme" path="res://UI/Theme/rework-theme.tres" id="Theme"]
+[node name="SocialView" type="VBoxContainer"]
+theme = ExtResource("Theme")
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="Categories" type="HBoxContainer" parent="."]
+[node name="Party" type="Button" parent="Categories"]
+unique_name_in_owner = true
+text = "Группа · N"
+theme_type_variation = &"QuietButton"
+[node name="Clan" type="Button" parent="Categories"]
+unique_name_in_owner = true
+text = "Гильдия игроков · O"
+theme_type_variation = &"QuietButton"
+[node name="RosterTitle" type="Label" parent="."]
+unique_name_in_owner = true
+text = "Состав загружается…"
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 22
+[node name="Status" type="Label" parent="."]
+unique_name_in_owner = true
+text = ""
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Muted"
+[node name="Columns" type="HBoxContainer" parent="."]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="Roster" type="VBoxContainer" parent="Columns"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+size_flags_stretch_ratio = 1.7
+[node name="Create" type="HBoxContainer" parent="Columns/Roster"]
+unique_name_in_owner = true
+[node name="GuildName" type="LineEdit" parent="Columns/Roster/Create"]
+unique_name_in_owner = true
+placeholder_text = "Название гильдии"
+max_length = 96
+size_flags_horizontal = 3
+[node name="CreateGroup" type="Button" parent="Columns/Roster/Create"]
+unique_name_in_owner = true
+text = "Создать"
+[node name="Members" type="ScrollContainer" parent="Columns/Roster"]
+size_flags_vertical = 3
+size_flags_horizontal = 3
+horizontal_scroll_mode = 0
+[node name="MembersRows" type="VBoxContainer" parent="Columns/Roster/Members"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+[node name="RosterActions" type="HBoxContainer" parent="Columns/Roster"]
+[node name="Resize" type="Button" parent="Columns/Roster/RosterActions"]
+unique_name_in_owner = true
+text = "Расширить до 20"
+size_flags_horizontal = 3
+[node name="Leave" type="Button" parent="Columns/Roster/RosterActions"]
+unique_name_in_owner = true
+text = "Покинуть"
+theme_type_variation = &"QuietButton"
+[node name="Disband" type="VBoxContainer" parent="Columns/Roster"]
+unique_name_in_owner = true
+[node name="Acknowledge" type="CheckBox" parent="Columns/Roster/Disband"]
+unique_name_in_owner = true
+text = "Подтверждаю роспуск гильдии"
+[node name="DisbandGroup" type="Button" parent="Columns/Roster/Disband"]
+unique_name_in_owner = true
+text = "Распустить"
+[node name="Invitations" type="VBoxContainer" parent="Columns"]
+custom_minimum_size = Vector2(300, 0)
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="InvitesTitle" type="Label" parent="Columns/Invitations"]
+text = "Приглашения"
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 22
+[node name="Invites" type="ScrollContainer" parent="Columns/Invitations"]
+size_flags_vertical = 3
+size_flags_horizontal = 3
+horizontal_scroll_mode = 0
+[node name="InvitesRows" type="VBoxContainer" parent="Columns/Invitations/Invites"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+[node name="NearbyTitle" type="Label" parent="Columns/Invitations"]
+text = "Пригласить игрока"
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Heading"
+theme_override_font_sizes/font_size = 22
+[node name="Nearby" type="ScrollContainer" parent="Columns/Invitations"]
+size_flags_vertical = 3
+size_flags_horizontal = 3
+horizontal_scroll_mode = 0
+[node name="NearbyRows" type="VBoxContainer" parent="Columns/Invitations/Nearby"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+[node name="Footer" type="Label" parent="."]
+text = "EXP личный. Лут подбирается вручную. Гильдия не защищает от PvP."
+autowrap_mode = 3
+size_flags_horizontal = 3
+theme_type_variation = &"Muted"

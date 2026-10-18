@@ -101,6 +101,10 @@ unique_name_in_owner = true
 size_flags_horizontal = 3
 text = "Управление · F1"
 
+[node name="Route_emotes" type="Button" parent="Scroll/Content/More"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+text = "Эмоции · F4"
 [node name="Live" type="Label" parent="."]
 text = "Мир продолжает жить, пока открыто меню."
 theme_type_variation = &"Muted"
@@ -114,3 +118,6 @@ autowrap_mode = 3
 [node name="LogoutButton" type="Button" parent="."]
 unique_name_in_owner = true
 text = "Выйти в главное меню"
+[node name="Route_settings" type="Button" parent="Scroll/Content"]
+unique_name_in_owner = true
+text = "Настройки и управление"

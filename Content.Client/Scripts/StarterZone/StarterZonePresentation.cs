@@ -50,8 +50,8 @@ public partial class StarterZonePresentation : Node3D
         mapView.GetNode<Button>("%ClearPin").Pressed+=()=> { _worldMap.Pin=null; _worldMap.QueueRedraw(); _pinText.Text="Отметка убрана"; };
         _worldMap.PinChanged+=position=>_pinText.Text=$"Личная отметка\nX {position.X:0.0} · Z {position.Y:0.0}";
         _guide=new UiWindow { ToggleKey=Key.F1 }; canvas.AddChild(_guide); _guide.Build("Памятка путешественника",new(820,640)); _guide.CloseRequested+=_guide.Close;
-        _guideText=UiComposition.Paragraph(UiComposition.Scroll(_guide.Body),"",16);
-        _guide.Body.AddChild(GameUi.Button("Продолжить путь",_guide.Close));
+        var guideView=GD.Load<PackedScene>("res://UI/Screens/GuideView.tscn").Instantiate<Control>(); _guide.Body.AddChild(guideView);
+        _guideText=guideView.GetNode<Label>("%GuideText"); guideView.GetNode<Button>("%Continue").Pressed+=_guide.Close;
         RefreshGuide(); BuildTown(buildLegacyScenery);
         if(network.LatestExploration is {} exploration) Apply(exploration);
         if(network.LatestWorldNode is { } state) WorldChanged(state);
@@ -79,9 +79,9 @@ public partial class StarterZonePresentation : Node3D
     public void ToggleGuide() { if(_guide.Visible) _guide.Close(); else _guide.Open(); }
     public override void _UnhandledInput(InputEvent input)
     {
-        if(GameUi.GameplayModalOpen || input is not InputEventKey { Pressed:true,Echo:false } key) return;
-        if(key.PhysicalKeycode==Key.F1) { ToggleGuide(); GetViewport().SetInputAsHandled(); }
-        if(key.PhysicalKeycode==Key.M) { ToggleMap(); GetViewport().SetInputAsHandled(); }
+        if(PcInput.Blocked(this)) return;
+        if(PcInput.Pressed("guide",input)) { ToggleGuide(); GetViewport().SetInputAsHandled(); }
+        if(PcInput.Pressed("map",input)) { ToggleMap(); GetViewport().SetInputAsHandled(); }
     }
     public override void _Process(double delta)
     {

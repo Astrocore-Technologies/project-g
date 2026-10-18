@@ -62,15 +62,9 @@ public partial class GameplayCamera : Node3D
     public override void _UnhandledInput(InputEvent @event)
     {
         if (!_local || !_camera.Current || !GetWindow().HasFocus() || GameUi.GameplayModalOpen ||
-            GetViewport().GuiGetHoveredControl() is not null ||
-            @event is not InputEventMouseButton { Pressed: true } mouse)
+            GetViewport().GuiGetHoveredControl() is not null || PcInput.Blocked(this))
             return;
-        var steps = mouse.ButtonIndex switch
-        {
-            MouseButton.WheelUp => -1,
-            MouseButton.WheelDown => 1,
-            _ => 0
-        };
+        var steps = PcInput.Pressed("zoom_in",@event) ? -1 : PcInput.Pressed("zoom_out",@event) ? 1 : 0;
         if (steps == 0) return;
         ZoomBySteps(steps);
         GetViewport().SetInputAsHandled();

@@ -297,6 +297,7 @@ public sealed partial class ServerWorld
     {
         if (!_playersByConnection.TryGetValue(connectionId, out var player))
             return null;
+        RemoveFollowActor(player);
         if (disconnectSocial) DisconnectSocial(connectionId);
         else { socialPending.Remove(connectionId); SocialResults.Remove(connectionId); }
         GroundItems?.RemovePlayer(player.EntityId);
@@ -362,6 +363,7 @@ public sealed partial class ServerWorld
             if (!(cursor ? player.Motion.TrySetCursor(command.Target) : player.Motion.TrySetTarget(command.Target, command.TargetHeight)))
                 return false;
         }
+        EndFollow(player.EntityId, FollowReason.ManualInput, false);
         player.LastProcessedSequence = command.Sequence;
         player.LastMovementClientTick = command.ClientTick;
         player.LastMovementServerTick = Tick;
@@ -441,6 +443,7 @@ public sealed partial class ServerWorld
     {
         Tick++;
         _persistenceDirty.Clear();
+        UpdateFollows(fixedDeltaSeconds);
         SimulatePvpIntentions();
         SimulateRespawns();
         SimulateSocial();

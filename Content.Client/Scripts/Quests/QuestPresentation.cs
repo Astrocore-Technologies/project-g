@@ -55,9 +55,8 @@ public partial class QuestPresentation : CanvasLayer
         _track=journalView.GetNode<Button>("%PrimaryAction"); _track.Pressed+=()=> { _tracking=!_tracking; RenderJournal(); };
         journalView.GetNode<Button>("%SecondaryAction").Pressed+=()=>GameUi.Navigate("map");
         _journalStatus=journalView.GetNode<Label>("%Status");
-        var trackerPanel=new PanelContainer { Position=new(16,384),CustomMinimumSize=new(282,0),MouseFilter=Control.MouseFilterEnum.Ignore }; root.AddChild(trackerPanel);
-        _tracker=UiComposition.Paragraph(trackerPanel,"",14); _tracker.CustomMinimumSize=new(254,0);
-        GameUi.CompactHud(trackerPanel);
+        var trackerPanel=GD.Load<PackedScene>("res://UI/Components/QuestTracker.tscn").Instantiate<PanelContainer>(); root.AddChild(trackerPanel);
+        _tracker=trackerPanel.GetNode<Label>("%Text");
         network.QuestNpcReceived += Spawn; network.PlayerDespawned += Despawn;
         network.QuestReplyReceived += Reply; network.QuestJournalReceived += Journal;
         network.ProfessionReceived += Training;
@@ -102,9 +101,9 @@ public partial class QuestPresentation : CanvasLayer
     }
     public override void _UnhandledInput(InputEvent ev)
     {
-        if (GameUi.GameplayModalOpen || ev is not InputEventKey { Pressed: true, Echo: false } key) return;
-        if (key.PhysicalKeycode == Key.L) { OpenJournal(); GetViewport().SetInputAsHandled(); }
-        else if (key.PhysicalKeycode == Key.F2 && _nearest.IsValid && _player.IsAlive) { Send(QuestAction.Talk, _nearest); GetViewport().SetInputAsHandled(); }
+        if (PcInput.Blocked(this)) return;
+        if (PcInput.Pressed("journal",ev)) { OpenJournal(); GetViewport().SetInputAsHandled(); }
+        else if (PcInput.Pressed("talk",ev) && _nearest.IsValid && _player.IsAlive) { Send(QuestAction.Talk, _nearest); GetViewport().SetInputAsHandled(); }
     }
     private bool Show(bool journal)
     {

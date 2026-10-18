@@ -1,9 +1,9 @@
 [gd_resource type="Theme" format=3 uid="uid://cvgfptdafmck8"]
+[ext_resource type="FontFile" path="res://Assets/UI/Fonts/Noto/NotoSerif.ttf" id="Bundled_HeadingFont"]
+[ext_resource type="FontFile" path="res://Assets/UI/Fonts/Noto/NotoSans.ttf" id="Bundled_BodyFont"]
 
 [ext_resource type="Texture2D" uid="uid://kp5d3o6s2i4n" path="res://Assets/UI/Textures/SourceKit/button_gold.svg" id="1"]
 
-[sub_resource type="SystemFont" id="HeadingFont"]
-font_names = PackedStringArray("Georgia", "Liberation Serif", "DejaVu Serif")
 
 [sub_resource type="StyleBoxFlat" id="Disabled"]
 content_margin_left = 22.0
@@ -91,11 +91,9 @@ border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.65, 0.62, 0.46, 0.8)
 
-[sub_resource type="SystemFont" id="BodyFont"]
-font_names = PackedStringArray("Arial", "Liberation Sans", "DejaVu Sans")
 
 [resource]
-default_font = SubResource("BodyFont")
+default_font = ExtResource("Bundled_BodyFont")
 default_font_size = 18
 Button/colors/font_color = Color(1, 0.976, 0.918, 1)
 Button/colors/font_disabled_color = Color(0.6, 0.64, 0.63, 1)
@@ -103,7 +101,7 @@ Button/colors/font_focus_color = Color(1, 0.976, 0.918, 1)
 Button/colors/font_hover_color = Color(1, 0.976, 0.918, 1)
 Button/colors/font_pressed_color = Color(1, 0.976, 0.918, 1)
 Button/font_sizes/font_size = 22
-Button/fonts/font = SubResource("HeadingFont")
+Button/fonts/font = ExtResource("Bundled_HeadingFont")
 Button/styles/disabled = SubResource("Disabled")
 Button/styles/focus = SubResource("Focus")
 Button/styles/hover = SubResource("Hover")
@@ -125,6 +123,6 @@ MenuPrimary/styles/normal = SubResource("Gold")
 MenuPrimary/styles/pressed = SubResource("Gold")
 MenuTitle/base_type = &"Label"
 MenuTitle/font_sizes/font_size = 48
-MenuTitle/fonts/font = SubResource("HeadingFont")
+MenuTitle/fonts/font = ExtResource("Bundled_HeadingFont")
 PanelContainer/styles/panel = SubResource("SettingsPanel")
 VBoxContainer/constants/separation = 16

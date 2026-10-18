@@ -1,0 +1,17 @@
+[gd_scene format=3]
+[ext_resource type="Theme" path="res://UI/Theme/rework-theme.tres" id="Theme"]
+[node name="MaterialAmountRow" type="HBoxContainer"]
+theme = ExtResource("Theme")
+size_flags_horizontal = 3
+size_flags_vertical = 3
+[node name="Title" type="Label" parent="."]
+unique_name_in_owner = true
+text = "Материал"
+autowrap_mode = 3
+size_flags_horizontal = 3
+[node name="Amount" type="SpinBox" parent="."]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(100, 36)
+min_value = 0
+max_value = 999
+step = 1

@@ -1,4 +1,6 @@
 [gd_resource type="Resource" script_class="UiSkin" load_steps=36 format=3]
+[ext_resource type="FontFile" path="res://Assets/UI/Fonts/Noto/NotoSans.ttf" id="Bundled_BodyFont"]
+[ext_resource type="FontFile" path="res://Assets/UI/Fonts/Noto/NotoSerif.ttf" id="Bundled_HeadingFont"]
 
 [ext_resource type="Script" path="res://Scripts/UI/Assets/UiSkin.cs" id="skin"]
 
@@ -255,16 +257,12 @@ corner_radius_top_right = 5
 corner_radius_bottom_left = 5
 corner_radius_bottom_right = 5
 
-[sub_resource type="SystemFont" id="BodyFont"]
-font_names = PackedStringArray("Arial", "Liberation Sans", "DejaVu Sans")
 
-[sub_resource type="SystemFont" id="HeadingFont"]
-font_names = PackedStringArray("Georgia", "Liberation Serif", "DejaVu Serif")
 
 [resource]
 script = ExtResource("skin")
-Font = SubResource("BodyFont")
-HeadingFont = SubResource("HeadingFont")
+Font = ExtResource("Bundled_BodyFont")
+HeadingFont = ExtResource("Bundled_HeadingFont")
 FontSize = 16
 Spacing = 8
 Paper = Color(0.960784, 0.921569, 0.839216, 1.000000)

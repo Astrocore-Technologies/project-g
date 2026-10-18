@@ -44,7 +44,7 @@ public partial class InventoryPresentation : CanvasLayer
         _stats=view.GetNode<Label>("%Stats"); _condition=view.GetNode<Label>("%Condition"); _comparison=view.GetNode<Label>("%Comparison");
         _equip=view.GetNode<Button>("%Equip"); _equip.Pressed+=Request;
         _coins=view.GetNode<Label>("%Coins"); _status=view.GetNode<Label>("%Status");
-        _revive=view.GetNode<Button>("%Revive"); _revive.Pressed+=RequestRevive; _revive.Visible=network.CanDevelopmentRevive; _revive.Disabled=true;
+        _revive=view.GetNode<Button>("%Revive"); _revive.Pressed+=RequestRevive; _revive.Visible=false; _revive.Disabled=true;
     }
     public void Apply(InventoryState state)
     {
@@ -120,12 +120,12 @@ public partial class InventoryPresentation : CanvasLayer
         PickupOutcome.Interrupted=>"Подбор прерван действием или уроном", PickupOutcome.InvalidState=>"Для PvP-вещи нужен активный тег; остановитесь и завершите другие действия",
         _=>$"Подбор отклонён: {result.Outcome}"
     };
-    public void ApplyAlive(bool alive) { _alive=alive; RefreshDetail(); _revive.Disabled=alive || !_network.CanDevelopmentRevive; if(alive && _awaitingRevive) { _awaitingRevive=false; _status.Text="Персонаж оживлён"; } }
+    public void ApplyAlive(bool alive) { _alive=alive; RefreshDetail(); _revive.Visible=!alive&&_network.CanDevelopmentRevive; _revive.Disabled=alive || !_network.CanDevelopmentRevive; if(alive && _awaitingRevive) { _awaitingRevive=false; _status.Text="Персонаж оживлён"; } }
     private void RequestRevive()
     { if(_revive.Disabled) return; if(++_reviveSequence==0) _reviveSequence++; _revive.Disabled=true; _awaitingRevive=true; _status.Text="Ожидание оживления…"; _network.SendDevelopmentRevive(new(_reviveSequence)); }
     public void Toggle() { if(_window.Visible) _window.Close(); else _window.Open(); }
     public override void _UnhandledInput(InputEvent ev)
-    { if(ev is InputEventKey { Pressed:true,Echo:false,PhysicalKeycode:Key.I }) { Toggle(); GetViewport().SetInputAsHandled(); } }
+    { if(PcInput.Pressed("inventory",ev)) { Toggle(); GetViewport().SetInputAsHandled(); } }
     private string MaterialName(ushort id) => _network.CraftRecipes.Values.SelectMany(r=>r.Costs).FirstOrDefault(m=>m.Id==id).Name??$"Материал {id}";
     private void Materials(CraftState state) { if(state.OwnerId!=_owner) return; _materials=state; Rebuild(); }
     private void Economy(EconomyState state) { if(state.OwnerId==_owner) _coins.Text=$"Монеты: {state.Coins:N0}"; }

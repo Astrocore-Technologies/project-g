@@ -41,7 +41,7 @@ public partial class ProfessionPresentation : CanvasLayer
     { if (_pending != 0 && Time.GetTicksMsec()/1000d-_sentAt > 10) { _pending=0; _confirmation=0; _feedback="Нет ответа — проверьте подключение"; Rebuild(); } }
     public override void _UnhandledInput(InputEvent ev)
     {
-        if (ev is not InputEventKey { Pressed:true,Echo:false,PhysicalKeycode:Key.P }) return;
+        if (!PcInput.Pressed("profession",ev)) return;
         if(GameUi.GameplayModalOpen) return; Toggle();
         GetViewport().SetInputAsHandled();
     }
