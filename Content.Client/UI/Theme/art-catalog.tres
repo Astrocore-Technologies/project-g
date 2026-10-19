@@ -88,319 +88,319 @@
 script = ExtResource("entry")
 Key = "icon.bag"
 Texture = ExtResource("bag")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_1"]
 script = ExtResource("entry")
 Key = "icon.bolt"
 Texture = ExtResource("bolt")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_2"]
 script = ExtResource("entry")
 Key = "icon.book"
 Texture = ExtResource("book")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_3"]
 script = ExtResource("entry")
 Key = "icon.boot"
 Texture = ExtResource("boot")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_4"]
 script = ExtResource("entry")
 Key = "icon.bow"
 Texture = ExtResource("bow")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_5"]
 script = ExtResource("entry")
 Key = "icon.chat"
 Texture = ExtResource("chat")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_6"]
 script = ExtResource("entry")
 Key = "icon.check"
 Texture = ExtResource("check")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_7"]
 script = ExtResource("entry")
 Key = "icon.chevron"
 Texture = ExtResource("chevron")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_8"]
 script = ExtResource("entry")
 Key = "icon.clock"
 Texture = ExtResource("clock")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_9"]
 script = ExtResource("entry")
 Key = "icon.close"
 Texture = ExtResource("close")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_10"]
 script = ExtResource("entry")
 Key = "icon.coin"
 Texture = ExtResource("coin")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_11"]
 script = ExtResource("entry")
 Key = "icon.compass"
 Texture = ExtResource("compass")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_12"]
 script = ExtResource("entry")
 Key = "icon.dash"
 Texture = ExtResource("dash")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_13"]
 script = ExtResource("entry")
 Key = "icon.eye"
 Texture = ExtResource("eye")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_14"]
 script = ExtResource("entry")
 Key = "icon.feather"
 Texture = ExtResource("feather")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_15"]
 script = ExtResource("entry")
 Key = "icon.flame"
 Texture = ExtResource("flame")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_16"]
 script = ExtResource("entry")
 Key = "icon.gem"
 Texture = ExtResource("gem")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_17"]
 script = ExtResource("entry")
 Key = "icon.group"
 Texture = ExtResource("group")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_18"]
 script = ExtResource("entry")
 Key = "icon.guild"
 Texture = ExtResource("guild")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_19"]
 script = ExtResource("entry")
 Key = "icon.hammer"
 Texture = ExtResource("hammer")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_20"]
 script = ExtResource("entry")
 Key = "icon.heart"
 Texture = ExtResource("heart")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_21"]
 script = ExtResource("entry")
 Key = "icon.helmet"
 Texture = ExtResource("helmet")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_22"]
 script = ExtResource("entry")
 Key = "icon.leaf"
 Texture = ExtResource("leaf")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_23"]
 script = ExtResource("entry")
 Key = "icon.lock"
 Texture = ExtResource("lock")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_24"]
 script = ExtResource("entry")
 Key = "icon.map"
 Texture = ExtResource("map")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_25"]
 script = ExtResource("entry")
 Key = "icon.menu"
 Texture = ExtResource("menu")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_26"]
 script = ExtResource("entry")
 Key = "icon.moon"
 Texture = ExtResource("moon")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_27"]
 script = ExtResource("entry")
 Key = "icon.person"
 Texture = ExtResource("person")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_28"]
 script = ExtResource("entry")
 Key = "icon.pin"
 Texture = ExtResource("pin")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_29"]
 script = ExtResource("entry")
 Key = "icon.potion"
 Texture = ExtResource("potion")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_30"]
 script = ExtResource("entry")
 Key = "icon.scale"
 Texture = ExtResource("scale")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_31"]
 script = ExtResource("entry")
 Key = "icon.scroll"
 Texture = ExtResource("scroll")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_32"]
 script = ExtResource("entry")
 Key = "icon.search"
 Texture = ExtResource("search")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_33"]
 script = ExtResource("entry")
 Key = "icon.settings"
 Texture = ExtResource("settings")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_34"]
 script = ExtResource("entry")
 Key = "icon.shield"
 Texture = ExtResource("shield")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_35"]
 script = ExtResource("entry")
 Key = "icon.snow"
 Texture = ExtResource("snow")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_36"]
 script = ExtResource("entry")
 Key = "icon.star"
 Texture = ExtResource("star")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_37"]
 script = ExtResource("entry")
 Key = "icon.sun"
 Texture = ExtResource("sun")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_38"]
 script = ExtResource("entry")
 Key = "icon.sword"
 Texture = ExtResource("sword")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_39"]
 script = ExtResource("entry")
 Key = "icon.warning"
 Texture = ExtResource("warning")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_40"]
 script = ExtResource("entry")
 Key = "equipment.weapon"
 Texture = ExtResource("sword")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_41"]
 script = ExtResource("entry")
 Key = "equipment.armor"
 Texture = ExtResource("shield")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_42"]
 script = ExtResource("entry")
 Key = "equipment.unknown"
 Texture = ExtResource("bag")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_43"]
 script = ExtResource("entry")
 Key = "nav.character"
 Texture = ExtResource("person")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_44"]
 script = ExtResource("entry")
 Key = "nav.inventory"
 Texture = ExtResource("bag")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_45"]
 script = ExtResource("entry")
 Key = "nav.map"
 Texture = ExtResource("map")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_46"]
 script = ExtResource("entry")
 Key = "nav.quests"
 Texture = ExtResource("scroll")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_47"]
 script = ExtResource("entry")
 Key = "nav.menu"
 Texture = ExtResource("menu")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_48"]
 script = ExtResource("entry")
 Key = "skill.1"
 Texture = ExtResource("bolt")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_49"]
 script = ExtResource("entry")
 Key = "skill.2"
 Texture = ExtResource("sun")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_50"]
 script = ExtResource("entry")
 Key = "skill.3"
 Texture = ExtResource("dash")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_51"]
 script = ExtResource("entry")
 Key = "skill.5"
 Texture = ExtResource("bolt")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [sub_resource type="Resource" id="art_52"]
 script = ExtResource("entry")
 Key = "skill.6"
 Texture = ExtResource("star")
-Attribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."
+Attribution = "User-supplied Project_G_UI_Source_Kit; see art-source/ui/source-kit/ASSET_PROVENANCE.md."
 
 [resource]
 script = ExtResource("catalog")

@@ -1,6 +1,12 @@
 # UI foundation / art handoff
 
-User direction (2026-10-09): prepare UI infrastructure; source assets supplied in Project_G_UI_Source_Kit. Its palette, component SVGs and 40 white icons are integrated through tools/import-ui-source-kit.py. Generated character illustrations are not assigned as player appearances.
+User direction (2026-10-09): prepare UI infrastructure; source assets supplied in Project_G_UI_Source_Kit. Its palette, component SVGs and 40 white icons were integrated through tools/import-ui-source-kit.py. Generated character illustrations are not assigned as player appearances.
+
+Source cleanup (2026-10-20): retained graphics and original provenance now live in
+`art-source/ui/source-kit`; the complete old package is archived locally under
+`.artifacts/archive/ui-source-kit-20261020/`. The importer exports SVGs only and
+offers a read-only `--check`; it preserves current hand-edited themes and catalogs.
+The current scene/theme implementation is described in `docs/design/ui-completion-2026-10-18.md`.
 
 ## Scope
 Client-only theme resources, keyed art catalog, reusable controls, eight live screen compositions and an offline art workbench. Presenters bind the source-kit theme to existing authoritative state and commands without inventing gameplay state. Server commands and authoritative ownership remain unchanged. No protocol or database migration.

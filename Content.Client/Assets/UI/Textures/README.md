@@ -1,4 +1,5 @@
 # Textures
 
-SourceKit/ содержит экспорты из пользовательского Project_G_UI_Source_Kit.
-Пересборка: python3 tools/import-ui-source-kit.py. Инструкция: docs/development/ui-assets.md.
+SourceKit/ содержит экспорты из `art-source/ui/source-kit/components`.
+Экспорт: `python tools/import-ui-source-kit.py`; проверка без записи: та же команда с `--check`.
+Темы и каталог не перезаписываются. Инструкция: `art-source/ui/source-kit/README.md`.

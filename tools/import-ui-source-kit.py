@@ -1,89 +1,77 @@
-"""Build text-free native UI resources from the supplied, editable source kit.
-Run from any directory: python3 tools/import-ui-source-kit.py
-No demo scenes, game data, character art, source scripts or game rules are imported.
+"""Export retained UI SVG sources without replacing hand-edited themes or catalogs.
+
+Run from any directory: python tools/import-ui-source-kit.py [--check]
+--check compares outputs without writing files. Runtime resource paths stay stable.
 """
+from argparse import ArgumentParser
 from pathlib import Path
-import json
-import shutil
+import sys
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
-KIT = ROOT / "Project_G_UI_Source_Kit"
+SOURCE = ROOT / "art-source/ui/source-kit"
 ASSETS = ROOT / "Content.Client/Assets/UI"
-THEME = ROOT / "Content.Client/UI/Theme"
 SVG = "{http://www.w3.org/2000/svg}"
-ET.register_namespace("", "http://www.w3.org/2000/svg")
-TOKENS = json.loads((KIT / "design/tokens.json").read_text())
-COLORS = TOKENS["colors"]
-for folder in [ASSETS / "Icons/SourceKit", ASSETS / "Textures/SourceKit", THEME]:
-    folder.mkdir(parents=True, exist_ok=True)
+COMPONENTS = (
+    "panel_parchment", "panel_dark", "button_default", "button_hover",
+    "button_pressed", "button_disabled", "button_focus", "button_gold",
+    "button_secondary", "item_default", "item_selected",
+)
 
-def color(key, alpha=1):
-    value = COLORS[key].lstrip("#")
-    channels = [int(value[i:i+2],16)/255 for i in (0,2,4)] + [alpha]
-    return "Color(" + ", ".join(f"{x:.6f}" for x in channels) + ")"
 
-def export_component(name):
-    root = ET.parse(KIT / "design/components" / (name + ".svg")).getroot()
+def component_bytes(path: Path) -> bytes:
+    root = ET.parse(path).getroot()
     for parent in root.iter():
         for child in list(parent):
-            if child.tag in [SVG+"text", SVG+"title", SVG+"desc"]:
+            if child.tag in (SVG + "text", SVG + "title", SVG + "desc"):
                 parent.remove(child)
-    if name.startswith("item_"):
+    if path.stem.startswith("item_"):
         for child in list(root):
-            if child.tag == SVG+"g": root.remove(child)
-    if name == "button_focus":
-        rects = root.findall(SVG+"rect")
-        for rect in rects[:-1]: root.remove(rect)
-    root.attrib.pop("aria-label",None)
-    ET.ElementTree(root).write(ASSETS / "Textures/SourceKit" / (name+".svg"),encoding="unicode")
+            if child.tag == SVG + "g":
+                root.remove(child)
+    if path.stem == "button_focus":
+        for rect in root.findall(SVG + "rect")[:-1]:
+            root.remove(rect)
+    root.attrib.pop("aria-label", None)
+    # Match the original Windows exporter, including line endings.
+    return ET.tostring(root, encoding="unicode").replace("\n", "\r\n").encode("utf-8")
 
-components=["panel_parchment","panel_dark","button_default","button_hover","button_pressed","button_disabled","button_focus","button_gold","button_secondary","item_default","item_selected"]
-for name in components: export_component(name)
-icons=sorted((KIT / "godot/icons").glob("*.svg"))
-for icon in icons: shutil.copyfile(icon,ASSETS / "Icons/SourceKit" / icon.name)
 
-# StyleBoxTexture keeps source outlines/gradients and stretches only the middle.
-parts=['[gd_resource type="Resource" script_class="UiSkin" load_steps=LOAD_STEPS format=3]',
-       '[ext_resource type="Script" path="res://Scripts/UI/Assets/UiSkin.cs" id="skin"]']
-for name in components:
-    parts.append(f'[ext_resource type="Texture2D" path="res://Assets/UI/Textures/SourceKit/{name}.svg" id="{name}"]')
-styles={"PaperPanel":"panel_parchment","DarkPanel":"panel_dark","ButtonNormal":"button_default","ButtonHover":"button_hover","ButtonPressed":"button_pressed","ButtonDisabled":"button_disabled","ButtonFocus":"button_focus","SlotNormal":"item_default","SlotSelected":"item_selected","SlotHover":"item_selected","TabNormal":"button_default","TabSelected":"button_gold","TabDisabled":"button_disabled","InputNormal":"button_secondary","InputFocus":"button_focus","TooltipPanel":"panel_dark"}
-for key,texture in styles.items():
-    edge=20 if key in ["PaperPanel","DarkPanel","TooltipPanel"] else 14
-    padding=18 if key=="PaperPanel" else 12 if key in ["DarkPanel","TooltipPanel"] else 4 if key.startswith("Slot") else 10
-    lines=[f'[sub_resource type="StyleBoxTexture" id="{key}"]',f'texture = ExtResource("{texture}")']
-    for side in ["left","top","right","bottom"]:
-        lines += [f'texture_margin_{side} = {edge}.0',f'content_margin_{side} = {0 if key.endswith("Focus") else padding}.0']
-    parts.append("\n".join(lines))
-for key,tint in {"GaugeBackground":"dark","HealthFill":"green","ManaFill":"blue","StaminaFill":"goldLight","ExperienceFill":"gold"}.items():
-    lines=[f'[sub_resource type="StyleBoxFlat" id="{key}"]',f'bg_color = {color(tint)}']
-    for side in ["left","top","right","bottom"]:lines.append(f'content_margin_{side} = 0.0')
-    for corner in ["top_left","top_right","bottom_left","bottom_right"]:lines.append(f'corner_radius_{corner} = 5')
-    parts.append("\n".join(lines))
-parts += ['[sub_resource type="SystemFont" id="BodyFont"]\nfont_names = PackedStringArray("Arial", "Liberation Sans", "DejaVu Sans")',
-          '[sub_resource type="SystemFont" id="HeadingFont"]\nfont_names = PackedStringArray("Georgia", "Liberation Serif", "DejaVu Serif")']
-resource=['[resource]','script = ExtResource("skin")','Font = SubResource("BodyFont")','HeadingFont = SubResource("HeadingFont")','FontSize = 16','Spacing = 8']
-for key,tint in {"Paper":"paper","Ink":"ink","Navy":"dark","LightText":"white","Gold":"goldLight","MutedInk":"muted","DisabledText":"muted","IconTint":"navy","Health":"green","Mana":"blue","Stamina":"goldLight"}.items():
-    resource.append(f'{key} = {color(tint,.9 if key=="Navy" else 1)}')
-for key in list(styles)+["GaugeBackground","HealthFill","ManaFill","StaminaFill","ExperienceFill"]:resource.append(f'{key} = SubResource("{key}")')
-parts.append("\n".join(resource))
-text="\n\n".join(parts)+"\n"
-text=text.replace("LOAD_STEPS",str(text.count("[ext_resource")+text.count("[sub_resource")+1))
-(THEME / "fantasy-skin.tres").write_text(text)
+def main() -> int:
+    parser = ArgumentParser(description=__doc__)
+    parser.add_argument("--check", action="store_true", help="Compare without writing outputs")
+    args = parser.parse_args()
+    ET.register_namespace("", "http://www.w3.org/2000/svg")
+    icons = sorted((SOURCE / "icons").glob("*.svg"))
+    if not icons:
+        raise ValueError(f"No icon sources found in {SOURCE / 'icons'}")
+    # Read and validate every source before updating any output.
+    outputs = {}
+    for icon in icons:
+        ET.parse(icon)
+        outputs[ASSETS / "Icons/SourceKit" / icon.name] = icon.read_bytes()
+    for name in COMPONENTS:
+        outputs[ASSETS / "Textures/SourceKit" / f"{name}.svg"] = component_bytes(
+            SOURCE / "components" / f"{name}.svg")
+    changed = []
+    for path, data in outputs.items():
+        if path.is_file() and path.read_bytes() == data:
+            continue
+        changed.append(path.relative_to(ROOT).as_posix())
+        if not args.check:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data)
+    for path in changed:
+        print(("Out of date: " if args.check else "Updated: ") + path)
+    print(f"{'Checked' if args.check else 'Exported'} {len(icons)} icons, "
+          f"{len(COMPONENTS)} component textures; {len(changed)} differences. "
+          "Themes and catalogs preserved.")
+    return 1 if args.check and changed else 0
 
-aliases={"equipment.weapon":"sword","equipment.armor":"shield","equipment.unknown":"bag", "nav.character":"person","nav.inventory":"bag","nav.map":"map","nav.quests":"scroll","nav.menu":"menu", "skill.1":"bolt","skill.2":"sun","skill.3":"dash","skill.5":"bolt","skill.6":"star"}
-entries={"icon."+p.stem:p.stem for p in icons};entries.update(aliases)
-parts=['[gd_resource type="Resource" script_class="UiArtCatalog" load_steps=LOAD_STEPS format=3]',
-       '[ext_resource type="Script" path="res://Scripts/UI/Assets/UiArtCatalog.cs" id="catalog"]',
-       '[ext_resource type="Script" path="res://Scripts/UI/Assets/UiArtEntry.cs" id="entry"]']
-for icon in icons:parts.append(f'[ext_resource type="Texture2D" path="res://Assets/UI/Icons/SourceKit/{icon.name}" id="{icon.stem}"]')
-ids=[]
-for i,(key,icon) in enumerate(entries.items()):
-    identity=f'art_{i}';ids.append(f'SubResource("{identity}")')
-    parts.append(f'[sub_resource type="Resource" id="{identity}"]\nscript = ExtResource("entry")\nKey = "{key}"\nTexture = ExtResource("{icon}")\nAttribution = "User-supplied Project_G_UI_Source_Kit; see docs/ASSET_PROVENANCE.md in the source kit."')
-parts.append('[resource]\nscript = ExtResource("catalog")\nEntries = Array[ExtResource("entry")](['+", ".join(ids)+'])')
-text="\n\n".join(parts)+"\n";text=text.replace("LOAD_STEPS",str(text.count("[ext_resource")+text.count("[sub_resource")+1))
-(THEME / "art-catalog.tres").write_text(text)
-(ASSETS / "SOURCE_KIT.md").write_text("# Source Kit runtime resources\n\nImported by tools/import-ui-source-kit.py from Project_G_UI_Source_Kit.\nIcons use the supplied white Godot variants; controls apply theme tint.\nComponents retain vector outlines/gradients, with sample text and item illustrations removed.\nFull-screen SVGs, demo scripts/data, map geography and character illustrations are not runtime UI.\nProvenance: Project_G_UI_Source_Kit/docs/ASSET_PROVENANCE.md.\n")
-print(f"Imported {len(icons)} icons, {len(components)} component textures, {len(entries)} catalog keys.")
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except (OSError, ValueError, ET.ParseError) as error:
+        print(f"UI source export failed: {error}", file=sys.stderr)
+        sys.exit(1)
