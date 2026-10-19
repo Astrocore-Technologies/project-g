@@ -21,7 +21,7 @@ public sealed class StatAllocationTests
         Assert.Equal(18,w.ProgressionState(id,w.Tick).StatPoints); Assert.Equal(10,player.BaseStats.Intelligence);
         Assert.Equal(7,w.Abilities!.Loadout(id,w.Tick).Mana); Assert.Equal(12,w.Combat!.Get(id).Health);
         w.ClearProgressionResults();
-        Assert.True(w.TryQueueProgression(42,new(2,ProgressionAction.AllocateStats,0,0,0,draft))); w.Simulate(.05f);
+        Assert.True(w.TryQueueProgression(42,new(2,ProgressionAction.AllocateStats,0,0,0,draft,preview.Sequence))); w.Simulate(.05f);
         Assert.Equal(ProgressionOutcome.Accepted,w.ProgressionResults[id].Outcome);
         Assert.Equal(13,w.ProgressionState(id,w.Tick).StatPoints); Assert.Equal(12,player.BaseStats.Intelligence);
         var stats=w.Combat.Get(id).Stats;

@@ -79,7 +79,7 @@ public sealed class RiverLandingTests
         var map = new SavedExploration { RegionKey = "prototype", Width = 30, Height = 30, OriginX = -15,
             OriginZ = -15, CellSize = 1, Cells = new ulong[15], Tutorial = 7, Places = 1 };
         map.Cells[0] = 1;
-        old = old with { Progression = old.Progression! with { Level = 2, Experience = 26, StatPoints = 3,
+        old = old with { Progression = old.Progression! with { Level = 2, Experience = 26, StatPoints = 3, Allocation = null,
             Exploration = region == "prototype" ? map : map with { RegionKey = "outskirts" },
             OtherExplorations = region == "prototype" ? [] : [map] } };
         string token; Guid id;

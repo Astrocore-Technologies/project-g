@@ -38,11 +38,13 @@ public sealed class ProgressionProtocolTests
     {
         foreach (var action in new[] { ProgressionAction.PreviewStats,ProgressionAction.AllocateStats })
         {
-            var command = new ProgressionCommand(7,action,0,0,0,[1,0,2,1,1,0,0]);
+            var command = new ProgressionCommand(7,action,0,0,0,[1,0,2,1,1,0,0],action == ProgressionAction.AllocateStats ? 6u : 0u);
             var bytes = NetworkProtocol.Write(command).CopyData();
             Check(bytes,r=>NetworkProtocol.TryReadProgressionCommand(r,out _));
             Assert.True(NetworkProtocol.TryReadProgressionCommand(Body(bytes),out var result));
             Assert.Equal(command.Allocation,result.Allocation);
+            Assert.Equal(command.PreviewSequence,result.PreviewSequence);
+            Assert.Equal(action == ProgressionAction.AllocateStats ? 43 : 39, bytes.Length);
             foreach (var allocation in new int[][] { [-1,0,0,0,0,0], [int.MaxValue,0,0,0,0,0], [100000,1,0,0,0,0], [1,2] })
                 Assert.Throws<ArgumentException>(()=>NetworkProtocol.Write(command with { Allocation=allocation }));
             bytes[^1]=255; Assert.False(NetworkProtocol.TryReadProgressionCommand(Body(bytes),out _));
@@ -60,6 +62,7 @@ public sealed class ProgressionProtocolTests
     public void RejectsInvalidCommandsEnumsNumbersDuplicateSkillsAndSlots()
     {
         Assert.Throws<ArgumentException>(() => NetworkProtocol.Write(new ProgressionCommand(0,ProgressionAction.AllocateStat,0,0,0)));
+        Assert.Throws<ArgumentException>(() => NetworkProtocol.Write(new ProgressionCommand(1,ProgressionAction.PreviewStats,0,0,0,new int[7],2)));
         Assert.Throws<ArgumentException>(() => NetworkProtocol.Write(new ProgressionCommand(1,ProgressionAction.AllocateStat,7,0,0)));
         Assert.Throws<ArgumentException>(() => NetworkProtocol.Write(new ProgressionCommand(1,ProgressionAction.AssignSlot,0,1,9)));
         var bytes = NetworkProtocol.Write(new ProgressionCommand(1,ProgressionAction.AllocateStat,0,0,0)).CopyData(); bytes[6] = 255;

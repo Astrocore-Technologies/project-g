@@ -29,7 +29,8 @@ public sealed class HealthRecoveryTests
     {
         var world = World();
         var initial = world.CreateInitialCharacter();
-        var player = world.AddPlayer(42, new(1), initial with { Health = 10, Stats = new(1, 1, vitality, 1, 1, 1, 10) });
+        var player = world.AddPlayer(42, new(1), initial with { Health = 10, Stats = new(1, 1, vitality, 1, 1, 1, 10),
+            Progression = initial.Progression! with { Allocation = null } });
         var actor = world.Combat!.Get(player.EntityId);
         Step(world, 19);
         Assert.Equal(10, actor.Health);

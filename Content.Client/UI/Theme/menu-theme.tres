@@ -1,9 +1,8 @@
 [gd_resource type="Theme" format=3 uid="uid://cvgfptdafmck8"]
-[ext_resource type="FontFile" path="res://Assets/UI/Fonts/Noto/NotoSerif.ttf" id="Bundled_HeadingFont"]
-[ext_resource type="FontFile" path="res://Assets/UI/Fonts/Noto/NotoSans.ttf" id="Bundled_BodyFont"]
 
 [ext_resource type="Texture2D" uid="uid://kp5d3o6s2i4n" path="res://Assets/UI/Textures/SourceKit/button_gold.svg" id="1"]
-
+[ext_resource type="FontFile" uid="uid://bf4pjat45jqkl" path="res://Assets/UI/Fonts/Noto/NotoSans.ttf" id="Bundled_BodyFont"]
+[ext_resource type="FontFile" uid="uid://co8j7lx78ewy1" path="res://Assets/UI/Fonts/Noto/NotoSerif.ttf" id="Bundled_HeadingFont"]
 
 [sub_resource type="StyleBoxFlat" id="Disabled"]
 content_margin_left = 22.0
@@ -90,7 +89,6 @@ border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.65, 0.62, 0.46, 0.8)
-
 
 [resource]
 default_font = ExtResource("Bundled_BodyFont")

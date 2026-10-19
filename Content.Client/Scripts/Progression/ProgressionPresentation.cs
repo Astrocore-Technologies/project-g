@@ -93,7 +93,11 @@ public partial class ProgressionPresentation : CanvasLayer
         var allocation = _pendingAction == ProgressionAction.AllocateStats; _pending = 0;
         if (result.Outcome == ProgressionOutcome.Accepted)
         { if (allocation) { Array.Clear(_draft); Invalidate(); } _feedback.Text = "Изменения сохранены"; }
-        else _feedback.Text = result.Outcome switch { ProgressionOutcome.NoPoints => "Недостаточно очков", ProgressionOutcome.Busy => "Дождитесь завершения действия", ProgressionOutcome.RateLimited => "Слишком часто. Попробуйте ещё раз", ProgressionOutcome.InvalidState => "Сейчас действие недоступно", _ => "Действие недоступно" };
+        else
+        {
+            _feedback.Text = result.Outcome switch { ProgressionOutcome.NoPoints => "Недостаточно очков", ProgressionOutcome.Busy => "Дождитесь завершения действия", ProgressionOutcome.RateLimited => "Слишком часто. Попробуйте ещё раз", ProgressionOutcome.InvalidState => "Сейчас действие недоступно", ProgressionOutcome.StalePreview => "Характеристики изменились. Обновляем предпросмотр — подтвердите заново", _ => "Действие недоступно" };
+            if (result.Outcome == ProgressionOutcome.StalePreview) Invalidate();
+        }
         Refresh(); RebuildSkills();
     }
     private void Preview(StatPreview value)
@@ -132,7 +136,9 @@ public partial class ProgressionPresentation : CanvasLayer
         _pending = _sequence; _pendingAction = action; _sentAt = Now(); _sentVersion = _version;
         _feedback.Text = action == ProgressionAction.PreviewStats ? "Расчёт предпросмотра…" : "Сохранение…";
         var allocation = action is ProgressionAction.PreviewStats or ProgressionAction.AllocateStats ? (int[])_draft.Clone() : null;
-        _network.SendProgression(new(_sequence,action,0,skill,slot,allocation)); Refresh(); RebuildSkills();
+        var previewSequence = action == ProgressionAction.AllocateStats && _previewVersion == _version && _preview is { } preview
+            ? preview.Sequence : 0;
+        _network.SendProgression(new(_sequence,action,0,skill,slot,allocation,previewSequence)); Refresh(); RebuildSkills();
     }
     private void Refresh()
     {

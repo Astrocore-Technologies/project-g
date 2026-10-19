@@ -13,7 +13,7 @@ public sealed class ProgressionIntegrationTests
     public async Task LossyClientsSeeOnlyOwnProgressionAndStatChangeWaitsForCommitThenReconnects()
     {
         var store = new SqliteCharacterStore(); await store.InitializeAsync(CancellationToken.None); var world = CharacterPersistenceTests.World();
-        var initial = world.CreateInitialCharacter(); initial = initial with { Progression = initial.Progression! with { StatPoints = 3 } };
+        var initial = world.CreateInitialCharacter(); initial = initial with { Progression = initial.Progression! with { StatPoints = 3, Allocation = null } };
         var seed = await store.OpenAsync("",initial,CancellationToken.None); var token = seed.IssuedToken; await seed.DisposeAsync();
         var port = CharacterPersistenceTests.FreePort();
         using var server = new GameServerService(Options.Create(new ServerOptions { Port = port,NetworkPollIntervalMilliseconds = 1 }),new HandshakeCoordinator(),world,NullLogger<GameServerService>.Instance,store);
@@ -35,7 +35,7 @@ public sealed class ProgressionIntegrationTests
             var gate = store.PauseSaves();
             try
             {
-                first.Progression(new(2,ProgressionAction.AllocateStats,0,0,0,[0,0,1,1,1,0,0])); await Poll(() => store.PendingSave);
+                first.Progression(new(2,ProgressionAction.AllocateStats,0,0,0,[0,0,1,1,1,0,0],first.StatPreviews[0].Sequence)); await Poll(() => store.PendingSave);
                 for (var i=0;i<20;i++) { first.Poll(); second.Poll(); await Task.Delay(25); }
                 Assert.Empty(first.ProgressionResults); Assert.Equal(before.Stats[2],first.Progressions[id].Stats[2]); Assert.Equal(maxHp,second.CombatStates[id].MaxHealth);
                 gate.TrySetResult();

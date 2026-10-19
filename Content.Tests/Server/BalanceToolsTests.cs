@@ -12,6 +12,23 @@ namespace Content.Tests.Server;
 
 public sealed class BalanceToolsTests
 {
+    [Fact]
+    public void PowerExperienceDraftUsesServerCurveAndIsExplicitUndoableAndIsolated()
+    {
+        var document = new BalanceDocument(ContentCatalogTests.DataPath); var original = document.Text;
+        Assert.Null(document.Catalog.Progression.ExperienceCurve);
+        Assert.Throws<ArgumentException>(() => document.ConfigurePowerExperienceCurve(0, 4));
+        Assert.Equal(original, document.Text); Assert.False(document.CanUndo);
+        document.ConfigurePowerExperienceCurve(150, 4);
+        Assert.Equal(1677, document.CharacterExperienceTable()[0].NextExperience);
+        Assert.Equal(0, document.CharacterExperienceTable()[^1].NextExperience);
+        var page = EditorSchema.Pages(document).Single(p => p.Key == "progression/character");
+        Assert.Contains(EditorSchema.Fields(document, page), f => f.Path == "progression/experienceCurve/scale" && f.Group.Contains("эксперимент"));
+        document.Undo(); Assert.Equal(original, document.Text);
+        document.Redo(); Assert.NotNull(document.Catalog.Progression.ExperienceCurve);
+        Assert.Equal(original, new BalanceDocument(ContentCatalogTests.DataPath).Text);
+    }
+
     [Fact]public void EchoRefusalAuthoringIsExplicitValidatedAtomicAndUndoable()
     {
         var document=new BalanceDocument(ContentCatalogTests.DataPath);var path=document.Entries().Single(e=>e.Name=="echoes / test_guardian_echo").Path;

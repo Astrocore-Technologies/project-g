@@ -38,7 +38,14 @@ public partial class PlayerHudSmoke : Node
             var world=GD.Load<PackedScene>("res://Scenes/World.tscn").Instantiate<WorldController>(); world.AutoConnect=false; world.UiSettingsPath="res://../.artifacts/ui-final-2026-10-18/review-settings.cfg";
             var network=world.GetNode<NetworkClient>("NetworkClient");
             var reviewPort=0;
-            if(UseReviewServer)
+            var serverPortArgument=OS.GetCmdlineUserArgs().FirstOrDefault(a=>a.StartsWith("--server-port=",StringComparison.Ordinal));
+            if(serverPortArgument is not null)
+            {
+                if(!int.TryParse(serverPortArgument[14..],out reviewPort) || reviewPort is <1 or >65535)
+                    throw new ArgumentException("Invalid isolated UI server port.");
+                network.DevelopmentIdentityProfile="ui-c1-"+Guid.NewGuid().ToString("N")[..12];
+            }
+            else if(UseReviewServer)
             {
                 using var config=System.Text.Json.JsonDocument.Parse(Godot.FileAccess.GetFileAsString("res://../.artifacts/ui-redesign/live.json"));
                 reviewPort=config.RootElement.GetProperty("port").GetInt32(); network.DevelopmentIdentityProfile="ui-hud-"+Guid.NewGuid().ToString("N")[..12];
@@ -47,6 +54,8 @@ public partial class PlayerHudSmoke : Node
             network.ProgressionReceived += state=>_state=state;
             network.StatPreviewReceived += _=>_previews++;
             if(reviewPort>0) network.ConnectToServerAt(reviewPort); else network.ConnectToServer(); await Wait(()=>_state.Stats is not null);
+            if(OS.GetCmdlineUserArgs().Contains("--power-curve-experiment") && _state.NextExperience!=1677)
+                throw new Exception("The isolated server must publish the experimental power curve threshold.");
             var character=world.GetChildren().OfType<ProgressionPresentation>().Single();
             var hud=world.GetChildren().OfType<PlayerHud>().Single();
             await ToSignal(GetTree().CreateTimer(.7),SceneTreeTimer.SignalName.Timeout);
@@ -78,6 +87,7 @@ public partial class PlayerHudSmoke : Node
             character.FindChildren("*","TabContainer",true,false).OfType<TabContainer>().Single().CurrentTab=1; await Frames(3);
             var buttons=character.FindChildren("*","Button",true,false).Cast<Button>().ToArray();
             var plus=buttons.Where(b=>b.Text=="+").ToArray();
+            if(plus.Length!=7)throw new Exception("All seven editable primary stats must be present.");
             var apply=buttons.Single(b=>b.Text=="Применить");
             var cancel=buttons.Single(b=>b.Text=="Отменить распределение");
             var original=_state; var count=_previews;
@@ -105,6 +115,8 @@ public partial class PlayerHudSmoke : Node
     private async Task Click(Button button)
     {
         var position=button.GetGlobalRect().GetCenter();
+        // Update GUI hover before the button event, just as a real pointer does.
+        Input.ParseInputEvent(new InputEventMouseMotion { Position=position,GlobalPosition=position }); await Frames(2);
         Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex=MouseButton.Left,Pressed=true,Position=position,GlobalPosition=position }); await Frames(1);
         Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex=MouseButton.Left,Pressed=false,Position=position,GlobalPosition=position }); await Frames(2);
     }
@@ -112,6 +124,8 @@ public partial class PlayerHudSmoke : Node
     {
         if (!OS.GetCmdlineUserArgs().Contains("--capture")) return;
         await ToSignal(RenderingServer.Singleton,RenderingServer.SignalName.FramePostDraw);
-        GetViewport().GetTexture().GetImage().SavePng($"res://../.artifacts/{name}.png");
+        var directoryArgument=OS.GetCmdlineUserArgs().FirstOrDefault(a=>a.StartsWith("--capture-dir=",StringComparison.Ordinal));
+        var directory=directoryArgument is null?"res://../.artifacts":directoryArgument[14..];
+        GetViewport().GetTexture().GetImage().SavePng($"{directory}/{name}.png");
     }
 }

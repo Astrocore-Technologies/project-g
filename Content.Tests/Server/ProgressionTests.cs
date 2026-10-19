@@ -96,7 +96,7 @@ public sealed class ProgressionTests
         initial = initial with { Health = 12,Mana = 7,AttackCooldownSeconds = 60,
             Cooldowns = initial.Cooldowns.Select(c => c with { Seconds = 60 }).ToArray(),
             Inventory = initial.Inventory with { Items = initial.Inventory.Items.Select(i => i == armor ? i with { EquippedSlot = EquipmentSlot.Armor } : i).ToArray() },
-            Progression = initial.Progression! with { StatPoints = 3 } };
+            Progression = initial.Progression! with { StatPoints = 3, Allocation = null } }; // Explicit legacy fixture with untracked history.
         var p = w.AddPlayer(42,new(1),initial); var hpMax = w.Combat!.Get(p.EntityId).Stats.MaxHealth;
         w.TryQueueProgression(42,new(1,ProgressionAction.AllocateStat,2,0,0)); Step(w);
         var saved = w.CaptureCharacter(42); Assert.Equal(initial.Stats.Vitality+1,saved.Stats.Vitality); Assert.Equal(12,saved.Health); Assert.Equal(7,saved.Mana);

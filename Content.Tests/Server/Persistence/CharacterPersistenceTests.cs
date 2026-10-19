@@ -25,8 +25,10 @@ public sealed class CharacterPersistenceTests
     public void StateRoundTripsAndRestoresStatsPositionResourcesAndCooldown()
     {
         var world = World();
+        var legacyProgression = world.CreateInitialCharacter().Progression! with { Allocation = null };
         var saved = world.CreateInitialCharacter() with
         {
+            Progression = legacyProgression,
             X = -6, Z = 2, Stats = new BaseStats(20, 4, 10, 10, 10, 1), Health = 0, Mana = 12,
             AttackCooldownSeconds = 60,
             Defense = new SavedDefense(1,42,.4,.8),

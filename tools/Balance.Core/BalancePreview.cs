@@ -23,7 +23,7 @@ public sealed record BalancePreview(DerivedStats Stats, double Hit, double Inter
             (1 + StatCalculator.CriticalProbability(stats) * (stats.CriticalDamage - 1)) / interval;
         var baseStats = catalog.Creatures["test_adventurer"].Stats;
         double Sum(BaseStats s) => s.Strength + s.Agility + s.Vitality + s.Intelligence + s.Dexterity + s.Luck + s.Wisdom;
-        var points = catalog.Progression.InitialStatPoints + (build.Level - 1) * catalog.Progression.StatPointsPerLevel - (Sum(build.Stats) - Sum(baseStats));
+        var points = catalog.Progression.GrantedPoints(build.Level) - (Sum(build.Stats) - Sum(baseStats));
         return new(stats, hit, interval, expected, target.MaxHealth, target.PhysicalDefense, points);
     }
 

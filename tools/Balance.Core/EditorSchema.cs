@@ -172,6 +172,10 @@ public static class EditorSchema
     public static EditorField Describe(EditorPage page, string path)
     {
         var key = path.Split('/')[^1]; var title = EditorLabels.Name(key); var group = "Основное";
+        if (path == "progression/experienceCurve/scale")
+            return new(path, "Масштаб EXP (A)", "Степенная кривая EXP · эксперимент", "A × (уровень + B)^1.5. Числа экспериментальные; пороги рассчитывает сервер.", false, false, 0);
+        if (path == "progression/experienceCurve/offset")
+            return new(path, "Смещение ранних уровней (B)", "Степенная кривая EXP · эксперимент", "B > −1. Изменение параметров не переносит существующий прогресс автоматически.", false, false, -1);
         var percent = EditorLabels.IsPercent(path); var integer = false; double? min = null, max = null;
         var help = "Значение проверяется серверным каталогом перед сохранением и запуском.";
         if (page.RootPath.StartsWith("balance/"))

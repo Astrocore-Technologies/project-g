@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 24,
+  "schemaVersion": 25,
   "balanceVersion": 19,
   "unarmedWeaponId": "unarmed",
   "lifecycle": { "inCombatSeconds": 30, "disconnectBodySeconds": 60, "corpseSeconds": 60,

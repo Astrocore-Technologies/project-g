@@ -27,7 +27,7 @@ public sealed record BalanceTestBuild
             catalog.Weapons[item.WeaponId].Kind != WeaponKind.Melee || !catalog.Creatures.ContainsKey(TargetId) ||
             ProfessionId != 0 && !catalog.Professions.Any(p => p.Id == ProfessionId))
             throw new InvalidDataException("Некорректный тестовый билд: уровень, оружие, профессия или цель.");
-        double[] stats = [Stats.Strength, Stats.Agility, Stats.Vitality, Stats.Intelligence, Stats.Dexterity, Stats.Luck];
+        double[] stats = [Stats.Strength, Stats.Agility, Stats.Vitality, Stats.Intelligence, Stats.Dexterity, Stats.Luck, Stats.Wisdom];
         if (stats.Any(s => !double.IsFinite(s) || s < 0 || s > 100000 || s != Math.Truncate(s)))
             throw new InvalidDataException("Тестовые характеристики: целые числа от 0 до 100000.");
         if (SelectedAbilityId is { } selected && (!catalog.Abilities.TryGetValue(selected, out var ability) || ability.Kind == AbilityKind.Dash ||
@@ -65,9 +65,16 @@ public sealed record BalanceTestBuild
             // Swap with slot one, preserving the rest of the bar and every learned skill.
             skills = skills.Select(s => s with { Slot = s.DefinitionId == selected ? (byte)1 : s.Slot == 1 ? previous : s.Slot }).ToArray();
         }
-        var budget = catalog.Progression.InitialStatPoints + (Level - 1) * catalog.Progression.StatPointsPerLevel;
-        var spent = Stats.Strength + Stats.Agility + Stats.Vitality + Stats.Intelligence + Stats.Dexterity + Stats.Luck -
-            (definition.Stats.Strength + definition.Stats.Agility + definition.Stats.Vitality + definition.Stats.Intelligence + definition.Stats.Dexterity + definition.Stats.Luck);
+        var budget = catalog.Progression.GrantedPoints(Level);
+        var basis = definition.Stats;
+        double[] differences = [Stats.Strength-basis.Strength, Stats.Agility-basis.Agility, Stats.Vitality-basis.Vitality,
+            Stats.Intelligence-basis.Intelligence, Stats.Dexterity-basis.Dexterity, Stats.Luck-basis.Luck, Stats.Wisdom-basis.Wisdom];
+        var spent = differences.Sum();
+        // The workshop explicitly allows out-of-budget fixtures; never fabricate a normal character ledger for them.
+        SavedStatAllocation? allocation = differences.All(v => v >= 0 && v == Math.Truncate(v)) && spent <= budget
+            ? new() { Version = 1, StartingStats = basis, EarnedFromLevels = budget,
+                Invested = new((int)differences[0],(int)differences[1],(int)differences[2],(int)differences[3],
+                    (int)differences[4],(int)differences[5],(int)differences[6]) } : null;
         var derived = CalculateStats(catalog, initial.ProfileId);
         return initial with
         {
@@ -78,7 +85,7 @@ public sealed record BalanceTestBuild
             Cooldowns = skills.Select(s => new SavedCooldown(s.DefinitionId, 0)).ToArray(),
             Progression = progression with
             {
-                Level = Level, StatPoints = (int)Math.Clamp(budget - spent, 0, 100000), Skills = skills,
+                Level = Level, StatPoints = (int)Math.Clamp(budget - spent, 0, 100000), Allocation = allocation, Skills = skills,
                 Discoveries = profession?.DiscoveryMask ?? 0,
                 Profession = new SavedProfession { ActiveId = ProfessionId, SuccessfulUses = profession?.SuccessfulUses ?? 0 },
                 SwordTraining = catalog.Swordsman?.ProfessionId == ProfessionId ? new(1, catalog.Swordsman.RequiredDamage) : null

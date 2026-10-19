@@ -76,7 +76,7 @@ public partial class Main
     {
         var catalog = _document.Catalog; var level = Math.Min(requestedLevel, catalog.Progression.LevelCap);
         var stats = catalog.Creatures["test_adventurer"].Stats;
-        var points = catalog.Progression.InitialStatPoints + (level - 1) * catalog.Progression.StatPointsPerLevel;
+        var points = catalog.Progression.GrantedPoints(level);
         stats = new(stats.Strength + (dexterity ? 0 : points), stats.Agility, stats.Vitality, stats.Intelligence, stats.Dexterity + (dexterity ? points : 0), stats.Luck, stats.Wisdom);
         _build = _build with { Level = level, Stats = stats }; UpdatePreview();
     }

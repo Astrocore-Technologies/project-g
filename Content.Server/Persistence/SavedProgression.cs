@@ -13,6 +13,8 @@ public sealed record SavedProgression
     public required int StatPoints { get; init; }
     public required byte Discoveries { get; init; }
     public required SavedSkill[] Skills { get; init; }
+    [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)] public SavedStatAllocation? Allocation { get; init; }
+    [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)] public string? ExperienceCurveKey { get; init; }
     [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)] public SavedExploration? Exploration { get; init; }
     [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)] public SavedExploration[]? OtherExplorations { get; init; }
     public SavedWorldParticipation WorldParticipation { get; init; } = new();
@@ -23,6 +25,8 @@ public sealed record SavedProgression
     {
         byte slot = 0;
         return new() { Level = 1, Experience = 0, StatPoints = catalog.Progression.InitialStatPoints, Discoveries = 0,
+            Allocation = new() { Version = 1, StartingStats = definition.Stats, Invested = default,
+                EarnedFromLevels = catalog.Progression.InitialStatPoints }, ExperienceCurveKey = catalog.ExperienceCurve.Key,
             Skills = definition.AbilityIds.Select(id => new SavedSkill(id,1,0,
                 catalog.Abilities[id].Kind is AbilityKind.Dash or AbilityKind.Passive || slot >= NetworkConstants.MaxAbilitySlots
                     ? (byte)0 : ++slot)).ToArray() };
@@ -34,6 +38,8 @@ public sealed record SavedProgression
         if (Version != 1 || Level is < 1 or > 1000 || Experience is < 0 or > 1000000000 ||
             StatPoints is < 0 or > 100000 || Discoveries > 3 || Skills is null || Skills.Length > NetworkConstants.MaxLearnedSkills)
             throw new InvalidDataException("Invalid progression model.");
+        Allocation?.Validate(StatPoints);
+        if (ExperienceCurveKey is { Length: 0 or > 128 }) throw new InvalidDataException("Invalid saved experience curve key.");
         if (Profession is null) throw new InvalidDataException("Missing profession history.");
         Profession.Validate(); Exploration?.Validate(); Pvp?.Validate();
         DeliveryQuest?.Validate();
@@ -72,6 +78,9 @@ public sealed record SavedProgression
         if (System.Text.Encoding.UTF8.GetByteCount(json) > 8192) throw new InvalidDataException("Progression exceeds size budget.");
         using var document = JsonDocument.Parse(json,new JsonDocumentOptions { MaxDepth = 8 });
         RejectDuplicates(document.RootElement);
+        foreach (var name in new[] { "Allocation", "ExperienceCurveKey" })
+            if (document.RootElement.TryGetProperty(name, out var extension) && extension.ValueKind == JsonValueKind.Null)
+                throw new InvalidDataException($"Null progression extension: {name}.");
         if(document.RootElement.TryGetProperty("SwordTraining",out var training) && training.ValueKind==JsonValueKind.Null) throw new InvalidDataException("Null sword training receipt.");
         if(document.RootElement.TryGetProperty("DeliveryQuest",out var quest) && quest.ValueKind==JsonValueKind.Null) throw new InvalidDataException("Null delivery quest receipt.");
         if(document.RootElement.TryGetProperty("Pvp",out var pvp)&&pvp.ValueKind==JsonValueKind.Null)throw new InvalidDataException("Null PvP component.");

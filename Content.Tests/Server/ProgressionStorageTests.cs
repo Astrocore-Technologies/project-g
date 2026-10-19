@@ -20,7 +20,7 @@ public sealed class ProgressionStorageTests
         var restored = await store.OpenAsync(token,fresh,CancellationToken.None);
         Assert.Equal(id,restored.CharacterId); Assert.Equal(17,restored.State.Health); Assert.Equal(9,restored.State.Mana); Assert.Equal(1,restored.State.Progression!.Level);
         var skill = restored.State.Progression.Skills[0];
-        var progress = restored.State.Progression with { Level = 2,Experience = 20,StatPoints = 3,Discoveries = 1,
+        var progress = restored.State.Progression with { Level = 2,Experience = 20,StatPoints = 3,Discoveries = 1, Allocation = null,
             Skills = restored.State.Progression.Skills.Select(s => s == skill ? s with { Level = 2,Practice = 1,Slot = 8 } : s).ToArray() };
         await store.SaveAsync([new(restored,restored.State with { Progression = progress })],CancellationToken.None); await restored.DisposeAsync();
         store = new SqliteCharacterStore(store.DatabasePath); await store.InitializeAsync(CancellationToken.None);
@@ -33,7 +33,7 @@ public sealed class ProgressionStorageTests
         var store = new SqliteCharacterStore(); await store.InitializeAsync(CancellationToken.None); var initial = CharacterPersistenceTests.World().CreateInitialCharacter();
         await using var first = await store.OpenAsync("",initial,CancellationToken.None); await using var second = await store.OpenAsync("",initial,CancellationToken.None);
         await store.SaveAsync([new(second,second.State)],CancellationToken.None);
-        var changed = first.State with { Health = 7,Progression = first.State.Progression! with { StatPoints = 3 } };
+        var changed = first.State with { Health = 7,Progression = first.State.Progression! with { StatPoints = 3, Allocation = null } };
         await Assert.ThrowsAsync<InvalidOperationException>(() => store.SaveAsync([new(first,changed),new(second,second.State)],CancellationToken.None));
         using var c = Connect(store.DatabasePath); using var q = c.CreateCommand();
         q.CommandText = "SELECT state FROM character_progression WHERE character_id = $id"; q.Parameters.AddWithValue("$id",first.CharacterId.ToString());

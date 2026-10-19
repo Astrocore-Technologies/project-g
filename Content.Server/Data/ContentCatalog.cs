@@ -18,7 +18,7 @@ public sealed class ContentCatalog
     public Content.Server.Quests.DeliveryQuestDefinition? DeliveryQuest {get;}
     public Content.Server.Pvp.PvpDefinition? Pvp {get;}
     public Content.Server.Economy.EconomyDefinition? Economy { get; }
-    public const int SchemaVersion = 24;
+    public const int SchemaVersion = 25;
     public WeaponDefinition UnarmedWeapon { get; }
     public const int MaxFileBytes = 4 * 1024 * 1024;
     private const int MaxDefinitions = 4096;
@@ -33,7 +33,7 @@ public sealed class ContentCatalog
 
     private ContentCatalog(ContentDocument document)
     {
-        if (document.SchemaVersion != SchemaVersion || document.BalanceVersion <= 0)
+        if (document.SchemaVersion is not (24 or SchemaVersion) || document.BalanceVersion <= 0)
             throw new ArgumentException("Unsupported schemaVersion or invalid balanceVersion.");
         ArgumentNullException.ThrowIfNull(document.Balance);
         document.Balance.Validate();
@@ -47,6 +47,9 @@ public sealed class ContentCatalog
         BalanceVersion = document.BalanceVersion;
         ArgumentNullException.ThrowIfNull(document.Progression); document.Progression.Validate();
         Progression = document.Progression;
+        if (document.SchemaVersion == 24 && Progression.ExperienceCurve is not null)
+            throw new ArgumentException("progression.experienceCurve requires schemaVersion 25.");
+        ExperienceCurve = new(Progression);
         Weapons = Index(document.Weapons, item => item.Id, "weapons");
         if(document.UnarmedWeaponId is null || !Weapons.TryGetValue(document.UnarmedWeaponId,out var unarmed) ||
             unarmed.Kind!=WeaponKind.Melee || unarmed.IsSword || (unarmed.Capabilities&Content.Shared.Combat.ActionCapability.Weapon)!=0)
@@ -341,6 +344,7 @@ public sealed class ContentCatalog
     public EchoSummonDefinition EchoSummon {get;}
     public EchoRecoveryDefinition EchoRecovery {get;}
     public Content.Server.Progression.ProgressionBalance Progression { get; }
+    public Content.Server.Progression.ExperienceCurve ExperienceCurve { get; }
     public IReadOnlyList<Content.Server.Professions.ProfessionDefinition> Professions { get; }
     public int BalanceVersion { get; }
     public StatBalance Balance { get; }

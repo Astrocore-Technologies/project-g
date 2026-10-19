@@ -52,6 +52,11 @@ public sealed record CharacterState
 
     public void Validate()
     {
+        if (Progression is { Allocation: { } allocation } progression)
+        {
+            allocation.Validate(progression.StatPoints);
+            allocation.ValidateStats(Stats);
+        }
         Defense?.Validate(); Surface?.Validate(); CombatControl?.Validate();Life?.Validate();Facing?.Validate();
         if(ActivePassiveModifiers is {} passives && (passives.Length>NetworkConstants.MaxLearnedSkills ||
             passives.Any(id=>string.IsNullOrWhiteSpace(id) || id.Length>64) || passives.Distinct(StringComparer.Ordinal).Count()!=passives.Length))
