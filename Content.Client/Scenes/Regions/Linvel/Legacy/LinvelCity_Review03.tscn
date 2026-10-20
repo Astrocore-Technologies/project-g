@@ -1,0 +1,73 @@
+[gd_scene format=3 uid="uid://dfd6hsuk8b7de"]
+
+[ext_resource type="Terrain3DMaterial" uid="uid://b8wrwggs1rqd6" path="res://Assets/World/Linvel/City/Terrain/CenterMaterial.tres" id="1_14rlj"]
+[ext_resource type="Terrain3DAssets" uid="uid://coiogx07qu568" path="res://Assets/World/Linvel/City/Terrain/CenterAssets.tres" id="2_xm162"]
+[ext_resource type="Terrain3DRegion" uid="uid://cr82f17jumqy4" path="res://Assets/World/Linvel/City/Terrain/CenterData/terrain3d-01-01.res" id="3_6goya"]
+[ext_resource type="Terrain3DRegion" uid="uid://bqjk2jnxwsae" path="res://Assets/World/Linvel/City/Terrain/CenterData/terrain3d-01_00.res" id="4_wpyem"]
+[ext_resource type="Terrain3DRegion" uid="uid://dbg6oy1nfod8d" path="res://Assets/World/Linvel/City/Terrain/CenterData/terrain3d_00-01.res" id="5_w0drk"]
+[ext_resource type="Terrain3DRegion" uid="uid://c733hy4komg2e" path="res://Assets/World/Linvel/City/Terrain/CenterData/terrain3d_00_00.res" id="6_aekj4"]
+[ext_resource type="PackedScene" uid="uid://b1v24fqty1v5f" path="res://Scenes/Regions/Linvel/Parts/CityCenter.tscn" id="7_bgc83"]
+[ext_resource type="PackedScene" uid="uid://j3pl51w1ky0k" path="res://Scenes/Regions/Linvel/Parts/TrainingQuarter.tscn" id="8_ins2b"]
+[ext_resource type="PackedScene" uid="uid://b88kybf1l6arx" path="res://Scenes/Regions/Linvel/Parts/HarborQuarter.tscn" id="9_hldfk"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_qpbnv"]
+sky_top_color = Color(0.3, 0.56, 0.77, 1)
+sky_horizon_color = Color(0.77, 0.85, 0.83, 1)
+ground_bottom_color = Color(0.45, 0.52, 0.39, 1)
+ground_horizon_color = Color(0.77, 0.85, 0.83, 1)
+
+[sub_resource type="Sky" id="Sky_tibd5"]
+sky_material = SubResource("ProceduralSkyMaterial_qpbnv")
+
+[sub_resource type="Environment" id="Environment_8thhe"]
+background_mode = 2
+sky = SubResource("Sky_tibd5")
+ambient_light_source = 2
+ambient_light_color = Color(0.78, 0.84, 0.91, 1)
+ambient_light_energy = 0.35
+tonemap_mode = 2
+
+[node name="LinvelCity" type="Node3D" unique_id=1962832825]
+metadata/linvel_city_stage = "harbor-03-awaiting-review"
+metadata/linvel_city_next = "Continue only after user review"
+
+[node name="World" type="Node3D" parent="." unique_id=287524385]
+
+[node name="Terrain3D" type="Terrain3D" parent="World" unique_id=1617589355 groups=["surface_terrain"]]
+data_directory = "res://Assets/World/Linvel/City/Terrain/CenterData"
+material = ExtResource("1_14rlj")
+assets = ExtResource("2_xm162")
+collision_mode = 3
+mesh_lods = 6
+top_level = true
+metadata/_edit_lock_ = true
+metadata/terrain_region_resources = Array[Resource]([ExtResource("3_6goya"), ExtResource("4_wpyem"), ExtResource("5_w0drk"), ExtResource("6_aekj4")])
+metadata/review_part = "harbor-03"
+
+[node name="CityParts" type="Node3D" parent="World" unique_id=762208740]
+
+[node name="CityCenter" parent="World/CityParts" unique_id=1096154364 instance=ExtResource("7_bgc83")]
+metadata/review_status = "Approved by user 2026-10-20"
+
+[node name="TrainingQuarter" parent="World/CityParts" unique_id=326303095 instance=ExtResource("8_ins2b")]
+metadata/review_status = "Approved to continue by user 2026-10-20"
+
+[node name="HarborQuarter" type="Node3D" parent="World/CityParts" unique_id=1284094953 instance=ExtResource("9_hldfk")]
+metadata/part_id = "linvel-harbor-03"
+metadata/review_status = "Awaiting user review"
+metadata/presentation_only = "No ship travel, fishing or economy rules"
+metadata/review_geometry_v2 = true
+metadata/large_piers_v3 = true
+metadata/pier_portals_v4 = true
+metadata/threshold_seams_closed = true
+
+[node name="Lighting" type="Node3D" parent="World" unique_id=1448046492]
+
+[node name="SpringAtmosphere" type="WorldEnvironment" parent="World/Lighting" unique_id=1059814325]
+environment = SubResource("Environment_8thhe")
+
+[node name="SpringSun" type="DirectionalLight3D" parent="World/Lighting" unique_id=1626364980]
+transform = Transform3D(0.81915206, 0.45198438, -0.35312894, 0, 0.6156615, 0.7880107, 0.57357645, -0.6455006, 0.5043204, 0, 0, 0)
+light_color = Color(1, 0.92, 0.79, 1)
+shadow_enabled = true
+directional_shadow_max_distance = 150.0

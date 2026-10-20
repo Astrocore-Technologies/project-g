@@ -42,8 +42,11 @@ public sealed partial class GameServerService
         public FollowCommand? Follow;
         public EmoteCommand? Emote; // NC: bounded cosmetic intention, no persistence payload.
         public QuestCommand? Quest;
+        public ActivityCommand? Activity;
         public LogoutCommand? Logout;
         public RespawnCommand? Respawn;
+        public TavernCommand? Tavern;
+        public RespecCommand? Respec;
         public CombatJournalRequest? Journal;
         public InventoryCommand? Inventory;
         public PickupCommand? Pickup;
@@ -131,6 +134,8 @@ public sealed partial class GameServerService
             var world = WorldFor(connection);
             if(intentions.Logout is {} logout)world.TryQueueLogout(connection,logout);
             if(intentions.Respawn is {} respawn)world.TryQueueRespawn(connection,respawn);
+            if(intentions.Tavern is {} tavern)world.TryQueueTavern(connection,tavern);
+            if(intentions.Respec is {} respec)world.TryQueueRespec(connection,respec);
             if(intentions.Social is {} social)world.TryQueueSocial(connection,social);
             if(intentions.Pvp is {} pvp)world.TryQueuePvp(connection,pvp);
             if(intentions.Economy is { } economy) world.TryQueueEconomy(connection,economy);
@@ -143,6 +148,7 @@ public sealed partial class GameServerService
             if (intentions.Follow is { } follow) world.TryStartFollow(connection, follow);
             if (intentions.Emote is { } emote) world.TryQueueEmote(connection,emote);
             if (intentions.Quest is { } quest) world.TryQueueQuest(connection,quest);
+            if (intentions.Activity is {} activity)world.TryQueueActivity(connection,activity);
             if(intentions.Journal is {} journal)world.TryQueueJournalRequest(connection,journal);
             if (intentions.Inventory is { } inventory) world.TryQueueInventory(connection, inventory);
             if (intentions.Pickup is { } pickup) world.TryQueuePickup(connection, pickup);

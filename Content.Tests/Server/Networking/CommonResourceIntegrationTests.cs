@@ -13,7 +13,7 @@ namespace Content.Tests.Server.Networking;
 
 public sealed class CommonResourceIntegrationTests
 {
-    [Fact]public async Task StatPreviewAndCommittedAllocationShareTheStaminaFormulaWithoutRefillingOrLeakingOwnerData()
+    [Fact]public async Task StatPreviewAndCommittedAllocationPreserveStaminaFractionWithoutLeakingOwnerData()
     {
         var data=CommonResourceTests.Document();data["balance"]!["stamina"]!["vitality"]=2;
         data["balance"]!["staminaRecovery"]!["wisdom"]=.25;
@@ -44,7 +44,7 @@ public sealed class CommonResourceIntegrationTests
             await Poll(()=>store.BlockedSave);await Observe();Assert.Equal(120,first.Defenses[id].MaxStamina);
             Assert.DoesNotContain(first.ProgressionResults,r=>r.Sequence==2);
             gate.TrySetResult();await Poll(()=>first.Defenses[id].MaxStamina==124&&first.ProgressionResults.Any(r=>r.Sequence==2));
-            Assert.Equal(70,first.Defenses[id].Stamina);Assert.Empty(observer.StatPreviews);
+            Assert.Equal(70d/120*124,first.Defenses[id].Stamina,8);Assert.Empty(observer.StatPreviews);
             Assert.All(observer.Defenses.Keys,key=>Assert.Equal(observer.LocalSpawn.EntityId,key));
         }
         finally{gate?.TrySetResult();await server.StopAsync(default);}

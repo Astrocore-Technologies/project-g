@@ -1,6 +1,7 @@
 [gd_scene format=3]
 [ext_resource type="Theme" path="res://UI/Theme/rework-theme.tres" id="EditorTheme"]
 [ext_resource type="Script" path="res://Scripts/UI/Components/UiModelPreview.cs" id="1"]
+[ext_resource type="PackedScene" path="res://UI/Components/ActivityOrderView.tscn" id="Activities"]
 [node name="DialogueView" type="HBoxContainer"]
 theme = ExtResource("EditorTheme")
 size_flags_horizontal = 3
@@ -44,3 +45,6 @@ text = "Рассмотреть профессию Мечника"
 unique_name_in_owner = true
 theme_type_variation = &"QuietButton"
 text = "Вернусь позже"
+[node name="DialogueActivities" parent="Content" instance=ExtResource("Activities")]
+unique_name_in_owner = true
+visible = false

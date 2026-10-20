@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "revision": 2,
+  "pveExperience": 20,
+  "pveRadius": 40,
+  "explorationCells": 100,
+  "explorationExperience": 5,
+  "oreExperience": 1,
+  "watchExperience": 20
+}

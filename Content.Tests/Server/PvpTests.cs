@@ -35,8 +35,10 @@ public sealed class PvpTests
         Assert.True(w.Combat.ApplyAbilityDamage(a.EntityId,1,b.EntityId)>0);Assert.Equal(0,w.PrivatePvp(b.EntityId).Pk);Kill(w,a.EntityId,b.EntityId);
         var death=w.PrivatePvp(b.EntityId);Assert.True(death.Dead);Assert.True(death.PvpDeath);Assert.Equal(2,death.ExperienceLost);Assert.Equal(-110,w.PrivatePvp(a.EntityId).Reputation);Assert.Equal(1,w.PrivatePvp(a.EntityId).Pk);Assert.Equal(1,calls);Assert.Empty(w.CaptureCharacter(43).Inventory!.Items);
         var loot=Assert.Single(w.CaptureWorldNode().DeathLoot!);Assert.Equal(before.Inventory!.Items[0] with {EquippedSlot=EquipmentSlot.None},loot.Item);
-        Assert.Equal(PvpOutcome.NotReady,Command(w,43,1,PvpMode.Peaceful,PvpAction.Respawn,death.DeathId));now+=60000;Assert.Equal(PvpOutcome.Accepted,Command(w,43,2,PvpMode.Peaceful,PvpAction.Respawn,death.DeathId));Assert.False(w.PrivatePvp(b.EntityId).Dead);Assert.Equal(new Vector2(-9,0),b.Position);Assert.Equal(w.Combat.Get(b.EntityId).Stats.MaxHealth*.5,w.Combat.Get(b.EntityId).Health);
-        Assert.Equal(w.Abilities!.Loadout(b.EntityId,w.Tick).MaxMana*.5,w.Abilities.Mana(b.EntityId));
+        Assert.Equal(PvpOutcome.NotReady,Command(w,43,1,PvpMode.Peaceful,PvpAction.Respawn,death.DeathId));now+=60000;Assert.Equal(PvpOutcome.Accepted,Command(w,43,2,PvpMode.Peaceful,PvpAction.Respawn,death.DeathId));Assert.False(w.PrivatePvp(b.EntityId).Dead);Assert.Equal(new Vector2(-9,0),b.Position);
+        var stats=w.Combat.Get(b.EntityId).Stats;
+        Assert.Equal(stats.MaxHealth*.5+stats.HealthRecovery*(double).05f,w.Combat.Get(b.EntityId).Health,8);
+        Assert.Equal(w.Abilities!.Loadout(b.EntityId,w.Tick).MaxMana*.5+stats.ManaRecovery*(double).05f,w.Abilities.Mana(b.EntityId),8);
         Assert.Equal(w.Combat.DefenseState(b.EntityId,w.Tick).MaxStamina,w.Combat.DefenseState(b.EntityId,w.Tick).Stamina);
         Assert.Equal(PvpOutcome.AlreadyProcessed,Command(w,43,2,PvpMode.Peaceful,PvpAction.Respawn,death.DeathId));Assert.Equal(1,calls);Assert.Equal(18,w.CaptureCharacter(43).Progression!.Experience);
     }
@@ -68,7 +70,7 @@ public sealed class PvpTests
     }
     [Fact]public void PveAndMixedDeathUseCorrectLossAndLegacyDeadSaveIsNotPenalizedAgain()
     {
-        var w=World();long now=100000;w.PvpClock=()=>now;var a=w.AddPlayer(42,new(1),Initial(w));var b=w.AddPlayer(43,new(2),Initial(w,-4.5f));Kill(w,w.Npc!.Id,b.EntityId);Assert.False(w.PrivatePvp(b.EntityId).PvpDeath);Assert.Equal(1,w.PrivatePvp(b.EntityId).ExperienceLost);Assert.Single(w.CaptureCharacter(43).Inventory!.Items);
+        var w=World();long now=100000;w.PvpClock=()=>now;var a=w.AddPlayer(42,new(1),Initial(w));var b=w.AddPlayer(43,new(2),Initial(w,-4.5f));Kill(w,w.Npc!.Id,b.EntityId);Assert.False(w.PrivatePvp(b.EntityId).PvpDeath);Assert.Equal(5,w.PrivatePvp(b.EntityId).ExperienceLost);Assert.Single(w.CaptureCharacter(43).Inventory!.Items);
         var c=w.AddPlayer(44,new(3),Initial(w,-4.8f));Command(w,42,1,PvpMode.Criminal);w.Combat!.ApplyAbilityDamage(c.EntityId,1,a.EntityId);Kill(w,w.Npc.Id,c.EntityId);Assert.True(w.PrivatePvp(c.EntityId).PvpDeath);Assert.Equal(1,w.PrivatePvp(a.EntityId).Pk);
         var d=w.AddPlayer(45,new(4),Initial(w,-6) with {Health=0});Assert.True(w.PrivatePvp(d.EntityId).Dead);Assert.Equal(20,w.CaptureCharacter(45).Progression!.Experience);Assert.Single(w.CaptureCharacter(45).Inventory!.Items);
     }

@@ -119,7 +119,8 @@ public sealed partial class EchoSimulation
     {
         var entry=_owners[body.OwnerId].Entries[body.InstanceId];
         return CompanionRuntimeState.Capture(_combat,_abilities,body.Id,body.Definition.Id,entry.Saved.Stats,
-            active?body.Slot:null,_now(),_grid.SurfaceHash==0?null:new(1,body.Motion.Height,_grid.SurfaceHash));
+            active?body.Slot:null,_now(),_grid.SurfaceHash==0?null:new(1,body.Motion.Height,_grid.SurfaceHash)) with
+            {Experience=entry.Saved.Experience,ExperienceFraction=entry.Saved.ExperienceFraction};
     }
 
     private void SaveBody(Entry entry,Actor body,bool active)

@@ -25,26 +25,26 @@ public static partial class NetworkProtocol
         var values=new MaterialAmount[count]; for(var i=0;i<count;i++) { if(!r.TryGetUShort(out var id) || !r.TryGetUShort(out var quantity)) return false; values[i]=new(id,quantity); } if(!CraftAmounts(values)) return false; s=new(new(owner),tick,op,cooldown,values); return true;
     }
     public static NetDataWriter Write(ResourceNodeState s)
-    { if(s.Id==0 || s.MaterialId==0 || s.Remaining>1000 || !StarterPoint(s.Position) || !CraftName(s.Name)) throw new ArgumentException("Invalid resource."); var w=CreateWriter(NetworkMessageType.ResourceNodeState); w.Put(s.Id); w.Put(s.ServerTick); w.Put(s.Position.X); w.Put(s.Position.Y); w.Put(s.MaterialId); w.Put(s.Remaining); w.Put(s.Name); return w; }
+    { if(s.Id==0 || s.MaterialId==0 || s.Remaining>1000 || !StarterPoint(s.Position) || !CraftName(s.Name)||!float.IsFinite(s.Height)||MathF.Abs(s.Height)>128) throw new ArgumentException("Invalid resource."); var w=CreateWriter(NetworkMessageType.ResourceNodeState); w.Put(s.Id); w.Put(s.ServerTick); w.Put(s.Position.X); w.Put(s.Position.Y); w.Put(s.MaterialId); w.Put(s.Remaining); w.Put(s.Name);w.Put(s.Height); return w; }
     public static bool TryReadResourceNodeState(NetDataReader r,out ResourceNodeState s)
-    { s=default; if(r.AvailableBytes>92 || !r.TryGetUShort(out var id) || id==0 || !r.TryGetUInt(out var tick) || !r.TryGetFloat(out var x) || !r.TryGetFloat(out var z) || !StarterPoint(new(x,z)) || !r.TryGetUShort(out var material) || material==0 || !r.TryGetUShort(out var remaining) || remaining>1000 || !r.TryGetString(out var name) || !CraftName(name) || r.AvailableBytes!=0) return false; s=new(id,tick,new(x,z),material,remaining,name); return true; }
+    { s=default; if(r.AvailableBytes>96 || !r.TryGetUShort(out var id) || id==0 || !r.TryGetUInt(out var tick) || !r.TryGetFloat(out var x) || !r.TryGetFloat(out var z) || !StarterPoint(new(x,z)) || !r.TryGetUShort(out var material) || material==0 || !r.TryGetUShort(out var remaining) || remaining>1000 || !r.TryGetString(out var name) || !CraftName(name)||!r.TryGetFloat(out var height)||!float.IsFinite(height)||MathF.Abs(height)>128 || r.AvailableBytes!=0) return false; s=new(id,tick,new(x,z),material,remaining,name,height); return true; }
     public static NetDataWriter Write(ResourceNodeDespawn s)
     { if(s.Id==0) throw new ArgumentException("Invalid resource identity."); var w=CreateWriter(NetworkMessageType.ResourceNodeDespawn); w.Put(s.Id); w.Put(s.ServerTick); return w; }
     public static bool TryReadResourceNodeDespawn(NetDataReader r,out ResourceNodeDespawn s)
     { s=default; if(r.AvailableBytes!=6 || !r.TryGetUShort(out var id) || id==0 || !r.TryGetUInt(out var tick)) return false; s=new(id,tick); return true; }
     private static bool ValidRecipe(CraftRecipeState s)
     {
-        if(s.Id==0 || !CraftName(s.Name) || !CraftName(s.OutputName) || !CraftName(s.StationName) || !StarterPoint(s.StationPosition) || !float.IsFinite(s.InteractionRange) || s.InteractionRange is < 0.5f or > 3 || s.Costs is null || s.Costs.Count is < 1 or > 4) return false;
+        if(s.Id==0 || !CraftName(s.Name) || !CraftName(s.OutputName) || !CraftName(s.StationName) || !StarterPoint(s.StationPosition) || !float.IsFinite(s.InteractionRange) || s.InteractionRange is < 0.5f or > 3 || s.Costs is null || s.Costs.Count is < 1 or > 4||!float.IsFinite(s.StationHeight)||MathF.Abs(s.StationHeight)>128) return false;
         var ids=new HashSet<ushort>(); foreach(var c in s.Costs) if(c.Id==0 || c.Quantity is < 1 or > 100 || !CraftName(c.Name) || !ids.Add(c.Id)) return false; return true;
     }
     public static NetDataWriter Write(CraftRecipeState s)
     {
-        if(!ValidRecipe(s)) throw new ArgumentException("Invalid public recipe."); var w=CreateWriter(NetworkMessageType.CraftRecipeState); w.Put(s.Id); w.Put(s.Name); w.Put(s.OutputName); w.Put(s.StationPosition.X); w.Put(s.StationPosition.Y); w.Put(s.StationName); w.Put(s.InteractionRange); w.Put((byte)s.Costs.Count); foreach(var c in s.Costs) { w.Put(c.Id); w.Put(c.Quantity); w.Put(c.Name); } return w;
+        if(!ValidRecipe(s)) throw new ArgumentException("Invalid public recipe."); var w=CreateWriter(NetworkMessageType.CraftRecipeState); w.Put(s.Id); w.Put(s.Name); w.Put(s.OutputName); w.Put(s.StationPosition.X); w.Put(s.StationPosition.Y); w.Put(s.StationName); w.Put(s.InteractionRange); w.Put((byte)s.Costs.Count); foreach(var c in s.Costs) { w.Put(c.Id); w.Put(c.Quantity); w.Put(c.Name); }w.Put(s.StationHeight); return w;
     }
     public static bool TryReadCraftRecipeState(NetDataReader r,out CraftRecipeState s)
     {
-        s=default; if(r.AvailableBytes>549 || !r.TryGetUShort(out var id) || !r.TryGetString(out var name) || !r.TryGetString(out var output) || !r.TryGetFloat(out var x) || !r.TryGetFloat(out var z) || !r.TryGetString(out var station) || !r.TryGetFloat(out var range) || !r.TryGetByte(out var count) || count is < 1 or > 4) return false;
+        s=default; if(r.AvailableBytes>553 || !r.TryGetUShort(out var id) || !r.TryGetString(out var name) || !r.TryGetString(out var output) || !r.TryGetFloat(out var x) || !r.TryGetFloat(out var z) || !r.TryGetString(out var station) || !r.TryGetFloat(out var range) || !r.TryGetByte(out var count) || count is < 1 or > 4) return false;
         var costs=new CraftIngredient[count]; for(var i=0;i<count;i++) { if(!r.TryGetUShort(out var material) || !r.TryGetUShort(out var quantity) || !r.TryGetString(out var title)) return false; costs[i]=new(material,quantity,title); }
-        var value=new CraftRecipeState(id,name,output,new(x,z),station,range,costs); if(r.AvailableBytes!=0 || !ValidRecipe(value)) return false; s=value; return true;
+        if(!r.TryGetFloat(out var height))return false;var value=new CraftRecipeState(id,name,output,new(x,z),station,range,costs,height); if(r.AvailableBytes!=0 || !ValidRecipe(value)) return false; s=value; return true;
     }
 }

@@ -20,7 +20,7 @@ public partial class PvpPresentation:CanvasLayer
         _details=view.GetNode<Label>("%Details"); _status=view.GetNode<Label>("%Status"); _ack=view.GetNode<CheckBox>("%Acknowledge");
         _peace=view.GetNode<Button>("%Peace"); _voluntary=view.GetNode<Button>("%Voluntary"); _criminal=view.GetNode<Button>("%Criminal"); _respawn=view.GetNode<Button>("%Respawn");
         _peace.Pressed+=()=>Mode(PvpMode.Peaceful); _voluntary.Pressed+=()=>Mode(PvpMode.Voluntary); _criminal.Pressed+=()=>Mode(PvpMode.Criminal);
-        _respawn.Pressed+=()=>Request(new(_state.LastSequence+1,PvpAction.Respawn,PvpMode.Peaceful,false,_state.DeathId));
+        _respawn.Pressed+=()=>_network.SendRespawn(_network.NewRespawnCommand(_state.DeathId));
         network.PvpStateReceived+=State;network.PvpResultReceived+=Result;network.PickupChannelReceived+=Channel;
     }
     public override void _ExitTree(){if(_network is null)return;_network.PvpStateReceived-=State;_network.PvpResultReceived-=Result;_network.PickupChannelReceived-=Channel;}

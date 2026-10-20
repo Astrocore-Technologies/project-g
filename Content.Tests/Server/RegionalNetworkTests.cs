@@ -225,6 +225,7 @@ public sealed class RegionalNetworkTests
             start.ArgumentList.Add("--RegionExports:SurfacePackagePath="+Path.Combine(AppContext.BaseDirectory,"Fixtures/legacy-surface-package.json"));
             start.ArgumentList.Add("--RegionExports:VerifySources=false");
             start.ArgumentList.Add("--Server:StartingRegion=prototype");
+            start.ArgumentList.Add("--Activities:Enabled=false");
             var process = Process.Start(start)!;
             process.BeginOutputReadLine(); process.BeginErrorReadLine(); return process;
         }

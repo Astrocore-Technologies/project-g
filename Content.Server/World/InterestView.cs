@@ -6,6 +6,8 @@ namespace Content.Server.World;
 public sealed class InterestView
 {
     internal FollowState? SentFollow;
+    // A committed regional respawn result must survive ticks while this observer loads its scene.
+    internal RespawnResult? PendingRespawn;
     public Dictionary<NetworkEntityId,PvpPublicState> PvpFlags {get;}=new();
     public bool MarketVisible;
     public int MarketCreditSent=-1;

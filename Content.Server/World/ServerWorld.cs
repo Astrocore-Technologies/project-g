@@ -207,29 +207,41 @@ public sealed partial class ServerWorld
                 Abilities.AddPlayer(entityId, definition);
             Inventory?.Add(entityId, saved?.Inventory ?? InventorySimulation.CreateStarter(_playerDefinition!),saved?.OfflineSeconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()) ?? 0);
             AddProgression(entityId,saved?.Progression);
+            RestoreRespawnBinding(entityId,saved?.RespawnBinding);
             AddExploration(entityId);
             if (saved is not null)
             {
                 var actor = Combat!.Get(entityId);
                 var playerEffects=saved.Effects?.Where(effect=>effect.TargetEcho is null).ToArray();
-                var previousStats=Combat.StatsAtSave(entityId,playerEffects,saved.ActivePassiveModifiers);
-                if (saved.Health > previousStats.MaxHealth || saved.Mana>Math.Max(0,previousStats.MaxMana) || saved.Defense?.Stamina>Math.Max(0,previousStats.MaxStamina))
-                    throw new InvalidDataException("Saved resources exceed previous maximum; content migration is required.");
+                // Validate saved definition/passive references even when maxima were captured explicitly.
+                var reconstructed=Combat.StatsAtSave(entityId,playerEffects,saved.ActivePassiveModifiers);
+                var previous=saved.ResourceMaxima ?? SavedResourceMaxima.From(reconstructed);
+                previous.Validate(saved.Health,saved.Mana,saved.Defense?.Stamina);
                 var offline = saved.OfflineSeconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
                 actor.Health=saved.Health;Combat.RestoreCombatPresence(entityId,saved.InCombatSeconds,offline);
                 Combat.RestoreFacing(entityId,saved.Facing);
                 Combat.RestoreEffects(entityId,playerEffects,offline,loggingIn:restoringFromLogout,savedPhase:saved.CombatControl?.Phase ?? CombatControlPhase.None);
-                actor.Health = Math.Min(saved.Health,actor.Stats.MaxHealth);
+                // Restore from the saved fraction exactly once, after all login conditions/effect expiry.
+                actor.Health = saved.Health>0 ? Math.Max(double.Epsilon,ResourceTransition.Amount(saved.Health,previous.Health,actor.Stats.MaxHealth)) : 0;
                 Combat.RefreshHealthRecovery(entityId);
                 actor.ReadyAt = Combat.Time + Math.Max(0, saved.AttackCooldownSeconds - offline);
-                Abilities!.Restore(entityId, saved with {Mana=Math.Min(saved.Mana,Math.Max(0,actor.Stats.MaxMana))}, offline);
-                Combat.RestoreDefense(entityId,saved.Defense is {} defense ? defense with {Stamina=Math.Min(defense.Stamina,Math.Max(0,actor.Stats.MaxStamina))} : null,offline);
+                Abilities!.Restore(entityId, saved with {Mana=ResourceTransition.Amount(saved.Mana,previous.Mana,actor.Stats.MaxMana),ResourceMaxima=null}, offline);
+                Combat.RestoreDefense(entityId,saved.Defense is {} defense ? defense with {Stamina=ResourceTransition.Amount(defense.Stamina,previous.Stamina,actor.Stats.MaxStamina)} : null,offline);
                 Combat.RestoreControl(entityId,saved.CombatControl,offline,finishForcedMotion:restoringFromLogout);
             }
             AddPvp(entityId,saved?.Progression?.Pvp);
             Combat?.RestoreLife(entityId,saved?.Life,saved?.OfflineSeconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())??0,
                 saved?.Progression?.Pvp);
             Combat?.RestoreJournal(entityId,saved?.DeathLogs,saved?.SessionJournal);
+            var previousPenalty=saved?.DeathPenalty;
+            if(previousPenalty is null && saved?.Progression?.Pvp is {DeathId:>0} legacyDeath)
+                previousPenalty=new(1,legacyDeath.DeathId,legacyDeath.PvpDeath,legacyDeath.ExperienceLost);
+            if(previousPenalty is {} penalty)
+            {
+                penalty.Validate();
+                if(penalty.DeathId>Combat!.CaptureLife(entityId).DeathId)throw new InvalidDataException("Penalty receipt exceeds combat life.");
+                _deathPenalties[entityId]=penalty;
+            }
             if(saved?.DeathLogs is {Count:>0} logs && logs[^1].DeathId>Combat!.CaptureLife(entityId).DeathId)
                 throw new InvalidDataException("Death journal ordinal exceeds character life.");
             Inventory?.FlushWear(entityId); // In-progress actions do not resume on restore; settle their durable debit before publication.
@@ -247,7 +259,8 @@ public sealed partial class ServerWorld
             {
                 Inventory = fixture.Inventory! with { Items = fixture.Inventory.Items.Select(i => i with { InstanceId = Guid.NewGuid() }).ToArray() },
                 Echoes = fixture.Echoes is { } echoes ? echoes with { Active = echoes.Active.Select(e => e with { InstanceId = Guid.NewGuid() }).ToArray() } : null,
-                OwnedEchoes = fixture.OwnedEchoes?.Select(e => e with { InstanceId = Guid.NewGuid() }).ToArray()
+                OwnedEchoes = fixture.OwnedEchoes?.Select(e => e with { InstanceId = Guid.NewGuid() }).ToArray(),
+                RespawnBinding=_taverns?.Starting.Binding()
             };
         var definition = _playerDefinition ?? throw new InvalidOperationException("Persistence requires player content.");
         if (!TryResolveSpawn(_spawn, out var spawn, out var spawnHeight))
@@ -259,6 +272,7 @@ public sealed partial class ServerWorld
             Inventory = Inventory is not null ? InventorySimulation.CreateStarter(definition) : null,
             // Companions require acquisition; login and legacy saves must never grant one.
             Echoes = SavedEchoes.Empty,
+            RespawnBinding=_taverns?.Starting.Binding(),
             Progression = SavedProgression.Starter(definition,_progressionCatalog!),
             X = spawn.X, Z = spawn.Y, Surface = Navigation.SurfaceHash == 0 ? null : new(1, spawnHeight, Navigation.SurfaceHash), Health = stats.MaxHealth, Mana = Math.Max(0, stats.MaxMana),
             AttackCooldownSeconds = 0, Cooldowns = definition.AbilityIds.Select(id => new SavedCooldown(id, 0)).ToArray(),
@@ -280,10 +294,13 @@ public sealed partial class ServerWorld
             Progression = CaptureProgression(player.EntityId),
             X = player.Position.X, Z = player.Position.Y, Surface = Navigation.SurfaceHash == 0 ? null : new(1, player.Height, Navigation.SurfaceHash), Health = actor.Health,
             Mana = Abilities!.Mana(player.EntityId), Cooldowns = Abilities.CaptureCooldowns(player.EntityId),
+            ResourceMaxima=SavedResourceMaxima.From(actor.Stats),
             AttackCooldownSeconds = Math.Max(0, actor.ReadyAt - Combat.Time),
             Facing=new(1,actor.Facing.X,actor.Facing.Y),
             InCombatSeconds=Combat.CombatRemaining(player.EntityId),
             Life=Combat.CaptureLife(player.EntityId),
+            DeathPenalty=_deathPenalties.GetValueOrDefault(player.EntityId),
+            RespawnBinding=_respawnBindings.GetValueOrDefault(player.EntityId),
             ActivePassiveModifiers=Combat.CapturePassiveModifiers(player.EntityId),
             Defense = Combat.CaptureDefense(player.EntityId),
             CombatControl = Combat.CaptureControl(player.EntityId),
@@ -308,7 +325,7 @@ public sealed partial class ServerWorld
         RemoveEconomyPlayer(connectionId,player.EntityId);
         RemoveTradePlayer(connectionId,player.EntityId);
         RemoveExploration(player.EntityId);
-        RemovePvp(connectionId,player.EntityId); RemoveProgression(player.EntityId); ResetQuestSession(player.EntityId);
+        RemovePvp(connectionId,player.EntityId); RemoveProgression(player.EntityId); ResetQuestSession(player.EntityId);RemoveTavernPlayer(player.EntityId);
         _playersByConnection.Remove(connectionId);
         _developmentRevives.Remove(connectionId); _developmentReviveSequences.Remove(connectionId);
         _playersByEntity.Remove(player.EntityId);
@@ -473,6 +490,9 @@ public sealed partial class ServerWorld
         SimulateRepair();
         SimulateTrade();
         SimulateQuests();
+        SimulateActivities();
+        SimulateTaverns();
+        SimulateRespec();
         SimulateEconomy();
         SimulateStarterZone();
         SimulateNpcRespawns();

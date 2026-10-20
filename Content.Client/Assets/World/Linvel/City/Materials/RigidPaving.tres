@@ -1,0 +1,10 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://cf8vgep4gpv4s"]
+
+[ext_resource type="Shader" uid="uid://un7orathcj8t" path="res://Assets/World/Linvel/City/Materials/RigidPaving.gdshader" id="1_a3qrf"]
+[ext_resource type="Texture2D" uid="uid://c3i22lp7cdcoc" path="res://Assets/World/Linvel/City/Terrain/PavingAlbedo.res" id="2_h2rj8"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_a3qrf")
+shader_parameter/paving_texture = ExtResource("2_h2rj8")
+shader_parameter/tiles_per_metre = 0.25

@@ -10,11 +10,11 @@ public partial class LifePresentation:CanvasLayer
     private NetworkEntityId _owner;
     private UiWindow _window=null!;
     private Label _timer=null!,_status=null!;
+    private Label _home=null!,_penalty=null!;
     private Button _respawn=null!;
     private Button _open=null!;
     private ActorLifeState _life;
     private double _clock,_received,_sent,_refresh;
-    private uint _sequence;
     private RespawnCommand? _pending;
     public void Initialize(NetworkClient network,NetworkEntityId owner)
     {
@@ -24,9 +24,19 @@ public partial class LifePresentation:CanvasLayer
         _open=GD.Load<PackedScene>("res://UI/Components/DeathReopen.tscn").Instantiate<Button>();AddChild(_open);_open.Pressed+=()=>_window.Open();
         var view=GD.Load<PackedScene>("res://UI/Screens/DeathView.tscn").Instantiate<Control>();_window.Body.AddChild(view);
         _timer=view.GetNode<Label>("%Timer");_status=view.GetNode<Label>("%Status");_respawn=view.GetNode<Button>("%RespawnButton");_respawn.Pressed+=Request;
+        _home=view.GetNode<Label>("%Home");_penalty=view.GetNode<Label>("%Penalty");
         view.GetNode<Button>("%DeathLog").Pressed+=()=>{_window.Close();GameUi.Navigate("death-log");};
         network.LifeReceived+=Apply;network.RespawnReceived+=Result;
+        network.TavernReceived+=ApplyHome;
+        if(network.LatestTavern is {} home)ApplyHome(home);
         if(network.KnownLife.TryGetValue(owner,out var life))Apply(life);
+    }
+    public void ApplyHome(TavernState home)
+    {
+        if(home.OwnerId!=_owner)return;
+        _home.Text=home.TavernId==0?"Место возрождения: стартовая точка региона":"Место возрождения: "+home.TavernName;
+        _penalty.Text=home.DeathId==0?"":"Потеря EXP: "+home.ExperienceLost+" · уровень сохранён";
+        _respawn.Text=home.TavernId==0?"Возродиться":"Вернуться в таверну";
     }
     public void Apply(ActorLifeState life)
     {
@@ -39,7 +49,7 @@ public partial class LifePresentation:CanvasLayer
     private void Request()
     {
         if(!_life.Dead || _pending is not null)return;
-        _pending=new RespawnCommand(++_sequence,_life.DeathId);_sent=_clock;_status.Text="Ожидаем сохранения…";_network.SendRespawn(_pending.Value);
+        _pending=_network.NewRespawnCommand(_life.DeathId);_sent=_clock;_status.Text="Ожидаем сохранения…";_network.SendRespawn(_pending.Value);
     }
     private void Result(RespawnResult result)
     {
@@ -59,5 +69,5 @@ public partial class LifePresentation:CanvasLayer
         _respawn.Disabled=!_life.Dead || ready>0 || _pending is not null;
     }
     public override void _ExitTree()
-    {if(_network is not null){_network.LifeReceived-=Apply;_network.RespawnReceived-=Result;}}
+    {if(_network is not null){_network.LifeReceived-=Apply;_network.RespawnReceived-=Result;_network.TavernReceived-=ApplyHome;}}
 }

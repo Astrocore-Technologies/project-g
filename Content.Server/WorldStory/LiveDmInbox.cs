@@ -3,8 +3,8 @@ using System.Text;
 using System.Threading.Channels;
 using Microsoft.Extensions.Options;
 namespace Content.Server.WorldStory;
-public enum LiveDmOperation { OpenBridge, EstablishPatrol, StormRumor }
-internal sealed record AuthorizedLiveDm(string Actor,LiveDmOperation Operation,string Reason);
+public enum LiveDmOperation { OpenBridge, EstablishPatrol, StormRumor,StartCampWatch }
+internal sealed record AuthorizedLiveDm(string Actor,LiveDmOperation Operation,string Reason,string? RegionId=null);
 public sealed class LiveDmOptions
 {
     public const string SectionName="LiveDm";
@@ -22,11 +22,12 @@ public sealed class LiveDmInbox
         _options=options.Value;
         if(_options.Operators.Count>8 || _options.Operators.Any(o=>o.Key.Length is < 1 or > 32 || o.Key.Any(c=>!char.IsAsciiLetterOrDigit(c) && c!='_' && c!='-') || o.Value.Length!=64 || !o.Value.All(char.IsAsciiHexDigit)) || _options.Enabled && _options.Operators.Count==0) throw new ArgumentException("Invalid Live-DM authorization configuration.");
     }
-    public bool TrySubmit(string actor,string credential,LiveDmOperation operation,string reason)
+    public bool TrySubmit(string actor,string credential,LiveDmOperation operation,string reason,string? regionId=null)
     {
         if(!_options.Enabled || actor is null || !_options.Operators.TryGetValue(actor,out var hash) || credential is null || credential.Length!=64 || !credential.All(char.IsAsciiHexDigit) || !Enum.IsDefined(operation) || string.IsNullOrWhiteSpace(reason) || reason.Length>160 || reason.Any(char.IsControl)) return false;
+        if(regionId is not null&&(regionId.Length is <1 or >64||regionId.Any(c=>!char.IsAsciiLetterLower(c)&&!char.IsAsciiDigit(c)&&c!='_')) || operation==LiveDmOperation.StartCampWatch&&regionId is null)return false;
         var digest=SHA256.HashData(Encoding.ASCII.GetBytes(credential));
-        return CryptographicOperations.FixedTimeEquals(digest,Convert.FromHexString(hash)) && _commands.Writer.TryWrite(new(actor,operation,reason));
+        return CryptographicOperations.FixedTimeEquals(digest,Convert.FromHexString(hash)) && _commands.Writer.TryWrite(new(actor,operation,reason,regionId));
     }
     internal bool TryTake(out AuthorizedLiveDm command) => _commands.Reader.TryRead(out command!);
 }

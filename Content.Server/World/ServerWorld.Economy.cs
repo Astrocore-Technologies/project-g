@@ -60,7 +60,7 @@ public sealed partial class ServerWorld
         else{if(listing.Seller!=owner)return CraftOutcome.Unavailable;quote=quote with {OutputName=_progressionCatalog.Items[listing.Item.DefinitionId].Name};}
         return Inventory!.CanReceiveEconomy(id,quote.CoinChange,listing.Item);
     }
-    private static bool SameQuote(EconomyQuote a,EconomyQuote b)=>a.Command==b.Command&&a.Chance==b.Chance&&a.DurabilityLoss==b.DurabilityLoss&&a.AttackGain==b.AttackGain&&a.OutputName==b.OutputName&&a.CoinChange==b.CoinChange&&a.Costs.SequenceEqual(b.Costs);
+    private static bool SameQuote(EconomyQuote a,EconomyQuote b)=>a.Command==b.Command&&a.Chance==b.Chance&&a.DurabilityLoss==b.DurabilityLoss&&a.AttackGain==b.AttackGain&&a.OutputName==b.OutputName&&a.CoinChange==b.CoinChange&&a.Experience==b.Experience&&a.Costs.SequenceEqual(b.Costs);
     private void SimulateEconomy()
     {
         foreach(var (connection,command) in _economyPending)
@@ -77,6 +77,8 @@ public sealed partial class ServerWorld
                 else
                 {
                     outcome=Inventory.PrepareEconomy(id,command,out var quote);
+                    if(command.Action==EconomyAction.SellOre&&_experienceRewards is {OreExperience:>0} rewardPolicy)
+                        quote=quote with {Experience=checked(command.Quantity*rewardPolicy.OreExperience)};
                     SavedListing? listing=null;var credit=0;
                     if(outcome==CraftOutcome.Accepted)outcome=PrepareMarket(connection,command,ref quote,out listing,out credit);
                     if(outcome==CraftOutcome.Accepted)
@@ -103,6 +105,9 @@ public sealed partial class ServerWorld
                             if(System.Text.Encoding.UTF8.GetByteCount((_nodeState with {Market=next}).Serialize())>8192)
                             { _economyResults[id]=new(command.Operation,Tick,CraftOutcome.InventoryFull,EconomyEffect.None); continue; }
                             effect=Inventory.ApplyEconomy(id,command,quote,command.Action is EconomyAction.Buy or EconomyAction.Cancel?listing!.Item:null);
+                            if(effect==EconomyEffect.SoldOre && _experienceRewards is {OreExperience:>0} rewards)
+                                AwardPersonalExperience(id,new(Content.Server.Progression.ExperienceActivity.TradeCompleted,
+                                    $"npc_ore:{command.Operation}",rewards.Revision,checked(command.Quantity*rewards.OreExperience)));
                             if(command.Action is EconomyAction.List or EconomyAction.Buy or EconomyAction.Cancel or EconomyAction.Claim){_nodeState=_nodeState with {Market=next};MarketDirty=true;}
                             MarkPersistent(id);Audit(_persistentActors.GetValueOrDefault(connection,"runtime-"+connection),"Economy",$"{command.Action}, operation {command.Operation}, effect {effect}");_economyQuotes.Remove(connection);
                         }

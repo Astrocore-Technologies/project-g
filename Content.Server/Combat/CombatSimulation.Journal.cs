@@ -21,7 +21,7 @@ public sealed partial class CombatSimulation
     }
     internal void RecordJournal(NetworkEntityId source,NetworkEntityId target,CombatJournalKind kind,double amount=0,
         double duration=0,double strength=0,ushort skill=0,CrowdControlKind control=default,CombatJournalFlags flags=0,bool unknownSource=false,
-        CombatHitTags hitTags=CombatHitTags.None)
+        CombatHitTags hitTags=CombatHitTags.None,string? sourceLabel=null)
     {
         var at=(long)Math.Clamp(CombatClock()*1000,0,253402300799999);
         Append(source);if(target!=source)Append(target);
@@ -32,7 +32,7 @@ public sealed partial class CombatSimulation
         {
             if(!_actors.TryGetValue(owner,out var actor) || actor.Journal is not {} journal)return;
             var revealed=source==owner || !source.IsValid || JournalVisibility?.Invoke(owner,source)!=false;
-            journal.Record(at,kind,JournalLabel(owner,source,unknownSource),JournalLabel(owner,target),amount,duration,strength,
+            journal.Record(at,kind,sourceLabel??JournalLabel(owner,source,unknownSource),JournalLabel(owner,target),amount,duration,strength,
                 revealed&&!unknownSource?skill:(ushort)0,control,flags,hitTags);
         }
     }

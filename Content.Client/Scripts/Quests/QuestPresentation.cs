@@ -10,6 +10,7 @@ namespace ProjectG.Quests;
 public partial class QuestPresentation : CanvasLayer
 {
     private NetworkClient _network = null!;
+    private ProjectG.Combat.TavernPresentation _tavern=null!;
     private PlayerController _player = null!;
     private readonly Dictionary<NetworkEntityId, (QuestNpcSpawn State, Node3D Visual)> _npcs = new();
     private Control _overlay = null!;
@@ -34,6 +35,7 @@ public partial class QuestPresentation : CanvasLayer
     public void Initialize(NetworkClient network, PlayerController player)
     {
         _network = network; _player = player; Layer = 21;
+        _tavern=new();AddChild(_tavern);_tavern.Initialize(network,player);
         var root = new Control { Theme = GameUi.CreateTheme(), MouseFilter = Control.MouseFilterEnum.Ignore }; AddChild(root); root.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         _talk=GD.Load<PackedScene>("res://UI/Components/InteractionPrompt.tscn").Instantiate<Button>(); root.AddChild(_talk);
         _talk.Pressed+=()=>Send(QuestAction.Talk,_nearest);
@@ -55,6 +57,7 @@ public partial class QuestPresentation : CanvasLayer
         _track=journalView.GetNode<Button>("%PrimaryAction"); _track.Pressed+=()=> { _tracking=!_tracking; RenderJournal(); };
         journalView.GetNode<Button>("%SecondaryAction").Pressed+=()=>GameUi.Navigate("map");
         _journalStatus=journalView.GetNode<Label>("%Status");
+        InitializeActivities(dialogue,journalView);
         var trackerPanel=GD.Load<PackedScene>("res://UI/Components/QuestTracker.tscn").Instantiate<PanelContainer>(); root.AddChild(trackerPanel);
         _tracker=trackerPanel.GetNode<Label>("%Text");
         network.QuestNpcReceived += Spawn; network.PlayerDespawned += Despawn;
@@ -66,10 +69,10 @@ public partial class QuestPresentation : CanvasLayer
     private void Spawn(QuestNpcSpawn npc)
     {
         if (_npcs.ContainsKey(npc.EntityId)) return;
-        var actor = new Node3D { Name = $"QuestNpc-{npc.EntityId.Value}", Position = new(npc.Position.X, 0, npc.Position.Y) };
+        var actor = new Node3D { Name = $"QuestNpc-{npc.EntityId.Value}", Position = new(npc.Position.X, npc.Height, npc.Position.Y) };
         AddChild(actor);
         actor.AddChild(ProjectG.Actors.ActorScenes.ForRole(npc.Role).Instantiate<Node3D>());
-        actor.AddChild(new Label3D { Position = new(0, 3.1f, 0), Text = npc.Name + "\n" + npc.Role,
+        actor.AddChild(new Label3D { Position = new(0, 3.1f, 0), Text = npc.Name + "\n" + (npc.Role=="innkeeper"?"Трактирщик":npc.Role),
             Billboard = BaseMaterial3D.BillboardModeEnum.Enabled, FontSize = 32, PixelSize = .006f, OutlineSize = 4, NoDepthTest = false });
         _npcs.Add(npc.EntityId, (npc, actor));
     }
@@ -84,6 +87,7 @@ public partial class QuestPresentation : CanvasLayer
         if (_network is null) return;
         _network.QuestNpcReceived -= Spawn; _network.PlayerDespawned -= Despawn; _network.QuestReplyReceived -= Reply; _network.QuestJournalReceived -= Journal;
         _network.ProfessionReceived -= Training;
+        _network.ActivitiesReceived-=ApplyActivities;_network.ActivityResultReceived-=ActivityResult;
     }
     public override void _Input(InputEvent ev)
     {
@@ -125,6 +129,8 @@ public partial class QuestPresentation : CanvasLayer
     private void Send(QuestAction action, NetworkEntityId npc)
     {
         if (GameUi.GameplayModalOpen && !_overlay.Visible || _pending != 0 || action != QuestAction.Journal && (!npc.IsValid || !_player.IsAlive)) return;
+        if(action==QuestAction.Talk&&_npcs.TryGetValue(npc,out var inn)&&inn.State.Role=="innkeeper")
+        {_tavern.Open(inn.State);return;}
         if(action!=QuestAction.Journal)
         {
             if(!Show(false)) return; _speaker=npc; _title.Text="Разговор"; _body.Text="";
@@ -158,6 +164,7 @@ public partial class QuestPresentation : CanvasLayer
         };
         if (_journalMode) { _journalStatus.Text=_status.Text; RenderJournal(); return; }
         _title.Text = reply.Speaker; _body.Text = reply.Text;
+        RenderActivities();
         _accept.Visible = (reply.Choices & 1) != 0; _deliver.Visible = (reply.Choices & 2) != 0;
         _trainingSword.Visible = (reply.Choices & 4) != 0; _swordsman.Visible = (reply.Choices & 8) != 0;
         _accept.Disabled = false; _deliver.Disabled = false;
@@ -199,6 +206,7 @@ public partial class QuestPresentation : CanvasLayer
     }
     public override void _Process(double delta)
     {
+        TickActivities();
         _tracker.GetParent<Control>().Visible=!GameUi.GameplayModalOpen && !string.IsNullOrWhiteSpace(_tracker.Text);
         _talk.Visible=!GameUi.GameplayModalOpen && _nearest.IsValid && _player.IsAlive;
         if(_talk.Visible && _npcs.TryGetValue(_nearest,out var nearby) && GetViewport().GetCamera3D() is {} camera)

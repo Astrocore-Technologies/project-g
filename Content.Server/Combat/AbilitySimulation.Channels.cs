@@ -17,8 +17,10 @@ public sealed partial class AbilitySimulation
             // Pay each pulse boundary before resolving it. Reflection/control may end the channel there;
             // the rest of this server step must never be charged in advance.
             var horizon=Math.Min(_time,channel.NextEventAt);
-            var step=channel.Advance(horizon,actor.Mana,_combat.AvailableStamina(effect.ActorId));
-            actor.Mana=Math.Max(0,actor.Mana-step.Mana);if(step.Stamina>0)_combat.SpendStamina(effect.ActorId,step.Stamina);
+            var resources=caster.Resources;
+            var step=channel.Advance(horizon,Content.Server.Stats.StatMath.Add(actor.Mana,resources.ManaFlowCredit),_combat.AvailableStamina(effect.ActorId));
+            var credit=Math.Min(resources.ManaFlowCredit,step.Mana);resources.ManaFlowCredit-=credit;
+            actor.Mana=Math.Max(0,actor.Mana-(step.Mana-credit));if(step.Stamina>0)_combat.SpendStamina(effect.ActorId,step.Stamina);
             if(step.Mana>0)
             {
                 _combat.RecordJournal(effect.ActorId,effect.ActorId,Content.Shared.Combat.CombatJournalKind.ManaSpent,step.Mana,skill:effect.Profile.Id);

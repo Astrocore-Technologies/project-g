@@ -44,6 +44,8 @@ public partial class ProgressionPresentation : CanvasLayer
         "Шанс критического удара и вторичный вклад в физическую и магическую атаку.",
         "Максимальный запас маны, регенерация маны и магическая защита."];
     private static readonly string[] DerivedNames = ["Ближняя атака","Дальняя атака","Магическая атака","Ближнее оружие","Дальнее оружие","Физ. защита","Маг. защита","Макс. HP","Макс. мана","Реген HP /с","Реген маны /с","Лечебные предметы","Предметы маны","Скорость атак","Скорость каста","Шанс крита","Блок урона","Точность","Уклонение","Критический урон","Прочность блока","Сокращение перезарядок","Макс. выносливость","Реген выносливости /с"];
+    internal static string PrimaryStatName(int index)=>StatNames[index];
+    internal static string DerivedStatName(int index)=>DerivedNames[index];
     public void Initialize(NetworkClient network)
     {
         _network = network; Layer = 20;

@@ -124,7 +124,25 @@ else catalog = ContentCatalog.LoadFile(contentPath);
 builder.Services.AddSingleton(catalog);
 var regionalWorlds = Content.Server.Regions.RegionalWorlds.Load(
     balanceRegions ?? Path.Combine(AppContext.BaseDirectory, "Data", "regions.json"), builder.Configuration, catalog);
+if(builder.Configuration.GetValue("Taverns:Enabled",true))
+    regionalWorlds.ConfigureTaverns(Content.Server.Respawn.TavernCatalog.LoadFile(
+        builder.Configuration["Taverns:CatalogPath"]??Path.Combine(AppContext.BaseDirectory,"Data","taverns.json")));
+if(builder.Configuration.GetValue("Taverns:Enabled",true)&&builder.Configuration.GetValue("Respec:Enabled",true))
+{
+    var reset=Content.Server.Progression.RespecServiceDefinition.LoadFile(builder.Configuration["Respec:ServicePath"]??Path.Combine(AppContext.BaseDirectory,"Data","respec.json"));
+    foreach(var region in regionalWorlds.Worlds)region.ConfigureRespec(reset);
+}
 if (combatTest is not null) regionalWorlds.StartingWorld.ConfigureCombatTestArena(combatTest);
+var experienceRewards=Content.Server.Progression.ExperienceRewardsDefinition.LoadFile(
+    builder.Configuration["Experience:RewardsPath"]??Path.Combine(AppContext.BaseDirectory,"Data","experience-rewards.json"));
+foreach(var region in regionalWorlds.Worlds)region.ConfigureExperienceRewards(experienceRewards);
+if(builder.Configuration.GetValue("Activities:Enabled",true))
+{
+    var services=Content.Server.Activities.CampServicesDefinition.LoadFile(
+        builder.Configuration["Activities:ServicesPath"]??Path.Combine(AppContext.BaseDirectory,"Data","camp-services.json"));
+    if(!regionalWorlds.Worlds.Any(w=>w.RegionId==services.RegionId))throw new InvalidDataException("Camp services reference an unavailable region.");
+    foreach(var region in regionalWorlds.Worlds)region.ConfigureCampServices(services);
+}
 if (balanceBuild is not null)
 {
     var presetBytes = File.ReadAllBytes(balanceBuild);

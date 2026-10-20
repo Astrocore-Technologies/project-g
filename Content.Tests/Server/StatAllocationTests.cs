@@ -10,16 +10,18 @@ public sealed class StatAllocationTests
 {
     private static ServerWorld World() => new(Options.Create(new MovementOptions()),Options.Create(new InterestOptions()),catalog:ContentCatalogTests.Load(),inventory:Options.Create(new InventoryOptions { Enabled=true }), hitRoll: () => 0, criticalRoll: () => 1);
     [Fact]
-    public void PreviewDoesNotMutateAndBatchMatchesPreviewWithoutHealingOrCooldownReset()
+    public void PreviewDoesNotMutateAndBatchPreservesResourceFractionsAndCooldown()
     {
         var w=World(); var initial=w.CreateInitialCharacter() with { Health=12,Mana=7,AttackCooldownSeconds=20 };
         var player=w.AddPlayer(42,new(1),initial); var id=player.EntityId;
+        var original=w.Combat!.Get(id).Stats;
         w.ClearProgressionResults();
         int[] draft=[1,0,1,2,1,0,0];
         Assert.True(w.TryQueueProgression(42,new(1,ProgressionAction.PreviewStats,0,0,0,draft))); w.Simulate(.05f);
         var preview=w.StatPreviews[id]; Assert.False(w.IsProgressionDirty(id));
         Assert.Equal(18,w.ProgressionState(id,w.Tick).StatPoints); Assert.Equal(10,player.BaseStats.Intelligence);
-        Assert.Equal(7,w.Abilities!.Loadout(id,w.Tick).Mana); Assert.Equal(12,w.Combat!.Get(id).Health);
+        Assert.Equal(7+original.ManaRecovery*.05,w.Abilities!.Loadout(id,w.Tick).Mana,6);
+        Assert.Equal(12+original.HealthRecovery*.05,w.Combat!.Get(id).Health,6);
         w.ClearProgressionResults();
         Assert.True(w.TryQueueProgression(42,new(2,ProgressionAction.AllocateStats,0,0,0,draft,preview.Sequence))); w.Simulate(.05f);
         Assert.Equal(ProgressionOutcome.Accepted,w.ProgressionResults[id].Outcome);
@@ -28,7 +30,8 @@ public sealed class StatAllocationTests
         Assert.Equal(preview.Projected[(int)CharacterStat.MaxHealth],stats.MaxHealth);
         Assert.Equal(preview.Projected[(int)CharacterStat.MagicAttack],stats.MagicAttack);
         Assert.Equal(preview.Projected[(int)CharacterStat.CastSpeed],stats.CastSpeedMultiplier);
-        Assert.Equal(7,w.Abilities.Loadout(id,w.Tick).Mana); Assert.Equal(12,w.Combat.Get(id).Health);
+        Assert.Equal((7+original.ManaRecovery*.1)/original.MaxMana*stats.MaxMana,w.Abilities.Loadout(id,w.Tick).Mana,6);
+        Assert.Equal((12+original.HealthRecovery*.1)/original.MaxHealth*stats.MaxHealth,w.Combat.Get(id).Health,6);
         Assert.True(w.CaptureCharacter(42).AttackCooldownSeconds>19);
         Assert.False(w.TryQueueProgression(42,new(2,ProgressionAction.AllocateStats,0,0,0,draft)));
         var restored=World(); var again=restored.AddPlayer(43,new(2),w.CaptureCharacter(42));

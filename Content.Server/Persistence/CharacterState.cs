@@ -32,12 +32,15 @@ public sealed record CharacterState
     [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)]public SavedFacing? Facing {get;init;}
     public required double Health { get; init; }
     public required double Mana { get; init; }
+    [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)] public SavedResourceMaxima? ResourceMaxima {get;init;}
     // Optional additive v1 extension: legacy characters start with a full resource, never reset existing data.
     public SavedDefense? Defense { get; init; }
     public SavedCombatControl? CombatControl { get; init; }
     public required double AttackCooldownSeconds { get; init; }
     public double InCombatSeconds { get; init; }
     public SavedCombatLife? Life {get;init;}
+    [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)] public SavedDeathPenalty? DeathPenalty {get;init;}
+    [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)] public SavedRespawnBinding? RespawnBinding {get;init;}
     // Validation context for previous maxima, not resumed effects. Conditions are evaluated anew on login.
     [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)]public string[]? ActivePassiveModifiers {get;init;}
     public required SavedCooldown[] Cooldowns { get; init; }
@@ -58,6 +61,11 @@ public sealed record CharacterState
             allocation.ValidateStats(Stats);
         }
         Defense?.Validate(); Surface?.Validate(); CombatControl?.Validate();Life?.Validate();Facing?.Validate();
+        ResourceMaxima?.Validate(Health,Mana,Defense?.Stamina);
+        DeathPenalty?.Validate();
+        RespawnBinding?.Validate();
+        if(DeathPenalty is {} penalty && Life is {} life && penalty.DeathId>life.DeathId)
+            throw new InvalidDataException("Death penalty receipt exceeds the saved life ordinal.");
         if(ActivePassiveModifiers is {} passives && (passives.Length>NetworkConstants.MaxLearnedSkills ||
             passives.Any(id=>string.IsNullOrWhiteSpace(id) || id.Length>64) || passives.Distinct(StringComparer.Ordinal).Count()!=passives.Length))
             throw new InvalidDataException("Invalid saved passive modifier context.");

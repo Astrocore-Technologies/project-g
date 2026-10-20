@@ -25,7 +25,7 @@ public sealed class HealthRecoveryTests
     [Theory]
     [InlineData(1)]
     [InlineData(30)]
-    public void InjuredPlayerRecoversFromVitalityOncePerSecondAndMarksDurableState(int vitality)
+    public void InjuredPlayerRecoversContinuouslyAndMarksEachChangedTickDurable(int vitality)
     {
         var world = World();
         var initial = world.CreateInitialCharacter();
@@ -33,9 +33,9 @@ public sealed class HealthRecoveryTests
             Progression = initial.Progression! with { Allocation = null } });
         var actor = world.Combat!.Get(player.EntityId);
         Step(world, 19);
-        Assert.Equal(10, actor.Health);
+        Assert.Equal(10+.95*actor.Stats.HealthRecovery, actor.Health,6);
         Step(world, 1);
-        Assert.Equal(10 + 1 + vitality / 30d, actor.Health, 8);
+        Assert.Equal(10 + 1 + vitality / 30d, actor.Health, 6);
         Assert.Contains(42, world.PersistenceDirty);
         Assert.Contains(player.EntityId, world.Combat.EquipmentDirty);
         Assert.Equal(actor.Health, world.CaptureCharacter(42).Health);
@@ -55,7 +55,7 @@ public sealed class HealthRecoveryTests
         Step(world, 10);
         var secondHit = world.Combat.ApplyAbilityDamage(player.EntityId, 1, world.TrainingTargetId);
         Step(world, 10);
-        Assert.Equal(damaged - secondHit + actor.Stats.HealthRecovery, actor.Health, 8);
+        Assert.Equal(damaged - secondHit + actor.Stats.HealthRecovery, actor.Health, 6);
         Assert.NotEqual(new Vector2(-7, 0), player.Position);
     }
 
@@ -85,21 +85,23 @@ public sealed class HealthRecoveryTests
     }
 
     [Fact]
-    public void EquipmentRateChangesDoNotLoseFractionAndNegativeRecoveryDoesNotDrainHp()
+    public void RateChangesApplyOnlyToTheirOwnElapsedTimeAndNegativeRecoveryDrainsHp()
     {
         var world = World();
         var player = world.AddPlayer(42, new(1), world.CreateInitialCharacter() with { Health = 10 });
         var combat = world.Combat!; var actor = combat.Get(player.EntityId);
+        var initialRate=actor.Stats.HealthRecovery;
         Step(world, 10);
         combat.ApplyEquipment(player.EntityId, (actor.Stats with { HealthRecovery = 2 }, actor.Weapon, actor.AttackInterval));
         Step(world, 10);
-        Assert.Equal(12, actor.Health);
+        var expected=10+initialRate*.5+1;
+        Assert.Equal(expected, actor.Health,6);
         combat.ApplyEquipment(player.EntityId, (actor.Stats with { HealthRecovery = -1 }, actor.Weapon, actor.AttackInterval));
         Step(world, 100);
-        Assert.Equal(12, actor.Health);
+        Assert.Equal(expected-5, actor.Health,6);
         combat.ApplyEquipment(player.EntityId, (actor.Stats with { HealthRecovery = .25 }, actor.Weapon, actor.AttackInterval));
         Step(world, 80);
-        Assert.Equal(13, actor.Health, 8);
+        Assert.Equal(expected-4, actor.Health, 6);
     }
 
     [Fact]
@@ -115,6 +117,6 @@ public sealed class HealthRecoveryTests
         var restored = world.AddPlayer(42, new(2), saved);
         Assert.Equal(saved.Health, world.Combat.Get(restored.EntityId).Health);
         Step(world, 20);
-        Assert.Equal(saved.Health + world.Combat.Get(restored.EntityId).Stats.HealthRecovery, world.Combat.Get(restored.EntityId).Health, 8);
+        Assert.Equal(saved.Health + world.Combat.Get(restored.EntityId).Stats.HealthRecovery, world.Combat.Get(restored.EntityId).Health, 6);
     }
 }

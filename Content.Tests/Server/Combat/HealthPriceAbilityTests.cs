@@ -64,6 +64,8 @@ public sealed class HealthPriceAbilityTests
     {
         var f=new Fight();var target=f.World.Combat!.Get(f.World.TrainingTargetId);
         var player=f.World.AddPlayer(42,new(1),f.World.CreateInitialCharacter() with {Health=20});
+        var actor=f.World.Combat.Get(player.EntityId);
+        f.World.Combat.ApplyEquipment(player.EntityId,(actor.Stats with {HealthRecovery=0},actor.Weapon,actor.AttackInterval));
         Assert.True(f.World.TryQueueAbility(42,new(1,0,2,target.Position),0));f.Step();
         Assert.Equal(AbilityOutcome.NoHealth,f.World.Abilities!.Results[player.EntityId].Outcome);
         Assert.Empty(f.Hits);

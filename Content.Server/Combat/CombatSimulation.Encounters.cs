@@ -116,7 +116,7 @@ public sealed partial class CombatSimulation
     }
     internal void NpcReturnedHome(NetworkEntityId npc){_encounters[npc].Returning=false;RefreshHealthRecovery(npc);}
     internal void ResumeNpcEncounter(NetworkEntityId npc)
-    {var encounter=_encounters[npc];ClearNpcThreat(npc,encounter);encounter.Closed=false;encounter.Returning=false;RefreshHealthRecovery(npc);}
+    {var encounter=_encounters[npc];ClearNpcThreat(npc,encounter);encounter.Contribution.Clear();encounter.Closed=false;encounter.Returning=false;RefreshHealthRecovery(npc);}
 
     private void EncounterActorDied(NetworkEntityId id)
     {

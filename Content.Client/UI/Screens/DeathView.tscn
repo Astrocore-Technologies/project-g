@@ -15,13 +15,21 @@ text = ""
 autowrap_mode = 3
 size_flags_horizontal = 3
 theme_type_variation = &"Muted"
+[node name="Home" type="Label" parent="."]
+unique_name_in_owner = true
+text = "Место возрождения: получение данных…"
+autowrap_mode = 3
+[node name="Penalty" type="Label" parent="."]
+unique_name_in_owner = true
+text = ""
+autowrap_mode = 3
 [node name="Space" type="Control" parent="."]
 size_flags_vertical = 3
 [node name="RespawnButton" type="Button" parent="."]
 unique_name_in_owner = true
 text = "Возродиться"
 [node name="Hint" type="Label" parent="."]
-text = "Возрождение возвращает 50% HP и MP. Перезарядки сохраняются."
+text = "50% HP и MP · 100% выносливости. Перезарядки сохраняются."
 autowrap_mode = 3
 size_flags_horizontal = 3
 theme_type_variation = &"Muted"

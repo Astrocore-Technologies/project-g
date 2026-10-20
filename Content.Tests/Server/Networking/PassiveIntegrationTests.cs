@@ -43,7 +43,7 @@ public sealed class PassiveIntegrationTests
             gate.TrySetResult();
             await Poll(client,()=>client.ProgressionResults.Any(r=>r.Sequence==1 && r.Outcome==ProgressionOutcome.Accepted) && client.Loadouts[id].MaxMana==240);
             var passive=client.Progressions[id].Skills.Single(s=>s.Id==610);Assert.True(passive.IsPassive);Assert.Equal(1,passive.Level);Assert.Equal(0,passive.Slot);
-            Assert.Equal(140,client.Loadouts[id].Mana);Assert.DoesNotContain(client.Loadouts[id].Abilities,s=>s.Id==610);
+            Assert.Equal(240,client.Loadouts[id].Mana);Assert.DoesNotContain(client.Loadouts[id].Abilities,s=>s.Id==610);
             client.Ability(1,610,client.LocalSpawn.Position);
             await Poll(client,()=>client.AbilityResults.Any(r=>r.Sequence==1 && r.Outcome==AbilityOutcome.UnknownAbility));
             Assert.Empty(client.Effects);

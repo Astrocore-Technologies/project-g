@@ -107,4 +107,13 @@ public enum NetworkMessageType : ushort
     EchoSignatureControlCommand=123,
     FollowCommand=124,
     FollowState=125,
+    TavernCommand=126,
+    TavernState=127,
+    TavernResult=128,
+    RespecCommand=129,
+    RespecQuote=130,
+    RespecResult=131,
+    ActivityCommand=132,
+    ActivityState=133,
+    ActivityResult=134,
 }

@@ -15,6 +15,7 @@ internal sealed class NpcEncounter(ThreatDefinition definition)
     internal Vector2 Home {get;set;}
     internal float? LeashRadius {get;set;}
     internal bool Closed {get;set;}
+    internal ulong ExperienceDeathId {get;set;}
     internal bool Returning {get;set;}
     internal void AddThreat(NetworkEntityId source,double amount)
         =>Threat[source]=StatMath.Add(Threat.GetValueOrDefault(source),amount);

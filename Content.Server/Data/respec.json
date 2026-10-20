@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "revision": 1,
+  "paidCoins": 100,
+  "quoteSeconds": 15,
+  "taverns": ["linvel_starting_tavern"]
+}

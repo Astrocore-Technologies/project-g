@@ -366,6 +366,7 @@ public partial class NetworkClient : Node
         CurrentRegion = null;
         KnownPlayers.Clear();
         KnownLife.Clear();
+        LatestTavern=null;_respawnSequence=0;_tavernSequence=0;_respecSequence=0;
         LatestEchoRoster=null;
         _sustainedEffects.Clear();
         _basicActions.Clear();
@@ -374,7 +375,7 @@ public partial class NetworkClient : Node
         LatestCombatJournalIndex=null;
         LatestControlState=null;
         CanDevelopmentRevive = false;
-        Navigation = null; LatestExploration=null; LatestWorldNode=null; LatestStarterZone=null; LatestPvpZone=null; LatestDefense=null; CraftRecipes.Clear(); ResourceNodes.Clear(); QuestNpcs.Clear(); LatestQuestJournal=null;
+        Navigation = null; LatestExploration=null; LatestWorldNode=null; LatestStarterZone=null; LatestPvpZone=null; LatestDefense=null; CraftRecipes.Clear(); ResourceNodes.Clear(); QuestNpcs.Clear(); LatestQuestJournal=null;LatestActivities=null;
         LatestServerTick = 0;
         if (TryReadDisconnectRejection(disconnectInfo, out var rejection))
         {
@@ -423,6 +424,22 @@ public partial class NetworkClient : Node
 
             switch (messageType)
             {
+                case NetworkMessageType.RespecQuote:
+                    if(_handshakeComplete&&deliveryMethod==DeliveryMethod.ReliableOrdered&&NetworkProtocol.TryReadRespecQuote(reader,out var resetQuote))
+                        RespecQuoteReceived?.Invoke(resetQuote);else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.RespecResult:
+                    if(_handshakeComplete&&deliveryMethod==DeliveryMethod.ReliableOrdered&&NetworkProtocol.TryReadRespecResult(reader,out var resetResult))
+                        RespecResultReceived?.Invoke(resetResult);else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.TavernState:
+                    if(_handshakeComplete&&deliveryMethod==DeliveryMethod.ReliableOrdered&&NetworkProtocol.TryReadTavernState(reader,out var home))
+                    {LatestTavern=home;TavernReceived?.Invoke(home);}else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.TavernResult:
+                    if(_handshakeComplete&&deliveryMethod==DeliveryMethod.ReliableOrdered&&NetworkProtocol.TryReadTavernResult(reader,out var tavernResult))
+                        TavernResultReceived?.Invoke(tavernResult);else DisconnectMalformed(peer);
+                    break;
                 case NetworkMessageType.ActorLifeState:
                     if(_handshakeComplete && deliveryMethod==DeliveryMethod.ReliableOrdered && NetworkProtocol.TryReadActorLifeState(reader,out var life))
                     {
@@ -550,6 +567,13 @@ public partial class NetworkClient : Node
                     if (_handshakeComplete && NetworkProtocol.TryReadDefenseState(reader,out var defense) &&
                         (LatestDefense is not { } previousDefense || previousDefense.OwnerId!=defense.OwnerId || Content.Shared.Movement.MovementSimulation.IsSequenceNewer(defense.ServerTick,previousDefense.ServerTick)))
                     { LatestDefense=defense; DefenseReceived?.Invoke(defense); }
+                    break;
+                case NetworkMessageType.ActivityState:
+                    if(_handshakeComplete&&deliveryMethod==DeliveryMethod.ReliableOrdered&&NetworkProtocol.TryReadActivityState(reader,out var activities))
+                    {LatestActivities=activities;ActivitiesReceived?.Invoke(activities);}else DisconnectMalformed(peer);
+                    break;
+                case NetworkMessageType.ActivityResult:
+                    if(_handshakeComplete&&deliveryMethod==DeliveryMethod.ReliableOrdered&&NetworkProtocol.TryReadActivityResult(reader,out var activityResult))ActivityResultReceived?.Invoke(activityResult);else DisconnectMalformed(peer);
                     break;
                 case NetworkMessageType.QuestNpcSpawn:
                     if(_handshakeComplete && NetworkProtocol.TryReadQuestNpcSpawn(reader,out var questNpc) && (QuestNpcs.Count<32 || QuestNpcs.ContainsKey(questNpc.EntityId)))

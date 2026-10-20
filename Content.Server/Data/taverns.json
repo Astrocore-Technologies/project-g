@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "startingTavern": "linvel_starting_tavern",
+  "taverns": [
+    {
+      "id": "linvel_starting_tavern",
+      "networkId": 1,
+      "revision": 1,
+      "regionId": "linvel_gardens",
+      "name": "Таверна Линвеля",
+      "npc": { "x": -423, "height": 14.1, "z": 230 },
+      "spawn": { "x": -420, "height": 14.1, "z": 230 },
+      "interactionRange": 3
+    }
+  ]
+}

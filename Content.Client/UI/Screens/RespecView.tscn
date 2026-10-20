@@ -1,0 +1,62 @@
+[gd_scene load_steps=3 format=3]
+[ext_resource type="Theme" path="res://UI/Theme/rework-theme.tres" id="Theme"]
+[ext_resource type="Script" path="res://Scripts/UI/RespecView.cs" id="Script"]
+[node name="RespecView" type="VBoxContainer"]
+theme = ExtResource("Theme")
+script = ExtResource("Script")
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+[node name="Introduction" type="Label" parent="."]
+text = "Верните все вложенные очки в свободный пул и распределите их заново."
+autowrap_mode = 3
+[node name="Summary" type="Label" parent="."]
+unique_name_in_owner = true
+text = "Получение расчёта…"
+autowrap_mode = 3
+theme_type_variation = &"Heading"
+[node name="Divider" type="HSeparator" parent="."]
+[node name="ComparisonScroll" type="ScrollContainer" parent="."]
+custom_minimum_size = Vector2(0, 180)
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+[node name="Comparison" type="RichTextLabel" parent="ComparisonScroll"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+text = "После расчёта здесь появятся текущие и итоговые характеристики."
+[node name="Warning" type="Label" parent="."]
+text = "Уровень, EXP, профессия, изученные навыки и вещи сохраняются. Доля HP, MP и выносливости сохраняется; перезарядки не сбрасываются. После подтверждения очки потребуется распределить заново."
+autowrap_mode = 3
+theme_type_variation = &"Muted"
+[node name="Acknowledge" type="CheckBox" parent="."]
+unique_name_in_owner = true
+text = "Подтверждаю полный сброс вложенных очков"
+[node name="Status" type="Label" parent="."]
+unique_name_in_owner = true
+text = ""
+autowrap_mode = 3
+[node name="Actions" type="HBoxContainer" parent="."]
+theme_override_constants/separation = 12
+[node name="Close" type="Button" parent="Actions"]
+unique_name_in_owner = true
+text = "Отмена"
+size_flags_horizontal = 3
+theme_type_variation = &"QuietButton"
+[node name="Refresh" type="Button" parent="Actions"]
+unique_name_in_owner = true
+text = "Обновить расчёт"
+size_flags_horizontal = 3
+theme_type_variation = &"QuietButton"
+[node name="Allocate" type="Button" parent="Actions"]
+unique_name_in_owner = true
+text = "Распределить очки"
+size_flags_horizontal = 3
+visible = false
+[node name="Confirm" type="Button" parent="Actions"]
+unique_name_in_owner = true
+text = "Подтвердить сброс"
+size_flags_horizontal = 3
+disabled = true

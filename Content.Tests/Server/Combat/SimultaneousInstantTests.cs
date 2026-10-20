@@ -20,6 +20,7 @@ public sealed class SimultaneousInstantTests
     private static JsonNode Document()
     {
         var data=JsonNode.Parse(File.ReadAllText(ContentCatalogTests.DataPath))!;
+        data["creatures"]![0]!["baseHealthRecovery"]=0;data["balance"]!["healthRecovery"]!["vitality"]=0;
         // Both sides of these simultaneity scenarios are deliberately authored Instant.
         data["weapons"]![0]!.AsObject().Remove("basicAttack");
         foreach(var skill in data["abilities"]!.AsArray())

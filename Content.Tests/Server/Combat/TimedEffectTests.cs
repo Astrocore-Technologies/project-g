@@ -71,18 +71,19 @@ public sealed class TimedEffectTests
     }
 
     [Fact]
-    public void ChangingMaximumNeverHealsAndOfflineExpiryClampsWithoutRestoringResources()
+    public void ChangingMaximumAndOfflineExpiryPreserveResourceFractions()
     {
         var world=World(Buff() with {Modifiers=new() {MaxHealth=100,MaxMana=100},DurationSeconds=2});
         var target=world.AddPlayer(42,new(1)); var combat=world.Combat!; var baseline=combat.Get(target.EntityId).Stats;
         combat.Get(target.EntityId).Health=7;
         combat.ApplyEffect(target.EntityId,target.EntityId,"buff");
-        Assert.Equal(7,combat.Get(target.EntityId).Health); Assert.Equal(baseline.MaxMana+100,world.Abilities!.Loadout(target.EntityId,0).MaxMana);
+        Assert.Equal(7/baseline.MaxHealth*(baseline.MaxHealth+100),combat.Get(target.EntityId).Health);
+        Assert.Equal(baseline.MaxMana+100,world.Abilities!.Loadout(target.EntityId,0).MaxMana);
         var state=world.CaptureCharacter(42) with {Health=baseline.MaxHealth+70,Mana=baseline.MaxMana+70,SavedAtUnixMilliseconds=DateTimeOffset.UtcNow.AddSeconds(-5).ToUnixTimeMilliseconds()};
         var next=World(Buff() with {Modifiers=new() {MaxHealth=100,MaxMana=100},DurationSeconds=2});
         var restored=next.AddPlayer(42,new(1),state);
-        Assert.Equal(baseline.MaxHealth,next.Combat!.Get(restored.EntityId).Health);
-        Assert.Equal(baseline.MaxMana,next.Abilities!.Mana(restored.EntityId));
+        Assert.Equal(state.Health/(baseline.MaxHealth+100)*baseline.MaxHealth,next.Combat!.Get(restored.EntityId).Health);
+        Assert.Equal(state.Mana/(baseline.MaxMana+100)*baseline.MaxMana,next.Abilities!.Mana(restored.EntityId));
         Assert.Empty(next.Combat.Get(restored.EntityId).Effects);
     }
 

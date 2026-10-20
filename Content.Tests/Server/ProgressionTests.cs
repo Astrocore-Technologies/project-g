@@ -19,7 +19,7 @@ public sealed class ProgressionTests
         var p = w.AddPlayer(42,new(1),w.CreateInitialCharacter() with { Health = 1 }); var hits = 0;
         w.TryQueueAbility(42,new(1,0,2,new(-7,3)),0);
         for (var i=0;i<40;i++) { Step(w); hits += w.Abilities!.Hits.Count; }
-        Assert.Equal(2,hits); Assert.Equal(1,Skill(w,p,2).Practice); Assert.Equal(2,w.ProgressionState(p.EntityId,w.Tick).Experience);
+        Assert.Equal(2,hits); Assert.Equal(1,Skill(w,p,2).Practice); Assert.Equal(0,w.ProgressionState(p.EntityId,w.Tick).Experience);
         w.TryQueueAbility(42,new(2,0,3,Vector2.UnitX),0); Step(w);
         Step(w,3); // The damage window ends before the Dodge action: death still cancels completion practice.
         w.Combat!.Move(w.Npc!.Id,p.Position - Vector2.UnitY * 0.5f);
@@ -53,7 +53,7 @@ public sealed class ProgressionTests
         w.TryQueueAbility(42,new(3,0,1,Vector2.UnitY),0); Step(w,20);
         w.TryQueueAbility(42,new(4,0,1,Vector2.UnitY),0); Step(w);
         Assert.Equal(AbilityOutcome.Cooldown,w.Abilities!.Results[p.EntityId].Outcome); Step(w,60);
-        Assert.Equal(1,Skill(w,p,1).Practice); Assert.Equal(1,w.ProgressionState(p.EntityId,w.Tick).Experience);
+        Assert.Equal(1,Skill(w,p,1).Practice); Assert.Equal(0,w.ProgressionState(p.EntityId,w.Tick).Experience);
         Step(w,80); Assert.Equal(1,Skill(w,p,1).Practice);
     }
     [Fact]
@@ -89,7 +89,7 @@ public sealed class ProgressionTests
         var result = third.ProgressionState(final.EntityId,third.Tick); Assert.Equal(2,result.Level); Assert.Equal(20,result.Experience); Assert.Equal(23,result.StatPoints);
     }
     [Fact]
-    public void StatAllocationKeepsEquipmentHealthManaAndCooldownWhileReplayAndFloodAreRejected()
+    public void StatAllocationKeepsEquipmentResourceFractionsAndCooldownWhileReplayAndFloodAreRejected()
     {
         var w = World(); var initial = w.CreateInitialCharacter();
         var armor = initial.Inventory!.Items.Single(i => ContentCatalogTests.Load().Items[i.DefinitionId].Slot == EquipmentSlot.Armor);
@@ -97,9 +97,11 @@ public sealed class ProgressionTests
             Cooldowns = initial.Cooldowns.Select(c => c with { Seconds = 60 }).ToArray(),
             Inventory = initial.Inventory with { Items = initial.Inventory.Items.Select(i => i == armor ? i with { EquippedSlot = EquipmentSlot.Armor } : i).ToArray() },
             Progression = initial.Progression! with { StatPoints = 3, Allocation = null } }; // Explicit legacy fixture with untracked history.
-        var p = w.AddPlayer(42,new(1),initial); var hpMax = w.Combat!.Get(p.EntityId).Stats.MaxHealth;
+        var p = w.AddPlayer(42,new(1),initial); var original=w.Combat!.Get(p.EntityId).Stats;var hpMax=original.MaxHealth;
         w.TryQueueProgression(42,new(1,ProgressionAction.AllocateStat,2,0,0)); Step(w);
-        var saved = w.CaptureCharacter(42); Assert.Equal(initial.Stats.Vitality+1,saved.Stats.Vitality); Assert.Equal(12,saved.Health); Assert.Equal(7,saved.Mana);
+        var saved = w.CaptureCharacter(42); Assert.Equal(initial.Stats.Vitality+1,saved.Stats.Vitality);
+        Assert.Equal((12+original.HealthRecovery*.05)/hpMax*w.Combat.Get(p.EntityId).Stats.MaxHealth,saved.Health,6);
+        Assert.Equal(7+original.ManaRecovery*.05,saved.Mana,6);
         Assert.True(w.Combat.Get(p.EntityId).Stats.MaxHealth > hpMax); Assert.Contains(saved.Inventory!.Items,i => i.EquippedSlot == EquipmentSlot.Armor); Assert.All(saved.Cooldowns,c => Assert.InRange(c.Seconds,58,60));
         Assert.False(w.TryQueueProgression(42,new(1,ProgressionAction.AllocateStat,2,0,0)));
         w.TryQueueProgression(42,new(2,ProgressionAction.AllocateStat,2,0,0));

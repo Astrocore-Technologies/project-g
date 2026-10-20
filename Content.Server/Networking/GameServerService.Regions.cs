@@ -127,7 +127,12 @@ public sealed partial class GameServerService
         _intentions.Remove(arrival!.Connection);
         _movementInputs.Remove(arrival.Connection);
         _receivedCombat.Remove(arrival.Connection);
-        if (_peers.TryGetValue(arrival.Connection, out var peer)) SendRegionBootstrap(peer);
+        if (_peers.TryGetValue(arrival.Connection, out var peer))
+        {
+            SendRegionBootstrap(peer);
+            if(WorldFor(arrival.Connection).RespawnResults.TryGetValue(arrival.Player.EntityId,out var respawn))
+                _views[arrival.Connection].PendingRespawn=respawn;
+        }
         BroadcastSnapshot();
         _logger.LogInformation("Regional arrival committed. Connection={Connection}, Region={Region}, Epoch={Epoch}",
             arrival.Connection, arrival.Owner.Region, arrival.Owner.Epoch);

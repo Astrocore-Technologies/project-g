@@ -409,6 +409,9 @@ public sealed class NetworkMovementIntegrationTests
 
         public Dictionary<NetworkEntityId, PlayerSpawn> Spawns { get; } = new();
         public Dictionary<NetworkEntityId,QuestNpcSpawn> QuestNpcs {get;}=new();
+        public Dictionary<NetworkEntityId,TavernState> TavernStates {get;}=new();
+        public List<TavernResult> TavernResults {get;}=new();
+        public void Tavern(TavernCommand command)=>SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
         public Dictionary<NetworkEntityId,QuestJournal> QuestJournals {get;}=new();
         public List<QuestReply> QuestReplies {get;}=new();
         public void Quest(QuestCommand command)=>SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
@@ -450,6 +453,9 @@ public sealed class NetworkMovementIntegrationTests
         public List<ProfessionResult> ProfessionResults { get; } = new();
         public void Profession(ProfessionCommand command) => SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
         public Dictionary<NetworkEntityId, ProgressionState> Progressions { get; } = new();
+        public Dictionary<NetworkEntityId,ActivityState> Activities {get;}=new();
+        public List<ActivityResult> ActivityResults {get;}=new();
+        public void Activity(ActivityCommand command)=>SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
         public List<ProgressionResult> ProgressionResults { get; } = new();
         public List<StatPreview> StatPreviews { get; } = new();
         public Dictionary<NetworkEntityId,DefenseState> Defenses { get; }=new();
@@ -470,6 +476,9 @@ public sealed class NetworkMovementIntegrationTests
         public List<LogoutResult> LogoutResults {get;}=new();
         public Dictionary<NetworkEntityId,ActorLifeState> Lives {get;}=new();
         public List<RespawnResult> RespawnResults {get;}=new();
+        public List<RespecQuote> RespecQuotes {get;}=new();
+        public List<RespecResult> RespecResults {get;}=new();
+        public void Respec(RespecCommand command)=>SendGame(NetworkProtocol.Write(command),DeliveryMethod.ReliableOrdered);
         public void Respawn(uint sequence,ulong death)=>SendGame(NetworkProtocol.Write(new RespawnCommand(sequence,death)),DeliveryMethod.ReliableOrdered);
         public void Logout(uint sequence=1)=>SendGame(NetworkProtocol.Write(new LogoutCommand(sequence)),DeliveryMethod.ReliableOrdered);
         public Dictionary<NetworkEntityId, AbilityLoadout> Loadouts { get; } = new();
@@ -567,6 +576,7 @@ public sealed class NetworkMovementIntegrationTests
                         SocialRosters.Clear(); SocialInvitations.Clear(); PartyPresences.Clear();
                         Recipes.Clear(); Resources.Clear(); GroundItems.Clear();
                         QuestNpcs.Clear(); QuestJournals.Clear(); QuestReplies.Clear();
+                        TavernStates.Clear();
                         _states.Clear(); _ticks.Clear(); _snapshotCoverage.Clear();
                         return;
                     }
@@ -577,6 +587,14 @@ public sealed class NetworkMovementIntegrationTests
                     }
                     switch (type)
                     {
+                        case NetworkMessageType.RespecQuote:
+                            Assert.True(NetworkProtocol.TryReadRespecQuote(reader,out var resetQuote));RespecQuotes.Add(resetQuote);break;
+                        case NetworkMessageType.RespecResult:
+                            Assert.True(NetworkProtocol.TryReadRespecResult(reader,out var resetResult));RespecResults.Add(resetResult);break;
+                        case NetworkMessageType.TavernState:
+                            Assert.True(NetworkProtocol.TryReadTavernState(reader,out var home));TavernStates[home.OwnerId]=home;break;
+                        case NetworkMessageType.TavernResult:
+                            Assert.True(NetworkProtocol.TryReadTavernResult(reader,out var tavern));TavernResults.Add(tavern);break;
                         case NetworkMessageType.ActorLifeState:
                             Assert.True(NetworkProtocol.TryReadActorLifeState(reader,out var life));Lives[life.EntityId]=life;break;
                         case NetworkMessageType.RespawnResult:
@@ -658,6 +676,10 @@ public sealed class NetworkMovementIntegrationTests
                             Assert.True(NetworkProtocol.TryReadProfessionResult(reader,out var professionResult)); ProfessionResults.Add(professionResult); break;
                         case NetworkMessageType.StatPreview:
                             Assert.True(NetworkProtocol.TryReadStatPreview(reader,out var statPreview)); StatPreviews.Add(statPreview); break;
+                        case NetworkMessageType.ActivityState:
+                            Assert.True(NetworkProtocol.TryReadActivityState(reader,out var activities));Assert.Equal(LocalSpawn.EntityId,activities.OwnerId);Activities[activities.OwnerId]=activities;break;
+                        case NetworkMessageType.ActivityResult:
+                            Assert.True(NetworkProtocol.TryReadActivityResult(reader,out var activityResult));ActivityResults.Add(activityResult);break;
                         case NetworkMessageType.QuestNpcSpawn:
                             Assert.True(NetworkProtocol.TryReadQuestNpcSpawn(reader,out var questNpc)); QuestNpcs[questNpc.EntityId]=questNpc; break;
                         case NetworkMessageType.QuestReply:

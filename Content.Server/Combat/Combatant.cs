@@ -29,9 +29,11 @@ public sealed class Combatant
     internal CombatSourceId SourceIdentity { get; set; }
     internal CombatSourceId? ContributionOwner {get;set;}
     internal double CombatUntil { get; set; }
+    internal double CombatPresenceEndsAt {get;set;}
     internal bool DetachedBody { get; set; }
     internal ulong DeathId;
     internal bool LifeDead;
+    internal bool DiedFromRegeneration;
     internal double CorpseEndsAt,RespawnReadyAt;
     public CombatEntityKind Kind { get; }
     public Vector2 Position { get; internal set; }
@@ -61,7 +63,6 @@ public sealed class Combatant
     internal string[] HitFollowups = [];
     public bool Active { get; internal set; } = true;
     public double Health { get; internal set; }
-    internal double HealthRecoveryElapsed { get; set; }
     public DerivedStats Stats { get; internal set; }
     internal DerivedStats BaseDerivedStats { get; set; }
     internal Dictionary<TimedEffectKey,TimedEffectInstance> Effects { get; } = new();

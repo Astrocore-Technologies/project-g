@@ -44,7 +44,7 @@ public sealed class CombatTimelineTests
             foreach(var id in new[]{Caster.EntityId,Striker.EntityId})
             {
                 var actor=Combat.Get(id);
-                Combat.ApplyEquipment(id,(actor.BaseDerivedStats with {AttackSpeedMultiplier=1,HealthRecovery=0},actor.Weapon,1));
+                Combat.ApplyEquipment(id,(actor.BaseDerivedStats with {AttackSpeedMultiplier=1,HealthRecovery=0,ManaRecovery=0},actor.Weapon,1));
             }
         }
         internal void Start(bool reverse=false)

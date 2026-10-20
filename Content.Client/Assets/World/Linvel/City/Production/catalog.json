@@ -1,0 +1,1910 @@
+[
+  {
+    "key": "townhouse_a",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 38962,
+    "triangles": 13642,
+    "dimensions_m": [
+      6.939999580383301,
+      6.109999656677246,
+      9.267499923706055
+    ],
+    "bounds_blender_m": [
+      [
+        -3.4658796787261963,
+        3.4658796787261963
+      ],
+      [
+        -3.0517406463623047,
+        3.0517406463623047
+      ],
+      [
+        -0.005624294281005859,
+        9.251590728759766
+      ]
+    ],
+    "sha256": "94358cfb34bd1c0a13294b6de4374ad5960b100badd3b16d73039bcbf5a123a0",
+    "original_design": true
+  },
+  {
+    "key": "townhouse_b",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 44885,
+    "triangles": 14537,
+    "dimensions_m": [
+      5.739999771118164,
+      7.619999885559082,
+      11.745499610900879
+    ],
+    "bounds_blender_m": [
+      [
+        -2.865879535675049,
+        2.865879535675049
+      ],
+      [
+        -4.312140464782715,
+        3.3005223274230957
+      ],
+      [
+        -0.0056247711181640625,
+        11.729591369628906
+      ]
+    ],
+    "sha256": "c6e6d365db83cc25cbb677cc8f68e2100a1ea3aaa078f30ea3e45e66849d149a",
+    "original_design": true
+  },
+  {
+    "key": "orchard_cottage",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 25943,
+    "triangles": 12447,
+    "dimensions_m": [
+      5.339999675750732,
+      5.409999847412109,
+      5.921499729156494
+    ],
+    "bounds_blender_m": [
+      [
+        -2.665879726409912,
+        2.665879726409912
+      ],
+      [
+        -2.7017405033111572,
+        2.7017405033111572
+      ],
+      [
+        0.006249904632568359,
+        5.918000221252441
+      ]
+    ],
+    "sha256": "79e74630c99a17f1419e535099d1c020d03aad82d449d1601a12ad791662b7df",
+    "original_design": true
+  },
+  {
+    "key": "adventurers_guild",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 91617,
+    "triangles": 21168,
+    "dimensions_m": [
+      9.9399995803833,
+      11.980000019073486,
+      15.719999999999999
+    ],
+    "bounds_blender_m": [
+      [
+        -4.965879917144775,
+        4.965879917144775
+      ],
+      [
+        -6.518750190734863,
+        5.451740741729736
+      ],
+      [
+        -0.0056247711181640625,
+        15.720085144042969
+      ]
+    ],
+    "sha256": "2fe3bd19496e16ff542b3552f5e3f240d3529a87b57ba851907c2bcb5087f931",
+    "original_design": true
+  },
+  {
+    "key": "healing_house",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 65840,
+    "triangles": 20261,
+    "dimensions_m": [
+      10.789999628067017,
+      8.91999979019165,
+      9.732500076293945
+    ],
+    "bounds_blender_m": [
+      [
+        -6.565878868103027,
+        4.215879440307617
+      ],
+      [
+        -5.3619537353515625,
+        3.551741123199463
+      ],
+      [
+        -0.0056247711181640625,
+        9.716590881347656
+      ]
+    ],
+    "sha256": "7658b14e89c777bf0a4eb82ad57d7785ebd4e83ab338df64ccf1b8014c9dad17",
+    "original_design": true
+  },
+  {
+    "key": "harbor_shrine",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 32395,
+    "triangles": 12985,
+    "dimensions_m": [
+      5.139999866485596,
+      7.304999923706054,
+      8.62
+    ],
+    "bounds_blender_m": [
+      [
+        -2.5658798217773438,
+        2.5658798217773438
+      ],
+      [
+        -3.850024938583374,
+        3.450521945953369
+      ],
+      [
+        0.006250143051147461,
+        8.620014190673828
+      ]
+    ],
+    "sha256": "4b787bcfef874c8bb7b2fd2909d136f4a392da6631f6bcd0788eeb167dd180db",
+    "original_design": true
+  },
+  {
+    "key": "smith_workshop",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 43043,
+    "triangles": 12933,
+    "dimensions_m": [
+      10.514999961853027,
+      8.519999980926514,
+      6.572499752044678
+    ],
+    "bounds_blender_m": [
+      [
+        -4.1449995040893555,
+        6.365879058837891
+      ],
+      [
+        -5.167550086975098,
+        3.351741075515747
+      ],
+      [
+        -0.005625247955322266,
+        6.556591033935547
+      ]
+    ],
+    "sha256": "17049a77082d1d8b749918a5e0f9caae01309537b907f9ceca65c65090e87fbc",
+    "original_design": true
+  },
+  {
+    "key": "carpenter_workshop",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 43147,
+    "triangles": 12949,
+    "dimensions_m": [
+      10.514999961853027,
+      8.519999980926514,
+      6.572499752044678
+    ],
+    "bounds_blender_m": [
+      [
+        -4.1449995040893555,
+        6.365879058837891
+      ],
+      [
+        -5.167550086975098,
+        3.351741075515747
+      ],
+      [
+        0.0,
+        6.556591033935547
+      ]
+    ],
+    "sha256": "fa49870182c7c27cc11dcd5228e7cfe34e176615a1be7d3d1be3904f15421228",
+    "original_design": true
+  },
+  {
+    "key": "watermill",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 39783,
+    "triangles": 13975,
+    "dimensions_m": [
+      7.269999742507935,
+      6.509999752044678,
+      9.019499778747559
+    ],
+    "bounds_blender_m": [
+      [
+        -3.0658793449401855,
+        4.199999809265137
+      ],
+      [
+        -3.2517404556274414,
+        3.2517404556274414
+      ],
+      [
+        -0.005624294281005859,
+        9.00359058380127
+      ]
+    ],
+    "sha256": "f9f2d3f4a8284edd1269ffa4d04468d4ce5734b5a76b45d29a325f5c61cc0cf9",
+    "original_design": true
+  },
+  {
+    "key": "harbor_warehouse",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 48469,
+    "triangles": 13076,
+    "dimensions_m": [
+      9.559999942779541,
+      9.71999979019165,
+      7.037499904632568
+    ],
+    "bounds_blender_m": [
+      [
+        -5.090000152587891,
+        4.465879440307617
+      ],
+      [
+        -5.788399696350098,
+        3.9517405033111572
+      ],
+      [
+        0.0,
+        7.0215911865234375
+      ]
+    ],
+    "sha256": "5f5c841326f5b23b183fe56e5f40f9903b9f8978453fa17419bda196f63d17bb",
+    "original_design": true
+  },
+  {
+    "key": "market_shop",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 37309,
+    "triangles": 13827,
+    "dimensions_m": [
+      6.621999740600586,
+      7.71999979019165,
+      9.081500053405762
+    ],
+    "bounds_blender_m": [
+      [
+        -3.4519999027252197,
+        3.165879487991333
+      ],
+      [
+        -4.761954307556152,
+        2.9505224227905273
+      ],
+      [
+        0.0,
+        9.07800006866455
+      ]
+    ],
+    "sha256": "582dffaaaf409e1a38671d56b9413915aa610330ca36c1a478ccfb5534a82a59",
+    "original_design": true
+  },
+  {
+    "key": "boatshed_open",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 24118,
+    "triangles": 11650,
+    "dimensions_m": [
+      6.139999866485596,
+      7.210000038146973,
+      5.195000171661377
+    ],
+    "bounds_blender_m": [
+      [
+        -3.0658798217773438,
+        3.0658798217773438
+      ],
+      [
+        -3.60052227973938,
+        3.60052227973938
+      ],
+      [
+        0.0,
+        5.192889213562012
+      ]
+    ],
+    "sha256": "6b3abb92994c3d338f3804ff56ec0745276ece7b5c0fd24c1c7bb96131aca478",
+    "original_design": true
+  },
+  {
+    "key": "boatshed_closed",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 23206,
+    "triangles": 11416,
+    "dimensions_m": [
+      6.139999866485596,
+      7.210000038146973,
+      5.195000171661377
+    ],
+    "bounds_blender_m": [
+      [
+        -3.069999933242798,
+        3.069999933242798
+      ],
+      [
+        -3.6050000190734863,
+        3.6050000190734863
+      ],
+      [
+        0.0,
+        5.192889213562012
+      ]
+    ],
+    "sha256": "53759ddc800ba5e44e7ebcd40103367af7f152c0baa1a9a1db7cb3c31d96e367",
+    "original_design": true
+  },
+  {
+    "key": "harbor_watchtower",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 4278,
+    "triangles": 4278,
+    "dimensions_m": [
+      3.899989174282681,
+      3.899989174282681,
+      11.07
+    ],
+    "bounds_blender_m": [
+      [
+        -1.9499945640563965,
+        1.9499945640563965
+      ],
+      [
+        -1.9499945640563965,
+        1.9499945640563965
+      ],
+      [
+        0.0,
+        11.069999694824219
+      ]
+    ],
+    "sha256": "6d3dedb7c0870ff8ca5cd37e892e314636329a7bd910b60e1981810e2b14141d",
+    "original_design": true
+  },
+  {
+    "key": "orchard_tree",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 23500,
+    "triangles": 5833,
+    "dimensions_m": [
+      5.996288537979126,
+      5.674890518188477,
+      5.705679090693593
+    ],
+    "bounds_blender_m": [
+      [
+        -3.0400562286376953,
+        2.9338531494140625
+      ],
+      [
+        -3.0115346908569336,
+        2.614658832550049
+      ],
+      [
+        0.003687143325805664,
+        5.723010063171387
+      ]
+    ],
+    "sha256": "68ebb3fcde360af24b668e84cb74ab700a672149bc3dcf0b4286764e041c98df",
+    "original_design": true
+  },
+  {
+    "key": "blossoming_tree",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 101692,
+    "triangles": 12203,
+    "dimensions_m": [
+      5.590696334838867,
+      5.557468414306641,
+      5.85841098614037
+    ],
+    "bounds_blender_m": [
+      [
+        -2.7742488384246826,
+        2.8164474964141846
+      ],
+      [
+        -2.748642921447754,
+        2.8088254928588867
+      ],
+      [
+        0.02340078353881836,
+        5.866616725921631
+      ]
+    ],
+    "sha256": "b43244228acb99b859c31f7a8ff9597fec2b088af8cdb0a6d296d00315aedfcd",
+    "original_design": true
+  },
+  {
+    "key": "cypress_tree",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 28164,
+    "triangles": 6129,
+    "dimensions_m": [
+      2.3438806533813477,
+      2.351003050804138,
+      7.10887018032372
+    ],
+    "bounds_blender_m": [
+      [
+        -1.154447317123413,
+        1.176493525505066
+      ],
+      [
+        -1.1682994365692139,
+        1.1710271835327148
+      ],
+      [
+        0.005200624465942383,
+        7.1036481857299805
+      ]
+    ],
+    "sha256": "7fbff45f3b3a065d210af664034f8158d88ef230a0de1cd125d1cf123d2d155f",
+    "original_design": true
+  },
+  {
+    "key": "garden_shrub",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 3900,
+    "triangles": 1300,
+    "dimensions_m": [
+      1.7878785133361816,
+      1.7891820669174194,
+      0.8229988142848015
+    ],
+    "bounds_blender_m": [
+      [
+        -0.8865864276885986,
+        0.8869933485984802
+      ],
+      [
+        -0.8838266134262085,
+        0.8732509613037109
+      ],
+      [
+        0.07731392979621887,
+        0.9243872761726379
+      ]
+    ],
+    "sha256": "d8770d20d10c83025dc99c6eb45a4d236bdc802d333f48afc145b63c5577314e",
+    "original_design": true
+  },
+  {
+    "key": "flower_planter",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 2040,
+    "triangles": 1408,
+    "dimensions_m": [
+      0.7282373011112213,
+      0.7270198166370392,
+      1.2838786840438843
+    ],
+    "bounds_blender_m": [
+      [
+        -0.3784768581390381,
+        0.34976041316986084
+      ],
+      [
+        -0.3327869772911072,
+        0.3942328095436096
+      ],
+      [
+        -1.519918441772461e-05,
+        1.2838786840438843
+      ]
+    ],
+    "sha256": "a18791eb7a7501c164ec4ef6aac222cf45ce0f27885e3d4d5765e34536d3418d",
+    "original_design": true
+  },
+  {
+    "key": "meadow_flowers",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 1704,
+    "triangles": 1300,
+    "dimensions_m": [
+      1.137156903743744,
+      1.1697299480438232,
+      0.394081175327301
+    ],
+    "bounds_blender_m": [
+      [
+        -0.5669589042663574,
+        0.5701980590820312
+      ],
+      [
+        -0.5926376581192017,
+        0.5770922899246216
+      ],
+      [
+        -1.4901161193847656e-08,
+        0.394081175327301
+      ]
+    ],
+    "sha256": "7c22d879e1716e3ab3a63bde55ccfe971037dc97f8c13b068c059f1be10226cf",
+    "original_design": true
+  },
+  {
+    "key": "square_fountain",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 6520,
+    "triangles": 6520,
+    "dimensions_m": [
+      5.9,
+      5.9,
+      3.92
+    ],
+    "bounds_blender_m": [
+      [
+        -2.950000047683716,
+        2.950000047683716
+      ],
+      [
+        -2.950000047683716,
+        2.950000047683716
+      ],
+      [
+        0.0,
+        3.9200000762939453
+      ]
+    ],
+    "sha256": "14f478095eb52b47f7f213879c4bf19b26b2a2f6d32e43530aa1ad00461e226c",
+    "original_design": true
+  },
+  {
+    "key": "market_bread",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 9357,
+    "triangles": 9357,
+    "dimensions_m": [
+      3.5,
+      2.319999933242798,
+      2.7100000381469727
+    ],
+    "bounds_blender_m": [
+      [
+        -1.75,
+        1.75
+      ],
+      [
+        -1.159999966621399,
+        1.159999966621399
+      ],
+      [
+        0.0,
+        2.7100000381469727
+      ]
+    ],
+    "sha256": "c5d454b10177fd1abe0b9a759ff86ddb89c72591ddeb57072bc0b1d31b287124",
+    "original_design": true
+  },
+  {
+    "key": "market_fruit",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 10581,
+    "triangles": 10041,
+    "dimensions_m": [
+      3.5,
+      2.319999933242798,
+      2.7100000381469727
+    ],
+    "bounds_blender_m": [
+      [
+        -1.75,
+        1.75
+      ],
+      [
+        -1.159999966621399,
+        1.159999966621399
+      ],
+      [
+        0.0,
+        2.7100000381469727
+      ]
+    ],
+    "sha256": "cb7fa2d93ccdc8cbce2893bd65839f153d928e7cbf5aa3f52321f80b54c65469",
+    "original_design": true
+  },
+  {
+    "key": "street_lantern",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 636,
+    "triangles": 636,
+    "dimensions_m": [
+      1.1899964469489908,
+      0.6399928938979814,
+      4.04
+    ],
+    "bounds_blender_m": [
+      [
+        -0.25,
+        0.9399964213371277
+      ],
+      [
+        -0.3199964463710785,
+        0.3199964463710785
+      ],
+      [
+        0.0,
+        4.039999961853027
+      ]
+    ],
+    "sha256": "e85f6eb964a8a5edb189cfd82bfca8fab338a71859cb8d1fdd9f21ec1b3a64db",
+    "original_design": true
+  },
+  {
+    "key": "guild_banner_pole",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 1948,
+    "triangles": 1948,
+    "dimensions_m": [
+      1.4929999780654908,
+      0.64,
+      5.180000000000001
+    ],
+    "bounds_blender_m": [
+      [
+        -0.3199999928474426,
+        1.1729999780654907
+      ],
+      [
+        -0.3199999928474426,
+        0.3199999928474426
+      ],
+      [
+        0.0,
+        5.179999828338623
+      ]
+    ],
+    "sha256": "d389130f3cf45fcddffa6dedf73d49c1d1da5eea4fb0a2a26fb073cb16bb61e6",
+    "original_design": true
+  },
+  {
+    "key": "public_bench",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 452,
+    "triangles": 452,
+    "dimensions_m": [
+      2.0,
+      0.6197386980056763,
+      1.105354905128479
+    ],
+    "bounds_blender_m": [
+      [
+        -1.0,
+        1.0
+      ],
+      [
+        -0.2750000059604645,
+        0.3447387218475342
+      ],
+      [
+        0.0,
+        1.105354905128479
+      ]
+    ],
+    "sha256": "85c24c19166f5fcb7a16d5362aab8dea91e5e6cbccd1b1692a3e7c168b55e02f",
+    "original_design": true
+  },
+  {
+    "key": "orchard_fence",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 328,
+    "triangles": 328,
+    "dimensions_m": [
+      4.24,
+      0.24,
+      1.3499999999999999
+    ],
+    "bounds_blender_m": [
+      [
+        -2.119999885559082,
+        2.119999885559082
+      ],
+      [
+        -0.11999999731779099,
+        0.11999999731779099
+      ],
+      [
+        0.0,
+        1.350000023841858
+      ]
+    ],
+    "sha256": "eb1a88756ae90859b3b2a20bc5a7e4bb587c2da0ce326f4384e21cfe2967f6db",
+    "original_design": true
+  },
+  {
+    "key": "training_dummy",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 2652,
+    "triangles": 2652,
+    "dimensions_m": [
+      1.340000033378601,
+      0.7200000286102295,
+      2.09
+    ],
+    "bounds_blender_m": [
+      [
+        -0.6700000166893005,
+        0.6700000166893005
+      ],
+      [
+        -0.36000001430511475,
+        0.36000001430511475
+      ],
+      [
+        0.0,
+        2.0899999141693115
+      ]
+    ],
+    "sha256": "8b58c0c8e90607aad597c360be5102c211705a458251db9b17c44f6813eea294",
+    "original_design": true
+  },
+  {
+    "key": "training_weapon_rack",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 752,
+    "triangles": 752,
+    "dimensions_m": [
+      2.379999876022339,
+      0.800000011920929,
+      1.7000000476837158
+    ],
+    "bounds_blender_m": [
+      [
+        -1.1899999380111694,
+        1.1899999380111694
+      ],
+      [
+        -0.4000000059604645,
+        0.4000000059604645
+      ],
+      [
+        0.0,
+        1.7000000476837158
+      ]
+    ],
+    "sha256": "e33484a6725c4d5788d460f26946a1ce11a15c46513138fde97bb18e02d2d7f1",
+    "original_design": true
+  },
+  {
+    "key": "dorn_pavilion",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 14724,
+    "triangles": 10856,
+    "dimensions_m": [
+      6.939999580383301,
+      4.309999942779541,
+      4.735000133514404
+    ],
+    "bounds_blender_m": [
+      [
+        -3.4699997901916504,
+        3.4699997901916504
+      ],
+      [
+        -2.1549999713897705,
+        2.1549999713897705
+      ],
+      [
+        0.0,
+        4.732889175415039
+      ]
+    ],
+    "sha256": "a17ffeb28c240e7e3450b3fb1d7c1bd9ebade524d7de5920d5ceea5e1a7bd176",
+    "original_design": true
+  },
+  {
+    "key": "cargo_barrel",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 1560,
+    "triangles": 1560,
+    "dimensions_m": [
+      0.8799785550207474,
+      0.8676765126220443,
+      1.0579999685287476
+    ],
+    "bounds_blender_m": [
+      [
+        -0.43998926877975464,
+        0.43998926877975464
+      ],
+      [
+        -0.43383824825286865,
+        0.43383824825286865
+      ],
+      [
+        0.0,
+        1.0579999685287476
+      ]
+    ],
+    "sha256": "195f1a2ac505c5739bea22b6ac558a251e2f4d610bec2e488d61f11e31cd32da",
+    "original_design": true
+  },
+  {
+    "key": "cargo_crate",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 1376,
+    "triangles": 1376,
+    "dimensions_m": [
+      1.0299999713897705,
+      0.9099999666213989,
+      0.8100000321865082
+    ],
+    "bounds_blender_m": [
+      [
+        -0.5149999856948853,
+        0.5149999856948853
+      ],
+      [
+        -0.45499998331069946,
+        0.45499998331069946
+      ],
+      [
+        -0.025000005960464478,
+        0.7850000262260437
+      ]
+    ],
+    "sha256": "cb32c7b06dd285a9e0818ed868e21817a4bce7138cf2041e1ea918d21a89ce01",
+    "original_design": true
+  },
+  {
+    "key": "cargo_sacks",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 1080,
+    "triangles": 1080,
+    "dimensions_m": [
+      1.2600000000000002,
+      1.1300000000000001,
+      0.82
+    ],
+    "bounds_blender_m": [
+      [
+        -0.6399999856948853,
+        0.6200000047683716
+      ],
+      [
+        -0.6600000262260437,
+        0.4699999690055847
+      ],
+      [
+        0.0,
+        0.8199999928474426
+      ]
+    ],
+    "sha256": "952c3034a2b80abe13a83dbae3bc56ad57fd0d37fd5b93806ea8c08e1dff8a21",
+    "original_design": true
+  },
+  {
+    "key": "handcart",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 5180,
+    "triangles": 5180,
+    "dimensions_m": [
+      2.0799999237060547,
+      4.004215717315674,
+      1.4349999763071537
+    ],
+    "bounds_blender_m": [
+      [
+        -1.0399999618530273,
+        1.0399999618530273
+      ],
+      [
+        -3.004215717315674,
+        1.0
+      ],
+      [
+        -0.0350000262260437,
+        1.399999976158142
+      ]
+    ],
+    "sha256": "74fc08ac373cf9037ea94bf70adb14af6879a21df418532f0f1ee80217e1f57b",
+    "original_design": true
+  },
+  {
+    "key": "fishing_net_rack",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 6168,
+    "triangles": 6168,
+    "dimensions_m": [
+      2.450000047683716,
+      0.6499999761581421,
+      2.0
+    ],
+    "bounds_blender_m": [
+      [
+        -1.225000023841858,
+        1.225000023841858
+      ],
+      [
+        -0.32499998807907104,
+        0.32499998807907104
+      ],
+      [
+        0.0,
+        2.0
+      ]
+    ],
+    "sha256": "0ee2b445ee59829bb12a787ddc312c3d89632b9e72f8c94c435eba657246787a",
+    "original_design": true
+  },
+  {
+    "key": "harbor_bollard",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 284,
+    "triangles": 284,
+    "dimensions_m": [
+      0.56,
+      0.56,
+      0.81
+    ],
+    "bounds_blender_m": [
+      [
+        -0.2800000011920929,
+        0.2800000011920929
+      ],
+      [
+        -0.2800000011920929,
+        0.2800000011920929
+      ],
+      [
+        0.0,
+        0.8100000023841858
+      ]
+    ],
+    "sha256": "0a58ce39f24c0807cbfba369ef1a962970661db38f0992d4e1f337bf735eae37",
+    "original_design": true
+  },
+  {
+    "key": "dock_straight",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 6552,
+    "triangles": 3196,
+    "dimensions_m": [
+      2.6600000858306885,
+      6.064593553543091,
+      3.35
+    ],
+    "bounds_blender_m": [
+      [
+        -1.3300001621246338,
+        1.3300001621246338
+      ],
+      [
+        -2.9994802474975586,
+        3.061314582824707
+      ],
+      [
+        -1.7000000476837158,
+        1.6499030590057373
+      ]
+    ],
+    "sha256": "512fe38f7cb4d16e305b2cae36c80d60d840194fe50f056dd05a285626b34afc",
+    "original_design": true
+  },
+  {
+    "key": "dock_landing",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 10528,
+    "triangles": 3076,
+    "dimensions_m": [
+      5.159999847412109,
+      4.064593553543091,
+      3.35
+    ],
+    "bounds_blender_m": [
+      [
+        -2.5799999237060547,
+        2.5799999237060547
+      ],
+      [
+        -1.999539852142334,
+        2.089785099029541
+      ],
+      [
+        -1.699997901916504,
+        1.6485397815704346
+      ]
+    ],
+    "sha256": "5df5a611204a9dcb6ec8e59599f0099ed13fce7c18b1fda03504ad35ca02fe2e",
+    "original_design": true
+  },
+  {
+    "key": "stone_balustrade",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 2068,
+    "triangles": 2068,
+    "dimensions_m": [
+      4.099999904632568,
+      0.5,
+      1.2300000190734863
+    ],
+    "bounds_blender_m": [
+      [
+        -2.049999952316284,
+        2.049999952316284
+      ],
+      [
+        -0.25,
+        0.25
+      ],
+      [
+        0.0,
+        1.2300000190734863
+      ]
+    ],
+    "sha256": "bdf7c3f5816e2e7208783df689462fc0b69611f53ae4092031347d924435c77a",
+    "original_design": true
+  },
+  {
+    "key": "terrace_retaining_wall",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 5104,
+    "triangles": 5104,
+    "dimensions_m": [
+      4.199999809265137,
+      1.0199999809265137,
+      2.9999998807907104
+    ],
+    "bounds_blender_m": [
+      [
+        -2.0999999046325684,
+        2.0999999046325684
+      ],
+      [
+        -0.5799999833106995,
+        0.4399999976158142
+      ],
+      [
+        -0.034999966621398926,
+        2.9649999141693115
+      ]
+    ],
+    "sha256": "c1aad1666176e5840ceda30abb0e1ab92ecc2745ee07b60e1b13b73ab8f5da1b",
+    "original_design": true
+  },
+  {
+    "key": "harbor_seawall",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 2024,
+    "triangles": 2024,
+    "dimensions_m": [
+      4.199999809265137,
+      1.0199999809265137,
+      1.4500001072883606
+    ],
+    "bounds_blender_m": [
+      [
+        -2.0999999046325684,
+        2.0999999046325684
+      ],
+      [
+        -0.5799999833106995,
+        0.4399999976158142
+      ],
+      [
+        -0.0350000262260437,
+        1.415000081062317
+      ]
+    ],
+    "sha256": "3219a58de99ef707de0101aa254e4e183153f4ef5cb5dba105a841051d0c4916",
+    "original_design": true
+  },
+  {
+    "key": "fishing_sailboat",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 13320,
+    "triangles": 10819,
+    "dimensions_m": [
+      3.722287654876709,
+      6.327267408370972,
+      6.139999985694885
+    ],
+    "bounds_blender_m": [
+      [
+        -1.0897421836853027,
+        2.6325454711914062
+      ],
+      [
+        -3.2799997329711914,
+        3.047267436981201
+      ],
+      [
+        -0.6400001049041748,
+        5.5
+      ]
+    ],
+    "sha256": "20ffef4704614d09ac071911ef85583952a727f129599822ea62becde847ee1a",
+    "original_design": true
+  },
+  {
+    "key": "fishing_rowboat",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 7708,
+    "triangles": 7708,
+    "dimensions_m": [
+      4.224634647369385,
+      4.424414873123169,
+      1.3798269033432007
+    ],
+    "bounds_blender_m": [
+      [
+        -2.1123173236846924,
+        2.1123173236846924
+      ],
+      [
+        -2.3299999237060547,
+        2.0944151878356934
+      ],
+      [
+        -0.6399999856948853,
+        0.7398269176483154
+      ]
+    ],
+    "sha256": "9e193388272bab121f2ed187534248dee14358e9cc823ca6c58443764b9c2ad6",
+    "original_design": true
+  },
+  {
+    "key": "coastal_boulder_a",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 320,
+    "triangles": 320,
+    "dimensions_m": [
+      2.672680616378784,
+      2.243687629699707,
+      2.0054688453674316
+    ],
+    "bounds_blender_m": [
+      [
+        -1.3408513069152832,
+        1.331829309463501
+      ],
+      [
+        -1.1381441354751587,
+        1.1055434942245483
+      ],
+      [
+        0.0,
+        2.0054688453674316
+      ]
+    ],
+    "sha256": "3009d2dc31f1d52b91908b5273797bb5b1dbe47d5a1bc760ef84f6901bcfb404",
+    "original_design": true
+  },
+  {
+    "key": "coastal_boulder_b",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 320,
+    "triangles": 320,
+    "dimensions_m": [
+      1.7186062932014465,
+      2.520286798477173,
+      1.1997915506362915
+    ],
+    "bounds_blender_m": [
+      [
+        -0.8683050870895386,
+        0.8503011465072632
+      ],
+      [
+        -1.284064531326294,
+        1.236222267150879
+      ],
+      [
+        0.0,
+        1.1997915506362915
+      ]
+    ],
+    "sha256": "1076d77e4374b9d4659d98e1f6d3f55c12f545ca35e464b4d1b0e386631aadbd",
+    "original_design": true
+  },
+  {
+    "key": "crop_row",
+    "source": "art-source/linvel/linvel_asset_library.blend",
+    "before_triangles": 432,
+    "triangles": 432,
+    "dimensions_m": [
+      2.179999828338623,
+      0.3799999952316284,
+      0.2000000048428774
+    ],
+    "bounds_blender_m": [
+      [
+        -1.0899999141693115,
+        1.0899999141693115
+      ],
+      [
+        -0.1899999976158142,
+        0.1899999976158142
+      ],
+      [
+        0.030000001192092896,
+        0.23000000417232513
+      ]
+    ],
+    "sha256": "960be86518ff4068b2a74e1219007421dd52ea98ebc7ee6cd711175b683b3943",
+    "original_design": true
+  },
+  {
+    "key": "grand_harbor_tavern",
+    "label_ru": "Большая портовая таверна",
+    "category": "building",
+    "bounds_blender_m": [
+      [
+        -7.450000286102295,
+        7.450000286102295
+      ],
+      [
+        -7.399999618530273,
+        7.400000095367432
+      ],
+      [
+        -0.019999995827674866,
+        11.774999618530273
+      ]
+    ],
+    "dimensions_m": [
+      14.90000057220459,
+      14.799999713897705,
+      11.794999614357948
+    ],
+    "triangles": 11212,
+    "meshes": 9,
+    "parts": 381,
+    "checked_joints": [
+      {
+        "a": "Foundation",
+        "b": "FrontWallLeft",
+        "axis": 2,
+        "overlap_m": 0.02
+      },
+      {
+        "a": "Foundation",
+        "b": "FrontWallRight",
+        "axis": 2,
+        "overlap_m": 0.02
+      },
+      {
+        "a": "PorchPost0",
+        "b": "PorchBeam0",
+        "axis": 2,
+        "overlap_m": 0.185
+      },
+      {
+        "a": "PorchPost1",
+        "b": "PorchBeam1",
+        "axis": 2,
+        "overlap_m": 0.185
+      }
+    ],
+    "part_ids": [
+      "BackWall",
+      "BalconyDeck",
+      "BalconyRail3.85",
+      "BalconyRail4.55",
+      "Baluster0",
+      "Baluster1",
+      "Baluster10",
+      "Baluster11",
+      "Baluster12",
+      "Baluster13",
+      "Baluster14",
+      "Baluster15",
+      "Baluster16",
+      "Baluster2",
+      "Baluster3",
+      "Baluster4",
+      "Baluster5",
+      "Baluster6",
+      "Baluster7",
+      "Baluster8",
+      "Baluster9",
+      "BarBody",
+      "BarTop",
+      "Chimney",
+      "ChimneyCap",
+      "Dormer0",
+      "Dormer1",
+      "DormerRoof0-1Course0",
+      "DormerRoof0-1Course1",
+      "DormerRoof0-1Course10",
+      "DormerRoof0-1Course11",
+      "DormerRoof0-1Course12",
+      "DormerRoof0-1Course13",
+      "DormerRoof0-1Course2",
+      "DormerRoof0-1Course3",
+      "DormerRoof0-1Course4",
+      "DormerRoof0-1Course5",
+      "DormerRoof0-1Course6",
+      "DormerRoof0-1Course7",
+      "DormerRoof0-1Course8",
+      "DormerRoof0-1Course9",
+      "DormerRoof01Course0",
+      "DormerRoof01Course1",
+      "DormerRoof01Course10",
+      "DormerRoof01Course11",
+      "DormerRoof01Course12",
+      "DormerRoof01Course13",
+      "DormerRoof01Course2",
+      "DormerRoof01Course3",
+      "DormerRoof01Course4",
+      "DormerRoof01Course5",
+      "DormerRoof01Course6",
+      "DormerRoof01Course7",
+      "DormerRoof01Course8",
+      "DormerRoof01Course9",
+      "DormerRoof0Eave-1",
+      "DormerRoof0Eave1",
+      "DormerRoof0Ridge",
+      "DormerRoof1-1Course0",
+      "DormerRoof1-1Course1",
+      "DormerRoof1-1Course10",
+      "DormerRoof1-1Course11",
+      "DormerRoof1-1Course12",
+      "DormerRoof1-1Course13",
+      "DormerRoof1-1Course2",
+      "DormerRoof1-1Course3",
+      "DormerRoof1-1Course4",
+      "DormerRoof1-1Course5",
+      "DormerRoof1-1Course6",
+      "DormerRoof1-1Course7",
+      "DormerRoof1-1Course8",
+      "DormerRoof1-1Course9",
+      "DormerRoof11Course0",
+      "DormerRoof11Course1",
+      "DormerRoof11Course10",
+      "DormerRoof11Course11",
+      "DormerRoof11Course12",
+      "DormerRoof11Course13",
+      "DormerRoof11Course2",
+      "DormerRoof11Course3",
+      "DormerRoof11Course4",
+      "DormerRoof11Course5",
+      "DormerRoof11Course6",
+      "DormerRoof11Course7",
+      "DormerRoof11Course8",
+      "DormerRoof11Course9",
+      "DormerRoof1Eave-1",
+      "DormerRoof1Eave1",
+      "DormerRoof1Ridge",
+      "EntryStep0",
+      "EntryStep1",
+      "EntryStep2",
+      "FacadeBeam0.68",
+      "FacadeBeam3.55",
+      "FacadeBeam6.8",
+      "FireplaceBack",
+      "Foundation",
+      "FrontLintel",
+      "FrontWallLeft",
+      "FrontWallRight",
+      "Gable0",
+      "Gable1",
+      "GableLeft0",
+      "GableLeft1",
+      "GableRight0",
+      "GableRight1",
+      "GroundFloor",
+      "GroundWindow0_Foot-1",
+      "GroundWindow0_Foot1",
+      "GroundWindow0_Inset",
+      "GroundWindow0_Jamb-1",
+      "GroundWindow0_Jamb1",
+      "GroundWindow0_Keystone",
+      "GroundWindow0_Mullion",
+      "GroundWindow0_Shutter-1",
+      "GroundWindow0_Shutter1",
+      "GroundWindow0_ShutterHinge-11.45",
+      "GroundWindow0_ShutterHinge-12.3",
+      "GroundWindow0_ShutterHinge11.45",
+      "GroundWindow0_ShutterHinge12.3",
+      "GroundWindow0_Sill",
+      "GroundWindow0_Transom",
+      "GroundWindow0_Voussoir0",
+      "GroundWindow0_Voussoir1",
+      "GroundWindow0_Voussoir10",
+      "GroundWindow0_Voussoir11",
+      "GroundWindow0_Voussoir2",
+      "GroundWindow0_Voussoir3",
+      "GroundWindow0_Voussoir4",
+      "GroundWindow0_Voussoir5",
+      "GroundWindow0_Voussoir6",
+      "GroundWindow0_Voussoir7",
+      "GroundWindow0_Voussoir8",
+      "GroundWindow0_Voussoir9",
+      "GroundWindow1_Foot-1",
+      "GroundWindow1_Foot1",
+      "GroundWindow1_Inset",
+      "GroundWindow1_Jamb-1",
+      "GroundWindow1_Jamb1",
+      "GroundWindow1_Keystone",
+      "GroundWindow1_Mullion",
+      "GroundWindow1_Shutter-1",
+      "GroundWindow1_Shutter1",
+      "GroundWindow1_ShutterHinge-11.45",
+      "GroundWindow1_ShutterHinge-12.3",
+      "GroundWindow1_ShutterHinge11.45",
+      "GroundWindow1_ShutterHinge12.3",
+      "GroundWindow1_Sill",
+      "GroundWindow1_Transom",
+      "GroundWindow1_Voussoir0",
+      "GroundWindow1_Voussoir1",
+      "GroundWindow1_Voussoir10",
+      "GroundWindow1_Voussoir11",
+      "GroundWindow1_Voussoir2",
+      "GroundWindow1_Voussoir3",
+      "GroundWindow1_Voussoir4",
+      "GroundWindow1_Voussoir5",
+      "GroundWindow1_Voussoir6",
+      "GroundWindow1_Voussoir7",
+      "GroundWindow1_Voussoir8",
+      "GroundWindow1_Voussoir9",
+      "Hearth",
+      "InteriorStair0",
+      "InteriorStair1",
+      "InteriorStair10",
+      "InteriorStair11",
+      "InteriorStair12",
+      "InteriorStair13",
+      "InteriorStair14",
+      "InteriorStair15",
+      "InteriorStair16",
+      "InteriorStair17",
+      "InteriorStair2",
+      "InteriorStair3",
+      "InteriorStair4",
+      "InteriorStair5",
+      "InteriorStair6",
+      "InteriorStair7",
+      "InteriorStair8",
+      "InteriorStair9",
+      "MainRoof-1Course0",
+      "MainRoof-1Course1",
+      "MainRoof-1Course10",
+      "MainRoof-1Course11",
+      "MainRoof-1Course12",
+      "MainRoof-1Course13",
+      "MainRoof-1Course2",
+      "MainRoof-1Course3",
+      "MainRoof-1Course4",
+      "MainRoof-1Course5",
+      "MainRoof-1Course6",
+      "MainRoof-1Course7",
+      "MainRoof-1Course8",
+      "MainRoof-1Course9",
+      "MainRoof1Course0",
+      "MainRoof1Course1",
+      "MainRoof1Course10",
+      "MainRoof1Course11",
+      "MainRoof1Course12",
+      "MainRoof1Course13",
+      "MainRoof1Course2",
+      "MainRoof1Course3",
+      "MainRoof1Course4",
+      "MainRoof1Course5",
+      "MainRoof1Course6",
+      "MainRoof1Course7",
+      "MainRoof1Course8",
+      "MainRoof1Course9",
+      "MainRoofEave-1",
+      "MainRoofEave1",
+      "MainRoofRidge",
+      "Mug1.40",
+      "Mug1.41",
+      "Mug1.42",
+      "Mug1.43",
+      "Mug1.44",
+      "Mug1.45",
+      "Mug1.46",
+      "Mug2.30",
+      "Mug2.31",
+      "Mug2.32",
+      "Mug2.33",
+      "Mug2.34",
+      "Mug2.35",
+      "Mug2.36",
+      "MugEmblem",
+      "MugHandle",
+      "OpenEntry_Foot-1",
+      "OpenEntry_Foot1",
+      "OpenEntry_Jamb-1",
+      "OpenEntry_Jamb1",
+      "OpenEntry_Keystone",
+      "OpenEntry_Voussoir0",
+      "OpenEntry_Voussoir1",
+      "OpenEntry_Voussoir10",
+      "OpenEntry_Voussoir11",
+      "OpenEntry_Voussoir12",
+      "OpenEntry_Voussoir13",
+      "OpenEntry_Voussoir14",
+      "OpenEntry_Voussoir15",
+      "OpenEntry_Voussoir16",
+      "OpenEntry_Voussoir17",
+      "OpenEntry_Voussoir18",
+      "OpenEntry_Voussoir2",
+      "OpenEntry_Voussoir3",
+      "OpenEntry_Voussoir4",
+      "OpenEntry_Voussoir5",
+      "OpenEntry_Voussoir6",
+      "OpenEntry_Voussoir7",
+      "OpenEntry_Voussoir8",
+      "OpenEntry_Voussoir9",
+      "PorchBeam0",
+      "PorchBeam1",
+      "PorchDeck",
+      "PorchPost0",
+      "PorchPost1",
+      "RearShelf1.4",
+      "RearShelf2.3",
+      "SideWall-1",
+      "SideWall1",
+      "SignBoard",
+      "SignBracket",
+      "Stool0_0",
+      "Stool0_1",
+      "Stool0_2",
+      "Stool1_0",
+      "Stool1_1",
+      "Stool1_2",
+      "Stool2_0",
+      "Stool2_1",
+      "Stool2_2",
+      "Stool3_0",
+      "Stool3_1",
+      "Stool3_2",
+      "Table0",
+      "Table1",
+      "Table2",
+      "Table3",
+      "UpperFloor",
+      "UpperFrontTimber-3.4",
+      "UpperFrontTimber-6.85",
+      "UpperFrontTimber0",
+      "UpperFrontTimber3.4",
+      "UpperFrontTimber6.85",
+      "UpperWalls",
+      "UpperWindow0_Foot-1",
+      "UpperWindow0_Foot1",
+      "UpperWindow0_Inset",
+      "UpperWindow0_Jamb-1",
+      "UpperWindow0_Jamb1",
+      "UpperWindow0_Keystone",
+      "UpperWindow0_Mullion",
+      "UpperWindow0_Shutter-1",
+      "UpperWindow0_Shutter1",
+      "UpperWindow0_ShutterHinge-14.55",
+      "UpperWindow0_ShutterHinge-15.4",
+      "UpperWindow0_ShutterHinge14.55",
+      "UpperWindow0_ShutterHinge15.4",
+      "UpperWindow0_Sill",
+      "UpperWindow0_Transom",
+      "UpperWindow0_Voussoir0",
+      "UpperWindow0_Voussoir1",
+      "UpperWindow0_Voussoir2",
+      "UpperWindow0_Voussoir3",
+      "UpperWindow0_Voussoir4",
+      "UpperWindow0_Voussoir5",
+      "UpperWindow0_Voussoir6",
+      "UpperWindow0_Voussoir7",
+      "UpperWindow0_Voussoir8",
+      "UpperWindow1_Foot-1",
+      "UpperWindow1_Foot1",
+      "UpperWindow1_Inset",
+      "UpperWindow1_Jamb-1",
+      "UpperWindow1_Jamb1",
+      "UpperWindow1_Keystone",
+      "UpperWindow1_Mullion",
+      "UpperWindow1_Shutter-1",
+      "UpperWindow1_Shutter1",
+      "UpperWindow1_ShutterHinge-14.55",
+      "UpperWindow1_ShutterHinge-15.4",
+      "UpperWindow1_ShutterHinge14.55",
+      "UpperWindow1_ShutterHinge15.4",
+      "UpperWindow1_Sill",
+      "UpperWindow1_Transom",
+      "UpperWindow1_Voussoir0",
+      "UpperWindow1_Voussoir1",
+      "UpperWindow1_Voussoir2",
+      "UpperWindow1_Voussoir3",
+      "UpperWindow1_Voussoir4",
+      "UpperWindow1_Voussoir5",
+      "UpperWindow1_Voussoir6",
+      "UpperWindow1_Voussoir7",
+      "UpperWindow1_Voussoir8",
+      "UpperWindow2_Foot-1",
+      "UpperWindow2_Foot1",
+      "UpperWindow2_Inset",
+      "UpperWindow2_Jamb-1",
+      "UpperWindow2_Jamb1",
+      "UpperWindow2_Keystone",
+      "UpperWindow2_Mullion",
+      "UpperWindow2_Shutter-1",
+      "UpperWindow2_Shutter1",
+      "UpperWindow2_ShutterHinge-14.55",
+      "UpperWindow2_ShutterHinge-15.4",
+      "UpperWindow2_ShutterHinge14.55",
+      "UpperWindow2_ShutterHinge15.4",
+      "UpperWindow2_Sill",
+      "UpperWindow2_Transom",
+      "UpperWindow2_Voussoir0",
+      "UpperWindow2_Voussoir1",
+      "UpperWindow2_Voussoir2",
+      "UpperWindow2_Voussoir3",
+      "UpperWindow2_Voussoir4",
+      "UpperWindow2_Voussoir5",
+      "UpperWindow2_Voussoir6",
+      "UpperWindow2_Voussoir7",
+      "UpperWindow2_Voussoir8",
+      "UpperWindow3_Foot-1",
+      "UpperWindow3_Foot1",
+      "UpperWindow3_Inset",
+      "UpperWindow3_Jamb-1",
+      "UpperWindow3_Jamb1",
+      "UpperWindow3_Keystone",
+      "UpperWindow3_Mullion",
+      "UpperWindow3_Shutter-1",
+      "UpperWindow3_Shutter1",
+      "UpperWindow3_ShutterHinge-14.55",
+      "UpperWindow3_ShutterHinge-15.4",
+      "UpperWindow3_ShutterHinge14.55",
+      "UpperWindow3_ShutterHinge15.4",
+      "UpperWindow3_Sill",
+      "UpperWindow3_Transom",
+      "UpperWindow3_Voussoir0",
+      "UpperWindow3_Voussoir1",
+      "UpperWindow3_Voussoir2",
+      "UpperWindow3_Voussoir3",
+      "UpperWindow3_Voussoir4",
+      "UpperWindow3_Voussoir5",
+      "UpperWindow3_Voussoir6",
+      "UpperWindow3_Voussoir7",
+      "UpperWindow3_Voussoir8"
+    ],
+    "entry_open_width_m": 2.4,
+    "walkable_ground_floor": true,
+    "collision_boxes_blender": [
+      [
+        [
+          0,
+          1.5,
+          0.23
+        ],
+        [
+          14,
+          11,
+          0.5
+        ]
+      ],
+      [
+        [
+          -4.1,
+          -4.0,
+          1.98
+        ],
+        [
+          5.8,
+          0.38,
+          3.04
+        ]
+      ],
+      [
+        [
+          4.1,
+          -4.0,
+          1.98
+        ],
+        [
+          5.8,
+          0.38,
+          3.04
+        ]
+      ],
+      [
+        [
+          -6.83,
+          1.5,
+          1.98
+        ],
+        [
+          0.36,
+          11,
+          3.04
+        ]
+      ],
+      [
+        [
+          6.83,
+          1.5,
+          1.98
+        ],
+        [
+          0.36,
+          11,
+          3.04
+        ]
+      ],
+      [
+        [
+          0,
+          7.0,
+          1.98
+        ],
+        [
+          14,
+          0.38,
+          3.04
+        ]
+      ],
+      [
+        [
+          0,
+          1.5,
+          3.55
+        ],
+        [
+          14,
+          11,
+          0.22
+        ]
+      ],
+      [
+        [
+          0,
+          -5.1,
+          0.38
+        ],
+        [
+          10.5,
+          2.3,
+          0.24
+        ]
+      ]
+    ],
+    "sha256": "34b185d5c3e66f591c00b1dff4b78f7b37a290ade1af27791eabc5b09d2fa252"
+  },
+  {
+    "key": "merchant_ship_large",
+    "label_ru": "Большой торговый парусник",
+    "category": "ship",
+    "bounds_blender_m": [
+      [
+        -10.330070495605469,
+        10.330070495605469
+      ],
+      [
+        -27.060991287231445,
+        22.116992950439453
+      ],
+      [
+        -4,
+        31.0
+      ]
+    ],
+    "dimensions_m": [
+      20.660140991210938,
+      49.1779842376709,
+      35.0
+    ],
+    "triangles": 4997,
+    "meshes": 7,
+    "parts": 81,
+    "checked_joints": [
+      {
+        "a": "Mast0",
+        "b": "MastFoot0",
+        "axis": 2,
+        "overlap_m": 0.6
+      },
+      {
+        "a": "Mast1",
+        "b": "MastFoot1",
+        "axis": 2,
+        "overlap_m": 0.6
+      }
+    ],
+    "part_ids": [
+      "Bowsprit",
+      "CargoHatch0",
+      "CargoHatch1",
+      "Compass-1",
+      "Compass1",
+      "Forestay",
+      "HatchBoard0-1.3",
+      "HatchBoard00",
+      "HatchBoard01.3",
+      "HatchBoard1-1.3",
+      "HatchBoard10",
+      "HatchBoard11.3",
+      "Hull",
+      "HullBand0.6",
+      "HullBand2.65",
+      "HullBand3.15",
+      "Jib",
+      "MainDeck",
+      "Mast0",
+      "Mast1",
+      "MastFoot0",
+      "MastFoot1",
+      "QuarterDeck",
+      "RailingPost10",
+      "RailingPost11",
+      "RailingPost12",
+      "RailingPost13",
+      "RailingPost14",
+      "RailingPost15",
+      "RailingPost16",
+      "RailingPost24",
+      "RailingPost25",
+      "RailingPost26",
+      "RailingPost27",
+      "RailingPost28",
+      "RailingPost29",
+      "RailingPost30",
+      "RailingPost31",
+      "RailingPost32",
+      "RailingPost33",
+      "RailingPost34",
+      "RailingPost35",
+      "RailingPost36",
+      "RailingPost4",
+      "RailingPost5",
+      "RailingPost6",
+      "RailingPost7",
+      "RailingPost8",
+      "RailingPost9",
+      "RailingTop",
+      "Sail00",
+      "Sail01",
+      "Sail02",
+      "Sail10",
+      "Sail11",
+      "Sheet00-1",
+      "Sheet001",
+      "Sheet01-1",
+      "Sheet011",
+      "Sheet02-1",
+      "Sheet021",
+      "Sheet10-1",
+      "Sheet101",
+      "Sheet11-1",
+      "Sheet111",
+      "StandingRig0-1",
+      "StandingRig01",
+      "StandingRig1-1",
+      "StandingRig11",
+      "SternCabin",
+      "SternWindow0",
+      "SternWindow1",
+      "SternWindow2",
+      "SternWindowSill0",
+      "SternWindowSill1",
+      "SternWindowSill2",
+      "Yard00",
+      "Yard01",
+      "Yard02",
+      "Yard10",
+      "Yard11"
+    ],
+    "waterline_m": 0,
+    "draft_m": 4,
+    "hull_length_m": 44,
+    "beam_m": 11,
+    "sha256": "149f65e4e523164f49afce345a10e3e35fbe576c49e91eb584fdfa18bb3a0d2a"
+  }
+]

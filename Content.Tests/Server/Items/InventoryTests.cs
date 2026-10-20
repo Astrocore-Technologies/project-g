@@ -16,7 +16,7 @@ public sealed class InventoryTests
         catalog: catalog ?? ContentCatalogTests.Load(), inventory: Options.Create(new InventoryOptions { Enabled = true }), hitRoll: () => 0, criticalRoll: () => 1);
 
     [Fact]
-    public void EquipmentRunsOnTickAndDoesNotHealOrResetCooldowns()
+    public void EquipmentRunsOnTickPreservesResourceFractionAndDoesNotResetCooldowns()
     {
         var world = World();
         var initial = world.CreateInitialCharacter() with { Health = 30, AttackCooldownSeconds = 60 };
@@ -30,7 +30,7 @@ public sealed class InventoryTests
         Assert.Equal(stats, actor.Stats);
         world.Simulate(.05f);
         Assert.Equal(stats.MeleeAttack + 8, actor.Stats.MeleeAttack);
-        Assert.Equal(30, actor.Health);
+        Assert.Equal(30+stats.HealthRecovery*(double).05f, actor.Health,8);
         Assert.True(world.CaptureCharacter(1).AttackCooldownSeconds > 59);
         Assert.False(world.TryQueueInventory(1, new(1, InventoryAction.Equip, sword.Handle)));
         var armor = items.Single(item => item.Slot == EquipmentSlot.Armor);
@@ -38,11 +38,12 @@ public sealed class InventoryTests
         world.Simulate(.05f);
         Assert.Equal(stats.PhysicalDefense + 8, actor.Stats.PhysicalDefense);
         Assert.Equal(stats.MaxHealth + 20, actor.Stats.MaxHealth);
-        Assert.Equal(30, actor.Health);
+        var equippedHealth=(30+stats.HealthRecovery*(double).05f*2)/stats.MaxHealth*(stats.MaxHealth+20);
+        Assert.Equal(equippedHealth, actor.Health,8);
         Assert.True(world.TryQueueInventory(1, new(3, InventoryAction.Unequip, armor.Handle)));
         world.Simulate(.05f);
         Assert.Equal(stats.MaxHealth, actor.Stats.MaxHealth);
-        Assert.Equal(30, actor.Health);
+        Assert.Equal((equippedHealth+stats.HealthRecovery*(double).05f)/(stats.MaxHealth+20)*stats.MaxHealth, actor.Health,8);
         Assert.True(world.CaptureCharacter(1).AttackCooldownSeconds > 59);
     }
 

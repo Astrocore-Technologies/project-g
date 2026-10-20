@@ -1,0 +1,3180 @@
+{
+  "schema_version": 1,
+  "stage": "whole-city-blockout-awaiting-review",
+  "intent": "Тёплая приморская гавань раскрывается в большой террасный город: оживлённый нижний порт, уютные жилые улицы, открытая площадь и заметная Гильдия; над крышами видны тренировочная терраса и дорога в горы.",
+  "reference": "First user-approved Linvel panoramic art; composition and scale, not a pixel trace.",
+  "art_direction": "Stylized Hand-Painted Anime 3D; this phase uses untextured architectural masses.",
+  "units": "metres",
+  "city_extent_m": [
+    400,
+    350
+  ],
+  "sea_height": 0,
+  "assumptions": [
+    "Dimensions and placement are reviewable prototype assumptions.",
+    "No server placement, travel, persistence, encounters or economy migration.",
+    "Existing detailed models remain available; blockout proxies are not replacements.",
+    "Automated route clearance is not a human playtest sign-off."
+  ],
+  "source_skill": {
+    "url": "https://mcpmarket.com/tools/skills/level-designer-spatial-architect",
+    "method": "Full SKILL.md read; MCP server configured, unavailable as a live tool in this session.",
+    "rules": [
+      "Intent before editor",
+      "Paper layout before blockout",
+      "Legible landmarks and primary routes",
+      "Greybox playtest before art dressing",
+      "Before/after evidence for revisions"
+    ]
+  },
+  "route_widths_m": {
+    "primary": 12,
+    "secondary": 8,
+    "local": 5,
+    "main_stairs": 12,
+    "cart_ramp": 10
+  },
+  "platforms": [
+    {
+      "id": "LowerQuay",
+      "part": "HarborQuarter",
+      "height": 4,
+      "points": [
+        [
+          -165,
+          91
+        ],
+        [
+          -130,
+          80
+        ],
+        [
+          -94,
+          83
+        ],
+        [
+          -66,
+          93
+        ],
+        [
+          -24,
+          91
+        ],
+        [
+          16,
+          96
+        ],
+        [
+          70,
+          108
+        ],
+        [
+          96,
+          128
+        ],
+        [
+          72,
+          144
+        ],
+        [
+          -40,
+          141
+        ],
+        [
+          -114,
+          135
+        ],
+        [
+          -162,
+          120
+        ]
+      ],
+      "color": "#cbb88f"
+    },
+    {
+      "id": "LowerTown",
+      "part": "ResidentialTerraces",
+      "height": 12,
+      "points": [
+        [
+          -130,
+          80
+        ],
+        [
+          -115,
+          37
+        ],
+        [
+          -84,
+          22
+        ],
+        [
+          -38,
+          32
+        ],
+        [
+          8,
+          29
+        ],
+        [
+          52,
+          51
+        ],
+        [
+          70,
+          108
+        ],
+        [
+          16,
+          96
+        ],
+        [
+          -24,
+          91
+        ],
+        [
+          -66,
+          93
+        ],
+        [
+          -94,
+          83
+        ]
+      ],
+      "color": "#d7c69f"
+    },
+    {
+      "id": "CivicTerrace",
+      "part": "CityCenter",
+      "height": 23,
+      "points": [
+        [
+          -62,
+          30
+        ],
+        [
+          -65,
+          -26
+        ],
+        [
+          -44,
+          -49
+        ],
+        [
+          54,
+          -49
+        ],
+        [
+          68,
+          -28
+        ],
+        [
+          63,
+          32
+        ],
+        [
+          35,
+          53
+        ],
+        [
+          -18,
+          49
+        ]
+      ],
+      "color": "#ead9b2"
+    },
+    {
+      "id": "CraftsTerrace",
+      "part": "CraftsQuarter",
+      "height": 18,
+      "points": [
+        [
+          -176,
+          25
+        ],
+        [
+          -167,
+          -38
+        ],
+        [
+          -121,
+          -65
+        ],
+        [
+          -68,
+          -46
+        ],
+        [
+          -65,
+          -26
+        ],
+        [
+          -62,
+          30
+        ],
+        [
+          -84,
+          44
+        ],
+        [
+          -122,
+          42
+        ]
+      ],
+      "color": "#cdbd9a"
+    },
+    {
+      "id": "WestHomes",
+      "part": "ResidentialTerraces",
+      "height": 29,
+      "points": [
+        [
+          -152,
+          -42
+        ],
+        [
+          -148,
+          -98
+        ],
+        [
+          -115,
+          -123
+        ],
+        [
+          -68,
+          -115
+        ],
+        [
+          -48,
+          -86
+        ],
+        [
+          -44,
+          -49
+        ],
+        [
+          -68,
+          -46
+        ],
+        [
+          -121,
+          -65
+        ]
+      ],
+      "color": "#ded0b1"
+    },
+    {
+      "id": "UpperTown",
+      "part": "UpperTown",
+      "height": 32,
+      "points": [
+        [
+          -68,
+          -115
+        ],
+        [
+          -48,
+          -153
+        ],
+        [
+          5,
+          -164
+        ],
+        [
+          60,
+          -151
+        ],
+        [
+          86,
+          -113
+        ],
+        [
+          68,
+          -65
+        ],
+        [
+          39,
+          -49
+        ],
+        [
+          -44,
+          -49
+        ],
+        [
+          -48,
+          -86
+        ]
+      ],
+      "color": "#dbcfac"
+    },
+    {
+      "id": "TrainingAcropolis",
+      "part": "TrainingQuarter",
+      "height": 36,
+      "points": [
+        [
+          68,
+          -65
+        ],
+        [
+          86,
+          -113
+        ],
+        [
+          90,
+          -151
+        ],
+        [
+          145,
+          -151
+        ],
+        [
+          184,
+          -126
+        ],
+        [
+          181,
+          -77
+        ],
+        [
+          152,
+          -48
+        ],
+        [
+          106,
+          -48
+        ]
+      ],
+      "color": "#d7c49b"
+    },
+    {
+      "id": "EastHomes",
+      "part": "SanctuaryQuarter",
+      "height": 20,
+      "points": [
+        [
+          63,
+          32
+        ],
+        [
+          65,
+          -28
+        ],
+        [
+          106,
+          -48
+        ],
+        [
+          152,
+          -48
+        ],
+        [
+          169,
+          -12
+        ],
+        [
+          156,
+          31
+        ],
+        [
+          140,
+          65
+        ],
+        [
+          111,
+          82
+        ],
+        [
+          70,
+          108
+        ],
+        [
+          52,
+          51
+        ]
+      ],
+      "color": "#dcd1b0"
+    },
+    {
+      "id": "LighthouseHeadland",
+      "part": "HarborQuarter",
+      "height": 5,
+      "points": [
+        [
+          -202,
+          151
+        ],
+        [
+          -188,
+          141
+        ],
+        [
+          -172,
+          144
+        ],
+        [
+          -163,
+          160
+        ],
+        [
+          -171,
+          180
+        ],
+        [
+          -191,
+          184
+        ],
+        [
+          -207,
+          168
+        ]
+      ],
+      "color": "#cbb88f"
+    },
+    {
+      "id": "GardenApproach",
+      "part": "GardensQuarter",
+      "height": 32,
+      "points": [
+        [
+          -50,
+          -151
+        ],
+        [
+          -45,
+          -224
+        ],
+        [
+          25,
+          -237
+        ],
+        [
+          91,
+          -212
+        ],
+        [
+          109,
+          -159
+        ],
+        [
+          60,
+          -151
+        ],
+        [
+          5,
+          -164
+        ]
+      ],
+      "color": "#a6b77b"
+    },
+    {
+      "id": "TavernCourt",
+      "part": "ResidentialTerraces",
+      "height": 12,
+      "points": [
+        [
+          -153,
+          60
+        ],
+        [
+          -125,
+          54
+        ],
+        [
+          -113,
+          66
+        ],
+        [
+          -116,
+          92
+        ],
+        [
+          -146,
+          94
+        ],
+        [
+          -158,
+          78
+        ]
+      ],
+      "color": "#d7c69f"
+    },
+    {
+      "id": "GateApproach",
+      "part": "GateQuarter",
+      "height": 32,
+      "points": [
+        [
+          22,
+          -168
+        ],
+        [
+          86,
+          -168
+        ],
+        [
+          86,
+          -140
+        ],
+        [
+          22,
+          -140
+        ]
+      ],
+      "color": "#dbcfac"
+    }
+  ],
+  "buildings": [
+    {
+      "id": "LowerHome_01",
+      "part": "ResidentialTerraces",
+      "kit": "tall_house",
+      "position": [
+        -111,
+        12,
+        48
+      ],
+      "yaw": 0,
+      "dimensions": [
+        9,
+        11,
+        14.2
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "LowerHome_02",
+      "part": "ResidentialTerraces",
+      "kit": "house",
+      "position": [
+        -86,
+        12,
+        49
+      ],
+      "yaw": 0,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "LowerHome_03",
+      "part": "ResidentialTerraces",
+      "kit": "house",
+      "position": [
+        -110,
+        12,
+        66
+      ],
+      "yaw": 5,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "LowerHome_04",
+      "part": "ResidentialTerraces",
+      "kit": "house",
+      "position": [
+        -87,
+        12,
+        63
+      ],
+      "yaw": -6,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "LowerHome_05",
+      "part": "ResidentialTerraces",
+      "kit": "tall_house",
+      "position": [
+        -68,
+        12,
+        64
+      ],
+      "yaw": 0,
+      "dimensions": [
+        9,
+        11,
+        14.2
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "LowerHome_06",
+      "part": "ResidentialTerraces",
+      "kit": "house",
+      "position": [
+        -68,
+        12,
+        43
+      ],
+      "yaw": 0,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "LowerHome_07",
+      "part": "ResidentialTerraces",
+      "kit": "house",
+      "position": [
+        -65,
+        12,
+        88.5
+      ],
+      "yaw": 5,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "LowerHome_08",
+      "part": "ResidentialTerraces",
+      "kit": "house",
+      "position": [
+        -13,
+        12,
+        62
+      ],
+      "yaw": -6,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "LowerHome_09",
+      "part": "ResidentialTerraces",
+      "kit": "tall_house",
+      "position": [
+        12,
+        12,
+        61
+      ],
+      "yaw": 0,
+      "dimensions": [
+        9,
+        11,
+        14.2
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "LowerHome_10",
+      "part": "ResidentialTerraces",
+      "kit": "house",
+      "position": [
+        34,
+        12,
+        63
+      ],
+      "yaw": 0,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "LowerHome_11",
+      "part": "ResidentialTerraces",
+      "kit": "house",
+      "position": [
+        -14,
+        12,
+        90
+      ],
+      "yaw": 5,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "LowerHome_12",
+      "part": "ResidentialTerraces",
+      "kit": "house",
+      "position": [
+        8,
+        12,
+        91
+      ],
+      "yaw": -6,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "LowerHome_13",
+      "part": "ResidentialTerraces",
+      "kit": "tall_house",
+      "position": [
+        30,
+        12,
+        92
+      ],
+      "yaw": 0,
+      "dimensions": [
+        9,
+        11,
+        14.2
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "LowerHome_14",
+      "part": "ResidentialTerraces",
+      "kit": "house",
+      "position": [
+        48,
+        12,
+        92
+      ],
+      "yaw": 0,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "WestHome_01",
+      "part": "ResidentialTerraces",
+      "kit": "tall_house",
+      "position": [
+        -140,
+        29,
+        -73
+      ],
+      "yaw": 0,
+      "dimensions": [
+        9,
+        11,
+        14.2
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "WestHome_02",
+      "part": "ResidentialTerraces",
+      "kit": "house",
+      "position": [
+        -111,
+        29,
+        -79.3
+      ],
+      "yaw": 4,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "WestHome_03",
+      "part": "ResidentialTerraces",
+      "kit": "house",
+      "position": [
+        -91,
+        29,
+        -77
+      ],
+      "yaw": -5,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "WestHome_04",
+      "part": "ResidentialTerraces",
+      "kit": "tall_house",
+      "position": [
+        -91,
+        29,
+        -100
+      ],
+      "yaw": 0,
+      "dimensions": [
+        9,
+        11,
+        14.2
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "WestHome_05",
+      "part": "ResidentialTerraces",
+      "kit": "house",
+      "position": [
+        -101,
+        29,
+        -102
+      ],
+      "yaw": 4,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "WestHome_06",
+      "part": "ResidentialTerraces",
+      "kit": "house",
+      "position": [
+        -122,
+        29,
+        -103
+      ],
+      "yaw": -5,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "WestHome_07",
+      "part": "ResidentialTerraces",
+      "kit": "tall_house",
+      "position": [
+        -143,
+        29,
+        -56
+      ],
+      "yaw": 0,
+      "dimensions": [
+        9,
+        11,
+        14.2
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "WestHome_08",
+      "part": "ResidentialTerraces",
+      "kit": "house",
+      "position": [
+        -111,
+        29,
+        -66
+      ],
+      "yaw": 4,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "WestHome_09",
+      "part": "ResidentialTerraces",
+      "kit": "house",
+      "position": [
+        -70,
+        29,
+        -68
+      ],
+      "yaw": -5,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "WestHome_10",
+      "part": "ResidentialTerraces",
+      "kit": "tall_house",
+      "position": [
+        -58,
+        29,
+        -83
+      ],
+      "yaw": 0,
+      "dimensions": [
+        9,
+        11,
+        14.2
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "Workshop_01",
+      "part": "CraftsQuarter",
+      "kit": "workshop",
+      "position": [
+        -151,
+        18,
+        -17
+      ],
+      "yaw": 0,
+      "dimensions": [
+        13,
+        15,
+        10
+      ],
+      "scale": 1,
+      "role": "workshop"
+    },
+    {
+      "id": "Workshop_02",
+      "part": "CraftsQuarter",
+      "kit": "house",
+      "position": [
+        -129,
+        18,
+        -23
+      ],
+      "yaw": 0,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "workshop"
+    },
+    {
+      "id": "Workshop_03",
+      "part": "CraftsQuarter",
+      "kit": "workshop",
+      "position": [
+        -105,
+        18,
+        -31
+      ],
+      "yaw": 90,
+      "dimensions": [
+        13,
+        15,
+        10
+      ],
+      "scale": 1,
+      "role": "workshop"
+    },
+    {
+      "id": "Workshop_04",
+      "part": "CraftsQuarter",
+      "kit": "workshop",
+      "position": [
+        -83,
+        18,
+        -26
+      ],
+      "yaw": 0,
+      "dimensions": [
+        13,
+        15,
+        10
+      ],
+      "scale": 1,
+      "role": "workshop"
+    },
+    {
+      "id": "Workshop_05",
+      "part": "CraftsQuarter",
+      "kit": "house",
+      "position": [
+        -150,
+        18,
+        3
+      ],
+      "yaw": 0,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "workshop"
+    },
+    {
+      "id": "Workshop_06",
+      "part": "CraftsQuarter",
+      "kit": "workshop",
+      "position": [
+        -130.5,
+        18,
+        4
+      ],
+      "yaw": 90,
+      "dimensions": [
+        13,
+        15,
+        10
+      ],
+      "scale": 1,
+      "role": "workshop"
+    },
+    {
+      "id": "Workshop_07",
+      "part": "CraftsQuarter",
+      "kit": "workshop",
+      "position": [
+        -106,
+        18,
+        0
+      ],
+      "yaw": 0,
+      "dimensions": [
+        13,
+        15,
+        10
+      ],
+      "scale": 1,
+      "role": "workshop"
+    },
+    {
+      "id": "Workshop_08",
+      "part": "CraftsQuarter",
+      "kit": "house",
+      "position": [
+        -84,
+        18,
+        0
+      ],
+      "yaw": 0,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "workshop"
+    },
+    {
+      "id": "Workshop_09",
+      "part": "CraftsQuarter",
+      "kit": "workshop",
+      "position": [
+        -137,
+        18,
+        30
+      ],
+      "yaw": 90,
+      "dimensions": [
+        13,
+        15,
+        10
+      ],
+      "scale": 1,
+      "role": "workshop"
+    },
+    {
+      "id": "Workshop_10",
+      "part": "CraftsQuarter",
+      "kit": "workshop",
+      "position": [
+        -145,
+        18,
+        -37
+      ],
+      "yaw": 0,
+      "dimensions": [
+        13,
+        15,
+        10
+      ],
+      "scale": 1,
+      "role": "workshop"
+    },
+    {
+      "id": "Workshop_11",
+      "part": "CraftsQuarter",
+      "kit": "house",
+      "position": [
+        -86,
+        18,
+        28
+      ],
+      "yaw": 0,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "workshop"
+    },
+    {
+      "id": "CivicBuilding_01",
+      "part": "CityCenter",
+      "kit": "tall_house",
+      "position": [
+        -43,
+        23,
+        -24
+      ],
+      "yaw": 90,
+      "dimensions": [
+        9,
+        11,
+        14.2
+      ],
+      "scale": 1,
+      "role": "weapon_shop"
+    },
+    {
+      "id": "CivicBuilding_02",
+      "part": "CityCenter",
+      "kit": "house",
+      "position": [
+        -43,
+        23,
+        -2
+      ],
+      "yaw": 90,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "armor_shop"
+    },
+    {
+      "id": "CivicBuilding_03",
+      "part": "CityCenter",
+      "kit": "house",
+      "position": [
+        -43,
+        23,
+        22
+      ],
+      "yaw": 90,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "camp_shop"
+    },
+    {
+      "id": "CivicBuilding_04",
+      "part": "CityCenter",
+      "kit": "tall_house",
+      "position": [
+        34,
+        23,
+        -25
+      ],
+      "yaw": -90,
+      "dimensions": [
+        9,
+        11,
+        14.2
+      ],
+      "scale": 1,
+      "role": "market_shop"
+    },
+    {
+      "id": "CivicBuilding_05",
+      "part": "CityCenter",
+      "kit": "house",
+      "position": [
+        44,
+        23,
+        -1
+      ],
+      "yaw": -90,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "market_shop"
+    },
+    {
+      "id": "CivicBuilding_06",
+      "part": "CityCenter",
+      "kit": "house",
+      "position": [
+        44,
+        23,
+        23
+      ],
+      "yaw": -90,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "market_shop"
+    },
+    {
+      "id": "CivicBuilding_07",
+      "part": "CityCenter",
+      "kit": "tall_house",
+      "position": [
+        -27,
+        23,
+        -37
+      ],
+      "yaw": 90,
+      "dimensions": [
+        9,
+        11,
+        14.2
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "CivicBuilding_08",
+      "part": "CityCenter",
+      "kit": "house",
+      "position": [
+        29,
+        23,
+        -37
+      ],
+      "yaw": -90,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "AdventurersGuild",
+      "part": "CityCenter",
+      "kit": "guild",
+      "position": [
+        0,
+        23,
+        -32
+      ],
+      "yaw": 0,
+      "dimensions": [
+        29,
+        22,
+        29
+      ],
+      "scale": 1,
+      "role": "guild"
+    },
+    {
+      "id": "HarborTavern",
+      "part": "ResidentialTerraces",
+      "kit": "tavern",
+      "position": [
+        -137,
+        12,
+        76
+      ],
+      "yaw": 0,
+      "dimensions": [
+        19,
+        15,
+        15
+      ],
+      "scale": 1,
+      "role": "tavern"
+    },
+    {
+      "id": "UpperHome_01",
+      "part": "UpperTown",
+      "kit": "tall_house",
+      "position": [
+        -28,
+        32,
+        -108
+      ],
+      "yaw": 0,
+      "dimensions": [
+        9,
+        11,
+        14.2
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "UpperHome_02",
+      "part": "UpperTown",
+      "kit": "house",
+      "position": [
+        -9,
+        32,
+        -110
+      ],
+      "yaw": 0,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "UpperHome_03",
+      "part": "UpperTown",
+      "kit": "house",
+      "position": [
+        12,
+        32,
+        -111
+      ],
+      "yaw": -5,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "UpperHome_04",
+      "part": "UpperTown",
+      "kit": "tall_house",
+      "position": [
+        32,
+        32,
+        -113
+      ],
+      "yaw": 5,
+      "dimensions": [
+        9,
+        11,
+        14.2
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "UpperHome_05",
+      "part": "UpperTown",
+      "kit": "house",
+      "position": [
+        -25,
+        32,
+        -132
+      ],
+      "yaw": 0,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "UpperHome_06",
+      "part": "UpperTown",
+      "kit": "house",
+      "position": [
+        -4,
+        32,
+        -136
+      ],
+      "yaw": 0,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "UpperHome_07",
+      "part": "UpperTown",
+      "kit": "tall_house",
+      "position": [
+        19,
+        32,
+        -137
+      ],
+      "yaw": -5,
+      "dimensions": [
+        9,
+        11,
+        14.2
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "UpperHome_08",
+      "part": "UpperTown",
+      "kit": "house",
+      "position": [
+        67,
+        32,
+        -80
+      ],
+      "yaw": 5,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "UpperHome_09",
+      "part": "UpperTown",
+      "kit": "house",
+      "position": [
+        -38,
+        32,
+        -65
+      ],
+      "yaw": 0,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "UpperHome_10",
+      "part": "UpperTown",
+      "kit": "tall_house",
+      "position": [
+        35,
+        32,
+        -63
+      ],
+      "yaw": 0,
+      "dimensions": [
+        9,
+        11,
+        14.2
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "UpperPublicHall",
+      "part": "UpperTown",
+      "kit": "hall",
+      "position": [
+        -5,
+        32,
+        -81
+      ],
+      "yaw": 0,
+      "dimensions": [
+        22,
+        16,
+        17
+      ],
+      "scale": 1,
+      "role": "public_hall"
+    },
+    {
+      "id": "EastHome_01",
+      "part": "SanctuaryQuarter",
+      "kit": "tall_house",
+      "position": [
+        90,
+        20,
+        -28
+      ],
+      "yaw": 0,
+      "dimensions": [
+        9,
+        11,
+        14.2
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "EastHome_02",
+      "part": "SanctuaryQuarter",
+      "kit": "house",
+      "position": [
+        110,
+        20,
+        -28
+      ],
+      "yaw": 4,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "EastHome_03",
+      "part": "SanctuaryQuarter",
+      "kit": "house",
+      "position": [
+        138,
+        20,
+        -27
+      ],
+      "yaw": -5,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "EastHome_04",
+      "part": "SanctuaryQuarter",
+      "kit": "house",
+      "position": [
+        93,
+        20,
+        -13
+      ],
+      "yaw": 0,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "EastHome_05",
+      "part": "SanctuaryQuarter",
+      "kit": "tall_house",
+      "position": [
+        113,
+        20,
+        -12
+      ],
+      "yaw": 4,
+      "dimensions": [
+        9,
+        11,
+        14.2
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "EastHome_06",
+      "part": "SanctuaryQuarter",
+      "kit": "house",
+      "position": [
+        143,
+        20,
+        -13
+      ],
+      "yaw": -5,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "EastHome_07",
+      "part": "SanctuaryQuarter",
+      "kit": "house",
+      "position": [
+        91,
+        20,
+        15
+      ],
+      "yaw": 0,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "EastHome_08",
+      "part": "SanctuaryQuarter",
+      "kit": "house",
+      "position": [
+        114,
+        20,
+        16
+      ],
+      "yaw": 4,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "EastHome_09",
+      "part": "SanctuaryQuarter",
+      "kit": "tall_house",
+      "position": [
+        141,
+        20,
+        17
+      ],
+      "yaw": -5,
+      "dimensions": [
+        9,
+        11,
+        14.2
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "EastHome_10",
+      "part": "SanctuaryQuarter",
+      "kit": "house",
+      "position": [
+        84,
+        20,
+        42
+      ],
+      "yaw": 0,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "EastHome_11",
+      "part": "SanctuaryQuarter",
+      "kit": "house",
+      "position": [
+        104,
+        20,
+        68
+      ],
+      "yaw": 4,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "EastHome_12",
+      "part": "SanctuaryQuarter",
+      "kit": "house",
+      "position": [
+        77,
+        20,
+        77
+      ],
+      "yaw": -5,
+      "dimensions": [
+        9,
+        11,
+        10.8
+      ],
+      "scale": 1,
+      "role": "housing"
+    },
+    {
+      "id": "HealingHouse",
+      "part": "SanctuaryQuarter",
+      "kit": "hall",
+      "position": [
+        111,
+        20,
+        44
+      ],
+      "yaw": 0,
+      "dimensions": [
+        18.26,
+        13.28,
+        14.11
+      ],
+      "scale": 0.83,
+      "role": "healing_house"
+    },
+    {
+      "id": "SeaSanctuary",
+      "part": "SanctuaryQuarter",
+      "kit": "shrine",
+      "position": [
+        141,
+        20,
+        44
+      ],
+      "yaw": 0,
+      "dimensions": [
+        12.0,
+        16.0,
+        16.0
+      ],
+      "scale": 0.8,
+      "role": "sanctuary"
+    },
+    {
+      "id": "HarborWarehouse_01",
+      "part": "HarborQuarter",
+      "kit": "warehouse",
+      "position": [
+        -133,
+        4,
+        104
+      ],
+      "yaw": -4,
+      "dimensions": [
+        15,
+        21,
+        12
+      ],
+      "scale": 1,
+      "role": "warehouse"
+    },
+    {
+      "id": "HarborWarehouse_02",
+      "part": "HarborQuarter",
+      "kit": "workshop",
+      "position": [
+        -105,
+        4,
+        106
+      ],
+      "yaw": -4,
+      "dimensions": [
+        13,
+        15,
+        10
+      ],
+      "scale": 1,
+      "role": "warehouse"
+    },
+    {
+      "id": "HarborWarehouse_03",
+      "part": "HarborQuarter",
+      "kit": "warehouse",
+      "position": [
+        -77,
+        4,
+        108
+      ],
+      "yaw": -4,
+      "dimensions": [
+        15,
+        21,
+        12
+      ],
+      "scale": 1,
+      "role": "warehouse"
+    },
+    {
+      "id": "HarborWarehouse_04",
+      "part": "HarborQuarter",
+      "kit": "workshop",
+      "position": [
+        -6,
+        4,
+        116
+      ],
+      "yaw": 8,
+      "dimensions": [
+        13,
+        15,
+        10
+      ],
+      "scale": 1,
+      "role": "warehouse"
+    },
+    {
+      "id": "HarborWarehouse_05",
+      "part": "HarborQuarter",
+      "kit": "warehouse",
+      "position": [
+        25,
+        4,
+        115
+      ],
+      "yaw": 8,
+      "dimensions": [
+        15,
+        21,
+        12
+      ],
+      "scale": 1,
+      "role": "warehouse"
+    },
+    {
+      "id": "HarborWarehouse_06",
+      "part": "HarborQuarter",
+      "kit": "workshop",
+      "position": [
+        54,
+        4,
+        118
+      ],
+      "yaw": 8,
+      "dimensions": [
+        13,
+        15,
+        10
+      ],
+      "scale": 1,
+      "role": "warehouse"
+    },
+    {
+      "id": "GreatLighthouse",
+      "part": "HarborQuarter",
+      "kit": "lighthouse",
+      "position": [
+        -184,
+        5,
+        163
+      ],
+      "yaw": 0,
+      "dimensions": [
+        11,
+        11,
+        34
+      ],
+      "scale": 1,
+      "role": "landmark"
+    },
+    {
+      "id": "NorthGateTower_1",
+      "part": "GateQuarter",
+      "kit": "tower",
+      "position": [
+        31,
+        32,
+        -155
+      ],
+      "yaw": 0,
+      "dimensions": [
+        8,
+        8,
+        18
+      ],
+      "scale": 1,
+      "role": "gate"
+    },
+    {
+      "id": "NorthGateTower_2",
+      "part": "GateQuarter",
+      "kit": "tower",
+      "position": [
+        61,
+        32,
+        -155
+      ],
+      "yaw": 0,
+      "dimensions": [
+        8,
+        8,
+        18
+      ],
+      "scale": 1,
+      "role": "gate"
+    },
+    {
+      "id": "WallTower_1",
+      "part": "GateQuarter",
+      "kit": "tower",
+      "position": [
+        -139,
+        29,
+        -96
+      ],
+      "yaw": 0,
+      "dimensions": [
+        6.08,
+        6.08,
+        13.68
+      ],
+      "scale": 0.76,
+      "role": "wall"
+    },
+    {
+      "id": "WallTower_2",
+      "part": "GateQuarter",
+      "kit": "tower",
+      "position": [
+        -104,
+        29,
+        -118
+      ],
+      "yaw": 0,
+      "dimensions": [
+        6.08,
+        6.08,
+        13.68
+      ],
+      "scale": 0.76,
+      "role": "wall"
+    },
+    {
+      "id": "WallTower_3",
+      "part": "GateQuarter",
+      "kit": "tower",
+      "position": [
+        106,
+        36,
+        -147
+      ],
+      "yaw": 0,
+      "dimensions": [
+        6.08,
+        6.08,
+        13.68
+      ],
+      "scale": 0.76,
+      "role": "wall"
+    },
+    {
+      "id": "WallTower_4",
+      "part": "GateQuarter",
+      "kit": "tower",
+      "position": [
+        161,
+        36,
+        -133
+      ],
+      "yaw": 0,
+      "dimensions": [
+        6.08,
+        6.08,
+        13.68
+      ],
+      "scale": 0.76,
+      "role": "wall"
+    },
+    {
+      "id": "WallTower_5",
+      "part": "GateQuarter",
+      "kit": "tower",
+      "position": [
+        176,
+        36,
+        -91
+      ],
+      "yaw": 0,
+      "dimensions": [
+        6.08,
+        6.08,
+        13.68
+      ],
+      "scale": 0.76,
+      "role": "wall"
+    },
+    {
+      "id": "OrchardHouse_1",
+      "part": "GardensQuarter",
+      "kit": "house",
+      "position": [
+        -21,
+        32,
+        -190
+      ],
+      "yaw": 0,
+      "dimensions": [
+        8.1,
+        9.9,
+        9.72
+      ],
+      "scale": 0.9,
+      "role": "orchard"
+    },
+    {
+      "id": "OrchardHouse_2",
+      "part": "GardensQuarter",
+      "kit": "house",
+      "position": [
+        8,
+        32,
+        -202
+      ],
+      "yaw": 0,
+      "dimensions": [
+        8.1,
+        9.9,
+        9.72
+      ],
+      "scale": 0.9,
+      "role": "orchard"
+    },
+    {
+      "id": "OrchardHouse_3",
+      "part": "GardensQuarter",
+      "kit": "house",
+      "position": [
+        72,
+        32,
+        -186
+      ],
+      "yaw": 0,
+      "dimensions": [
+        8.1,
+        9.9,
+        9.72
+      ],
+      "scale": 0.9,
+      "role": "orchard"
+    },
+    {
+      "id": "LargeShipEnvelope_1",
+      "part": "HarborQuarter",
+      "kit": "ship",
+      "position": [
+        -78,
+        0,
+        182
+      ],
+      "yaw": 0,
+      "dimensions": [
+        13,
+        48,
+        32
+      ],
+      "scale": 1,
+      "role": "ship_clearance"
+    },
+    {
+      "id": "LargeShipEnvelope_2",
+      "part": "HarborQuarter",
+      "kit": "ship",
+      "position": [
+        -22,
+        0,
+        183
+      ],
+      "yaw": 0,
+      "dimensions": [
+        13,
+        48,
+        32
+      ],
+      "scale": 1,
+      "role": "ship_clearance"
+    },
+    {
+      "id": "LargeShipEnvelope_3",
+      "part": "HarborQuarter",
+      "kit": "ship",
+      "position": [
+        38,
+        0,
+        180
+      ],
+      "yaw": 0,
+      "dimensions": [
+        13,
+        48,
+        32
+      ],
+      "scale": 1,
+      "role": "ship_clearance"
+    }
+  ],
+  "links": [
+    {
+      "id": "GrandCivicStair",
+      "part": "CityCenter",
+      "start": [
+        0,
+        23,
+        44
+      ],
+      "end": [
+        0,
+        12,
+        77
+      ],
+      "width": 12,
+      "kind": "stairs"
+    },
+    {
+      "id": "HarborStair",
+      "part": "HarborQuarter",
+      "start": [
+        -36,
+        12,
+        83
+      ],
+      "end": [
+        -36,
+        4,
+        110
+      ],
+      "width": 12,
+      "kind": "stairs"
+    },
+    {
+      "id": "WestCartAscent",
+      "part": "CraftsQuarter",
+      "start": [
+        -99,
+        12,
+        78
+      ],
+      "end": [
+        -99,
+        18,
+        39
+      ],
+      "width": 10,
+      "kind": "ramp"
+    },
+    {
+      "id": "CraftsCivicAscent",
+      "part": "CityCenter",
+      "start": [
+        -79,
+        18,
+        12
+      ],
+      "end": [
+        -57,
+        23,
+        12
+      ],
+      "width": 10,
+      "kind": "ramp"
+    },
+    {
+      "id": "UpperTownAscent",
+      "part": "UpperTown",
+      "start": [
+        49,
+        23,
+        -39
+      ],
+      "end": [
+        49,
+        32,
+        -83
+      ],
+      "width": 12,
+      "kind": "ramp"
+    },
+    {
+      "id": "EastCivicAscent",
+      "part": "SanctuaryQuarter",
+      "start": [
+        60,
+        23,
+        0
+      ],
+      "end": [
+        84,
+        20,
+        0
+      ],
+      "width": 10,
+      "kind": "ramp"
+    },
+    {
+      "id": "ArenaEastStair",
+      "part": "TrainingQuarter",
+      "start": [
+        132,
+        20,
+        -40
+      ],
+      "end": [
+        132,
+        36,
+        -83
+      ],
+      "width": 10,
+      "kind": "stairs"
+    },
+    {
+      "id": "ArenaUpperAscent",
+      "part": "TrainingQuarter",
+      "start": [
+        75,
+        32,
+        -108
+      ],
+      "end": [
+        98,
+        36,
+        -108
+      ],
+      "width": 10,
+      "kind": "ramp"
+    },
+    {
+      "id": "WestHomesStair",
+      "part": "ResidentialTerraces",
+      "start": [
+        -126,
+        18,
+        -49
+      ],
+      "end": [
+        -126,
+        29,
+        -82
+      ],
+      "width": 8,
+      "kind": "stairs"
+    },
+    {
+      "id": "LighthouseCauseway",
+      "part": "HarborQuarter",
+      "start": [
+        -152,
+        4,
+        116
+      ],
+      "end": [
+        -184,
+        5,
+        155
+      ],
+      "width": 8,
+      "kind": "bridge"
+    },
+    {
+      "id": "GreatPier_1",
+      "part": "HarborQuarter",
+      "start": [
+        -105,
+        4.05,
+        130
+      ],
+      "end": [
+        -105,
+        4.05,
+        207
+      ],
+      "width": 9,
+      "kind": "pier"
+    },
+    {
+      "id": "GreatPier_2",
+      "part": "HarborQuarter",
+      "start": [
+        -50,
+        4.05,
+        136
+      ],
+      "end": [
+        -50,
+        4.05,
+        218
+      ],
+      "width": 9,
+      "kind": "pier"
+    },
+    {
+      "id": "GreatPier_3",
+      "part": "HarborQuarter",
+      "start": [
+        10,
+        4.05,
+        139
+      ],
+      "end": [
+        10,
+        4.05,
+        215
+      ],
+      "width": 9,
+      "kind": "pier"
+    },
+    {
+      "id": "GreatPier_4",
+      "part": "HarborQuarter",
+      "start": [
+        65,
+        4.05,
+        138
+      ],
+      "end": [
+        65,
+        4.05,
+        200
+      ],
+      "width": 9,
+      "kind": "pier"
+    },
+    {
+      "id": "WestBreakwater",
+      "part": "CoastAndBackdrop",
+      "start": [
+        -188,
+        3,
+        172
+      ],
+      "end": [
+        -155,
+        3,
+        208
+      ],
+      "width": 8,
+      "kind": "breakwater"
+    },
+    {
+      "id": "WestBreakwaterArm",
+      "part": "CoastAndBackdrop",
+      "start": [
+        -155,
+        3,
+        208
+      ],
+      "end": [
+        -101,
+        3,
+        224
+      ],
+      "width": 8,
+      "kind": "breakwater"
+    },
+    {
+      "id": "EastBreakwater",
+      "part": "CoastAndBackdrop",
+      "start": [
+        100,
+        3,
+        131
+      ],
+      "end": [
+        127,
+        3,
+        181
+      ],
+      "width": 8,
+      "kind": "breakwater"
+    },
+    {
+      "id": "EastBreakwaterArm",
+      "part": "CoastAndBackdrop",
+      "start": [
+        127,
+        3,
+        181
+      ],
+      "end": [
+        96,
+        3,
+        211
+      ],
+      "width": 8,
+      "kind": "breakwater"
+    }
+  ],
+  "streets": [
+    {
+      "id": "CivicProcessional",
+      "part": "CityCenter",
+      "points": [
+        [
+          0,
+          23,
+          43
+        ],
+        [
+          0,
+          23,
+          26
+        ],
+        [
+          12,
+          23,
+          22
+        ],
+        [
+          12,
+          23,
+          -2
+        ],
+        [
+          0,
+          23,
+          -12
+        ],
+        [
+          0,
+          23,
+          -14
+        ]
+      ],
+      "width": 12
+    },
+    {
+      "id": "CivicUpperConnector",
+      "part": "CityCenter",
+      "points": [
+        [
+          12,
+          23,
+          -2
+        ],
+        [
+          23,
+          23,
+          -11
+        ],
+        [
+          49,
+          23,
+          -11
+        ],
+        [
+          49,
+          23,
+          -39
+        ]
+      ],
+      "width": 10
+    },
+    {
+      "id": "LowerTownLoop",
+      "part": "ResidentialTerraces",
+      "points": [
+        [
+          -113,
+          12,
+          78
+        ],
+        [
+          -99,
+          12,
+          78
+        ],
+        [
+          -38,
+          12,
+          78
+        ],
+        [
+          0,
+          12,
+          78
+        ],
+        [
+          48,
+          12,
+          78
+        ]
+      ],
+      "width": 8
+    },
+    {
+      "id": "LowerWestLane",
+      "part": "ResidentialTerraces",
+      "points": [
+        [
+          -77,
+          12,
+          45
+        ],
+        [
+          -77,
+          12,
+          78
+        ]
+      ],
+      "width": 6
+    },
+    {
+      "id": "LowerEastLane",
+      "part": "ResidentialTerraces",
+      "points": [
+        [
+          21.5,
+          12,
+          55
+        ],
+        [
+          21.5,
+          12,
+          91
+        ]
+      ],
+      "width": 6
+    },
+    {
+      "id": "TavernCourtLane",
+      "part": "ResidentialTerraces",
+      "points": [
+        [
+          -113,
+          12,
+          78
+        ],
+        [
+          -120,
+          12,
+          87
+        ],
+        [
+          -137,
+          12,
+          87
+        ]
+      ],
+      "width": 5
+    },
+    {
+      "id": "HarborPromenade",
+      "part": "HarborQuarter",
+      "points": [
+        [
+          -152,
+          4,
+          121
+        ],
+        [
+          -104,
+          4,
+          124
+        ],
+        [
+          -50,
+          4,
+          127
+        ],
+        [
+          0,
+          4,
+          132
+        ],
+        [
+          68,
+          4,
+          139
+        ]
+      ],
+      "width": 12
+    },
+    {
+      "id": "CraftsSpine",
+      "part": "CraftsQuarter",
+      "points": [
+        [
+          -163,
+          18,
+          16
+        ],
+        [
+          -119,
+          18,
+          16
+        ],
+        [
+          -79,
+          18,
+          16
+        ]
+      ],
+      "width": 10
+    },
+    {
+      "id": "CraftsLane",
+      "part": "CraftsQuarter",
+      "points": [
+        [
+          -118,
+          18,
+          -42
+        ],
+        [
+          -118,
+          18,
+          35
+        ]
+      ],
+      "width": 7
+    },
+    {
+      "id": "UpperMainStreet",
+      "part": "UpperTown",
+      "points": [
+        [
+          49,
+          32,
+          -83
+        ],
+        [
+          48,
+          32,
+          -145
+        ],
+        [
+          46,
+          32,
+          -166
+        ]
+      ],
+      "width": 12
+    },
+    {
+      "id": "UpperHomeLane",
+      "part": "UpperTown",
+      "points": [
+        [
+          -41,
+          32,
+          -121
+        ],
+        [
+          32,
+          32,
+          -125
+        ],
+        [
+          48,
+          32,
+          -125
+        ]
+      ],
+      "width": 7
+    },
+    {
+      "id": "UpperCrossStreet",
+      "part": "UpperTown",
+      "points": [
+        [
+          -37,
+          32,
+          -94
+        ],
+        [
+          22,
+          32,
+          -95
+        ],
+        [
+          75,
+          32,
+          -108
+        ]
+      ],
+      "width": 8
+    },
+    {
+      "id": "ArenaWestEntry",
+      "part": "TrainingQuarter",
+      "points": [
+        [
+          98,
+          36,
+          -108
+        ],
+        [
+          113,
+          36,
+          -109
+        ],
+        [
+          133,
+          36,
+          -109
+        ]
+      ],
+      "width": 8
+    },
+    {
+      "id": "WestHomeLane",
+      "part": "ResidentialTerraces",
+      "points": [
+        [
+          -137,
+          29,
+          -89
+        ],
+        [
+          -77,
+          29,
+          -88
+        ],
+        [
+          -63,
+          29,
+          -105
+        ]
+      ],
+      "width": 6
+    },
+    {
+      "id": "EastNeighborhood",
+      "part": "SanctuaryQuarter",
+      "points": [
+        [
+          84,
+          20,
+          3
+        ],
+        [
+          101,
+          20,
+          3
+        ],
+        [
+          132,
+          20,
+          3
+        ],
+        [
+          153,
+          20,
+          3
+        ]
+      ],
+      "width": 8
+    },
+    {
+      "id": "SanctuaryLane",
+      "part": "SanctuaryQuarter",
+      "points": [
+        [
+          126,
+          20,
+          -36
+        ],
+        [
+          126,
+          20,
+          40
+        ],
+        [
+          126,
+          20,
+          65
+        ]
+      ],
+      "width": 8
+    },
+    {
+      "id": "RoadToValley",
+      "part": "GardensQuarter",
+      "points": [
+        [
+          46,
+          32,
+          -166
+        ],
+        [
+          47,
+          32,
+          -190
+        ],
+        [
+          39,
+          32,
+          -221
+        ]
+      ],
+      "width": 12
+    }
+  ],
+  "anchors": [
+    {
+      "id": "Arrival",
+      "label": "Гавань",
+      "part": "HarborQuarter",
+      "position": [
+        -36,
+        4,
+        117
+      ]
+    },
+    {
+      "id": "LowerSquare",
+      "label": "Нижний город",
+      "part": "ResidentialTerraces",
+      "position": [
+        -37,
+        12,
+        78
+      ]
+    },
+    {
+      "id": "MainSquare",
+      "label": "Центральная площадь",
+      "part": "CityCenter",
+      "position": [
+        0,
+        23,
+        12
+      ]
+    },
+    {
+      "id": "Guild",
+      "label": "Гильдия",
+      "part": "CityCenter",
+      "position": [
+        0,
+        23,
+        -19
+      ]
+    },
+    {
+      "id": "Crafts",
+      "label": "Мастерские",
+      "part": "CraftsQuarter",
+      "position": [
+        -119,
+        18,
+        16
+      ]
+    },
+    {
+      "id": "Tavern",
+      "label": "Таверна",
+      "part": "ResidentialTerraces",
+      "position": [
+        -137,
+        12,
+        87
+      ]
+    },
+    {
+      "id": "Sanctuary",
+      "label": "Святилище",
+      "part": "SanctuaryQuarter",
+      "position": [
+        141,
+        20,
+        59
+      ]
+    },
+    {
+      "id": "Arena",
+      "label": "Тренировочная арена",
+      "part": "TrainingQuarter",
+      "position": [
+        133,
+        36,
+        -109
+      ]
+    },
+    {
+      "id": "Dorn",
+      "label": "Двор Дорна",
+      "part": "TrainingQuarter",
+      "position": [
+        137,
+        36,
+        -64
+      ]
+    },
+    {
+      "id": "Gate",
+      "label": "Городские ворота",
+      "part": "GateQuarter",
+      "position": [
+        46,
+        32,
+        -155
+      ]
+    },
+    {
+      "id": "Gardens",
+      "label": "Сады и дорога в котловину",
+      "part": "GardensQuarter",
+      "position": [
+        46,
+        32,
+        -198
+      ]
+    },
+    {
+      "id": "Lighthouse",
+      "label": "Маяк",
+      "part": "HarborQuarter",
+      "position": [
+        -184,
+        5,
+        163
+      ]
+    }
+  ],
+  "districts": [
+    {
+      "id": "CityCenter",
+      "scene": "res://Scenes/Regions/Linvel/Masterplan/Parts/CityCenter.tscn"
+    },
+    {
+      "id": "ResidentialTerraces",
+      "scene": "res://Scenes/Regions/Linvel/Masterplan/Parts/ResidentialTerraces.tscn"
+    },
+    {
+      "id": "CraftsQuarter",
+      "scene": "res://Scenes/Regions/Linvel/Masterplan/Parts/CraftsQuarter.tscn"
+    },
+    {
+      "id": "UpperTown",
+      "scene": "res://Scenes/Regions/Linvel/Masterplan/Parts/UpperTown.tscn"
+    },
+    {
+      "id": "TrainingQuarter",
+      "scene": "res://Scenes/Regions/Linvel/Masterplan/Parts/TrainingQuarter.tscn"
+    },
+    {
+      "id": "SanctuaryQuarter",
+      "scene": "res://Scenes/Regions/Linvel/Masterplan/Parts/SanctuaryQuarter.tscn"
+    },
+    {
+      "id": "GateQuarter",
+      "scene": "res://Scenes/Regions/Linvel/Masterplan/Parts/GateQuarter.tscn"
+    },
+    {
+      "id": "GardensQuarter",
+      "scene": "res://Scenes/Regions/Linvel/Masterplan/Parts/GardensQuarter.tscn"
+    },
+    {
+      "id": "HarborQuarter",
+      "scene": "res://Scenes/Regions/Linvel/Masterplan/Parts/HarborQuarter.tscn"
+    },
+    {
+      "id": "CoastAndBackdrop",
+      "scene": "res://Scenes/Regions/Linvel/Masterplan/Parts/CoastAndBackdrop.tscn"
+    }
+  ],
+  "layout_approved_by_user": "2026-10-20; proceed to art production, extend land on both flanks",
+  "landmasses": [
+    {
+      "id": "WestMainland",
+      "points": [
+        [
+          -485,
+          -610
+        ],
+        [
+          -60,
+          -340
+        ],
+        [
+          -70,
+          -170
+        ],
+        [
+          -156,
+          -125
+        ],
+        [
+          -180,
+          -55
+        ],
+        [
+          -170,
+          50
+        ],
+        [
+          -210,
+          89
+        ],
+        [
+          -292,
+          86
+        ],
+        [
+          -350,
+          25
+        ],
+        [
+          -425,
+          -82
+        ],
+        [
+          -485,
+          -210
+        ]
+      ]
+    },
+    {
+      "id": "EastMainland",
+      "points": [
+        [
+          45,
+          -350
+        ],
+        [
+          420,
+          -610
+        ],
+        [
+          495,
+          -210
+        ],
+        [
+          424,
+          -28
+        ],
+        [
+          350,
+          59
+        ],
+        [
+          263,
+          100
+        ],
+        [
+          168,
+          98
+        ],
+        [
+          147,
+          76
+        ],
+        [
+          156,
+          30
+        ],
+        [
+          180,
+          -36
+        ],
+        [
+          204,
+          -130
+        ],
+        [
+          110,
+          -177
+        ]
+      ]
+    }
+  ],
+  "kits": {
+    "house": [
+      9,
+      11,
+      10.8
+    ],
+    "tall_house": [
+      9,
+      11,
+      14.2
+    ],
+    "workshop": [
+      13,
+      15,
+      10
+    ],
+    "warehouse": [
+      15,
+      21,
+      12
+    ],
+    "guild": [
+      29,
+      22,
+      29
+    ],
+    "hall": [
+      22,
+      16,
+      17
+    ],
+    "tavern": [
+      19,
+      15,
+      15
+    ],
+    "shrine": [
+      15,
+      20,
+      20
+    ],
+    "tower": [
+      8,
+      8,
+      18
+    ],
+    "lighthouse": [
+      11,
+      11,
+      34
+    ],
+    "ship": [
+      13,
+      48,
+      32
+    ]
+  },
+  "review_questions": [
+    "Читается ли Гильдия при подъёме из гавани?",
+    "Достаточны ли ширины главных маршрутов?",
+    "Удобны ли перепады высот и обходы?",
+    "Соответствуют ли силуэт и плотность первому арту?",
+    "Какой квартал первым переводить из макета в художественную сборку?"
+  ],
+  "building_count": 87,
+  "paper_clearance_conflicts": []
+}

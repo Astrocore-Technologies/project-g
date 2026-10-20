@@ -1,0 +1,107 @@
+[
+  {
+    "kind": "house",
+    "meshes": 2,
+    "triangles": 20,
+    "joints": [
+      0.12
+    ],
+    "path": "D:\\projects\\project-g\\Content.Client\\Assets\\World\\Linvel\\City\\Masterplan\\Kit\\block_house.glb"
+  },
+  {
+    "kind": "tall_house",
+    "meshes": 2,
+    "triangles": 20,
+    "joints": [
+      0.12
+    ],
+    "path": "D:\\projects\\project-g\\Content.Client\\Assets\\World\\Linvel\\City\\Masterplan\\Kit\\block_tall_house.glb"
+  },
+  {
+    "kind": "workshop",
+    "meshes": 2,
+    "triangles": 20,
+    "joints": [
+      0.12
+    ],
+    "path": "D:\\projects\\project-g\\Content.Client\\Assets\\World\\Linvel\\City\\Masterplan\\Kit\\block_workshop.glb"
+  },
+  {
+    "kind": "warehouse",
+    "meshes": 2,
+    "triangles": 20,
+    "joints": [
+      0.12
+    ],
+    "path": "D:\\projects\\project-g\\Content.Client\\Assets\\World\\Linvel\\City\\Masterplan\\Kit\\block_warehouse.glb"
+  },
+  {
+    "kind": "guild",
+    "meshes": 6,
+    "triangles": 60,
+    "joints": [
+      0.12,
+      6.5,
+      0.12,
+      6.5,
+      0.12
+    ],
+    "path": "D:\\projects\\project-g\\Content.Client\\Assets\\World\\Linvel\\City\\Masterplan\\Kit\\block_guild.glb"
+  },
+  {
+    "kind": "hall",
+    "meshes": 2,
+    "triangles": 20,
+    "joints": [
+      0.12
+    ],
+    "path": "D:\\projects\\project-g\\Content.Client\\Assets\\World\\Linvel\\City\\Masterplan\\Kit\\block_hall.glb"
+  },
+  {
+    "kind": "tavern",
+    "meshes": 2,
+    "triangles": 20,
+    "joints": [
+      0.12
+    ],
+    "path": "D:\\projects\\project-g\\Content.Client\\Assets\\World\\Linvel\\City\\Masterplan\\Kit\\block_tavern.glb"
+  },
+  {
+    "kind": "shrine",
+    "meshes": 2,
+    "triangles": 20,
+    "joints": [
+      0.12
+    ],
+    "path": "D:\\projects\\project-g\\Content.Client\\Assets\\World\\Linvel\\City\\Masterplan\\Kit\\block_shrine.glb"
+  },
+  {
+    "kind": "tower",
+    "meshes": 2,
+    "triangles": 20,
+    "joints": [
+      0.12
+    ],
+    "path": "D:\\projects\\project-g\\Content.Client\\Assets\\World\\Linvel\\City\\Masterplan\\Kit\\block_tower.glb"
+  },
+  {
+    "kind": "lighthouse",
+    "meshes": 3,
+    "triangles": 110,
+    "joints": [
+      0.2,
+      0.12
+    ],
+    "path": "D:\\projects\\project-g\\Content.Client\\Assets\\World\\Linvel\\City\\Masterplan\\Kit\\block_lighthouse.glb"
+  },
+  {
+    "kind": "ship",
+    "meshes": 3,
+    "triangles": 40,
+    "joints": [
+      0.25,
+      0.12
+    ],
+    "path": "D:\\projects\\project-g\\Content.Client\\Assets\\World\\Linvel\\City\\Masterplan\\Kit\\block_ship.glb"
+  }
+]

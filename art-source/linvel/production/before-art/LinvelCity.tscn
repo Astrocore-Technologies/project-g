@@ -1,0 +1,119 @@
+[gd_scene format=3 uid="uid://cteicw18tl6q1"]
+
+[ext_resource type="PackedScene" uid="uid://cievx1kxp4kxq" path="res://Scenes/Regions/Linvel/Masterplan/Parts/CityCenter.tscn" id="1_e24xt"]
+[ext_resource type="PackedScene" uid="uid://dmp8jhx2wkkpq" path="res://Scenes/Regions/Linvel/Masterplan/Parts/ResidentialTerraces.tscn" id="2_nkmyd"]
+[ext_resource type="PackedScene" uid="uid://bo5lh6desehi7" path="res://Scenes/Regions/Linvel/Masterplan/Parts/CraftsQuarter.tscn" id="3_aj0wv"]
+[ext_resource type="PackedScene" uid="uid://b2anh8feb6kae" path="res://Scenes/Regions/Linvel/Masterplan/Parts/UpperTown.tscn" id="4_0ipyx"]
+[ext_resource type="PackedScene" uid="uid://dhkwhyc8vfrn7" path="res://Scenes/Regions/Linvel/Masterplan/Parts/TrainingQuarter.tscn" id="5_4gndw"]
+[ext_resource type="PackedScene" uid="uid://c8vfi0b27j36g" path="res://Scenes/Regions/Linvel/Masterplan/Parts/SanctuaryQuarter.tscn" id="6_y6c4r"]
+[ext_resource type="PackedScene" uid="uid://djnikjue0y4gt" path="res://Scenes/Regions/Linvel/Masterplan/Parts/GateQuarter.tscn" id="7_1bwxn"]
+[ext_resource type="PackedScene" uid="uid://bwbxb26w1dvml" path="res://Scenes/Regions/Linvel/Masterplan/Parts/GardensQuarter.tscn" id="8_0r717"]
+[ext_resource type="PackedScene" uid="uid://bv7imrscd0587" path="res://Scenes/Regions/Linvel/Masterplan/Parts/HarborQuarter.tscn" id="9_6cwt5"]
+[ext_resource type="PackedScene" uid="uid://c03vw6iapjod8" path="res://Scenes/Regions/Linvel/Masterplan/Parts/CoastAndBackdrop.tscn" id="10_d36wj"]
+[ext_resource type="Terrain3DMaterial" uid="uid://bte3r5y3mgolo" path="res://Assets/World/Linvel/City/Masterplan/TerrainMaterial.tres" id="11_1p5g3"]
+[ext_resource type="Terrain3DAssets" uid="uid://dqum5gsgks1ip" path="res://Assets/World/Linvel/City/Masterplan/TerrainAssets.tres" id="12_wbwhs"]
+[ext_resource type="Terrain3DRegion" uid="uid://bjb5x0qst7kpf" path="res://Assets/World/Linvel/City/Masterplan/TerrainData/terrain3d-01-01.res" id="13_sxoml"]
+[ext_resource type="Terrain3DRegion" uid="uid://bf0oqs0uft44i" path="res://Assets/World/Linvel/City/Masterplan/TerrainData/terrain3d-01_00.res" id="14_3hvr0"]
+[ext_resource type="Terrain3DRegion" uid="uid://tawxpy3flcyv" path="res://Assets/World/Linvel/City/Masterplan/TerrainData/terrain3d-01-02.res" id="14_sxoml"]
+[ext_resource type="Terrain3DRegion" uid="uid://bbjcrhmsuo1jw" path="res://Assets/World/Linvel/City/Masterplan/TerrainData/terrain3d-01-03.res" id="15_3hvr0"]
+[ext_resource type="Terrain3DRegion" uid="uid://dmrcico7txmkp" path="res://Assets/World/Linvel/City/Masterplan/TerrainData/terrain3d_00-01.res" id="15_li8yp"]
+[ext_resource type="Terrain3DRegion" uid="uid://cdolivdkmjjin" path="res://Assets/World/Linvel/City/Masterplan/TerrainData/terrain3d_00_00.res" id="16_02bpn"]
+[ext_resource type="Terrain3DRegion" uid="uid://bp0l31i2tmved" path="res://Assets/World/Linvel/City/Masterplan/TerrainData/terrain3d-02-01.res" id="17_li8yp"]
+[ext_resource type="Terrain3DRegion" uid="uid://c82bwxpgrgiu7" path="res://Assets/World/Linvel/City/Masterplan/TerrainData/terrain3d-02-02.res" id="18_02bpn"]
+[ext_resource type="Terrain3DRegion" uid="uid://b252oyle72dk7" path="res://Assets/World/Linvel/City/Masterplan/TerrainData/terrain3d-02-03.res" id="19_ba0x0"]
+[ext_resource type="Terrain3DRegion" uid="uid://cygjhklw7nmcx" path="res://Assets/World/Linvel/City/Masterplan/TerrainData/terrain3d-02_00.res" id="20_28axe"]
+[ext_resource type="Terrain3DRegion" uid="uid://b3u01x2gc6741" path="res://Assets/World/Linvel/City/Masterplan/TerrainData/terrain3d_00-02.res" id="22_qevyq"]
+[ext_resource type="Terrain3DRegion" uid="uid://btdfext8tkuo8" path="res://Assets/World/Linvel/City/Masterplan/TerrainData/terrain3d_00-03.res" id="23_05k41"]
+[ext_resource type="Terrain3DRegion" uid="uid://dbbmcfvpw1pwg" path="res://Assets/World/Linvel/City/Masterplan/TerrainData/terrain3d_01-01.res" id="25_qvbuw"]
+[ext_resource type="Terrain3DRegion" uid="uid://bsp5i6e1bgltp" path="res://Assets/World/Linvel/City/Masterplan/TerrainData/terrain3d_01-02.res" id="26_upkwx"]
+[ext_resource type="Terrain3DRegion" uid="uid://b1r48elpd786d" path="res://Assets/World/Linvel/City/Masterplan/TerrainData/terrain3d_01-03.res" id="27_16hup"]
+[ext_resource type="Terrain3DRegion" uid="uid://bve5mv5ma8xnm" path="res://Assets/World/Linvel/City/Masterplan/TerrainData/terrain3d_01_00.res" id="28_s3d1e"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_ba0x0"]
+sky_top_color = Color(0.3, 0.56, 0.77, 1)
+sky_horizon_color = Color(0.77, 0.85, 0.83, 1)
+ground_bottom_color = Color(0.45, 0.52, 0.39, 1)
+ground_horizon_color = Color(0.77, 0.85, 0.83, 1)
+
+[sub_resource type="Sky" id="Sky_28axe"]
+sky_material = SubResource("ProceduralSkyMaterial_ba0x0")
+
+[sub_resource type="Environment" id="Environment_qevyq"]
+background_mode = 2
+sky = SubResource("Sky_28axe")
+ambient_light_source = 2
+ambient_light_color = Color(0.78, 0.84, 0.91, 1)
+ambient_light_energy = 0.48
+
+[node name="LinvelCity" type="Node3D" unique_id=1660705708]
+metadata/masterplan_revision = 1
+metadata/linvel_city_stage = "whole-city-blockout-awaiting-review"
+metadata/art_direction = "Stylized Hand-Painted Anime 3D; this phase uses untextured architectural masses."
+metadata/human_playtest_approved = false
+metadata/server_integration = false
+metadata/legacy_scene = "res://Scenes/Regions/Linvel/Legacy/LinvelCity_Review03.tscn"
+metadata/paper_plan = "art-source/linvel/masterplan/linvel-paper-plan.png"
+metadata/blockout_surface_fix = true
+metadata/connections_reviewed = true
+metadata/exact_blockout_floors = true
+metadata/final_blockout_review = true
+metadata/continuous_route_landings_v2 = true
+metadata/connected_civic_terrace_v3 = true
+
+[node name="World" type="Node3D" parent="." unique_id=1596233066]
+
+[node name="CityParts" type="Node3D" parent="World" unique_id=125575545]
+
+[node name="CityCenter" type="Node3D" parent="World/CityParts" unique_id=1690115928 instance=ExtResource("1_e24xt")]
+metadata/review_stage = "Untextured blockout, not final art"
+
+[node name="ResidentialTerraces" type="Node3D" parent="World/CityParts" unique_id=322162250 instance=ExtResource("2_nkmyd")]
+metadata/review_stage = "Untextured blockout, not final art"
+
+[node name="CraftsQuarter" type="Node3D" parent="World/CityParts" unique_id=2112335679 instance=ExtResource("3_aj0wv")]
+metadata/review_stage = "Untextured blockout, not final art"
+
+[node name="UpperTown" type="Node3D" parent="World/CityParts" unique_id=191669960 instance=ExtResource("4_0ipyx")]
+metadata/review_stage = "Untextured blockout, not final art"
+
+[node name="TrainingQuarter" type="Node3D" parent="World/CityParts" unique_id=1517974386 instance=ExtResource("5_4gndw")]
+metadata/review_stage = "Untextured blockout, not final art"
+
+[node name="SanctuaryQuarter" type="Node3D" parent="World/CityParts" unique_id=839356638 instance=ExtResource("6_y6c4r")]
+metadata/review_stage = "Untextured blockout, not final art"
+
+[node name="GateQuarter" type="Node3D" parent="World/CityParts" unique_id=1524931762 instance=ExtResource("7_1bwxn")]
+metadata/review_stage = "Untextured blockout, not final art"
+
+[node name="GardensQuarter" type="Node3D" parent="World/CityParts" unique_id=1518701752 instance=ExtResource("8_0r717")]
+metadata/review_stage = "Untextured blockout, not final art"
+
+[node name="HarborQuarter" type="Node3D" parent="World/CityParts" unique_id=1824201659 instance=ExtResource("9_6cwt5")]
+metadata/review_stage = "Untextured blockout, not final art"
+
+[node name="CoastAndBackdrop" type="Node3D" parent="World/CityParts" unique_id=840179684 instance=ExtResource("10_d36wj")]
+metadata/review_stage = "Untextured blockout, not final art"
+
+[node name="Lighting" type="Node3D" parent="World" unique_id=1137021405]
+
+[node name="SpringAtmosphere" type="WorldEnvironment" parent="World/Lighting" unique_id=259309010]
+environment = SubResource("Environment_qevyq")
+
+[node name="SpringSun" type="DirectionalLight3D" parent="World/Lighting" unique_id=1024589668]
+transform = Transform3D(0.81915206, 0.45198438, -0.35312894, 0, 0.6156615, 0.7880107, 0.57357645, -0.6455006, 0.5043204, 0, 0, 0)
+light_color = Color(1, 0.92, 0.79, 1)
+light_energy = 0.95
+shadow_enabled = true
+directional_shadow_max_distance = 600.0
+
+[node name="Terrain3D" type="Terrain3D" parent="World" unique_id=1106117879 groups=["surface_terrain"]]
+data_directory = "res://Assets/World/Linvel/City/Masterplan/TerrainData"
+material = ExtResource("11_1p5g3")
+assets = ExtResource("12_wbwhs")
+collision_mode = 3
+mesh_lods = 6
+vertex_spacing = 2.0
+top_level = true
+metadata/_edit_lock_ = true
+metadata/terrain_region_resources = Array[Resource]([ExtResource("13_sxoml"), ExtResource("14_sxoml"), ExtResource("15_3hvr0"), ExtResource("14_3hvr0"), ExtResource("17_li8yp"), ExtResource("18_02bpn"), ExtResource("19_ba0x0"), ExtResource("20_28axe"), ExtResource("15_li8yp"), ExtResource("22_qevyq"), ExtResource("23_05k41"), ExtResource("16_02bpn"), ExtResource("25_qvbuw"), ExtResource("26_upkwx"), ExtResource("27_16hup"), ExtResource("28_s3d1e")])
+metadata/masterplan_01 = true

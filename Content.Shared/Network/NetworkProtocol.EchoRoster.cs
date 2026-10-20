@@ -66,7 +66,8 @@ public static partial class NetworkProtocol
         (value.Availability==EchoAvailability.RequiresRestoration ? value.DeathId is >0 and <=long.MaxValue : value.DeathId==0) &&
         (value.Refusal&~(EchoRefusal.Basic|EchoRefusal.Signature))==0 &&
         double.IsFinite(value.Health)&&value.Health>=0 && (value.Availability==EchoAvailability.RequiresRestoration)==(value.Health==0) &&
-        double.IsFinite(value.Mana)&&value.Mana>=0 && double.IsFinite(value.Stamina)&&value.Stamina>=0;
+        double.IsFinite(value.Mana)&&value.Mana>=0 && double.IsFinite(value.Stamina)&&value.Stamina>=0 &&
+        value.Experience>=0 && double.IsFinite(value.ExperienceFraction) && value.ExperienceFraction is >=0 and <1;
 
     public static NetDataWriter Write(EchoRosterRequest value)
     {
@@ -118,6 +119,7 @@ public static partial class NetworkProtocol
                 entry.Availability==EchoAvailability.Active&&(!slots.Add(entry.Slot)||!bodies.Add(entry.EntityId)))throw new ArgumentException("Invalid Echo roster entry.");
             writer.Put(entry.Handle);writer.Put(entry.Name);writer.Put((byte)entry.Availability);writer.Put(entry.Slot);writer.Put(entry.EntityId.Value);
             writer.Put(entry.Health);writer.Put(entry.Mana);writer.Put(entry.Stamina);writer.Put(entry.ActionSequence);writer.Put(entry.Execution);writer.Put(entry.DeathId);writer.Put((byte)entry.Refusal);
+            writer.Put(entry.Experience);writer.Put(entry.ExperienceFraction);
         }
         return writer;
     }
@@ -132,8 +134,9 @@ public static partial class NetworkProtocol
         {
             if(!reader.TryGetULong(out var handle)||!reader.TryGetString(out var name)||!reader.TryGetByte(out var state)||
                 !reader.TryGetByte(out var slot)||!reader.TryGetULong(out var body)||!reader.TryGetDouble(out var hp)||
-                !reader.TryGetDouble(out var mp)||!reader.TryGetDouble(out var stamina)||!reader.TryGetUInt(out var action)||!reader.TryGetULong(out var execution)||!reader.TryGetULong(out var death)||!reader.TryGetByte(out var refusal))return false;
-            var entry=new EchoRosterEntry(handle,name,(EchoAvailability)state,slot,new(body),hp,mp,stamina,action,execution,death,(EchoRefusal)refusal);
+                !reader.TryGetDouble(out var mp)||!reader.TryGetDouble(out var stamina)||!reader.TryGetUInt(out var action)||!reader.TryGetULong(out var execution)||!reader.TryGetULong(out var death)||!reader.TryGetByte(out var refusal)||
+                !reader.TryGetLong(out var experience)||!reader.TryGetDouble(out var fraction))return false;
+            var entry=new EchoRosterEntry(handle,name,(EchoAvailability)state,slot,new(body),hp,mp,stamina,action,execution,death,(EchoRefusal)refusal,experience,fraction);
             if(!ValidRosterEntry(entry)||!handles.Add(handle)||body==owner||entry.Availability==EchoAvailability.Active&&(!slots.Add(slot)||!bodies.Add(entry.EntityId)))return false;
             entries[i]=entry;
         }

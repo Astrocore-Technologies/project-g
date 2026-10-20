@@ -7,7 +7,6 @@ public sealed partial class CombatSimulation
 {
     private readonly HashSet<NetworkEntityId> _recoveringMana = new();
     private readonly List<NetworkEntityId> _manaRecoveryFinished = new();
-    private readonly double _manaRecoveryInterval;
     internal event Action<NetworkEntityId>? ManaChanged;
 
     internal void SetManaRecoveryConnected(NetworkEntityId id, bool connected)
@@ -21,13 +20,11 @@ public sealed partial class CombatSimulation
     {
         if(!_actors.TryGetValue(id,out var actor))return;
         if(actor.Resources.ManaRecoveryConnected && actor.Active && actor.Health>0 &&
-            actor.Resources.Mana<Math.Max(0,actor.Stats.MaxMana) && actor.Stats.ManaRecovery>0)
+            (ResourceTransition.CanFlow(actor.Resources.Mana,actor.Stats.MaxMana,actor.Stats.ManaRecovery) ||
+             actor.Stats.MaxMana>0 && actor.Stats.ManaRecovery>0 && InputAbilities?.ContinuousCosts(id).Mana>0))
             _recoveringMana.Add(id);
         else
-        {
             _recoveringMana.Remove(id);
-            actor.Resources.ManaRecoveryElapsed=0;
-        }
     }
 
     private double DrainActorMana(NetworkEntityId id,double amount)
@@ -56,25 +53,27 @@ public sealed partial class CombatSimulation
         foreach(var id in _recoveringMana)
         {
             var actor=_actors[id];var resource=actor.Resources;
-            if(!actor.Active || actor.Health<=0 || actor.Stats.ManaRecovery<=0 || !resource.ManaRecoveryConnected)
-            {resource.ManaRecoveryElapsed=0;_manaRecoveryFinished.Add(id);continue;}
-            resource.ManaRecoveryElapsed+=delta;
-            if(resource.ManaRecoveryElapsed<_manaRecoveryInterval)continue;
-            var elapsed=Math.Floor(resource.ManaRecoveryElapsed/_manaRecoveryInterval)*_manaRecoveryInterval;
-            resource.ManaRecoveryElapsed-=elapsed;
-            var mana=Math.Min(Math.Max(0,actor.Stats.MaxMana),StatMath.Add(resource.Mana,
-                StatMath.Multiply(actor.Stats.ManaRecovery,elapsed)));
+            if(!actor.Active || actor.Health<=0 && (!actor.DiedFromRegeneration || actor.LifeDead) || !resource.ManaRecoveryConnected)
+            {_manaRecoveryFinished.Add(id);continue;}
+            var mana=ResourceTransition.Flow(resource.Mana,actor.Stats.MaxMana,actor.Stats.ManaRecovery,delta,ResourceClockTolerance);
+            if(actor.Stats.ManaRecovery>0 && actor.Stats.MaxMana>0)
+                resource.ManaFlowCredit=Math.Min(Math.Max(0,StatMath.Add(resource.Mana,
+                    StatMath.Multiply(actor.Stats.ManaRecovery,delta))-actor.Stats.MaxMana),
+                    StatMath.Multiply(InputAbilities?.ContinuousCosts(id).Mana ?? 0,delta));
             if(mana!=resource.Mana){resource.Mana=mana;ManaChanged?.Invoke(id);}
-            if(mana>=Math.Max(0,actor.Stats.MaxMana))
-            {resource.ManaRecoveryElapsed=0;_manaRecoveryFinished.Add(id);}
+            if(!ResourceTransition.CanFlow(mana,actor.Stats.MaxMana,actor.Stats.ManaRecovery) &&
+                !(actor.Stats.MaxMana>0 && actor.Stats.ManaRecovery>0 && InputAbilities?.ContinuousCosts(id).Mana>0))
+                _manaRecoveryFinished.Add(id);
         }
         foreach(var id in _manaRecoveryFinished)_recoveringMana.Remove(id);
     }
 
-    private void RefreshResourceStats(NetworkEntityId id)
+    private void RefreshResourceStats(NetworkEntityId id,DerivedStats previousStats)
     {
         var actor=_actors[id];var previous=actor.Resources.Mana;
-        actor.Resources.Clamp(actor.Stats);
+        var fraction=actor.Kind==CombatEntityKind.Player;
+        actor.Resources.Mana=ResourceTransition.Amount(previous,previousStats.MaxMana,actor.Stats.MaxMana,fraction);
+        actor.Resources.Stamina=ResourceTransition.Amount(actor.Resources.Stamina,previousStats.MaxStamina,actor.Stats.MaxStamina,fraction);
         RefreshManaRecovery(id);
         if(previous!=actor.Resources.Mana)ManaChanged?.Invoke(id);
         if(_defense.ContainsKey(id)){_defenseDirty.Add(id);_defenseActive.Add(id);}

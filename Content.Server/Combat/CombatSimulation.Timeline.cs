@@ -44,6 +44,8 @@ public sealed partial class CombatSimulation
         }
         while(_time<end)
         {
+            // An external wall-clock expiry observed before this segment owns no elapsed flow.
+            AdvanceCombatPresence();
             // AI decisions become common intents at their own authoritative boundary,
             // before calculating motion; player packet frequency cannot delay their start.
             if(PrepareActions is not null)
@@ -55,6 +57,7 @@ public sealed partial class CombatSimulation
                 ResolveContactBatch();
             }
             PrepareMotion?.Invoke(tick);
+            InputAbilities?.PrepareResourceFlows();
             var at=NextBoundary(end);
             at=MotionBoundary?.Invoke(at) ?? at;
             at=InputAbilities?.NextBoundary(at) ?? at;
@@ -113,11 +116,22 @@ public sealed partial class CombatSimulation
             next=EarlierBoundary(_time,next,guard.RecoverAt);
             if(guard.GuardUntil>_time && _catalog.Defense.BlockHoldPerSecond>0)
                 next=EarlierBoundary(_time,next,_time+guard.Stamina/_catalog.Defense.BlockHoldPerSecond);
+            var actor=_actors[id];
+            if(guard.RecoverAt<=_time && !StaminaRecoveryPaused(id,_time))
+                next=ResourceBoundary(next,guard.Stamina,actor.Stats.MaxStamina,actor.Stats.StaminaRecovery);
         }
         foreach(var id in _recoveringHealth)
-            next=EarlierBoundary(_time,next,_time+_healthRecoveryInterval-_actors[id].HealthRecoveryElapsed);
+        {
+            var actor=_actors[id];next=ResourceBoundary(next,actor.Health,actor.Stats.MaxHealth,actor.Stats.HealthRecovery);
+        }
         foreach(var id in _recoveringMana)
-            next=EarlierBoundary(_time,next,_time+_manaRecoveryInterval-_actors[id].Resources.ManaRecoveryElapsed);
+        {
+            var actor=_actors[id];next=ResourceBoundary(next,actor.Resources.Mana,actor.Stats.MaxMana,
+                actor.Stats.ManaRecovery-(InputAbilities?.ContinuousCosts(id).Mana ?? 0));
+        }
+        // Combat-tag expiry can change passive maxima/rates at this exact boundary.
+        foreach(var id in _combatTagged)
+            next=EarlierBoundary(_time,next,_time+CombatRemaining(id));
         foreach(var (id,input) in Inputs.Waiting)
         {
             // The receipt deadline is inclusive. Its next representable instant expires
@@ -126,5 +140,22 @@ public sealed partial class CombatSimulation
             if(_actors.TryGetValue(id,out var actor))next=EarlierBoundary(_time,next,actor.ReadyAt);
         }
         return PlanBasicProjectiles(NextReceivedInput(next));
+    }
+
+    private double ResourceBoundary(double next,double current,double maximum,double rate)
+    {
+        if(!ResourceTransition.CanFlow(current,maximum,rate))return next;
+        var at=_time+ResourceTransition.SecondsToLimit(current,maximum,rate);
+        return EarlierBoundary(_time,next,at>_time?at:Math.BitIncrement(_time));
+    }
+
+    internal double ChannelResourceBoundary(NetworkEntityId id,double next,double manaCost,double staminaCost)
+    {
+        var actor=_actors[id];var guard=_defense[id];
+        var manaRate=actor.Resources.ManaRecoveryConnected?actor.Stats.ManaRecovery:0;
+        var staminaRate=guard.RecoverAt<=_time && !StaminaRecoveryPaused(id,_time)?actor.Stats.StaminaRecovery:0;
+        if(manaCost>0)next=ResourceBoundary(next,actor.Resources.Mana,actor.Stats.MaxMana,manaRate-manaCost);
+        if(staminaCost>0)next=ResourceBoundary(next,guard.Stamina,actor.Stats.MaxStamina,staminaRate-staminaCost);
+        return next;
     }
 }

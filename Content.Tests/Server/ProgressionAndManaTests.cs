@@ -64,12 +64,12 @@ public sealed class ProgressionAndManaTests
         var w = World(); var initial = w.CreateInitialCharacter() with { Mana = 0 };
         var p = w.AddPlayer(42, new(1), initial);
         Step(w, ticks, delta);
-        Assert.Equal(15, w.Abilities!.Mana(p.EntityId), 8);
+        Assert.Equal(3*(double)delta*ticks, w.Abilities!.Mana(p.EntityId), 8);
         var saved = w.CaptureCharacter(42);
         var next = World(); var restored = next.AddPlayer(42, new(1), saved with { SavedAtUnixMilliseconds = 1 });
         Assert.Equal(saved.Mana, next.Abilities!.Mana(restored.EntityId));
         Step(next, 20);
-        Assert.Equal(saved.Mana + 3, next.Abilities.Mana(restored.EntityId), 8);
+        Assert.Equal(saved.Mana + 3*(double).05f*20, next.Abilities.Mana(restored.EntityId), 8);
     }
 
     [Fact]
@@ -84,7 +84,7 @@ public sealed class ProgressionAndManaTests
         w.Abilities.SetManaRecoveryConnected(p.EntityId, false);
         Step(w, 40); Assert.Equal(0, w.Abilities.Mana(p.EntityId));
         w.Abilities.SetManaRecoveryConnected(p.EntityId, true);
-        Step(w, 20); Assert.Equal(3, w.Abilities.Mana(p.EntityId), 8);
+        Step(w, 20); Assert.Equal(3*(double).05f*20, w.Abilities.Mana(p.EntityId), 8);
         w.Combat!.Get(p.EntityId).Health = 0; // Isolate the death gate from PvP target permissions.
         var before = w.Abilities.Mana(p.EntityId);
         Step(w, 40); Assert.Equal(before, w.Abilities.Mana(p.EntityId));
@@ -94,12 +94,13 @@ public sealed class ProgressionAndManaTests
     }
 
     [Fact]
-    public void RecoveryTracksAllocatedWisdomWithoutHealingOnAllocation()
+    public void RecoveryTracksAllocatedWisdomAndPreservesFractionOnAllocation()
     {
         var w = World(); var p = w.AddPlayer(42, new(1), w.CreateInitialCharacter() with { Mana = 0 });
         Assert.True(w.TryQueueProgression(42, new(1, ProgressionAction.AllocateStat, 6, 0, 0)));
-        Step(w, 1); Assert.Equal(0, w.Abilities!.Mana(p.EntityId));
-        Step(w, 19); Assert.Equal(3.2, w.Abilities.Mana(p.EntityId), 8);
+        Step(w, 1);var scaled=3*(double).05f/140*148;
+        Assert.Equal(scaled, w.Abilities!.Mana(p.EntityId),8);
+        Step(w, 19); Assert.Equal(scaled+3.2*(double).05f*19, w.Abilities.Mana(p.EntityId), 8);
         Assert.Equal(17, w.ProgressionState(p.EntityId, w.Tick).StatPoints);
     }
 }

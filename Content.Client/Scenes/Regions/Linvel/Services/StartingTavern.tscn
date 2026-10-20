@@ -1,0 +1,17 @@
+[gd_scene load_steps=2 format=3]
+[ext_resource type="PackedScene" path="res://Scenes/Actors/Primitives/ResidentFigure.tscn" id="Figure"]
+[node name="StartingTavern" type="Node3D"]
+metadata/tavern_id = "linvel_starting_tavern"
+metadata/network_id = 1
+metadata/placement_revision = 1
+metadata/region_id = "linvel_gardens"
+metadata/public_name = "Таверна Линвеля"
+metadata/interaction_range = 3.0
+metadata/prototype_placement = "Стартовый лагерь до готовности городской таверны; перенос требует новой revision и миграции привязок."
+[node name="Npc" type="Marker3D" parent="."]
+position = Vector3(-423, 14.1, 230)
+gizmo_extents = 1.5
+[node name="Figure" parent="Npc" instance=ExtResource("Figure")]
+[node name="Respawn" type="Marker3D" parent="."]
+position = Vector3(-420, 14.1, 230)
+gizmo_extents = 1.5

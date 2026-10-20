@@ -56,7 +56,7 @@ public sealed class RegionalTravelTests
         Assert.Equal(EchoCombatDocuments.Serialize([readyBefore]).Single().State,
             EchoCombatDocuments.Serialize([Assert.Single(restored,e=>e.Availability==SavedEchoAvailability.Ready)]).Single().State);
     }
-    private sealed class Fixture : IAsyncDisposable
+    internal sealed class Fixture : IAsyncDisposable
     {
         public SqliteCharacterStore Store { get; } = new();
         public Dictionary<string, WorldNodeSession> Leases { get; } = new();

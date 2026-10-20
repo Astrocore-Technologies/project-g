@@ -81,7 +81,8 @@ public sealed partial class ServerWorld
         if (_starterLastCell.TryGetValue(id,out var previous) && previous==cell && places==previousPlaces) return;
         _starterLastCell[id]=cell;
         ulong[]? changed=null;
-        void Reveal(Vector2 position)
+        var eligibleCells=0;
+        void Reveal(Vector2 position,bool reward=false)
         {
             var center=Navigation.Cell(position); var x=center%Navigation.Width; var z=center/Navigation.Width;
             var radius=_starterZone!.RevealRadiusCells;
@@ -90,16 +91,24 @@ public sealed partial class ServerWorld
                 var nx=x+dx; var nz=z+dz;
                 if(dx*dx+dz*dz>radius*radius || nx<0 || nz<0 || nx>=Navigation.Width || nz>=Navigation.Height) continue;
                 var index=nz*Navigation.Width+nx; var bit=1UL<<(index%64);
-                if ((map.Cells[index/64]&bit)!=0) continue;
+                if (((changed??map.Cells)[index/64]&bit)!=0) continue;
                 changed ??= (ulong[])map.Cells.Clone(); changed[index/64]|=bit;
+                if(reward && Navigation.IsWalkable(Navigation.Center(index)))eligibleCells++;
             }
         }
-        Reveal(player.Position);
+        Reveal(player.Position,moved && _experienceRewards is not null);
         // Existing discovery rewards already prove a historical visit; preserve that knowledge on upgrade.
         if (_starterPending.Contains(id)) for(var i=0;i<DiscoveryLandmarks.Length;i++)
             if ((places&(1<<i))!=0) Reveal(DiscoveryLandmarks[i]);
-        if(changed is not null || map.Places != places) StoreExploration(id,map with { Cells=changed ?? map.Cells, Places=places });
+        var experienceCells=checked(map.ExperienceCells+eligibleCells);
+        if(changed is not null || map.Places != places) StoreExploration(id,map with { Cells=changed ?? map.Cells, Places=places,ExperienceCells=experienceCells });
         else if(_progression[id].Exploration is null) StoreExploration(id,map);
+        if(_experienceRewards is {} rewards)
+        {
+            var milestones=experienceCells/rewards.ExplorationCells-map.ExperienceCells/rewards.ExplorationCells;
+            if(milestones>0)AwardPersonalExperience(id,new(Content.Server.Progression.ExperienceActivity.MapExploration,
+                $"{RegionId}:{experienceCells/rewards.ExplorationCells}",rewards.Revision,checked(milestones*rewards.ExplorationExperience)));
+        }
     }
     private void SimulateStarterZone()
     {

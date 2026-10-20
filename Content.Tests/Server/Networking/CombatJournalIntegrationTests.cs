@@ -15,8 +15,11 @@ public sealed class CombatJournalIntegrationTests
 {
     private static ServerWorld World()
     {
-        var world=new ServerWorld(Options.Create(new MovementOptions()),Options.Create(new InterestOptions()),catalog:ContentCatalogTests.Load(),
-            combat:Options.Create(new CombatOptions{HealthRecoveryIntervalSeconds=60}),hitRoll:()=>0,criticalRoll:()=>1);
+        // Exact damage evidence is tested separately from resource flow.
+        var data=Content.Tests.Server.Combat.CommonResourceTests.Document();
+        data["creatures"]![0]!["baseHealthRecovery"]=0;data["balance"]!["healthRecovery"]!["vitality"]=0;
+        var world=new ServerWorld(Options.Create(new MovementOptions()),Options.Create(new InterestOptions()),
+            catalog:Content.Tests.Server.Combat.CommonResourceTests.Catalog(data),hitRoll:()=>0,criticalRoll:()=>1);
         world.Combat!.DamagePermission=(_,_)=>true;return world;
     }
     private static GameServerService Server(int port,ServerWorld world,SqliteCharacterStore store)=>new(Options.Create(new ServerOptions

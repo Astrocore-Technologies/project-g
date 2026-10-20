@@ -7,7 +7,8 @@ public enum EchoSummonOutcome : byte
 { Accepted, Buffered, Completed, Cancelled, Interrupted, InvalidState, InvalidEcho, ActiveLimit, AlreadyActive, NoMana, Unavailable }
 public readonly record struct EchoRosterRequest(uint Sequence,uint Page);
 public readonly record struct EchoRosterEntry(ulong Handle,string Name,EchoAvailability Availability,byte Slot,
-    NetworkEntityId EntityId,double Health,double Mana,double Stamina,uint ActionSequence=0,ulong Execution=0,ulong DeathId=0,EchoRefusal Refusal=EchoRefusal.None);
+    NetworkEntityId EntityId,double Health,double Mana,double Stamina,uint ActionSequence=0,ulong Execution=0,ulong DeathId=0,EchoRefusal Refusal=EchoRefusal.None,
+    long Experience=0,double ExperienceFraction=0);
 public readonly record struct EchoRosterPage(NetworkEntityId OwnerId,uint ServerTick,uint Sequence,uint Page,uint Total,
     IReadOnlyList<EchoRosterEntry> Entries,byte RestorationCost=1);
 public readonly record struct EchoSummonCommand(uint Sequence,ulong Handle,uint InputOrder=0)

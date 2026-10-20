@@ -1,10 +1,15 @@
 # Character & Stats — архитектура GDD 03
 
 Дата: 2026-10-20. Статус: **направление разрешено к реализации;
-C1 реализован, остальные разделы — план последующих этапов**.
+C1–C4 и C5a/b реализованы и проверены; первый набор C5c реализован;
+C6–C7 остаются планом**.
 Пользователь разрешил реализацию командой «го». Открытые gameplay-правила
 и экспериментальные коэффициенты этим документом не утверждаются.
 Фактические решения C1 и проверки: [отчёт](../development/character-stats-c1.md).
+Ресурсы и regen C2: [реализация и проверки](../development/character-stats-c2.md).
+PvE penalty и tavern respawn C3: [реализация и проверки](../development/character-stats-c3.md).
+Полный сброс C4: [реализация и проверки](../development/character-stats-c4.md).
+Источники и деление EXP C5a/b: [реализация и проверки](../development/character-stats-c5.md).
 В частности, Int64/revision в общей схеме ниже — направление по необходимости;
 C1 сохраняет нынешние int32 budgets и привязывает apply к серверному preview.
 
@@ -155,7 +160,7 @@ Attack не лечит; HP > 0 как максимум; MP/Stamina capacity не
 
 ```text
 oldMax > 0: newCurrent = clamp(oldCurrent / oldMax, 0, 1) * newMax
-oldMax = 0: отдельное согласованное правило; кандидат — 0
+oldMax = 0: newCurrent = 0 (ответ пользователя 2026-10-20)
 dead: HP остаётся 0; изменение статов не является воскрешением
 ```
 
@@ -187,8 +192,10 @@ definitions. Это входит в persistence contract и тесты reconnect
 Нужна явная политика условий regen: in-combat, Block, action, returning NPC,
 disconnect body и offline. D101 уже задаёт 100 / 15 в секунду / задержку 1 секунду;
 D102 — исключение возвращающегося NPC. Дополнительные runtime-паузы не объявлять
-правилами GDD без сверки. При нескольких отрицательных источниках атрибуция
-смерти остаётся открытым gameplay-вопросом, а не произвольным выбором кода.
+правилами GDD без сверки. Ответ пользователя 2026-10-20: при неоднозначном
+суммарном отрицательном HP regen причина смерти «Отрицательная регенерация»,
+без назначения игрока-убийцы. Существующая mixed-PvP классификация риска
+не меняется; kill credit последнему атакующему за такую смерть не выдаётся.
 
 Фактическое непрерывное изменение сохраняется через существующий checkpoint
 до публикации. Увеличение частоты durable writes измерить на стенде. Отложенная
@@ -215,8 +222,12 @@ key, типом активности, версией reward config и суммо
 PvE, craft completion, личное открытие, исследование, quest/event completion;
 торговля/доставка подключаются после определения значимого результата.
 Не создавать клиентский GrantEXP RPC, общий лимит EXP/час или подавление
-валидного повторного крафта. Текущий +1 за damage event обозначить legacy
-источником и заменить лишь после согласования PvE reward contract.
+валидного повторного крафта. C5 удаляет +1 за damage event: урон, эффективное
+лечение и успешный контроль дают участие в общем пуле победы, а не отдельный EXP.
+`Data/experience-rewards.json` v1/revision 1 содержит выбранные пользователем
+временные 20 EXP, радиус 40 м, 100 новых проходимых ячеек и 5 EXP исследования.
+Приложение загружает policy во все региональные worlds до загрузки героев;
+в изолированных domain worlds без policy боевой EXP выключен.
 
 ### Идемпотентность и атомарность
 
@@ -252,43 +263,103 @@ claim либо штатный abort checkpoint. В реализации выбр
 
 ### Группа и Эхо
 
-Отделить eligibility события от равного деления и от destination доли.
-Не начислять owner долю его Эхо, не вводить им уровни через этот GDD. До ответа
-про eligibility, судьбу доли Эхо и остаток целочисленного деления общий
-distributor не включать. Его тестовые варианты — только предложения.
+`ServerWorld.Experience` отделяет eligibility, равное деление и destination.
+Победа получает source key NPC life UUID + death ordinal; receipt хранится на
+encounter этой жизни. SavedNpcRespawn и изменения всех получателей входят в
+общий checkpoint. Повторная обработка того же death ordinal не награждается;
+после настоящего revive следующее поражение имеет новый death ordinal, новая
+spawn life — новый UUID. Return-home сбрасывает вклад. Training targets и PvP
+не создают PvE reward.
+
+Допуск после завершения боевого frame: текущий connected/loaded живой герой,
+тот же world, расстояние до места победы не больше 40 м в XYZ. Для героя
+используется existing persistent root credit (в том числе вклад его спутника),
+для Эхо — отдельный source конкретного экземпляра из ContributionLedger.Sources.
+Эхо дополнительно должно оставаться живым активным телом того же owner в радиусе.
+Смена party не переписывает вклад: party без вклада не создаёт entitlement.
+Отозванное/погибшее Эхо и отсутствующий владелец не создают фантомных долей;
+released projectile сохраняет исходные source/credit identities.
+
+Пользователь выбрал отдельный EXP экземпляра Эхо и накопление дробей. Герой
+получает только одну свою долю; герои на cap исключены из делителя, их дроби
+не банковуются. SavedExperienceFraction v1 — точная сокращённая рациональная
+дробь, numerator/denominator по 512 десятичных знаков, с fail-closed validation;
+bounded JSON 8 KiB остаётся прежним. Floating point используется только для
+подписи UI. Echo Experience — Int64 counter, без уровней. Capture, recall,
+recovery и login сохраняют счётчик и дробь. Optional extensions совместимы
+со старыми SavedProgression/SavedEchoCombat v1; SQL schema 12 не меняется.
+
+Исследование использует durable битсет известной карты и ExperienceCells:
+считаются новые проходимые ячейки из существующего reveal radius при движении.
+Initial reveal и восстановление исторических landmarks не награждаются;
+карты архивируются с receipt при переходе региона. Баланс rewards не мигрирует
+уже выданные награды молча. Крафт/quest/discovery используют собственные ordinal,
+completed-state и region/discovery bit. Нет отдельного безграничного списка hits.
+
+Protocol v81 расширяет owner-only EchoRosterPage (ID 115, ReliableOrdered):
+в конце каждой строки после Refusal добавлены Experience Int64 и доля Double
+[0,1). Wire не содержит criteria или точной private дроби. Новых message IDs нет;
+старый клиент отклоняется штатной проверкой версии. Обычный ProgressionState
+отображает целый EXP героя; подтверждённый EXP Эхо виден в существующей подписи.
 
 ## 8. Сброс характеристик
 
-Развивать существующие PreviewStats/AllocateStats; новая операция — полный
-respec через подтверждённую городскую услугу. Server проверяет actor ownership,
-NPC/service и дистанцию, alive/busy/In Combat, roster lock при наличии этой
-системы, актуальную цену, состояние кошелька/предмета и build revision.
-Roster lock сейчас нельзя заменить всегда разрешающей заглушкой и объявить
-полным соответствием турнирам.
+C4 подключает полный respec через трактирщика из явно выбранного серверного списка
+городских услуг; размещение стартовой таверны пока prototype до включения города
+в server graph. Произвольного запроса сброса из открытого мира нет. Сервер проверяет
+ownership/loaded, NPC/service, 3D range/LOS, alive, In Combat, движение/действие/обмен.
+Tournament Roster Lock ещё не существует: заглушка «всегда разрешать» не добавлена,
+интеграция блокировки требуется вместе с турнирной системой.
 
-Quote содержит срок актуальности, revision, стоимость, результаты и причины
-несовместимости equipment/skills. Повторное подтверждение stale quote
-отвергается с обновлением preview. Первый полный сброс использует durable
-признак, последующие — утверждённую плату. Признак бесплатного использования,
-платёж, возврат вложений, конфигурация и ресурсы сохраняются атомарно.
-Повтор подтверждения возвращает результат по тому же request receipt.
+`Data/respec.json` v1: service revision, временная цена **100 монет** по ответу
+пользователя 2026-10-20, TTL 15 с, stable tavern IDs. Это не финальная калибровка
+на 15–30 минут заработка. Alpha использует кошелёк; альтернативный предмет не введён.
 
-Предлагаемый scope первой операции: полный сброс в свободный пул, после него
-обычное распределение. Объединение сброса и нового билда в одну UI-операцию
-необязательно; итоговый UX оформить в редактируемой сцене. Не снимать требования предметов
-и навыков ради удобства; последствия несовместимости требуют определения.
+`ServerWorld.Respec` хранит owner-bound quote: nonce, server-issued operation,
+цену/кошелёк/итоговый пул, текущие и будущие первичные/производные статы.
+Подтверждение сравнивает TTL, NPC, ledger/историю, уровень/пул, профессию/навыки,
+статы, equipment/wallet image, пересчитанный результат и service revision.
+Текущий запас ресурсов не фиксируется quote: при подтверждении сохраняется его
+текущая доля, регенерация продолжает работать. Stale quote не применяет изменений.
+
+`SavedRespec` v1 — optional receipt в SavedProgression v1: Completed ordinal,
+QuoteId, фактически оплаченные монеты и возвращённые очки. Первый успешный сброс
+бесплатен; пустой сброс не расходует право. У персонажей с известным C1 ledger
+до C4 этой услуги не было: отсутствие receipt означает отсутствие успешного сброса.
+Отсутствующий/несовместимый ledger не восстанавливается по сумме статов — нужна
+миграция. Будущие повреждённые receipts не подменяются новым бесплатным сбросом.
+
+Полный сброс возвращает Invested в StatPoints, сохраняет starting stats, earned
+и achievement bonus, уровень, EXP, профессию, навыки, предметы, cooldown и ACR.
+`InventorySimulation.Respec` заранее готовит equipment/resources и кошелёк;
+изменения вместе с receipt и audit идут в существующий fenced atomic checkpoint.
+Публикация результата — после commit. Повтор последней operation+QuoteId возвращает
+AlreadyProcessed; более старая операция не повторяется. Нового reset cooldown нет.
+
+В нынешних item/skill definitions нет требований к величине статов. Сброс не
+отключает предметы/навыки и не обходит имеющиеся ограничения по оружию. При будущем
+введении stat requirements нужны их обычная enforcement policy и предварительный
+список несовместимостей; C4 не объявляет этот отсутствующий механизм реализованным.
+
+Protocol v80: RespecCommand/Quote/Result 129/130/131, ReliableOrdered, quote/result
+только владельцу. Рабочая `RespecView.tscn` используется и presenter, и автономным
+preview. После подтверждения — переход в обычное окно распределения характеристик.
+SQL schema 12 не меняется; working DB не мигрировалась.
 
 ## 9. PvE-смерть и таверна
 
-Подключить `DeathPenaltyPolicy` к текущему событию player death. Для принятого
-в источнике направления штрафа: `min(CurrentEXP, 0.05 * EXPToNextLevel(Level))`
-с отдельно выбранным целочисленным округлением. На cap: 0 без долга, уровень
-и очки не уменьшаются. DeathId/receipt исключает повтор penalty при reconnect,
-повторном lifecycle callback или revive. PvP policy остаётся отдельной.
+`DeathPenaltyPolicy` подключена к текущему событию player death, включая мир без
+PvP-модуля. Штраф: `min(CurrentEXP, EXPToNextLevel(Level) / 20)` с целочисленным
+округлением вниз, без минимума 1 (ответ пользователя 2026-10-20). На cap: 0 без
+долга, уровень и очки не уменьшаются. `SavedDeathPenalty` v1 хранит DeathId,
+тип смерти и фактическую потерю; reconnect/revive не повторяют списание.
+PvP policy остаётся отдельной; historical legacy death не пересчитывается задним числом.
 
-Хранить versioned `RespawnBinding` со stable tavern ID, region ID и точкой
-проходимой поверхности; не клиентские координаты и не node path сцены.
-NPC binding — серверная услуга с отдельными ещё открытыми условиями.
+`SavedRespawnBinding` v1 хранит stable tavern ID, placement revision, region ID
+и точку проходимой поверхности; координаты задаёт серверный `TavernCatalog`.
+Новому герою и legacy без binding назначается стартовая таверна Линвеля.
+Услуга бесплатна у её NPC, живым персонажем вне боя; сервер проверяет ownership,
+sequence/rate, состояние, 3D-дистанцию и LOS. Команда содержит только sequence и runtime NPC ID.
 Удаление/перенос используемой таверны требует content migration; не переносить
 персонажа молча в произвольный город.
 
@@ -297,11 +368,38 @@ Respawn использует существующие 60 секунд, 50% HP/MP
 Снять обычные death-removable effects, пересчитать конфигурацию, установить
 respawn fractions и применить location transition одним сохраняемым результатом.
 Cooldown, ACR и persist-through-death сохраняются по combat contract.
-Таверна другого региона использует существующий regional transfer/fencing;
-не придумывать handoff или новый региональный worker. Если нет атомарного пути
-между текущими checkpoints death/transfer, сначала реализовать его и проверить
-crash между prepare/commit; нельзя объявить полноценный tavern respawn по
-перемещению внутри одного региона.
+Таверна другого региона использует существующий regional transfer/fencing:
+новые жизнь/ресурсы/местоположение сохраняются одним checkpoint, после commit
+включается actor назначения и новый epoch. До commit нет Accepted/result/bootstrap
+назначения. Ошибка staging/commit требует recovery из durable state, autosave
+частично подготовленного actor запрещён. Отдельного worker/service не добавлено.
+Проверены задержка commit, rollback и запрет старых epoch packets.
+
+`Data/taverns.json` — server-only catalog; `StartingTavern.tscn` — редактируемые
+NPC/Respawn markers, exporter пишет только явно заданный JSON. Пока городской
+таверны нет в серверном графе, размещение временное в стартовом лагере gardens;
+это не готовое здание в городской сцене. Перенос требует явной миграции binding.
+Protocol v79: owner-only TavernState/Result (IDs 127/128), TavernCommand 126;
+AOI QuestNpcSpawn 86 получил Height. Все эти редкие сообщения ReliableOrdered.
+
+```mermaid
+sequenceDiagram
+    participant C as Клиент
+    participant S as Регион смерти
+    participant DB as Fenced checkpoint
+    participant T as Регион таверны
+    S->>DB: DeathId + EXP debit + receipt
+    DB-->>S: Commit смерти
+    S-->>C: Подтверждённая смерть и потеря EXP
+    C->>S: RespawnCommand после 60 с
+    S->>S: Проверка жизни, DeathId, таймера, binding
+    S->>DB: Жизнь + 50/50/100 + регион/точка + прежний receipt
+    DB-->>S: Commit подтверждён
+    S->>T: Активация сохранённого персонажа
+    T-->>C: Новый epoch и загрузка региона
+    C->>T: RegionReady
+    T-->>C: Baseline, home и сохранённый Accepted
+```
 
 ## 10. Сеть и интерфейс
 
@@ -364,3 +462,26 @@ receipt. Только добавление интерфейса или enum не
 GDD 03: нужны полные producer → transaction → owner UI сценарии.
 
 Порядок реализации, блокеры и проверки: [план GDD 03](../design/character-stats/implementation-plan.md).
+
+## 13. C5c — существующие authoritative activity producers
+
+Принятые временные NPC-продажа, повторяемая поставка и «Дозор лагеря» входят
+в прежний fixed-tick мир и общий durability barrier. Нового процесса, транспорта
+или базы нет. Продажа использует существующий economy operation receipt;
+последний номер/статус поставки хранится в optional `SavedDeliveryOrder` героя,
+номер/active/reward revision/pool запуска — в optional `SavedCampWatch` региона.
+Cargo, EXP, receipt и аудит фиксируются вместе; публикация только после commit.
+Запущенный «Дозор» сохраняет величину бонуса при смене конфигурации и restart.
+Delivery revision при несовместимом сохранении требует явной миграции.
+
+Protocol v82: bounded owner-only ActivityCommand/State/Result (132–134),
+ReliableOrdered; публичные высоты resource/station и EXP в economy quote
+расширяют существующие DTO. Частота snapshots не меняется. SQL schema 12
+сохраняется: используются строго проверяемые optional versioned JSON components.
+Старый бинарник не читает новые поля — откат требует сохранённой совместимой
+копии базы. Рабочая БД в этом срезе не мигрировалась и не открывалась.
+
+Редактируемая сцена сервисов экспортирует только placement в server-only
+`camp-services.json`, сохраняя ручные reward/text настройки. Definitions
+валидируются по ссылкам и поверхности до запуска UDP. Правила и критерии
+награды не переносятся в Shared. [Результат C5c](../development/character-stats-c5c.md).

@@ -40,7 +40,8 @@ public sealed partial class EchoSimulation
                 status==EchoAvailability.Summoning?summoning.Sequence:0,status==EchoAvailability.Summoning?summoning.Execution:0,
                 status==EchoAvailability.RequiresRestoration?actor?.DeathId??saved.DeathId:0,
                 (Allows(entry,0)?EchoRefusal.None:EchoRefusal.Basic)|
-                (Allows(entry,_catalog.Abilities[_catalog.Echoes[saved.DefinitionId].SignatureId].NetworkId)?EchoRefusal.None:EchoRefusal.Signature));
+                (Allows(entry,_catalog.Abilities[_catalog.Echoes[saved.DefinitionId].SignatureId].NetworkId)?EchoRefusal.None:EchoRefusal.Signature),
+                saved.Experience,saved.ExperienceFraction?.Display()??0);
         }
         return new(owner,tick,state.RosterSequence,state.RosterPage,(uint)state.Roster.Count,entries,(byte)_catalog.EchoRecovery.Quantity);
     }

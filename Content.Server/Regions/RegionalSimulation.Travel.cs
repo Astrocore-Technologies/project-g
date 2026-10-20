@@ -11,7 +11,8 @@ public sealed partial class RegionalSimulation
 {
     private sealed record Journey(int Connection, RegionTransfer Transfer, FrozenCharacterState Destination,
         NetworkEntityId PreviousEntity, PlayerId PlayerId, Task Commit, CancellationTokenSource Deadline,
-        IReadOnlyList<CharacterSave> Characters, IReadOnlyList<(ServerWorld World, WorldNodeSave Save)> Worlds, SocialSave? Social);
+        IReadOnlyList<CharacterSave> Characters, IReadOnlyList<(ServerWorld World, WorldNodeSave Save)> Worlds, SocialSave? Social,
+        RespawnCommand? Respawn);
     private Journey? journey;
     public bool HasPendingJourney => journey is not null;
     public Task PendingCommit => journey?.Commit ?? Task.CompletedTask;
@@ -28,20 +29,26 @@ public sealed partial class RegionalSimulation
     {
         EnsureNoJourney();
         if (!connections.TryGetValue(connection, out var character) || !CanExecute(connection, Owner(connection))) return false;
-        var source = World(connection); var route = Boundary(connection);
-        if (route is null || !source.ReadyForRegionTravel(connection)) return false;
+        var source = World(connection);
+        var respawning=source.TryGetRegionalRespawn(connection,out var respawn,out var home);
+        var route = respawning ? new RegionBoundary(source.RegionId,home!.RegionId,source.GetPlayer(connection).Position,
+            new(home.Spawn.X,home.Spawn.Z),1,source.GetPlayer(connection).Height,home.Spawn.Height) : Boundary(connection);
+        if (route is null || !respawning && !source.ReadyForRegionTravel(connection)) return false;
         var target = Region(route.Destination);
         // Every possible write needs its lease before any actor is removed.
         foreach (var world in orderedWorlds)
             if (!worldLeases.ContainsKey(world.WorldNodeKey)) throw new InvalidOperationException("Missing regional world lease.");
-        var destination = PrepareArrival(FrozenCharacterState.Capture(source.CaptureCharacter(connection)).Restore(), target, route);
-        ValidateArchivedMaps(destination);
-        var cargo = FrozenCharacterState.Capture(destination);
         var actor = source.GetPlayer(connection);
         var transfer = ownership.Prepare(character, Guid.NewGuid(), Owner(connection), target.RegionId);
         var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         try
         {
+            // Resource/life mutation remains unpublished and joins the fenced destination checkpoint.
+            // Any staging error after this point requires recovery, never an autosave of the staged life.
+            if(respawning)source.PrepareRegionalRespawn(connection);
+            var destination=PrepareArrival(FrozenCharacterState.Capture(source.CaptureCharacter(connection)).Restore(),target,route);
+            ValidateArchivedMaps(destination);
+            var cargo=FrozenCharacterState.Capture(destination);
             var changes = new List<CharacterSave>(sessions.Count);
             foreach (var (peer, session) in sessions)
                 changes.Add(new(session, peer == connection ? cargo.Restore() : World(peer).CaptureCharacter(peer,includeSessionJournal:false), World(peer).PickupClaims(peer)));
@@ -55,7 +62,7 @@ public sealed partial class RegionalSimulation
             Task commit;
             try { commit = store.SaveRegionalCheckpointAsync(changes, writes.Select(w => w.Save).ToArray(), social, deadline.Token); }
             catch (Exception error) { commit = Task.FromException(error); }
-            journey = new(connection, transfer, cargo, actor.EntityId, actor.PlayerId, commit, deadline, changes, writes, social);
+            journey = new(connection, transfer, cargo, actor.EntityId, actor.PlayerId, commit, deadline, changes, writes, social,respawning?respawn:null);
             return true;
         }
         catch
@@ -82,6 +89,7 @@ public sealed partial class RegionalSimulation
             var player = target.AddPlayer(current.Connection, current.PlayerId, current.Destination.Restore(),restoringFromLogout:false);
             target.BindWorldActor(current.Connection, current.Transfer.Character);
             target.BindSocial(current.Connection, current.Transfer.Character);
+            if(current.Respawn is {} respawn)target.CompleteRegionalRespawn(current.Connection,respawn);
             ownership.Complete(current.Transfer);
             arrival = new(current.Connection, current.Transfer.Destination, current.PreviousEntity, player);
             current.Deadline.Dispose(); journey = null;

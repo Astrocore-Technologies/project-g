@@ -72,7 +72,9 @@ public sealed class StarterZoneTests
         var w=World(); var initial=w.CreateInitialCharacter(); var json=JsonNode.Parse(initial.Progression!.Serialize())!;
         Assert.Null(json["Exploration"]); var legacy=SavedProgression.Deserialize(json.ToJsonString());
         var p=w.AddPlayer(42,new(1),initial with { Health=17,Mana=9,Progression=legacy }); w.Simulate(0.05f); var saved=w.CaptureCharacter(42);
-        Assert.Equal(17,saved.Health); Assert.Equal(9,saved.Mana); Assert.Equal(legacy.Skills,saved.Progression!.Skills);
+        var stats=w.Combat!.Get(p.EntityId).Stats;
+        Assert.Equal(17+stats.HealthRecovery*(double).05f,saved.Health,8);
+        Assert.Equal(9+stats.ManaRecovery*(double).05f,saved.Mana,8);Assert.Equal(legacy.Skills,saved.Progression!.Skills);
         var document=JsonNode.Parse(saved.Progression.Serialize())!;
         document["Exploration"]!["Width"]=65535; Assert.Throws<InvalidDataException>(()=>SavedProgression.Deserialize(document.ToJsonString()));
         document=JsonNode.Parse(saved.Progression.Serialize())!; document["Exploration"]!["Cells"]!.AsArray()[^1]=1UL<<63;

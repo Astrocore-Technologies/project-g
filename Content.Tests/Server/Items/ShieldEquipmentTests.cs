@@ -62,7 +62,8 @@ public sealed class ShieldEquipmentTests
             Assert.True(world.TryQueueInventory(1,new(2,InventoryAction.Equip,firstShield?primary.Handle:shield.Handle)));world.Simulate(.05f);
             Assert.Equal(InventoryOutcome.IncompatibleEquipment,inventory.Results[player.EntityId].Outcome);
             Assert.Equal(before,inventory.Capture(player.EntityId).Serialize());Assert.Equal(stats,actor.Stats);
-            Assert.Equal(30,actor.Health);Assert.Equal(mana,actor.Resources.Mana);Assert.Equal(stamina,actor.Resources.Stamina);
+            Assert.Equal(30+stats.HealthRecovery*(double).05f*2,actor.Health,8);
+            Assert.Equal(mana+stats.ManaRecovery*(double).05f,actor.Resources.Mana,8);Assert.Equal(stamina,actor.Resources.Stamina);
         }
     }
 

@@ -38,7 +38,9 @@ public sealed class CompanionPvpTests
         var before=world.CaptureCharacter(43);PvpTests.Command(world,42,1,PvpMode.Criminal);
         Assert.True(world.Combat!.ApplyAbilityDamage(echo,100000,a.EntityId)>0);world.Simulate(.05f);
         Assert.True(world.Combat.CaptureLife(echo).Dead);Assert.False(world.PrivatePvp(b.EntityId).Dead);
-        Assert.Equal(before.Health,world.Combat.Get(b.EntityId).Health);Assert.Equal(before.Progression!.Experience,world.CaptureCharacter(43).Progression!.Experience);
+        var owner=world.Combat.Get(b.EntityId);
+        Assert.Equal(before.Health+owner.Stats.HealthRecovery*(double).05f*2,owner.Health,8);
+        Assert.Equal(before.Progression!.Experience,world.CaptureCharacter(43).Progression!.Experience);
         Assert.Equal(before.Inventory!.Serialize(),world.CaptureCharacter(43).Inventory!.Serialize());
         Assert.Equal(0,world.PrivatePvp(a.EntityId).Pk);Assert.Empty(world.CaptureWorldNode().DeathLoot??[]);
         Assert.True(world.Combat.InCombat(b.EntityId));

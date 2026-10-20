@@ -35,7 +35,8 @@ public sealed class NpcRespawnTests
         var f=new Encounter(seconds:30);var id=f.Npc.Id;f.Kill();
         Assert.True(f.World.Combat!.Resurrect(default,id,1,20));Assert.Equal(NpcBehavior.Idle,f.Npc.Behavior);
         Assert.Empty(f.World.CaptureWorldNode().NpcRespawns!);f.Now+=30001;f.World.Simulate(.05f);
-        Assert.Equal(id,f.Npc.Id);Assert.Equal(20,f.World.Combat.Get(id).Health);
+        Assert.Equal(id,f.Npc.Id);var actor=f.World.Combat.Get(id);
+        Assert.Equal(20+actor.Stats.HealthRecovery*(double).05f,actor.Health,8);
     }
     internal sealed class Encounter
     {

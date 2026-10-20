@@ -106,10 +106,10 @@ public sealed partial class CombatSimulation
         foreach (var id in _defenseActive)
         {
             var a=_defense[id];
-            if (!_actors[id].Active || _actors[id].Health<=0)
+            if (!_actors[id].Active || _actors[id].Health<=0 && (!_actors[id].DiedFromRegeneration || _actors[id].LifeDead))
             { a.GuardUntil=0; a.ParryUntil=0; _defenseSleeping.Add(id); continue; }
             var elapsed=Math.Clamp(_time-a.RecoverAt,0,delta);
-            var sword = IsSwordsman(id); var actor = _actors[id];
+            var actor = _actors[id];
             if (_swords.TryGetValue(id, out var window) && window.RiposteUntil > 0 && window.RiposteUntil <= _time)
             { window.RiposteUntil = 0; SwordWindowsChanged?.Invoke(id); }
             var heldSeconds=Math.Clamp(a.GuardUntil-(_time-delta),0,delta);
@@ -121,17 +121,23 @@ public sealed partial class CombatSimulation
             }
             // Recovery pays for the interval just traversed. A lock ending at this
             // boundary cannot retroactively make that entire interval recoverable.
-            var paused = actor.StationaryCast || actor.StunnedUntil>from || actor.Control!=CombatControlPhase.None ||
-                actor.RecoveryUntil>from || a.GuardUntil>_time || sword && actor.IsCasting;
-            var capacity=Math.Max(0,actor.Stats.MaxStamina);var recovery=Math.Max(0,actor.Stats.StaminaRecovery);
-            if (a.Stamina<capacity && elapsed>0 && !paused && recovery>0)
-            { a.Stamina=Math.Min(capacity,StatMath.Add(a.Stamina,StatMath.Multiply(recovery,elapsed))); _defenseDirty.Add(id); }
+            var paused = StaminaRecoveryPaused(id,from) || heldSeconds>0;
+            var capacity=Math.Max(0,actor.Stats.MaxStamina);var recovery=actor.Stats.StaminaRecovery;
+            if (elapsed>0 && !paused)
+                a.Stamina=ResourceTransition.Flow(a.Stamina,capacity,recovery,elapsed,ResourceClockTolerance);
             // Timed movement effects keep only affected actors awake and publish their expiration too.
             _defenseDirty.Add(id);
-            if ((a.Stamina>=capacity || recovery<=0) && a.GuardUntil<=_time && a.ParryUntil<=_time && a.ParryReadyAt<=_time &&
+            if (!ResourceTransition.CanFlow(a.Stamina,capacity,recovery) && a.GuardUntil<=_time && a.ParryUntil<=_time && a.ParryReadyAt<=_time &&
                 a.GuardBreakUntil<=_time && actor.StunnedUntil<=_time && actor.SlowUntil<=_time && (!_swords.TryGetValue(id,out var s) || s.FootworkUntil<=_time && s.RiposteUntil<=_time)) _defenseSleeping.Add(id);
         }
         foreach (var id in _defenseSleeping) _defenseActive.Remove(id);
+    }
+
+    private bool StaminaRecoveryPaused(NetworkEntityId id,double from)
+    {
+        var actor=_actors[id];var guard=_defense[id];
+        return actor.StationaryCast || actor.StunnedUntil>from || actor.Control!=CombatControlPhase.None ||
+            actor.RecoveryUntil>from || guard.GuardUntil>from || IsSwordsman(id) && actor.IsCasting;
     }
 
     private InputDisposition ExecuteDefenseInput(NetworkEntityId id,DefenseCommand c,uint tick)

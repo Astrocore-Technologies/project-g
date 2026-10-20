@@ -18,6 +18,7 @@ public partial class NetworkClient
         CurrentRegion = entry; RegionActive = false; _surfaceAssembly = new();
         KnownPlayers.Clear(); CraftRecipes.Clear(); ResourceNodes.Clear();
         KnownLife.Clear();
+        LatestTavern=null;
         LatestEchoRoster=null;
         _sustainedEffects.Clear();
         _basicActions.Clear();
@@ -27,7 +28,7 @@ public partial class NetworkClient
         LatestControlState=null;
         Navigation = null; LatestServerTick = 0;
         LatestWorldNode = null; LatestExploration = null; LatestStarterZone = null; LatestPvpZone = null; LatestDefense = null;
-        QuestNpcs.Clear(); LatestQuestJournal=null;
+        QuestNpcs.Clear(); LatestQuestJournal=null;LatestActivities=null;
         CanDevelopmentRevive = false;
         // Listeners detach old presentation synchronously, before the next packet in this poll.
         RegionChanged?.Invoke();

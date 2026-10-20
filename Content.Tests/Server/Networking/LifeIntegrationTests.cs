@@ -54,8 +54,10 @@ public sealed class LifeIntegrationTests
     [Fact]public async Task PveDeathAndRespawnPublishLifeAndHealthOnlyAfterTheirAtomicCommit()
     {
         var store=new SqliteCharacterStore();await store.InitializeAsync(default);long now=100000;
-        var world=new ServerWorld(Options.Create(new MovementOptions{SpawnX=-7}),Options.Create(new InterestOptions()),catalog:ContentCatalogTests.Load(),
-            combat:Options.Create(new CombatOptions{HealthRecoveryIntervalSeconds=60}),npc:Options.Create(new NpcOptions
+        var data=Content.Tests.Server.Combat.CommonResourceTests.Document();
+        data["creatures"]![0]!["baseHealthRecovery"]=0;data["balance"]!["healthRecovery"]!["vitality"]=0;
+        var world=new ServerWorld(Options.Create(new MovementOptions{SpawnX=-7}),Options.Create(new InterestOptions()),catalog:Content.Tests.Server.Combat.CommonResourceTests.Catalog(data),
+            npc:Options.Create(new NpcOptions
             {Enabled=true,X=-6.5f,Z=0,WindupSeconds=3,DecisionSeconds=.1f,AggroRadius=2}),hitRoll:()=>0,criticalRoll:()=>1);
         world.PvpClock=()=>Interlocked.Read(ref now);Assert.False(world.HasPvp);
         var seed=await store.OpenAsync("",world.CreateInitialCharacter() with {Health=1},default);var token=seed.IssuedToken;await seed.DisposeAsync();

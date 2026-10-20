@@ -98,6 +98,14 @@ public sealed partial class ServerWorld
     }
     internal void ApplyLiveDm(AuthorizedLiveDm command)
     {
+        if(command.RegionId is not null&&command.RegionId!=RegionId)return;
+        if(command.Operation==LiveDmOperation.StartCampWatch)
+        {
+            if(!HasWorldNode||!HasActivities||Npc is null||_experienceRewards is not {WatchExperience:>0}||_nodeState.CampWatch is {Active:true}||
+                _nodeState.CampWatch?.Occurrence==long.MaxValue)return;
+            _nodeState=_nodeState with {CampWatch=new(1,(_nodeState.CampWatch?.Occurrence??0)+1,true,_experienceRewards.Revision,_experienceRewards.WatchExperience)};
+            ActivityEventDirty=true;Audit("dm:"+command.Actor,command.Operation.ToString(),command.Reason);return;
+        }
         if(_node is not { Interactive: true }) return;
         _nodeState=command.Operation switch
         {

@@ -15,10 +15,10 @@ public sealed partial class ServerWorld
     private readonly Dictionary<NetworkEntityId, QuestReply> _questReplies = new();
     public bool HasQuests => _deliveryQuest is not null || _swordTrainer.IsValid;
     public IReadOnlyDictionary<NetworkEntityId, QuestReply> QuestReplies => _questReplies;
-    private void InitializeQuests(bool enabled)
+    private void InitializeQuests(bool enabled,DeliveryQuestDefinition? definition=null)
     {
         if (!enabled) return;
-        _deliveryQuest = _progressionCatalog?.DeliveryQuest ?? throw new InvalidDataException("Missing delivery quest content.");
+        _deliveryQuest = definition ?? _progressionCatalog?.DeliveryQuest ?? throw new InvalidDataException("Missing delivery quest content.");
         if (Inventory is null) throw new InvalidDataException("Delivery quests require inventory.");
         if (_deliveryQuest.RegionId != RegionId) return;
         foreach (var npc in new[] { _deliveryQuest.Giver, _deliveryQuest.Recipient })
@@ -31,7 +31,7 @@ public sealed partial class ServerWorld
     public bool TryGetQuestNpc(NetworkEntityId id, out QuestNpcSpawn spawn)
     {
         spawn = default; if (!_questNpcs.TryGetValue(id, out var npc)) return false;
-        spawn = new(id, Tick, npc.Position, npc.Name, npc.Role); return true;
+        spawn = new(id, Tick, npc.Position, npc.Name, npc.Role,_innkeepers.TryGetValue(id,out var inn)?inn.Npc.Height:LocateHeight(npc.Position)); return true;
     }
     public bool TryQueueQuest(int connection, QuestCommand command)
     {
@@ -82,7 +82,7 @@ public sealed partial class ServerWorld
                     else if ((outcome = Inventory!.ChangeQuestMaterial(id, q.MaterialId, -q.Quantity)) == QuestOutcome.Accepted)
                     {
                         _progression[id] = _progression[id] with { DeliveryQuest = saved with { Status = QuestStatus.Completed } };
-                        GrantExperience(id, q.Experience); DirtyProgression(id);
+                        AwardPersonalExperience(id,new(Content.Server.Progression.ExperienceActivity.QuestCompleted,q.Id,_progressionCatalog!.BalanceVersion,q.Experience)); DirtyProgression(id);
                     }
                 }
                 else if (c.Action != QuestAction.Talk) outcome = QuestOutcome.Unavailable;
@@ -103,5 +103,5 @@ public sealed partial class ServerWorld
     }
     public void ClearQuestResults() => _questReplies.Clear();
     private void ResetQuestSession(NetworkEntityId id)
-    { _questPending.Remove(id); _questSequences.Remove(id); _questReplies.Remove(id); }
+    { RemoveActivitySession(id);_questPending.Remove(id); _questSequences.Remove(id); _questReplies.Remove(id); }
 }

@@ -159,10 +159,14 @@ public sealed partial class CombatSimulation
 
     private void RefreshEffectStats(NetworkEntityId id,bool notify=true)
     {
-        var actor=_actors[id];RefreshPassivePermissions(actor);actor.Stats=WithEffects(id,actor.BaseDerivedStats);
+        var actor=_actors[id];var previous=actor.Stats;
+        RefreshPassivePermissions(actor);actor.Stats=WithEffects(id,actor.BaseDerivedStats);
         actor.AttackInterval=_calculator.AttackInterval(actor.Weapon.AttackIntervalSeconds,actor.Stats);
-        actor.Health=Math.Min(actor.Health,actor.Stats.MaxHealth); RefreshHealthRecovery(id); _equipmentDirty.Add(id);
-        RefreshResourceStats(id);
+        // GDD 03's fraction rule is for player characters. NPC/Echo capacity policy stays unchanged.
+        var health=ResourceTransition.Amount(actor.Health,previous.MaxHealth,actor.Stats.MaxHealth,actor.Kind==CombatEntityKind.Player);
+        actor.Health=actor.Health>0?Math.Max(double.Epsilon,health):0;
+        RefreshHealthRecovery(id); _equipmentDirty.Add(id);
+        RefreshResourceStats(id,previous);
         if(notify) EffectStatsChanged?.Invoke(id);
     }
 

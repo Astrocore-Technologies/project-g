@@ -39,8 +39,8 @@ public partial class CraftingPresentation : Node3D
         view.GetNode<Button>("%ConfirmRepair").Pressed+=ConfirmRepair; view.GetNode<Button>("%CancelRepair").Pressed+=CancelRepair;
         foreach(var resource in network.ResourceNodes.Values) Resource(resource);
         var station=network.CraftRecipes.Values.First();
-        AddChild(new MeshInstance3D { Position=new(station.StationPosition.X,0.55f,station.StationPosition.Y),Mesh=new BoxMesh { Size=new(1.1f,0.2f,0.7f) },MaterialOverride=new StandardMaterial3D { AlbedoColor=new(0.55f,0.34f,0.16f) } });
-        AddChild(new Label3D { Position=new(station.StationPosition.X,1.7f,station.StationPosition.Y),Text=station.StationName+" • C",Billboard=BaseMaterial3D.BillboardModeEnum.Enabled });
+        AddChild(new MeshInstance3D { Position=new(station.StationPosition.X,station.StationHeight+0.55f,station.StationPosition.Y),Mesh=new BoxMesh { Size=new(1.1f,0.2f,0.7f) },MaterialOverride=new StandardMaterial3D { AlbedoColor=new(0.55f,0.34f,0.16f) } });
+        AddChild(new Label3D { Position=new(station.StationPosition.X,station.StationHeight+1.7f,station.StationPosition.Y),Text=station.StationName+" • C",Billboard=BaseMaterial3D.BillboardModeEnum.Enabled });
         Rebuild();
     }
     private void Inventory(InventoryState state)
@@ -126,7 +126,7 @@ public partial class CraftingPresentation : Node3D
     {
         if(!_nodes.TryGetValue(state.Id,out var node))
         {
-            node=new Node3D { Position=new(state.Position.X,0,state.Position.Y) }; AddChild(node); _nodes.Add(state.Id,node);
+            node=new Node3D { Position=new(state.Position.X,state.Height,state.Position.Y) }; AddChild(node); _nodes.Add(state.Id,node);
             node.AddChild(new MeshInstance3D { Name="Shape",Position=new(0,0.35f,0),Mesh=new CylinderMesh { TopRadius=0.35f,BottomRadius=0.5f,Height=0.7f },MaterialOverride=new StandardMaterial3D { AlbedoColor=new(0.5f,0.4f,0.3f) } });
             node.AddChild(new Label3D { Name="Title",Position=new(0,1.5f,0),Billboard=BaseMaterial3D.BillboardModeEnum.Enabled });
         }

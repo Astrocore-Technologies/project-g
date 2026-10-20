@@ -26,7 +26,7 @@ public sealed record CraftingDefinition
         foreach(var n in Resources) if(n is null || n.Id==0 || !nodes.Add(n.Id) || !materials.Contains(n.MaterialId) || !Name(n.Name) || !float.IsFinite(n.X) || !float.IsFinite(n.Z) || n.Stock is < 1 or > 1000) throw new InvalidDataException("Invalid resource node.");
         foreach(var r in Recipes)
         {
-            if(r is null || r.Id==0 || !recipes.Add(r.Id) || !Name(r.Name) || r.Costs is null || r.Costs.Length is < 1 or > 4 || r.Experience is < 0 or > 100 || (r.OutputItemId is null ? !materials.Contains(r.OutputMaterialId) || r.OutputQuantity is < 1 or > 100 : r.OutputMaterialId!=0 || r.OutputQuantity!=1 || !catalog.Items.ContainsKey(r.OutputItemId))) throw new InvalidDataException("Invalid recipe output.");
+            if(r is null || r.Id==0 || !recipes.Add(r.Id) || !Name(r.Name) || r.Costs is null || r.Costs.Length is < 1 or > 4 || r.Experience is < 1 or > 100 || (r.OutputItemId is null ? !materials.Contains(r.OutputMaterialId) || r.OutputQuantity is < 1 or > 100 : r.OutputMaterialId!=0 || r.OutputQuantity!=1 || !catalog.Items.ContainsKey(r.OutputItemId))) throw new InvalidDataException("Invalid recipe output.");
             var seen=new HashSet<ushort>(); foreach(var c in r.Costs) if(c is null || !materials.Contains(c.Id) || !seen.Add(c.Id) || c.Quantity is < 1 or > 100) throw new InvalidDataException("Invalid recipe cost.");
         }
     }

@@ -1,0 +1,11 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://douv1g5nwqr52"]
+
+[ext_resource type="Shader" path="res://Assets/World/Linvel/City/Materials/linvel_painted.gdshader" id="1_cmmdb"]
+[ext_resource type="Texture2D" uid="uid://blq2aex5rmrbl" path="res://Assets/World/Linvel/adventurers_guild_linvel_painted_atlas.png" id="2_h8juu"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_cmmdb")
+shader_parameter/albedo_texture = ExtResource("2_h8juu")
+shader_parameter/tint = Color(1, 1, 1, 1)
+shader_parameter/roughness = 0.85

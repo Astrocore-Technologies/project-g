@@ -49,7 +49,7 @@ public sealed class RecoveryReplicationTests
             await Poll(first, second, () => first.Spawns.Count == 2 && second.Spawns.Count == 2 && first.CombatStates.Count == 3 && second.CombatStates.Count == 3);
             var id = first.LocalSpawn.EntityId;
             gate = store.PauseSaves();
-            await Poll(first, second, () => store.PendingSave);
+            await Poll(first, second, () => store.BlockedSave);
             healed = world.Combat!.Get(id).Health;
             // Flush earlier reliable messages while the new HP is held behind the real SQLite commit.
             var until = DateTime.UtcNow.AddMilliseconds(600);

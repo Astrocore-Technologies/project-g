@@ -14,16 +14,17 @@ public static partial class NetworkProtocol
         c = default; if (r.AvailableBytes != 13 || !r.TryGetUInt(out var seq) || !r.TryGetByte(out var action) || !r.TryGetULong(out var id)) return false;
         var v = new QuestCommand(seq, (QuestAction)action, new(id)); if (!ValidQuestCommand(v)) return false; c = v; return true;
     }
-    private static bool ValidQuestNpc(QuestNpcSpawn s) => s.EntityId.IsValid && float.IsFinite(s.Position.X) && float.IsFinite(s.Position.Y) && WorldText(s.Name, 32, 96) && WorldText(s.Role, 32, 96);
+    private static bool ValidQuestNpc(QuestNpcSpawn s) => s.EntityId.IsValid && float.IsFinite(s.Position.X) && float.IsFinite(s.Position.Y) &&
+        float.IsFinite(s.Height)&&MathF.Abs(s.Height)<=128&&WorldText(s.Name, 32, 96) && WorldText(s.Role, 32, 96);
     public static NetDataWriter Write(QuestNpcSpawn s)
     {
         if (!ValidQuestNpc(s)) throw new ArgumentException("Invalid quest NPC.");
-        var w = CreateWriter(NetworkMessageType.QuestNpcSpawn); w.Put(s.EntityId.Value); w.Put(s.ServerTick); WriteVector2(w, s.Position); w.Put(s.Name); w.Put(s.Role); return w;
+        var w = CreateWriter(NetworkMessageType.QuestNpcSpawn); w.Put(s.EntityId.Value); w.Put(s.ServerTick); WriteVector2(w, s.Position);w.Put(s.Height); w.Put(s.Name); w.Put(s.Role); return w;
     }
     public static bool TryReadQuestNpcSpawn(NetDataReader r, out QuestNpcSpawn s)
     {
-        s = default; if (r.AvailableBytes > 216 || !r.TryGetULong(out var id) || !r.TryGetUInt(out var tick) || !TryReadVector2(r, out var position) || !r.TryGetString(out var name) || !r.TryGetString(out var role) || r.AvailableBytes != 0) return false;
-        var v = new QuestNpcSpawn(new(id), tick, position, name, role); if (!ValidQuestNpc(v)) return false; s = v; return true;
+        s = default; if (r.AvailableBytes > 220 || !r.TryGetULong(out var id) || !r.TryGetUInt(out var tick) || !TryReadVector2(r, out var position) || !r.TryGetFloat(out var height)||!r.TryGetString(out var name) || !r.TryGetString(out var role) || r.AvailableBytes != 0) return false;
+        var v = new QuestNpcSpawn(new(id), tick, position, name, role,height); if (!ValidQuestNpc(v)) return false; s = v; return true;
     }
     private static bool ValidQuestReply(QuestReply s) => s.Sequence != 0 && Enum.IsDefined(s.Outcome) && s.Choices <= 15 && WorldText(s.Speaker, 32, 96) && WorldText(s.Text, 200, 600);
     public static NetDataWriter Write(QuestReply s)

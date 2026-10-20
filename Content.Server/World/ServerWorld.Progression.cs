@@ -37,6 +37,8 @@ public sealed partial class ServerWorld
             !value.Skills.Any(s => s.DefinitionId == "sword_rising"))
             value = value with { Skills = [..value.Skills,new SavedSkill("sword_rising",1,0,0)] };
         value.Validate(); ValidateProfession(value);
+        if(value.DeliveryOrder is {} order && _campServices is {} services && (order.DefinitionId!=services.DeliveryId||order.Revision!=services.Revision))
+            throw new InvalidDataException("Saved delivery order requires a content migration.");
         value.Allocation?.ValidateStats(_playersByEntity[id].BaseStats);
         if(value.DeliveryQuest is { } quest && quest.DefinitionId!=catalog.DeliveryQuest?.Id) throw new InvalidDataException("Quest content migration required.");
         if(value.SwordTraining is { } training && (catalog.Swordsman is not { } sword || training.Damage > sword.RequiredDamage)) throw new InvalidDataException("Sword training content migration required.");
@@ -47,6 +49,8 @@ public sealed partial class ServerWorld
             throw new InvalidDataException("Saved experience curve requires an explicit migration.");
         if (value.Level > balance.LevelCap || (value.Level == balance.LevelCap ? value.Experience != 0 : value.Experience >= catalog.ExperienceCurve.NextLevel(value.Level)))
             throw new InvalidDataException("Saved level curve requires migration.");
+        if(value.Level==balance.LevelCap && value.ExperienceFraction is not null)
+            throw new InvalidDataException("Capped characters cannot bank fractional EXP.");
         foreach (var skill in value.Skills)
         {
             if (!catalog.Abilities.TryGetValue(skill.DefinitionId,out var definition) ||
@@ -90,21 +94,6 @@ public sealed partial class ServerWorld
         _progressionSequences[id] = (command.Sequence,Tick);
         _progressionPending[id] = command with { Allocation = command.Allocation is null ? null : (int[])command.Allocation.Clone() }; return true;
     }
-    private void GrantExperience(NetworkEntityId id, int amount)
-    {
-        if (!_progression.TryGetValue(id,out var value) || amount <= 0 || value.Level == _progressionCatalog!.Progression.LevelCap) return;
-        var balance = _progressionCatalog.Progression;
-        var award = ProgressionRules.Award(_progressionCatalog.ExperienceCurve, balance.StatPointsPerLevel,
-            value.Level, value.Experience, amount);
-        var next = value with { Level = award.Level, Experience = award.Experience,
-            StatPoints = checked(value.StatPoints + award.GrantedStatPoints),
-            Allocation = award.GrantedStatPoints != 0 && value.Allocation is { } allocation
-                ? allocation with { EarnedFromLevels = checked(allocation.EarnedFromLevels + award.GrantedStatPoints) } : value.Allocation };
-        // The other components were validated on load. Do not rebuild skill/reference sets on each damage reward.
-        if (next.StatPoints > 100000) throw new InvalidOperationException("Available points exceed the current wire/storage representation.");
-        next.Allocation?.Validate(next.StatPoints);
-        _progression[id] = next; DirtyProgression(id);
-    }
     private void DirtyProgression(NetworkEntityId id) { _progressionDirty.Add(id); MarkPersistent(id); }
     // Only moving players visit landmarks; persistent bits make rewards one-time across reconnects.
     private void VisitDiscoveries(ServerPlayer player)
@@ -117,19 +106,17 @@ public sealed partial class ServerWorld
             if ((value.Discoveries & bit) != 0 || Vector2.DistanceSquared(player.Position,landmarks[i]) > 2.25f) continue;
             _progression[player.EntityId] = value with { Discoveries = (byte)(value.Discoveries | bit) };
             if (HasStarterZone) _starterDirty.Add(player.EntityId);
-            GrantExperience(player.EntityId,_progressionCatalog!.Progression.DiscoveryExperience); DirtyProgression(player.EntityId);
+            AwardPersonalExperience(player.EntityId,new(ExperienceActivity.Discovery,$"{RegionId}:{i}",_progressionCatalog!.BalanceVersion,_progressionCatalog.Progression.DiscoveryExperience)); DirtyProgression(player.EntityId);
             value = _progression[player.EntityId];
             EvaluateProfessionOffer(player.EntityId);
         }
     }
     private void SimulateProgression()
     {
-        if (_progressionCatalog is not { } catalog) return;
-        // Combat events are created exactly once by the authoritative simulation; no client reward RPC.
-        foreach (var action in Combat!.Events) if (action.Damage > 0 && IsPlayer(action.AttackerId) && !IsPlayer(action.TargetId) && !_arenaDummies.Contains(action.TargetId)) GrantExperience(action.AttackerId,1);
-        // Periodic ticks are not separate actions and must not multiply experience with server tick rate.
-        foreach(var hit in Abilities!.DirectHits)
-            if (hit.Damage > 0 && IsPlayer(hit.ActorId) && !IsPlayer(hit.TargetId) && !_arenaDummies.Contains(hit.TargetId)) GrantExperience(hit.ActorId,1);
+        if (_progressionCatalog is not { } catalog || Combat is null || Abilities is null) return;
+        // Character EXP comes from confirmed victories. Hits/ticks only contribute to eligibility;
+        // successful skill uses still advance their own, separate practice below.
+        DistributePveExperience();
         foreach (var use in Abilities.Practice)
         {
             RecordProfessionUse(use.ActorId);

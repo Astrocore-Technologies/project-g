@@ -1,0 +1,25 @@
+[gd_scene load_steps=2 format=3]
+[ext_resource type="PackedScene" path="res://Scenes/Actors/Primitives/ResidentFigure.tscn" id="Figure"]
+[node name="StartingCampServices" type="Node3D"]
+metadata/placement_revision = 1
+metadata/region_id = "linvel_gardens"
+metadata/prototype_placement = "Временные сервисы стартового лагеря. Баланс и тексты — в camp-services.json; экспорт меняет только размещение."
+[node name="Station" type="Marker3D" parent="."]
+position = Vector3(-416,14.12,230)
+gizmo_extents = 1.0
+[node name="Wood" type="Marker3D" parent="."]
+position = Vector3(-414,14.14,224)
+gizmo_extents = 1.0
+metadata/resource_id = 1
+[node name="Ore" type="Marker3D" parent="."]
+position = Vector3(-409,14.13,228)
+gizmo_extents = 1.0
+metadata/resource_id = 2
+[node name="Giver" type="Marker3D" parent="."]
+position = Vector3(-418,14.11,234)
+gizmo_extents = 1.0
+[node name="Figure" parent="Giver" instance=ExtResource("Figure")]
+[node name="Recipient" type="Marker3D" parent="."]
+position = Vector3(-400,14.11,234)
+gizmo_extents = 1.0
+[node name="Figure" parent="Recipient" instance=ExtResource("Figure")]

@@ -52,7 +52,9 @@ public sealed class ProfessionTests
         var w=World(); var initial=Eligible(w) with { Health=12,Mana=7,AttackCooldownSeconds=60 }; initial=initial with { Cooldowns=initial.Cooldowns.Select(c=>c with { Seconds=60 }).ToArray() };
         var p=w.AddPlayer(42,new(1),initial); var prepared=Command(w,p,1,ProfessionAction.Prepare);
         Assert.Equal(ProfessionOutcome.Accepted,Command(w,p,2,ProfessionAction.Confirm,token:prepared.Confirmation).Outcome);
-        var saved=w.CaptureCharacter(42); Assert.Equal(initial.Stats,saved.Stats); Assert.Equal(12,saved.Health); Assert.Equal(7,saved.Mana);
+        var saved=w.CaptureCharacter(42); Assert.Equal(initial.Stats,saved.Stats);var stats=w.Combat!.Get(p.EntityId).Stats;
+        Assert.Equal(12+stats.HealthRecovery*(double).05f*2,saved.Health,8);
+        Assert.Equal(7+stats.ManaRecovery*(double).05f*2,saved.Mana,8);
         Assert.Equal((ushort)1,saved.Progression!.Profession.ActiveId); var skill=Assert.Single(saved.Progression.Skills,s=>s.DefinitionId=="trail_impulse"); Assert.Equal(1,skill.Level); Assert.Equal(0,skill.Slot);
         Assert.All(saved.Cooldowns.Where(c=>c.AbilityId!="trail_impulse"),c=>Assert.InRange(c.Seconds,59,60));
         Assert.False(w.TryQueueProfession(42,new(2,ProfessionAction.Confirm,1,prepared.Confirmation))); Step(w);

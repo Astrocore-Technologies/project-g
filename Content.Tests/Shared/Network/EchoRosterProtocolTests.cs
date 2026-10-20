@@ -102,7 +102,7 @@ public sealed class EchoRosterProtocolTests
         var page=Page(total:1);var row=page.Entries[0] with {Refusal=EchoRefusal.Basic|EchoRefusal.Signature};
         var bytes=NetworkProtocol.Write(page with {Entries=[row]}).CopyData();
         Assert.True(NetworkProtocol.TryReadEchoRosterPage(Body(bytes),out var read));Assert.Equal(row,Assert.Single(read.Entries));
-        bytes[^1]=4;Assert.False(NetworkProtocol.TryReadEchoRosterPage(Body(bytes),out _));
+        bytes[^17]=4;Assert.False(NetworkProtocol.TryReadEchoRosterPage(Body(bytes),out _));
         Assert.Throws<ArgumentException>(()=>NetworkProtocol.Write(page with {Entries=[row with {Refusal=(EchoRefusal)4}]}));
     }
 }

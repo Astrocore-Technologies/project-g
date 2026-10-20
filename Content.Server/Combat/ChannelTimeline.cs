@@ -21,13 +21,12 @@ internal sealed class ChannelTimeline
         _definition=definition;_startedAt=_paidUntil=now;_nextPulse=definition.PulseAtStart?0UL:1UL;
     }
     internal bool Finished {get;private set;}
+    internal double ManaPerSecond=>_definition.ManaPerSecond;
+    internal double StaminaPerSecond=>_definition.StaminaPerSecond;
     internal double PaidUntil=>_paidUntil;
     internal double NextEventAt=>Math.Min(_startedAt+_nextPulse*_definition.IntervalSeconds,
         _definition.MaximumSeconds is {} maximum?_startedAt+maximum:double.PositiveInfinity);
     internal double? Remaining=>_definition.MaximumSeconds is {} maximum?Math.Max(0,_startedAt+maximum-_paidUntil):null;
-    internal double FundedUntil(double mana,double stamina)=>_paidUntil+Math.Min(
-        _definition.ManaPerSecond>0 ? mana/_definition.ManaPerSecond : double.PositiveInfinity,
-        _definition.StaminaPerSecond>0 ? stamina/_definition.StaminaPerSecond : double.PositiveInfinity);
 
     internal ChannelAdvance Advance(double now,double mana,double stamina)
     {

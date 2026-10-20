@@ -1,0 +1,44 @@
+[gd_scene format=3 uid="uid://qbanlcebkdpf"]
+
+[ext_resource type="Material" uid="uid://d15vhpxjrvswi" path="res://Assets/World/Linvel/Beech/Revision2/VisualStyle/Materials/SilverBark.tres" id="1_5gaeo"]
+[ext_resource type="ArrayMesh" uid="uid://cp7x6wrmdiwb7" path="res://Assets/World/Linvel/Beech/Revision2/VisualStyle/Meshes/beech_canopy_2_Bark.res" id="2_2rdjo"]
+[ext_resource type="Material" uid="uid://bp834s7lcubp2" path="res://Assets/World/Linvel/Beech/Revision2/VisualStyle/Materials/beech_canopy_2Leaves.tres" id="3_th28g"]
+[ext_resource type="ArrayMesh" uid="uid://2pnx80hs3off" path="res://Assets/World/Linvel/Beech/Revision2/VisualStyle/Meshes/beech_canopy_2_Leaves.res" id="4_m4m8i"]
+[ext_resource type="ArrayMesh" uid="uid://mkmb8lhb1qih" path="res://Assets/World/Linvel/Beech/Revision2/VisualStyle/Meshes/beech_canopy_2_UpperBranches.res" id="5_1cus7"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wg2uh"]
+resource_name = "Beech_HandPaintedVertexColor"
+cull_mode = 2
+diffuse_mode = 3
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cwol4"]
+resource_name = "reference_beech_foliage"
+cull_mode = 2
+diffuse_mode = 3
+albedo_color = Color(0.58383155, 0.7152409, 0.39588127, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kg5ay"]
+resource_name = "Beech_HandPaintedVertexColor"
+cull_mode = 2
+diffuse_mode = 3
+roughness = 0.9
+
+[node name="CityBeech2" type="Node3D" unique_id=347728192]
+metadata/original_asset = "city_beech_2"
+
+[node name="Visual" type="MeshInstance3D" parent="." unique_id=783609804]
+material_override = ExtResource("1_5gaeo")
+mesh = ExtResource("2_2rdjo")
+surface_material_override/0 = SubResource("StandardMaterial3D_wg2uh")
+
+[node name="Foliage" type="MeshInstance3D" parent="." unique_id=223163909]
+material_override = ExtResource("3_th28g")
+mesh = ExtResource("4_m4m8i")
+surface_material_override/0 = SubResource("StandardMaterial3D_cwol4")
+
+[node name="UpperBranches" type="MeshInstance3D" parent="." unique_id=532245957]
+material_override = ExtResource("1_5gaeo")
+mesh = ExtResource("5_1cus7")
+surface_material_override/0 = SubResource("StandardMaterial3D_kg5ay")

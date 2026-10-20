@@ -120,7 +120,8 @@ public sealed partial class GameServerService : BackgroundService
                 {
                     ApplyBufferedIntentions();
                     ApplyReceivedCombatInputs();
-                    if(_liveDm?.TryTake(out var dm)==true) _world.ApplyLiveDm(dm);
+                    if(_liveDm?.TryTake(out var dm)==true)
+                        (dm.RegionId is null?_world:_worlds.FirstOrDefault(w=>w.RegionId==dm.RegionId))?.ApplyLiveDm(dm);
                     var simulationStarted = Stopwatch.GetTimestamp();
                     if (_regions is null) _world.Simulate(fixedDelta);
                     else _regions.Simulate(fixedDelta);
@@ -251,6 +252,17 @@ public sealed partial class GameServerService : BackgroundService
             {
                 if(_characters is null)world.TryQueueRespawn(peer.Id,respawn);
                 else BufferIntentions(peer.Id).Respawn ??= respawn;
+                return;
+            }
+            if(messageType==NetworkMessageType.ActivityCommand&&deliveryMethod==DeliveryMethod.ReliableOrdered&&NetworkProtocol.TryReadActivityCommand(reader,out var activity))
+            {if(_characters is null)world.TryQueueActivity(peer.Id,activity);else BufferIntentions(peer.Id).Activity??=activity;}
+            if(messageType==NetworkMessageType.RespecCommand&&deliveryMethod==DeliveryMethod.ReliableOrdered&&NetworkProtocol.TryReadRespecCommand(reader,out var respec))
+            {if(_characters is null)world.TryQueueRespec(peer.Id,respec);else BufferIntentions(peer.Id).Respec??=respec;}
+            if(messageType==NetworkMessageType.TavernCommand && deliveryMethod==DeliveryMethod.ReliableOrdered &&
+                NetworkProtocol.TryReadTavernCommand(reader,out var tavern))
+            {
+                if(_characters is null)world.TryQueueTavern(peer.Id,tavern);
+                else BufferIntentions(peer.Id).Tavern??=tavern;
                 return;
             }
             if(messageType==NetworkMessageType.LogoutCommand && deliveryMethod==DeliveryMethod.ReliableOrdered &&
@@ -465,6 +477,7 @@ public sealed partial class GameServerService : BackgroundService
             world.ClearLogoutResults();
             world.ClearLifeResults();
             world.ClearQuestResults();
+            world.ClearActivityResults();
             world.Abilities?.ClearResults();
             world.Inventory?.ClearResults();
             world.GroundItems?.ClearResults();
@@ -540,8 +553,19 @@ public sealed partial class GameServerService : BackgroundService
             foreach(var id in equipmentCombat.LifeDirty)
                 if(view.Entities.Contains(id) && !view.Entered.Contains(id))SendGame(peer,NetworkProtocol.Write(equipmentCombat.LifeState(id,world.Tick)),DeliveryMethod.ReliableOrdered);
         }
-        if(world.TryGetOwnedEntity(peer.Id,out var lifeOwner) && world.RespawnResults.TryGetValue(lifeOwner,out var respawnResult))
+        if(view.PendingRespawn is {} committedRespawn)
+        {SendGame(peer,NetworkProtocol.Write(committedRespawn),DeliveryMethod.ReliableOrdered);view.PendingRespawn=null;}
+        else if(world.TryGetOwnedEntity(peer.Id,out var lifeOwner) && world.RespawnResults.TryGetValue(lifeOwner,out var respawnResult))
             SendGame(peer,NetworkProtocol.Write(respawnResult),DeliveryMethod.ReliableOrdered);
+        if(world.TryGetOwnedEntity(peer.Id,out var homeOwner))
+        {
+            if(world.RespecQuotes.TryGetValue(homeOwner,out var resetQuote))SendGame(peer,NetworkProtocol.Write(resetQuote),DeliveryMethod.ReliableOrdered);
+            if(world.RespecResults.TryGetValue(homeOwner,out var resetResult))SendGame(peer,NetworkProtocol.Write(resetResult),DeliveryMethod.ReliableOrdered);
+            if(view.Entered.Contains(homeOwner)||world.TavernDirty.Contains(homeOwner))
+                SendGame(peer,NetworkProtocol.Write(world.HomeState(homeOwner)),DeliveryMethod.ReliableOrdered);
+            if(world.TavernResults.TryGetValue(homeOwner,out var tavernResult))
+                SendGame(peer,NetworkProtocol.Write(tavernResult),DeliveryMethod.ReliableOrdered);
+        }
         if(world.HasPvp)
         {
             foreach(var id in view.Entities)if(world.IsPlayer(id))
@@ -558,6 +582,12 @@ public sealed partial class GameServerService : BackgroundService
             }
         }
         SendSocial(peer);
+        if(world.HasActivities&&world.TryGetOwnedEntity(peer.Id,out var activityOwner))
+        {
+            if(view.Entered.Contains(activityOwner)||world.ActivityEventDirty||world.IsProgressionDirty(activityOwner)||world.Inventory!.IsDirty(activityOwner)||world.ActivityResults.ContainsKey(activityOwner))
+                SendGame(peer,NetworkProtocol.Write(world.ActivityState(activityOwner)),DeliveryMethod.ReliableOrdered);
+            if(world.ActivityResults.TryGetValue(activityOwner,out var activityResult))SendGame(peer,NetworkProtocol.Write(activityResult),DeliveryMethod.ReliableOrdered);
+        }
         if(world.HasQuests && world.TryGetOwnedEntity(peer.Id,out var questOwner))
         {
             if(view.Entered.Contains(questOwner) || world.IsProgressionDirty(questOwner) || world.Inventory!.IsDirty(questOwner) || world.QuestReplies.ContainsKey(questOwner))

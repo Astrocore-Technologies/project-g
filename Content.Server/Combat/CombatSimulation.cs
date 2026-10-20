@@ -46,8 +46,6 @@ public sealed partial class CombatSimulation
         _navigation = navigation;
         _playerDefinition = options.PlayerDefinitionId;
         _targetDefinition = options.TargetDefinitionId;
-        _healthRecoveryInterval = options.HealthRecoveryIntervalSeconds;
-        _manaRecoveryInterval = options.ManaRecoveryIntervalSeconds;
         DrainMana=DrainActorMana;RestoreMana=RestoreActorMana;
         _continuousBasicLease = options.ContinuousAttackLeaseSeconds;
         _maxQueryRange = cellSize * 32;
@@ -95,7 +93,7 @@ public sealed partial class CombatSimulation
         var actor=_actors[id];ClearControl(id);RefreshControlModifiers(actor);
         actor.Health=double.Epsilon;RefreshPassiveConditions(id);
         actor.Health=Math.Max(double.Epsilon,actor.Stats.MaxHealth*(actor.Kind==CombatEntityKind.Player?_catalog.Lifecycle.RespawnHealthFraction:1));
-        actor.HealthRecoveryElapsed=0;actor.Action=null;actor.StunnedUntil=actor.SlowUntil=0;
+        actor.Action=null;actor.StunnedUntil=actor.SlowUntil=0;
         StopContinuousBasic(id);Inputs.Clear(id);_equipmentDirty.Add(id);
         SetDefenseConnected(id,true);
         if(_defense.TryGetValue(id,out var defense))
@@ -140,9 +138,7 @@ public sealed partial class CombatSimulation
         if(profile.ControlResistance is not null)actor.EquipmentControlResistance=profile.ControlResistance;
         RefreshEffectStats(id,notify:false);
         RefreshBlockPermission(id);
-        // Changing maxima cannot heal; existing ReadyAt is deliberately preserved.
-        actor.Health = Math.Min(actor.Health, actor.Stats.MaxHealth);
-        RefreshHealthRecovery(id);
+        // RefreshEffectStats owns the single resource transition; ReadyAt is preserved.
         _equipmentDirty.Add(id);
     }
     internal void DevelopmentRevive(NetworkEntityId id)
@@ -220,13 +216,15 @@ public sealed partial class CombatSimulation
 
     private void AdvanceState(double delta,double from)
     {
+        // Integrate the configuration that owned [from, _time], before endpoint state changes.
+        RecoverHealth(delta);
+        RecoverMana(delta);
+        AdvanceDefense(delta,from);
+        FinishRegenerationDeaths();
         AdvanceCombatPresence();
         AdvanceLife();
         AdvanceDodges();
         AdvanceEffects();
-        RecoverHealth(delta);
-        RecoverMana(delta);
-        AdvanceDefense(delta,from);
         SimulateControl();
     }
 

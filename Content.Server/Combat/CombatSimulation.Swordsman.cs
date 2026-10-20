@@ -98,7 +98,8 @@ public sealed partial class CombatSimulation
     internal void RestoreStamina(NetworkEntityId id, double amount)
     {
         if (!_defense.TryGetValue(id, out var d)) return;
-        d.Stamina = Math.Min(Math.Max(0,_actors[id].Stats.MaxStamina), StatMath.Add(d.Stamina,amount)); _defenseDirty.Add(id);
+        d.Stamina = Math.Min(Math.Max(0,_actors[id].Stats.MaxStamina), StatMath.Add(d.Stamina,amount));
+        _defenseDirty.Add(id);_defenseActive.Add(id);
     }
     internal double DodgeCostFor(NetworkEntityId id) => (_actors[id].ProfessionDodge??_actors[id].BaseDodge)?.StaminaCost??0;
 }

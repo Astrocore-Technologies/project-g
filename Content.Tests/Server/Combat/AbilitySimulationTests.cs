@@ -32,7 +32,7 @@ public sealed class AbilitySimulationTests
     [Fact]
     public void ReplacingCastDoesNotPayTwiceAndCooldownCannotBeBypassedByReplay()
     {
-        var f = new Fixture();
+        var f = new Fixture(noRecovery:true); // Isolate payment/replay from continuous recovery.
         f.Queue(1, 1, Vector2.UnitY); f.Step();
         Assert.False(f.Queue(1, 1, Vector2.UnitY));
         f.Queue(2, 1, Vector2.UnitY); f.Step();
@@ -64,7 +64,7 @@ public sealed class AbilitySimulationTests
     [Fact]
     public void GroundAreaWaitsForCastAndDoesNotHurtPlayers()
     {
-        var f = new Fixture();
+        var f = new Fixture(noRecovery:true);
         var second = f.World.AddPlayer(43, new(2));
         f.World.Combat!.Move(second.EntityId, new(-7, 3));
         var hp = f.Health;
@@ -75,8 +75,7 @@ public sealed class AbilitySimulationTests
         Assert.Single(f.Hits);
         Assert.True(f.Health < hp);
         Assert.Equal(f.World.Combat.Get(second.EntityId).Stats.MaxHealth, f.World.Combat.Get(second.EntityId).Health);
-        // Cost starts at activation; only one recovery interval has elapsed after that debit.
-        Assert.Equal(133, f.Abilities.Loadout(f.Player.EntityId, f.World.Tick).Mana, 8);
+        Assert.Equal(130, f.Abilities.Loadout(f.Player.EntityId, f.World.Tick).Mana, 8);
     }
 
     [Fact]

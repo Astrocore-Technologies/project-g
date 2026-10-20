@@ -18,7 +18,8 @@ public sealed class CombatLifeTests
         now+=59999;Assert.True(combat.CanResurrect(id,life.DeathId));now++;world.Simulate(.05f);
         Assert.False(combat.CanResurrect(id,life.DeathId));Assert.Equal(0,combat.LifeState(id,world.Tick).CorpseRemaining);
         Assert.True(world.TryQueueRespawn(42,new(2,life.DeathId)));world.Simulate(.05f);
-        Assert.Equal(RespawnOutcome.Accepted,world.RespawnResults[id].Outcome);Assert.Equal(combat.Get(id).Stats.MaxHealth*.5,combat.Get(id).Health);
+        Assert.Equal(RespawnOutcome.Accepted,world.RespawnResults[id].Outcome);var stats=combat.Get(id).Stats;
+        Assert.Equal(stats.MaxHealth*.5+stats.HealthRecovery*(double).05f,combat.Get(id).Health,8);
         Assert.False(combat.LifeState(id,world.Tick).Dead);Assert.False(world.TryQueueRespawn(42,new(2,life.DeathId)));
         Assert.Equal(RespawnOutcome.AlreadyProcessed,world.RespawnResults[id].Outcome);
     }

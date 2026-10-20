@@ -16,6 +16,7 @@ public sealed class CombatOptions
     public int MaxCompensationMilliseconds { get; set; } = 0; // D124: compensation stays disabled pending a separate decision.
     public float MaxAbilityLifetimeSeconds { get; set; } = 10;
     public float ImpactSeconds { get; set; } = 0.15f;
-    public double ManaRecoveryIntervalSeconds { get; set; } = 1; // coalesce durable updates.
+    // Legacy configuration keys retained for compatibility. Resource flow now follows every timeline segment.
+    public double ManaRecoveryIntervalSeconds { get; set; } = 1;
     public double HealthRecoveryIntervalSeconds { get; set; } = 1;
 }

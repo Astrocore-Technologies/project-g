@@ -63,7 +63,7 @@ public sealed partial class EchoSimulation
                 actor.Resources.Mana=Math.Max(0,actor.Stats.MaxMana);actor.Resources.Stamina=Math.Max(0,actor.Stats.MaxStamina);
             }
             var recovered=CompanionRuntimeState.Capture(_combat,_abilities,id,original.DefinitionId,original.Stats,null,_now()) with
-            {InstanceId=original.InstanceId,PendingLogoutRestore=false};
+            {InstanceId=original.InstanceId,PendingLogoutRestore=false,Experience=original.Experience,ExperienceFraction=original.ExperienceFraction};
             var remaining=CompanionRuntimeState.CaptureEffects(_combat,id).Select(effect=>effect with {TargetEcho=original.InstanceId}).ToArray();
             return(recovered,remaining);
         }

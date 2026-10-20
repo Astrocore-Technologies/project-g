@@ -7,12 +7,8 @@ internal sealed class CombatResources(DerivedStats stats)
 {
     internal double Mana = Math.Max(0, stats.MaxMana);
     internal double Stamina = Math.Max(0, stats.MaxStamina);
-    internal double ManaRecoveryElapsed;
     internal bool ManaRecoveryConnected = true;
+    // Positive flow that would overflow a full bar can fund work in this same timeline segment.
+    internal double ManaFlowCredit;
 
-    internal void Clamp(DerivedStats current)
-    {
-        Mana = Math.Clamp(Mana, 0, Math.Max(0, current.MaxMana));
-        Stamina = Math.Clamp(Stamina, 0, Math.Max(0, current.MaxStamina));
-    }
 }

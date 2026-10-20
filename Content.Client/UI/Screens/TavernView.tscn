@@ -1,0 +1,46 @@
+[gd_scene load_steps=3 format=3]
+[ext_resource type="Theme" path="res://UI/Theme/rework-theme.tres" id="Theme"]
+[ext_resource type="Script" path="res://Scripts/UI/TavernView.cs" id="Script"]
+[node name="TavernView" type="VBoxContainer"]
+theme = ExtResource("Theme")
+script = ExtResource("Script")
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+[node name="SelectedInn" type="Label" parent="."]
+unique_name_in_owner = true
+theme_type_variation = &"Heading"
+text = "Таверна"
+autowrap_mode = 3
+[node name="Introduction" type="Label" parent="."]
+text = "Здесь вас будут ждать после возвращения в мир."
+autowrap_mode = 3
+[node name="Divider" type="HSeparator" parent="."]
+[node name="CurrentHome" type="Label" parent="."]
+unique_name_in_owner = true
+text = "Получение места возрождения…"
+autowrap_mode = 3
+[node name="Terms" type="Label" parent="."]
+text = "Назначение бесплатно и доступно вне боя.\nВозрождение через 60 с: 50% HP и MP, полная выносливость.\nТекущие ресурсы и перезарядки при назначении не меняются."
+autowrap_mode = 3
+theme_type_variation = &"Muted"
+[node name="Status" type="Label" parent="."]
+unique_name_in_owner = true
+text = ""
+autowrap_mode = 3
+size_flags_vertical = 3
+[node name="Respec" type="Button" parent="."]
+unique_name_in_owner = true
+text = "Сброс характеристик…"
+theme_type_variation = &"QuietButton"
+[node name="Actions" type="HBoxContainer" parent="."]
+theme_override_constants/separation = 12
+[node name="Close" type="Button" parent="Actions"]
+unique_name_in_owner = true
+text = "Не сейчас"
+theme_type_variation = &"QuietButton"
+size_flags_horizontal = 3
+[node name="Bind" type="Button" parent="Actions"]
+unique_name_in_owner = true
+text = "Назначить местом возрождения"
+size_flags_horizontal = 3

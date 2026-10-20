@@ -163,7 +163,8 @@ public sealed class PassiveAbilityTests
         await using var reopened=await store.OpenAsync(token,saved,default);
         var active=new ChannelingTests.Fight(data,saved:reopened.State);Assert.Equal(saved.Mana,active.Mana);Assert.Equal(saved.Health,active.Actor.Health);
         var expired=new ChannelingTests.Fight(data,saved:reopened.State with {SavedAtUnixMilliseconds=saved.SavedAtUnixMilliseconds-40000});
-        Assert.False(expired.Combat.InCombat(expired.Id));Assert.Equal(expired.Actor.BaseDerivedStats.MaxHealth,expired.Actor.Health);
+        Assert.False(expired.Combat.InCombat(expired.Id));
+        Assert.Equal(saved.Health/saved.ResourceMaxima!.Health*expired.Actor.Stats.MaxHealth,expired.Actor.Health,8);
         Assert.Equal(expired.Actor.BaseDerivedStats.MaxMana,expired.Mana);Assert.Empty(expired.World.CaptureCharacter(42).ActivePassiveModifiers!);
     }
 

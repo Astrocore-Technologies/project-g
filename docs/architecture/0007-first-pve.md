@@ -8,6 +8,13 @@ Temporary assumptions: one nonblocking monster, proximity aggro and sticky neare
 
 ## Server
 
+Update 2026-10-20: [Character & Stats C2](../development/character-stats-c2.md)
+supersedes the one-second HP/MP coalescing described below with continuous signed
+flow on the common combat timeline. Scheduled sets include full resources with
+a negative rate; checkpoint-before-publication and the existing NPC return policy
+are preserved. This is the approved GDD 03 resource rule, with no new service or
+database strategy.
+
 Update 2026-10-09: the historical no-regeneration/no-respawn assumption above is superseded by the approved gameplay contract. Connected living players recover HP at the existing derived rate, coalesced once per simulation second. Configured NPC spawns use a stable regional key and a persisted UTC respawn deadline (ordinary 30 s, boss 120 s; 0 disables). Only injured players and waiting spawns are scheduled. Death/respawn transitions join the existing atomic regional checkpoint; no new service, SQL migration or wire layout. A respawn retires the old runtime ID, clears combat/effects/motion/AI and creates a fresh ID at home. Existing AOI despawn/CombatState/snapshots handle both observers and late joins. Old world JSON remains compatible; the optional bounded `NpcRespawns` component has independently versioned entries. Returning an injured living NPC home still does not heal it.
 
 `NpcSimulation` is transport/Godot-independent. `ServerWorld` owns the runtime ID, spatial index and tick ordering. NPCs do not have fake PlayerIds. The existing catalog supplies creature stats and weapon; `Npc` configuration supplies spawn/speed/perception/leash/decision interval/windup. The shipped prototype enables one NPC at (7, 3), speed 3, aggro 6, leash 10, decisions no more than 5 Hz and windup 1 second. Tests opt in explicitly; old arenas remain unchanged.

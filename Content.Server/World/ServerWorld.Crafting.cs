@@ -32,11 +32,11 @@ public sealed partial class ServerWorld
     }
     public CraftRecipeState[] PublicCraftRecipes() => _crafting!.Recipes.Select(r=>new CraftRecipeState(r.Id,r.Name,
         r.OutputItemId is { } item ? _progressionCatalog!.Items[item].Name : _crafting.Materials.Single(m=>m.Id==r.OutputMaterialId).Name,
-        _crafting.StationPosition,_crafting.StationName,_crafting.InteractionRange,r.Costs.Select(c=>new CraftIngredient(c.Id,(ushort)c.Quantity,_crafting.Materials.Single(m=>m.Id==c.Id).Name)).ToArray())).ToArray();
+        _crafting.StationPosition,_crafting.StationName,_crafting.InteractionRange,r.Costs.Select(c=>new CraftIngredient(c.Id,(ushort)c.Quantity,_crafting.Materials.Single(m=>m.Id==c.Id).Name)).ToArray(),LocateHeight(_crafting.StationPosition))).ToArray();
     public CraftState CraftState(NetworkEntityId id)
     { var saved=Inventory!.CraftingState(id); return new(id,Tick,saved.LastOperation,(float)saved.CooldownSeconds,saved.Materials.Select(m=>new MaterialAmount(m.Id,(ushort)m.Quantity)).ToArray()); }
     public ResourceNodeState ResourceState(ushort id)
-    { var node=Array.Find(_crafting!.Resources,n=>n.Id==id)!; var stock=Array.Find(_resourceStock,n=>n.Id==id)!; return new(id,Tick,node.Position,node.MaterialId,(ushort)stock.Remaining,node.Name); }
+    { var node=Array.Find(_crafting!.Resources,n=>n.Id==id)!; var stock=Array.Find(_resourceStock,n=>n.Id==id)!; return new(id,Tick,node.Position,node.MaterialId,(ushort)stock.Remaining,node.Name,LocateHeight(node.Position)); }
     public bool TryQueueCraft(int connection,CraftCommand command)
     {
         if(!HasCrafting || !_playersByConnection.TryGetValue(connection,out var player) || command.Operation is 0 or > long.MaxValue || command.Target==0 || !Enum.IsDefined(command.Action)) return false;
@@ -78,7 +78,7 @@ public sealed partial class ServerWorld
                             }
                         }
                         else
-                        { outcome=Inventory.MakeRecipe(player.EntityId,command.Operation,recipe!,_crafting.ActionCooldownSeconds); if(outcome==CraftOutcome.Accepted) GrantExperience(player.EntityId,recipe!.Experience); }
+                        { outcome=Inventory.MakeRecipe(player.EntityId,command.Operation,recipe!,_crafting.ActionCooldownSeconds); if(outcome==CraftOutcome.Accepted) AwardPersonalExperience(player.EntityId,new(Content.Server.Progression.ExperienceActivity.CraftCompleted,$"{command.Operation}:{recipe!.Id}",_progressionCatalog!.BalanceVersion,recipe.Experience)); }
                     }
                 }
             }

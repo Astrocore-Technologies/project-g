@@ -4,7 +4,7 @@ public static class NetworkConstants
 {
     public const int Port = 9050;
     public const string ConnectionKey = "project-g-dev";
-    public const ushort ProtocolVersion = 78; // Owner-bound stat preview confirmation in AllocateStats.
+    public const ushort ProtocolVersion = 82; // Camp activities and authored crafting/resource heights.
     public const int CharacterStatCount = 24;
     public const int MaxControlKinds = 14; // Public kinds, not a gameplay cap on control instances.
     public const double ContinuousAttackHeartbeatSeconds = .1;

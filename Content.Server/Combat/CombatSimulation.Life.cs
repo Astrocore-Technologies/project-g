@@ -29,7 +29,8 @@ public sealed partial class CombatSimulation
         EncounterActorDied(id);
         actor.CorpseEndsAt=CombatClock()+_catalog.Lifecycle.CorpseSeconds;
         actor.RespawnReadyAt=CombatClock()+_catalog.Lifecycle.RespawnSeconds;
-        RecordJournal(source,id,CombatJournalKind.Death,unknownSource:unknownSource);actor.Journal?.Died(actor.DeathId);
+        RecordJournal(source,id,CombatJournalKind.Death,unknownSource:unknownSource,
+            sourceLabel:actor.DiedFromRegeneration?NegativeRegenerationLabel:null);actor.Journal?.Died(actor.DeathId);
         ScheduleLife(actor);_lifeDirty.Add(id);_equipmentDirty.Add(id);
         StopContinuousBasic(id);StopBasic(id,ActionStopReason.Death);StopSummon(id,ActionStopReason.Death);Inputs.Invalidate(id);_suppressedBasicInputs.Add(id);
         ClearControl(id);RefreshControlModifiers(actor);StopForControl?.Invoke(id);
@@ -48,7 +49,7 @@ public sealed partial class CombatSimulation
         if(!double.IsFinite(health) || health<=0)throw new ArgumentException("Resurrection must specify positive HP.");
         if(!CanResurrect(target,death) || source.IsValid && !CanSupport(source,target,allowOtherPlayers))return false;
         var actor=_actors[target];actor.Health=health;RefreshPassiveConditions(target);actor.Health=Math.Min(actor.Stats.MaxHealth,health);
-        actor.HealthRecoveryElapsed=0;actor.Action=null;ClearControl(target);RefreshControlModifiers(actor);
+        actor.Action=null;ClearControl(target);RefreshControlModifiers(actor);
         RecordJournal(source,target,CombatJournalKind.Resurrection,actor.Health);
         ResetLifeAfterRevival(actor);RefreshHealthRecovery(target);SupportCombatParticipant(source,target,actor.Health);Revived?.Invoke(target);
         return true;
@@ -56,7 +57,7 @@ public sealed partial class CombatSimulation
 
     private void ResetLifeAfterRevival(Combatant actor)
     {
-        UnscheduleLife(actor);actor.LifeDead=false;actor.CorpseEndsAt=actor.RespawnReadyAt=0;
+        UnscheduleLife(actor);actor.LifeDead=false;actor.DiedFromRegeneration=false;actor.CorpseEndsAt=actor.RespawnReadyAt=0;
         _lifeDirty.Add(actor.Id);_equipmentDirty.Add(actor.Id);
         RefreshManaRecovery(actor.Id);
         _defenseActive.Add(actor.Id);

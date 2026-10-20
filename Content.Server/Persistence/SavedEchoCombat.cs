@@ -27,6 +27,9 @@ public sealed record SavedEchoCombat
     [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingDefault)] public bool PendingLogoutRestore {get;init;}
     public required double Health { get; init; }
     public required double Mana { get; init; }
+    [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingDefault)] public long Experience {get;init;}
+    [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)] public SavedExperienceFraction? ExperienceFraction {get;init;}
+    [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)] public SavedResourceMaxima? ResourceMaxima {get;init;}
     public required SavedDefense Defense { get; init; }
     public required SavedCombatControl CombatControl { get; init; }
     public ulong DeathId { get; init; }
@@ -38,6 +41,8 @@ public sealed record SavedEchoCombat
 
     public void Validate()
     {
+        if(Experience<0)throw new InvalidDataException("Invalid owned Echo EXP.");
+        ExperienceFraction?.Validate();
         if (Version != 1 || InstanceId == Guid.Empty || !Enum.IsDefined(Availability) ||
             DefinitionId is not {Length: > 0 and <= 64} || DeathId > long.MaxValue ||
             (Availability == SavedEchoAvailability.Active) != ActiveSlot.HasValue ||
@@ -53,7 +58,7 @@ public sealed record SavedEchoCombat
     internal CharacterState ActorState() => new()
     {
         RegionId = "echo_state", ProfileId = ProfileId, Stats = Stats, X = X, Z = Z, Surface = Surface,
-        Facing = Facing, Health = Health, Mana = Mana, Defense = Defense, CombatControl = CombatControl,
+        Facing = Facing, Health = Health, Mana = Mana, ResourceMaxima=ResourceMaxima, Defense = Defense, CombatControl = CombatControl,
         AttackCooldownSeconds = AttackCooldownSeconds, InCombatSeconds = InCombatSeconds,
         ActivePassiveModifiers = ActivePassiveModifiers, Cooldowns = Cooldowns,
         SavedAtUnixMilliseconds = SavedAtUnixMilliseconds
@@ -94,6 +99,9 @@ public static class EchoCombatDocuments
                 throw new InvalidDataException("Unsupported or oversized owned Echo document.");
             try
             {
+                using var document=JsonDocument.Parse(row.State);
+                if(document.RootElement.TryGetProperty("ExperienceFraction",out var fraction) && fraction.ValueKind==JsonValueKind.Null)
+                    throw new InvalidDataException("Null owned Echo EXP fraction.");
                 echoes[i] = JsonSerializer.Deserialize<SavedEchoCombat>(row.State, Json) ?? throw new InvalidDataException("Missing owned Echo document.");
                 if (echoes[i].InstanceId != row.InstanceId) throw new InvalidDataException("Owned Echo row/document identity mismatch.");
             }

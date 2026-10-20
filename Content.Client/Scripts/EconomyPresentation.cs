@@ -18,7 +18,7 @@ public partial class EconomyPresentation:CanvasLayer
     private EconomyState _state;private InventoryState _inventory;private CraftState _materials;private MarketState _market;
     private readonly Dictionary<ulong,ItemConditionEntry> _conditions=new();
     private EconomyCommand? _pending;private EconomyQuote? _quote;private double _clock,_sentAt;private Vector2 _lastViewport;
-    private string _status="Подойдите к верстаку (-10, 2).";private int _price=10,_oreQuantity=1;
+    private string _status="Подойдите к верстаку.";private int _price=10,_oreQuantity=1;
     public void Initialize(NetworkClient network,PlayerController player)
     {
         _network=network;_player=player;Layer=7;
@@ -114,6 +114,7 @@ public partial class EconomyPresentation:CanvasLayer
         foreach(var cost in quote.Costs) text.AppendLine("Стоимость: "+MaterialName(cost.Id)+" × "+cost.Quantity);
         if(quote.Command.Action==EconomyAction.List) text.AppendLine("Цена продажи: "+quote.Command.Price+" монет. Без комиссии.");
         if(quote.CoinChange!=0) text.AppendLine("Монеты: "+(quote.CoinChange>0?"+":"")+quote.CoinChange);
+        if(quote.Experience>0)text.AppendLine("EXP персонажа: +"+quote.Experience+" (на максимальном уровне не накапливается)");
         _risk.Text="";
         if(quote.Command.Action==EconomyAction.Enhance)
         {

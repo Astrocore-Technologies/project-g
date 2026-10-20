@@ -1,0 +1,65 @@
+[gd_resource type="Terrain3DAssets" format=3 uid="uid://dqum5gsgks1ip"]
+
+[ext_resource type="Texture2D" uid="uid://oe0wn56nj50g" path="res://Assets/World/Linvel/Beech/Revision2/StylePass/GroundGrass.res" id="1_nly6a"]
+[ext_resource type="Texture2D" uid="uid://cbtosoexnp4t2" path="res://Assets/World/Linvel/Beech/Revision2/Terrain/Textures/ForestFloor_normal.res" id="2_0fg01"]
+[ext_resource type="Texture2D" uid="uid://c3i22lp7cdcoc" path="res://Assets/World/Linvel/City/Terrain/PavingAlbedo.res" id="3_yrerb"]
+[ext_resource type="Texture2D" uid="uid://bdmi8jgtu8edd" path="res://Assets/World/Linvel/Beech/Revision2/StylePass/GroundRock.res" id="4_gcl0c"]
+[ext_resource type="Texture2D" uid="uid://litfu606meq2" path="res://Assets/World/Linvel/Beech/Revision2/Terrain/Textures/ExposedStone_normal.res" id="5_ole2b"]
+[ext_resource type="Texture2D" uid="uid://ckirpgauajipp" path="res://Assets/World/Linvel/Beech/Revision2/StylePass/GroundPath.res" id="6_q8c8u"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_nly6a"]
+transparency = 4
+cull_mode = 2
+vertex_color_use_as_albedo = true
+backlight_enabled = true
+backlight = Color(0.5, 0.5, 0.5, 1)
+distance_fade_mode = 1
+distance_fade_min_distance = 128.0
+distance_fade_max_distance = 96.0
+
+[sub_resource type="Terrain3DMeshAsset" id="Terrain3DMeshAsset_0fg01"]
+generated_type = 1
+height_offset = 0.5
+material_override = SubResource("StandardMaterial3D_nly6a")
+last_lod = 0
+last_shadow_lod = 0
+lod0_range = 128.0
+
+[sub_resource type="Terrain3DTextureAsset" id="Terrain3DTextureAsset_yrerb"]
+name = "ForestFloor"
+albedo_texture = ExtResource("1_nly6a")
+normal_texture = ExtResource("2_0fg01")
+normal_depth = 0.0
+ao_strength = 0.0
+uv_scale = 0.16
+
+[sub_resource type="Terrain3DTextureAsset" id="Terrain3DTextureAsset_gcl0c"]
+name = "CityPaving"
+id = 1
+albedo_texture = ExtResource("3_yrerb")
+normal_texture = ExtResource("2_0fg01")
+normal_depth = 0.0
+ao_strength = 0.0
+uv_scale = 0.5
+
+[sub_resource type="Terrain3DTextureAsset" id="Terrain3DTextureAsset_ole2b"]
+name = "ExposedStone"
+id = 2
+albedo_texture = ExtResource("4_gcl0c")
+normal_texture = ExtResource("5_ole2b")
+normal_depth = 0.0
+ao_strength = 0.0
+uv_scale = 0.2
+
+[sub_resource type="Terrain3DTextureAsset" id="Terrain3DTextureAsset_q8c8u"]
+name = "TrainingSand"
+id = 3
+albedo_texture = ExtResource("6_q8c8u")
+normal_texture = ExtResource("2_0fg01")
+normal_depth = 0.0
+ao_strength = 0.0
+uv_scale = 0.2
+
+[resource]
+mesh_list = Array[Terrain3DMeshAsset]([SubResource("Terrain3DMeshAsset_0fg01")])
+texture_list = Array[Terrain3DTextureAsset]([SubResource("Terrain3DTextureAsset_yrerb"), SubResource("Terrain3DTextureAsset_gcl0c"), SubResource("Terrain3DTextureAsset_ole2b"), SubResource("Terrain3DTextureAsset_q8c8u")])

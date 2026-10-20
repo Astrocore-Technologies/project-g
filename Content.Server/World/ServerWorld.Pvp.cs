@@ -93,6 +93,7 @@ public sealed partial class ServerWorld
     {
         if(!_playersByEntity.TryGetValue(target,out var player))return;
         if(_pvp.ContainsKey(target))_lethal.Add(target);
+        else if(_progression.ContainsKey(target))ApplyDeathPenalty(target,pvp:false);
         player.Motion.Reset(player.Position,player.Position,player.Height,player.Height);_movingPlayers.Remove(player.ConnectionId);
         Inventory?.FlushWear(target);Echoes?.Wake(target);MarkPersistent(target);
         // A same-tick resurrection must not erase the legal consequences of an actual death.
@@ -124,6 +125,7 @@ public sealed partial class ServerWorld
                 else if(c.Mode!=PvpMode.Peaceful&&Rules.IsSafe(p.Position))outcome=PvpOutcome.Protected;
                 else _pvp[id]=s with {Mode=c.Mode,CombatUntil=c.Mode==PvpMode.Peaceful?s.CombatUntil:now+Rules.CombatSeconds*1000L};
             }
+            else if(_taverns is not null)outcome=PvpOutcome.InvalidOperation; // v79 uses the common, epoch-aware RespawnCommand.
             else if(!s.Dead||s.DeathId!=c.DeathId)outcome=PvpOutcome.InvalidState;
             else if(now<s.RespawnAt)outcome=PvpOutcome.NotReady;
             else RespawnPvp(p);
@@ -146,7 +148,7 @@ public sealed partial class ServerWorld
             if(s.DeathId==long.MaxValue)throw new InvalidOperationException("Death ordinal exhausted.");
             if(_playerTrades.TryGetValue(id,out var session)&&_trades.TryGetValue(session,out var trade))CloseTrade(trade,TradePhase.Cancelled);
             _economyQuotes.Remove(p.ConnectionId);_repairQuotes.Remove(p.ConnectionId);
-            var xp=_progression[id].Experience;var lost=(int)((long)xp*(isPvp?Rules.PvpExperiencePercent:Rules.PveExperiencePercent)/100);_progression[id]=_progression[id] with {Experience=xp-lost};DirtyProgression(id);
+            var lost=ApplyDeathPenalty(id,isPvp);
             var dropped=Guid.Empty;var skipped=false;
             if(isPvp)
             {
@@ -161,7 +163,7 @@ public sealed partial class ServerWorld
                 }
                 foreach(var (killer,identity) in _pvpIdentities)
                 {
-                    if(identity!=s.LastAttacker)continue;var k=_pvp[killer];
+                    if(Combat!.Get(id).DiedFromRegeneration || identity!=s.LastAttacker)continue;var k=_pvp[killer];
                     if(k.Episodes.Any(e=>e.Victim==_pvpIdentities[id]&&e.Civilian&&e.Until>now)){_pvp[killer]=k with {Reputation=Math.Max(-1000,k.Reputation-Rules.KillPenalty),Pk=k.Pk==int.MaxValue?int.MaxValue:k.Pk+1};DirtyPvp(killer);}break;
                 }
             }
@@ -187,6 +189,7 @@ public sealed partial class ServerWorld
         ResetLogoutSession(connection);
         ResetLifeSession(connection);
         ResetQuestSession(p.EntityId);
+        ResetTavernSession(p.EntityId);
         // A disconnected body remains in the simulation; only its input session ended.
         if(Combat is not null)
         {var actor=Combat.Get(p.EntityId);actor.DetachedBody=true;actor.Active=true;Combat.RefreshHealthRecovery(p.EntityId);}
@@ -203,6 +206,7 @@ GroundItems?.CancelChannel(p.EntityId,Tick);_pvpPending.Remove(connection);if(_p
         var p=_playersByConnection[oldConnection];_playersByConnection.Remove(oldConnection);p.ConnectionId=newConnection;p.PlayerId=player;_playersByConnection.Add(newConnection,p);
         Combat?.SetDefenseConnected(p.EntityId,newConnection>=0);
         ResetQuestSession(p.EntityId);
+        ResetTavernSession(p.EntityId);
         if(_persistentActors.Remove(oldConnection,out var identity))_persistentActors[newConnection]=identity;
         if(newConnection>=0){p.LastProcessedSequence=0;p.LastPathRequestTick=null;p.NavigationOrder=0;p.CancelledNavigationOrder=0;Combat?.ResetSession(p.EntityId);Abilities?.ResetSession(p.EntityId);Inventory?.ResetSession(p.EntityId);Echoes?.ResetSession(p.EntityId);GroundItems?.RemovePlayer(p.EntityId);_progressionSequences.Remove(p.EntityId);_professionSequences.Remove(p.EntityId);_tradeRequests.Remove(oldConnection);}
         if(_movingPlayers.Remove(oldConnection))_movingPlayers.Add(newConnection);_persistenceDirty.Remove(oldConnection);_pvpRequests.Remove(oldConnection);_pvpPending.Remove(oldConnection);MarkPersistent(p.EntityId);

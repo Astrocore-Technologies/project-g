@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 namespace Content.Server.Persistence;
 public sealed record SavedWorldNode
 {
+    [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)] public SavedCampWatch? CampWatch {get;init;}
     [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)] public SavedNpcRespawn[]? NpcRespawns { get; init; }
     [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)] public SavedDeathLoot[]? DeathLoot {get;init;}
     [JsonRequired] public int Version { get; init; } = 1;
@@ -14,6 +15,7 @@ public sealed record SavedWorldNode
     private static readonly JsonSerializerOptions Json = new() { UnmappedMemberHandling=JsonUnmappedMemberHandling.Disallow,MaxDepth=8 };
     public void Validate() { if (Version!=1 || Repairs is < 0 or > 64 || Patrols is < 0 or > 64) throw new InvalidDataException("Invalid saved world node.");
         Market?.Validate();
+        CampWatch?.Validate();
         if (NpcRespawns is { } respawns)
         {
             if (respawns.Length > 32) throw new InvalidDataException("NPC respawn budget exceeded.");
@@ -34,6 +36,7 @@ public sealed record SavedWorldNode
         if (System.Text.Encoding.UTF8.GetByteCount(source)>8192) throw new InvalidDataException("World document too large.");
         using var d=JsonDocument.Parse(source,new JsonDocumentOptions { MaxDepth=8 });
         RejectDuplicates(d.RootElement);
+        if(d.RootElement.TryGetProperty("CampWatch",out var watch)&&watch.ValueKind==JsonValueKind.Null)throw new InvalidDataException("Null camp watch.");
         if(d.RootElement.TryGetProperty("NpcRespawns",out var respawns)&&respawns.ValueKind==JsonValueKind.Null)throw new InvalidDataException("Null NPC respawns.");
         if(d.RootElement.TryGetProperty("DeathLoot",out var loot)&&loot.ValueKind==JsonValueKind.Null)throw new InvalidDataException("Null death loot component.");
         if(d.RootElement.TryGetProperty("Market",out var market) && market.ValueKind==JsonValueKind.Null)throw new InvalidDataException("Null market component.");

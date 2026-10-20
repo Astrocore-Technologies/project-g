@@ -22,6 +22,11 @@ public sealed class RegionalWorlds
     public IReadOnlyList<RegionBoundary> Routes { get; }
     public ServerWorld Primary => Worlds[0];
     public ServerWorld StartingWorld { get; }
+    public void ConfigureTaverns(Content.Server.Respawn.TavernCatalog catalog)
+    {
+        catalog.ValidateWorlds(Worlds);
+        foreach(var world in Worlds)world.ConfigureTaverns(catalog);
+    }
 
     public RegionalWorlds(IReadOnlyList<ServerWorld> worlds, IReadOnlyList<RegionBoundary> routes, string? startingRegion = null)
     {

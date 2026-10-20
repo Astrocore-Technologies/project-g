@@ -1,0 +1,10 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://ciaw5e1p8q3wh"]
+
+[ext_resource type="Shader" uid="uid://un7orathcj8t" path="res://Assets/World/Linvel/City/Materials/RigidPaving.gdshader" id="1_kgu41"]
+[ext_resource type="Texture2D" uid="uid://oe0wn56nj50g" path="res://Assets/World/Linvel/Beech/Revision2/StylePass/GroundGrass.res" id="2_yeoti"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_kgu41")
+shader_parameter/paving_texture = ExtResource("2_yeoti")
+shader_parameter/tiles_per_metre = 0.08

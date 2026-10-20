@@ -89,6 +89,7 @@ public sealed class SqliteServerProcessTests
         start.ArgumentList.Add("--RegionExports:SurfacePackagePath="+Path.Combine(AppContext.BaseDirectory,"Fixtures/legacy-surface-package.json"));
         start.ArgumentList.Add("--RegionExports:VerifySources=false");
         start.ArgumentList.Add("--Server:StartingRegion=prototype");
+        start.ArgumentList.Add("--Activities:Enabled=false");
         var process = Process.Start(start) ?? throw new InvalidOperationException("Test server process could not start.");
         return new(process, process.StandardOutput.ReadToEndAsync(), process.StandardError.ReadToEndAsync());
     }

@@ -21,6 +21,7 @@ internal static class CompanionRuntimeState
             ActiveSlot = actor.Health <= 0 ? null : activeSlot,
             Stats = stats, X = actor.Position.X, Z = actor.Position.Y, Surface = surface,
             Facing = new(1, actor.Facing.X, actor.Facing.Y), Health = actor.Health, Mana = abilities.Mana(id),
+            ResourceMaxima=SavedResourceMaxima.From(actor.Stats),
             Defense = combat.CaptureDefense(id), CombatControl = combat.CaptureControl(id),
             DeathId = actor.DeathId, AttackCooldownSeconds = Math.Max(0, actor.ReadyAt - combat.Time),
             InCombatSeconds = combat.CombatRemaining(id), ActivePassiveModifiers = combat.CapturePassiveModifiers(id),
@@ -45,10 +46,9 @@ internal static class CompanionRuntimeState
             actor.DefinitionId != saved.ProfileId || saved.Availability == SavedEchoAvailability.RequiresRestoration ||
             effects.Any(effect => effect.TargetEcho != saved.InstanceId))
             throw new InvalidDataException("Saved Echo does not match this combat body.");
-        var previousStats = combat.StatsAtSave(id, effects, saved.ActivePassiveModifiers);
-        if (saved.Health > previousStats.MaxHealth || saved.Mana > Math.Max(0, previousStats.MaxMana) ||
-            saved.Defense.Stamina > Math.Max(0, previousStats.MaxStamina))
-            throw new InvalidDataException("Saved Echo resources exceed the previous maximum; content migration is required.");
+        var reconstructed=combat.StatsAtSave(id,effects,saved.ActivePassiveModifiers);
+        var previous=saved.ResourceMaxima ?? SavedResourceMaxima.From(reconstructed);
+        previous.Validate(saved.Health,saved.Mana,saved.Defense.Stamina);
         actor.Health = saved.Health;
         combat.RestoreFacing(id, saved.Facing);
         combat.RestoreCombatPresence(id, saved.InCombatSeconds, offline);
@@ -56,7 +56,7 @@ internal static class CompanionRuntimeState
         actor.Health = Math.Min(saved.Health, actor.Stats.MaxHealth);
         combat.RefreshHealthRecovery(id);
         actor.ReadyAt = combat.Time + Math.Max(0, saved.AttackCooldownSeconds - offline);
-        abilities.Restore(id, saved.ActorState() with { Mana = Math.Min(saved.Mana, Math.Max(0, actor.Stats.MaxMana)) }, offline);
+        abilities.Restore(id, saved.ActorState() with { Mana = Math.Min(saved.Mana, Math.Max(0, actor.Stats.MaxMana)),ResourceMaxima=null }, offline);
         combat.RestoreDefense(id, saved.Defense with { Stamina = Math.Min(saved.Defense.Stamina, Math.Max(0, actor.Stats.MaxStamina)) }, offline);
         combat.RestoreControl(id, saved.CombatControl, offline, finishForcedMotion: loggingIn);
         combat.RestoreLife(id, new(1, saved.DeathId, false, 0, 0), offline);
