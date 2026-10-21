@@ -8,11 +8,24 @@ func _ready() -> void:
 		get_tree().quit(1)
 		return
 	super._ready()
+	if "--water-diagnostics" in OS.get_cmdline_user_args():
+		await get_tree().create_timer(2.0).timeout
+		var directory := ProjectSettings.globalize_path("res://../.artifacts/linvel-water/diagnostics")
+		DirAccess.make_dir_recursive_absolute(directory)
+		var material := (city.get_node("CityParts/CoastAndBackdrop/OpenSea") as MeshInstance3D).material_override as ShaderMaterial
+		show_surface_view(water_views()[0])
+		for mode in range(1,6):
+			material.set_shader_parameter("debug_view",mode)
+			await get_tree().create_timer(.8).timeout
+			await RenderingServer.frame_post_draw
+			get_viewport().get_texture().get_image().save_png(directory.path_join("mode-%d.png"%mode))
+		material.set_shader_parameter("debug_view",0)
+		get_tree().quit(0)
+		return
 	if "--water-review" in OS.get_cmdline_user_args():
 		await get_tree().create_timer(2.0).timeout
 		if "--water-hide" in OS.get_cmdline_user_args():
 			city.get_node("CityParts/CoastAndBackdrop/OpenSea").hide()
-			city.get_node("CityParts/CoastAndBackdrop/FarSea").hide()
 		var stage := "candidate-01"
 		for argument in OS.get_cmdline_user_args():
 			if argument.begins_with("--water-stage="): stage = argument.trim_prefix("--water-stage=")
@@ -37,7 +50,7 @@ func world_checks() -> Dictionary:
 
 func water_views() -> Array:
 	return [["harbor-overview",Vector3(-246,128,309),Vector3(-42,10,145)],
-	["pier-water",Vector3(-87,8,169),Vector3(-105,0,178)],
+	["pier-water",Vector3(-73,6,155),Vector3(-80,0,178)],
 	["quay-water",Vector3(-20,5.5,164),Vector3(-15,0,139)],
 	["outer-sea",Vector3(-175,9,216),Vector3(-185,0,300)],
 	["coastal-shallows",Vector3(185,23,171),Vector3(145,0,151)],

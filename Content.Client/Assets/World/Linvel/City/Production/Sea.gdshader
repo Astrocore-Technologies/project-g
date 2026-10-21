@@ -30,6 +30,7 @@ uniform float sun_glint : hint_range(0.0, 1.0) = 0.12;
 uniform float water_roughness : hint_range(0.1, 1.0) = 0.38;
 group_uniforms;
 uniform sampler2D depth_texture : hint_depth_texture, filter_nearest, repeat_disable;
+uniform int debug_view : hint_range(0, 5) = 0;
 varying vec3 water_world;
 varying float shelter;
 
@@ -59,14 +60,18 @@ void fragment() {
 	vec2 uv_field = field_uv(p);
 	bool in_field = all(greaterThanEqual(uv_field, vec2(0.0))) && all(lessThanEqual(uv_field, vec2(1.0)));
 	vec3 field = texture(shore_field, clamp(uv_field, vec2(0.0), vec2(1.0))).rgb;
-	float shore = in_field ? field.g * 32.0 : 32.0;
-	float bed_depth = in_field ? field.r * 16.0 : 8.0;
+	vec2 border_metres = min(uv_field, vec2(1.0) - uv_field) * (field_bounds.zw - field_bounds.xy);
+	float field_weight = in_field ? smoothstep(0.0, 48.0, min(border_metres.x, border_metres.y)) : 0.0;
+	// Fade the finite authored field into the ocean at every edge, including
+	// mainland samples at its northern border. No rectangular atlas boundary.
+	float shore = mix(32.0, field.g * 32.0, field_weight);
+	float bed_depth = mix(16.0, field.r * 16.0, field_weight);
 	float raw_depth = textureLod(depth_texture, SCREEN_UV, 0.0).r;
 	vec4 floor_view = INV_PROJECTION_MATRIX * vec4(SCREEN_UV * 2.0 - 1.0, raw_depth, 1.0);
 	vec3 floor_world = (INV_VIEW_MATRIX * vec4(floor_view.xyz / floor_view.w, 1.0)).xyz;
 	float depth = raw_depth > 0.000001 ? max(water_world.y - floor_world.y, 0.0) : 80.0;
 	// Bed distance is stable across views. Screen depth adds contact with piles.
-	float tint_depth = min(depth, max(bed_depth, 0.05));
+	float tint_depth = max(bed_depth, 0.05);
 	vec2 direction = normalize(wind_direction + vec2(0.0001));
 	vec2 flow = p * 0.055 - direction * TIME * wave_speed * 0.014;
 	float paint = texture(water_paint, flow).g;
@@ -74,11 +79,13 @@ void fragment() {
 	float distance_to_camera = length(CAMERA_POSITION_WORLD - water_world);
 	float detail = 1.0 - smoothstep(70.0, 300.0, distance_to_camera);
 	float ripple_a = dot(p, direction) * 1.75 - TIME * wave_speed * 1.2;
-	float ripple_b = dot(p, vec2(-direction.y, direction.x)) * 1.22 + TIME * 0.65;
+	vec2 secondary_direction = normalize(direction + vec2(0.3, -0.32));
+	float ripple_b = dot(p, secondary_direction) * 2.1 + TIME * 0.65;
+	float ripple_warp = sin(dot(p, vec2(-direction.y, direction.x)) * 0.31 + TIME * 0.18) * 1.15 + paint * 3.0;
 	float broad_phase = dot(p, direction) * (6.283185 / wave_length) - TIME * wave_speed;
-	float calm = mix(1.0, 1.0 - harbor_calm, shelter);
+	float calm = mix(1.0, 1.0 - harbor_calm, shelter) * (1.0 - smoothstep(350.0, 1000.0, distance_to_camera));
 	vec2 slope = direction * cos(broad_phase) * wave_height * 0.7 * calm;
-	slope += vec2(sin(ripple_a + paint * 1.8), cos(ripple_b + paint)) * ripple_strength * detail * mix(1.0, 0.55, shelter);
+	slope += (direction * sin(ripple_a + ripple_warp) + secondary_direction * cos(ripple_b + paint * 4.0) * 0.35) * ripple_strength * detail * mix(1.0, 0.55, shelter);
 	vec3 normal_world = normalize(vec3(-slope.x, 1.0, -slope.y));
 	NORMAL = normalize((VIEW_MATRIX * vec4(normal_world, 0.0)).xyz);
 	float depth_blend = 1.0 - exp(-tint_depth / colour_depth);
@@ -86,21 +93,38 @@ void fragment() {
 	colour *= mix(0.96, 1.04, paint);
 	float foam_distance = shore + (brush - 0.5) * 0.7;
 	float wash = 0.5 + 0.5 * sin(shore * 2.8 - TIME * 1.25 + paint * 3.0);
-	float shore_foam = (1.0 - smoothstep(0.12, foam_width, foam_distance)) * mix(0.35, 1.0, wash);
+	float local_foam_width = foam_width * mix(1.4, 0.6, shelter);
+	float shore_foam = (1.0 - smoothstep(0.12, local_foam_width, foam_distance)) * mix(0.35, 1.0, wash);
 	float surf_line = (1.0 - smoothstep(0.12, 0.42, abs(shore - (0.7 + 0.6 * sin(TIME * 0.65))))) * (1.0 - shelter * 0.6);
 	float contact = (1.0 - smoothstep(0.025, contact_width, depth));
-	float foam = max(shore_foam, max(surf_line * 0.45, contact)) * smoothstep(0.15, 0.65, brush) * foam_strength;
-	float crest = smoothstep(0.94, 1.0, sin(ripple_a * 0.4 + paint * 3.0)) * smoothstep(0.48, 0.8, brush) * 0.07 * detail;
+	// The reused painted foam texture is teal, sampled in linear space.
+	float brush_mask = smoothstep(0.035, 0.20, brush);
+	float foam = max(shore_foam, max(surf_line * 0.45, contact)) * brush_mask * foam_strength;
+	float crest = smoothstep(0.94, 1.0, sin(ripple_a * 0.4 + paint * 3.0)) * brush_mask * 0.04 * detail;
 	ALBEDO = mix(colour, foam_colour, clamp(foam + crest, 0.0, 0.85));
 	float fresnel = pow(1.0 - max(dot(NORMAL, VIEW), 0.0), 4.0);
 	ROUGHNESS = clamp(water_roughness + (1.0 - detail) * 0.24 + foam * 0.35, 0.0, 1.0);
 	SPECULAR = reflection_strength;
-	float opacity = 1.0 - exp(-depth / clarity);
+	float opacity = 1.0 - exp(-max(depth, bed_depth * 0.75) / clarity);
 	ALPHA = clamp(mix(0.12, 1.0, opacity) + fresnel * 0.28 + foam * 0.4, 0.0, 1.0);
+	if (debug_view > 0) {
+		vec3 debug_colour = vec3(0.03,0.4,0.65);
+		if (debug_view == 1) debug_colour = vec3(bed_depth / 16.0);
+		if (debug_view == 2) debug_colour = vec3(clamp(depth / 16.0,0.0,1.0));
+		if (debug_view == 3) debug_colour = normal_world * 0.5 + vec3(0.5);
+		if (debug_view == 4) debug_colour = ALBEDO;
+		ALBEDO = vec3(0.0);
+		EMISSION = debug_colour;
+		ALPHA = 1.0;
+		SPECULAR = 0.0;
+		FOG = vec4(0.0);
+	}
 }
 void light() {
+	if (debug_view == 0) {
 	float facing = smoothstep(-0.15, 0.75, dot(NORMAL, LIGHT));
 	DIFFUSE_LIGHT += mix(0.38, 0.85, facing) * LIGHT_COLOR * ATTENUATION / PI;
 	float highlight = pow(max(dot(NORMAL, normalize(LIGHT + VIEW)), 0.0), 72.0);
 	SPECULAR_LIGHT += LIGHT_COLOR * smoothstep(0.12, 0.85, highlight) * sun_glint * ATTENUATION;
+	}
 }

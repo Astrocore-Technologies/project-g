@@ -7,6 +7,12 @@ Scope: client shader/material resources, saved coast scene and a native preview.
 No gameplay, protocol, persistence, collision or server changes. Existing district
 scenes and hand placements remain authoritative. No runtime scene generator.
 
+User steering during implementation: World.tscn is the world entry point.
+Districts moved to LinvelCity/Parts. Canonical city assembly is
+LinvelCity/LinvelCity.tscn, instanced from World; no nested World under the city.
+The single sun and WorldEnvironment belong to World. Both previews instance
+that actual World scene. User-deleted fallback Ground remains optional.
+
 Implementation: shared soft light include for city painted props and limestone;
 one continuous ocean with localized harbor shelter, authored shoreline field,
 depth coloration/visibility and painted foam. Water parameters remain editable

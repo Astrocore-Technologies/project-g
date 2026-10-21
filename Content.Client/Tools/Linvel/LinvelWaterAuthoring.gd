@@ -11,14 +11,48 @@ var natural_land := PackedByteArray()
 var heights := PackedFloat32Array()
 var bake_report: Dictionary = {}
 
-func reload_world() -> Dictionary:
-	EditorInterface.reload_scene_from_path("res://Scenes/Regions/Linvel/LinvelCity/LinvelCity.tscn")
-	EditorInterface.reload_scene_from_path.call_deferred("res://Scenes/World.tscn")
-	return {"queued":true}
-
 func load_shore() -> Dictionary:
-	shore_image = (load(BASE+"Textures/coast_shore_field.res") as Texture2D).get_image()
+	shore_image = (ResourceLoader.load(BASE+"Textures/coast_shore_field.res","Texture2D",ResourceLoader.CACHE_MODE_IGNORE) as Texture2D).get_image()
 	return {"width":shore_image.get_width()}
+
+func _blur_axis(source: PackedFloat32Array, radius: int, vertical: bool) -> PackedFloat32Array:
+	var size := FIELD_PIXELS
+	var output := PackedFloat32Array()
+	output.resize(size*size)
+	for row in size:
+		var total := 0.0
+		for offset in range(-radius,radius+1):
+			var column := clampi(offset,0,size-1)
+			total += source[column*size+row if vertical else row*size+column]
+		for column in size:
+			output[column*size+row if vertical else row*size+column] = total/float(radius*2+1)
+			var entering := clampi(column+radius+1,0,size-1)
+			var leaving := clampi(column-radius,0,size-1)
+			total += source[entering*size+row if vertical else row*size+entering]-source[leaving*size+row if vertical else row*size+leaving]
+	return output
+
+func smooth_depth() -> Dictionary:
+	var previous := ResourceLoader.load(BASE+"Textures/coast_shore_field.res","Texture2D",ResourceLoader.CACHE_MODE_IGNORE) as Texture2D
+	if previous.get_meta("colour_depth_smoothing",0)==1: return {"already_smoothed":true}
+	load_shore()
+	var depths := PackedFloat32Array()
+	depths.resize(FIELD_PIXELS*FIELD_PIXELS)
+	for y in FIELD_PIXELS:
+		for x in FIELD_PIXELS: depths[y*FIELD_PIXELS+x] = maxf(.5,shore_image.get_pixel(x,y).r)
+	# Three separable box filters approximate a broad Gaussian. Clamped deep
+	# input and a shore-distance blend preserve the authored shallow shelf.
+	for iteration in 3:
+		depths = _blur_axis(_blur_axis(depths,10,false),10,true)
+	for y in FIELD_PIXELS:
+		for x in FIELD_PIXELS:
+			var colour := shore_image.get_pixel(x,y)
+			colour.r = lerpf(colour.r,depths[y*FIELD_PIXELS+x],smoothstep(10,24,colour.g*32))
+			shore_image.set_pixel(x,y,colour)
+	var texture := ImageTexture.create_from_image(shore_image)
+	texture.set_meta("colour_depth_smoothing",1)
+	assert(ResourceSaver.save(texture,BASE+"Textures/coast_shore_field.res")==OK)
+	shore_image.save_png(BASE+"Textures/coast_shore_field.png")
+	return {"smoothed":true,"shore_and_berths_preserved":true,"terrain_changed":false}
 
 func begin_bake() -> Dictionary:
 	bake_report = {"done":false,"stage":"native heights"}
@@ -41,9 +75,6 @@ func bake_shore() -> Dictionary:
 		var poly := PackedVector2Array()
 		for p in platform.points: poly.append(Vector2(p[0],p[1]))
 		polygons.append(poly)
-	var barriers: Array = []
-	for link in layout.links:
-		if link.kind == "breakwater": barriers.append(link)
 	var count := FIELD_PIXELS*FIELD_PIXELS
 	var distance := PackedFloat32Array()
 	distance.resize(count)
@@ -67,13 +98,8 @@ func bake_shore() -> Dictionary:
 					if Geometry2D.is_point_in_polygon(p,poly):
 						land = true
 						break
-			if not land:
-				for link in barriers:
-					var a := Vector2(link.start[0],link.start[2])
-					var b := Vector2(link.end[0],link.end[2])
-					if p.distance_to(Geometry2D.get_closest_point_to_segment(p,a,b)) < float(link.width)*.5:
-						land = true
-						break
+			# The elevated breakwater walks stand on piles. Their deck footprint
+			# is not land at water level; depth sampling handles the actual piles.
 			distance[index] = 0 if land else 10000
 	# Two-pass chamfer field, in world metres. Static authoring cost only.
 	for y in FIELD_PIXELS:
@@ -109,7 +135,8 @@ func bake_shore() -> Dictionary:
 	var texture := ImageTexture.create_from_image(shore_image)
 	assert(ResourceSaver.save(texture,BASE+"Textures/coast_shore_field.res")==OK)
 	shore_image.save_png(BASE+"Textures/coast_shore_field.png")
-	return {"pixels":FIELD_PIXELS,"shallow_pixels":shallow_pixels,"bounds":str(Rect2(FIELD_ORIGIN,FIELD_SIZE)),"basis":"native Terrain3D + saved platform footprints + breakwaters"}
+	smooth_depth()
+	return {"pixels":FIELD_PIXELS,"shallow_pixels":shallow_pixels,"bounds":str(Rect2(FIELD_ORIGIN,FIELD_SIZE)),"basis":"native Terrain3D + solid platform footprints","colour_depth_smoothed":true,"elevated_walks_excluded":true}
 
 func _field(p: Vector2) -> Color:
 	var uv := (p-FIELD_ORIGIN)/FIELD_SIZE*float(FIELD_PIXELS)
@@ -133,11 +160,21 @@ func _shader(path: String) -> Shader:
 	shader.take_over_path(path)
 	return shader
 
+func _paint_material(path: String, shader_path: String) -> ShaderMaterial:
+	var result := ShaderMaterial.new()
+	result.shader = _shader(shader_path)
+	if FileAccess.file_exists(path):
+		var previous := ResourceLoader.load(path,"ShaderMaterial",ResourceLoader.CACHE_MODE_IGNORE) as ShaderMaterial
+		for property in previous.get_property_list():
+			if str(property.name).begins_with("shader_parameter/"):
+				var value: Variant = previous.get(property.name)
+				if value!=null: result.set(property.name,value)
+	return result
+
 func build_water() -> Dictionary:
 	assert(shore_image!=null,"Bake shore first")
 	var part := ResourceLoader.load(COAST,"PackedScene",ResourceLoader.CACHE_MODE_IGNORE).instantiate() as Node3D
-	var material := ShaderMaterial.new()
-	material.shader = _shader(BASE+"Sea.gdshader")
+	var material := _paint_material(BASE+"Sea.tres",BASE+"Sea.gdshader")
 	material.set_shader_parameter("shore_field",ResourceLoader.load(BASE+"Textures/coast_shore_field.res","",ResourceLoader.CACHE_MODE_REPLACE))
 	material.set_shader_parameter("water_paint",load("res://Assets/World/Linvel/Beech/Revision2/StylePass/WaterColour.res"))
 	material.set_shader_parameter("foam_paint",load("res://Assets/World/Linvel/Beech/Revision2/StylePass/WaterFoam.res"))
@@ -154,14 +191,21 @@ func build_water() -> Dictionary:
 	var uvs: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV]
 	var indices: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
 	for i in vertices.size(): vertices[i] += Vector3(0,0,200)
+	var far_triangles := 0
 	for rect in [Rect2(-6000,-6000,5600,12000),Rect2(400,-6000,5600,12000),Rect2(-400,-6000,800,5880),Rect2(-400,520,800,5480)]:
-		var a: Vector2 = rect.position
-		var b: Vector2 = rect.end
-		for p in [a,Vector2(b.x,a.y),b,a,b,Vector2(a.x,b.y)]:
-			indices.append(vertices.size())
-			vertices.append(Vector3(p.x,0,p.y))
-			normals.append(Vector3.UP)
-			uvs.append(Vector2.ZERO)
+		var bounds: Rect2 = rect
+		var columns := ceili(bounds.size.x/128.0)
+		var rows := ceili(bounds.size.y/128.0)
+		for row in rows:
+			for column in columns:
+				var a := bounds.position+Vector2(float(column)/columns,float(row)/rows)*bounds.size
+				var b := bounds.position+Vector2(float(column+1)/columns,float(row+1)/rows)*bounds.size
+				for p in [a,Vector2(b.x,a.y),b,a,b,Vector2(a.x,b.y)]:
+					indices.append(vertices.size())
+					vertices.append(Vector3(p.x,0,p.y))
+					normals.append(Vector3.UP)
+					uvs.append(Vector2.ZERO)
+				far_triangles += 2
 	arrays[Mesh.ARRAY_VERTEX] = vertices
 	arrays[Mesh.ARRAY_NORMAL] = normals
 	arrays[Mesh.ARRAY_TEX_UV] = uvs
@@ -178,8 +222,7 @@ func build_water() -> Dictionary:
 	# One surface keeps depth sampling, transparency sorting and material identical.
 	var old_far := part.get_node_or_null("FarSea")
 	if old_far: old_far.free()
-	var bed_material := ShaderMaterial.new()
-	bed_material.shader = _shader(BASE+"CoastalSeabed.gdshader")
+	var bed_material := _paint_material(BASE+"CoastalSeabed.tres",BASE+"CoastalSeabed.gdshader")
 	bed_material.set_shader_parameter("sand_paint",load("res://Assets/World/Linvel/Beech/Revision2/StylePass/GroundPath.res"))
 	bed_material.set_shader_parameter("rock_paint",load("res://Assets/World/Linvel/Beech/Revision2/StylePass/GroundRock.res"))
 	bed_material.set_shader_parameter("water_paint",load("res://Assets/World/Linvel/Beech/Revision2/StylePass/WaterColour.res"))
@@ -208,7 +251,7 @@ func build_water() -> Dictionary:
 	assert(packed.pack(part)==OK)
 	assert(ResourceSaver.save(packed,COAST)==OK)
 	part.free()
-	return {"water_triangles":64000,"far_triangles":8,"bed_triangles":bed_triangles,"material":BASE+"Sea.tres","runtime_generator":false}
+	return {"water_triangles":64000+far_triangles,"far_triangles":far_triangles,"bed_triangles":bed_triangles,"material":BASE+"Sea.tres","runtime_generator":false}
 
 func inspect() -> Dictionary:
 	var root := get_parent()

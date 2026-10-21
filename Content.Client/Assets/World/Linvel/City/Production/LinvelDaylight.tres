@@ -1,4 +1,4 @@
-[gd_resource type="Environment" load_steps=3 format=3]
+[gd_resource type="Environment" format=3 uid="uid://bxcxdn23ttxkt"]
 
 [sub_resource type="ProceduralSkyMaterial" id="DaySky"]
 sky_top_color = Color(0.3, 0.56, 0.77, 1)

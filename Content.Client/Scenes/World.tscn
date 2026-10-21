@@ -4,7 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://cjm0qbhvx4xdh" path="res://Scenes/PlayerAvatar.tscn" id="2_player"]
 [ext_resource type="Script" uid="uid://bklqoyyb08nt8" path="res://Scripts/Network/NetworkClient.cs" id="3_network"]
 [ext_resource type="PackedScene" path="res://Scenes/Regions/Linvel/LinvelCity/LinvelCity.tscn" id="4_linvel"]
-[ext_resource type="Environment" path="res://Assets/World/Linvel/City/Production/LinvelDaylight.tres" id="5_daylight"]
+[ext_resource type="Environment" uid="uid://bxcxdn23ttxkt" path="res://Assets/World/Linvel/City/Production/LinvelDaylight.tres" id="5_daylight"]
 
 [node name="World" type="Node3D" unique_id=345959936]
 script = ExtResource("1_world")
@@ -12,15 +12,16 @@ PlayerScene = ExtResource("2_player")
 
 [node name="LinvelCity" parent="." unique_id=519119534 instance=ExtResource("4_linvel")]
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=120648314]
 transform = Transform3D(0.81915206, 0.45198438, -0.35312894, 0, 0.6156615, 0.7880107, 0.57357645, -0.6455006, 0.5043204, 0, 0, 0)
 light_color = Color(1, 0.92, 0.79, 1)
 light_energy = 0.95
 shadow_enabled = true
 directional_shadow_max_distance = 600.0
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1898799245]
 environment = ExtResource("5_daylight")
+
 [node name="NetworkClient" type="Node" parent="." unique_id=788756509]
 script = ExtResource("3_network")
 DevelopmentIdentityProfile = "combat01-beech"

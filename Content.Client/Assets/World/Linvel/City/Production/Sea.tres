@@ -31,3 +31,4 @@ shader_parameter/contact_width = 0.22
 shader_parameter/reflection_strength = 0.36
 shader_parameter/sun_glint = 0.12
 shader_parameter/water_roughness = 0.38
+shader_parameter/debug_view = 0
