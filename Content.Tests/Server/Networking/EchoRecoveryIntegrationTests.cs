@@ -51,6 +51,6 @@ public sealed class EchoRecoveryIntegrationTests
         finally{gate?.TrySetResult();await server.StopAsync(default);}
         await using var restored=await store.OpenAsync(credential,w.CreateInitialCharacter(),default);
         Assert.Single(restored.State.Inventory!.Items);var ready=Assert.Single(restored.State.OwnedEchoes!);
-        Assert.Equal(Content.Server.Persistence.SavedEchoAvailability.Ready,ready.Availability);Assert.Equal(110,ready.Health,8);Assert.Equal(5ul,ready.DeathId);
+        Assert.Equal(Content.Server.Persistence.SavedEchoAvailability.Ready,ready.Availability);Assert.Equal(250,ready.Health,8);Assert.Equal(5ul,ready.DeathId);
     }
 }

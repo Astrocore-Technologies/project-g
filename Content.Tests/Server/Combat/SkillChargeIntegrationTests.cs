@@ -34,7 +34,7 @@ public sealed class SkillChargeIntegrationTests
         if(interrupted) f.Abilities.InterruptCast(f.Id);
         else { Assert.True(f.World.TryQueueActionCancel(42,new(1,1))); f.Step(); }
         Assert.Equal(interrupted ? 2 : 3,f.Skill.Charges);
-        Assert.Equal(interrupted ? 137.5 : 140,f.Abilities.Mana(f.Id));
+        Assert.Equal(interrupted ? 97.5 : 100,f.Abilities.Mana(f.Id));
         Assert.Equal(interrupted ? 5 : 0,f.Skill.RechargeInSeconds,5);
     }
 

@@ -56,6 +56,8 @@ public partial class PlayerHudSmoke : Node
             if(reviewPort>0) network.ConnectToServerAt(reviewPort); else network.ConnectToServer(); await Wait(()=>_state.Stats is not null);
             if(OS.GetCmdlineUserArgs().Contains("--power-curve-experiment") && _state.NextExperience!=1677)
                 throw new Exception("The isolated server must publish the experimental power curve threshold.");
+            if(OS.GetCmdlineUserArgs().Contains("--zero-start")&&(_state.StatPoints!=20||_state.Stats.Any(v=>v!=0)))
+                throw new Exception("The new hero must start with seven zero stats and twenty unspent points.");
             var character=world.GetChildren().OfType<ProgressionPresentation>().Single();
             var hud=world.GetChildren().OfType<PlayerHud>().Single();
             await ToSignal(GetTree().CreateTimer(.7),SceneTreeTimer.SignalName.Timeout);

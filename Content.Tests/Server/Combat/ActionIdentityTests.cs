@@ -25,10 +25,10 @@ public sealed class ActionIdentityTests
         Assert.True(f.World.TryQueueAbility(42,new(1,0,2,aim),0));Assert.True(f.World.TryQueueActionCancel(42,new(1,1,ulong.MaxValue)));f.Step();
         Assert.Equal(AbilityOutcome.Accepted,f.Abilities.Results[f.Id].Outcome);Assert.Equal(AbilityPhase.Charging,Assert.Single(f.Abilities.ActiveStates).Phase);
         Assert.True(f.World.TryQueueAbilityControl(42,new(1,1,f.World.Tick,AbilityControlKind.Release,aim,ExecutionId:ulong.MaxValue)));f.Step();
-        Assert.Equal(AbilityPhase.Charging,Assert.Single(f.Abilities.ActiveStates).Phase);Assert.Equal(140,f.Mana);
+        Assert.Equal(AbilityPhase.Charging,Assert.Single(f.Abilities.ActiveStates).Phase);Assert.Equal(100,f.Mana);
         var execution=Assert.Single(f.Abilities.ActiveStates).EffectId;
         Assert.True(f.World.TryQueueAbilityControl(42,new(2,1,f.World.Tick,AbilityControlKind.Release,aim,ExecutionId:execution)));f.Step();
-        Assert.Equal(138,f.Mana);Assert.Equal(AbilityPhase.Impact,Assert.Single(f.Abilities.ActiveStates).Phase);
+        Assert.Equal(98,f.Mana);Assert.Equal(AbilityPhase.Impact,Assert.Single(f.Abilities.ActiveStates).Phase);
     }
 
     [Fact]public void ExecutionTargetIsValidatedAgainstItsOwnerEvenWhenInputSequencesCoincide()

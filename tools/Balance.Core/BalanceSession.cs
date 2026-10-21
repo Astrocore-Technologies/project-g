@@ -21,7 +21,8 @@ public sealed class BalanceSession : IDisposable
     public bool Running => _owned.Any(p => !p.HasExited);
     public IEnumerable<string> DrainLog() { while (_log.TryDequeue(out var line)) yield return line; }
 
-    public async Task StartAsync(string repository, string godot, BalanceDocument document, BalanceTestBuild build, bool client = true)
+    public async Task StartAsync(string repository, string godot, BalanceDocument document, BalanceTestBuild build, bool client = true,
+        Content.Server.Progression.ExperienceRewardsDefinition? rewards=null)
     {
         if (!await _launch.WaitAsync(0)) throw new InvalidOperationException("Запуск уже выполняется.");
         try
@@ -45,6 +46,9 @@ public sealed class BalanceSession : IDisposable
             BalanceDocument.WriteAtomic(contentPath, Encoding.UTF8.GetBytes(content.ToJsonString()));
             var buildPath = Path.Combine(DirectoryPath, "build.json");
             BalanceDocument.WriteAtomic(buildPath, JsonSerializer.SerializeToUtf8Bytes(build));
+            var rewardsPath=Path.Combine(DirectoryPath,"experience-rewards.json");
+            rewards??=Content.Server.Progression.ExperienceRewardsDefinition.LoadFile(Path.Combine(repository,"Content.Server/Data/experience-rewards.json"));
+            rewards.Validate();BalanceDocument.WriteAtomic(rewardsPath,JsonSerializer.SerializeToUtf8Bytes(rewards));
             var regions = JsonNode.Parse(File.ReadAllText(Path.Combine(output, "Data", "regions.json")))!.AsArray();
             // Use the current primary region and its authored training target rather than a retired map.
             var arena = regions[0]!;
@@ -65,6 +69,7 @@ public sealed class BalanceSession : IDisposable
             string[] settings = ["--environment", "Development", $"--Server:StartingRegion={arenaId}", $"--Server:Port={Port}",
                 $"--Persistence:SqlitePath={Path.Combine(DirectoryPath, "sandbox.db")}",
                 $"--Balance:ContentPath={contentPath}", $"--Balance:BuildPath={buildPath}", $"--Balance:RegionsPath={regionsPath}",
+                $"--Experience:RewardsPath={rewardsPath}",
                 "--Logging:LogLevel:Default=Warning", "--Logging:LogLevel:Microsoft.Hosting.Lifetime=Information"];
             await RunAsync("dotnet", repository, [serverDll, "--validate-content", ..settings]);
             var ready = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);

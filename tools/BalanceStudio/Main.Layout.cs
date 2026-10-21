@@ -16,6 +16,7 @@ public partial class Main
         var heading = new HBoxContainer(); root.AddChild(heading);
         var brand = Text("PROJECT G  /  Мастерская баланса", 22); brand.SizeFlagsHorizontal = SizeFlags.ExpandFill; heading.AddChild(brand);
         _source = Text(""); heading.AddChild(_source);
+        heading.AddChild(Button("Статы / EXP", OpenCharacterAudit));
         var actions = new HBoxContainer(); root.AddChild(actions);
         actions.AddChild(Button("Открыть…", () => _open.PopupCenteredRatio(.7f)));
         _save = Button("Сохранить", SaveSource); _save.TooltipText = "Ctrl+S · сохранить черновик в открытый исходник"; actions.AddChild(_save);

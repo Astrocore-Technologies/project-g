@@ -51,14 +51,14 @@ public sealed class ChargedAbilityIntegrationTests
             client.SendGame(NetworkProtocol.Write(new AbilityControlCommand(2,1,0,AbilityControlKind.Aim,target.Position+new Vector2(3,0))),DeliveryMethod.ReliableOrdered);
             await Poll(client,()=>store.PendingSave);
             for(var i=0;i<12;i++){client.Poll();await Task.Delay(10);}
-            Assert.Equal(140,client.Loadouts[id].Mana);Assert.DoesNotContain(client.Effects,e=>e.Phase==AbilityPhase.Impact);Assert.Empty(client.AbilityHits);
-            if(!startPaused)Assert.Equal(138,world.Abilities!.Mana(id));
+            Assert.Equal(100,client.Loadouts[id].Mana);Assert.DoesNotContain(client.Effects,e=>e.Phase==AbilityPhase.Impact);Assert.Empty(client.AbilityHits);
+            if(!startPaused)Assert.Equal(98,world.Abilities!.Mana(id));
             gate!.TrySetResult();
-            await Poll(client,()=>client.Loadouts[id].Mana==138 && client.Effects.Any(e=>e.Phase==AbilityPhase.Impact));
+            await Poll(client,()=>client.Loadouts[id].Mana==98 && client.Effects.Any(e=>e.Phase==AbilityPhase.Impact));
             Assert.Single(client.AbilityHits);Assert.Equal(0,client.Loadouts[id].Abilities.Single(p=>p.Id==2).Charges);
         }
         finally{gate?.TrySetResult();await server.StopAsync(default);}
         await using var saved=await store.OpenAsync(credential,world.CreateInitialCharacter(),default);
-        Assert.Equal(138,saved.State.Mana);Assert.Equal((byte)0,saved.State.Cooldowns.Single(c=>c.AbilityId=="test_ground_area").AvailableCharges!.Value);
+        Assert.Equal(98,saved.State.Mana);Assert.Equal((byte)0,saved.State.Cooldowns.Single(c=>c.AbilityId=="test_ground_area").AvailableCharges!.Value);
     }
 }

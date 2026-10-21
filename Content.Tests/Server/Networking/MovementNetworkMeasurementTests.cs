@@ -21,6 +21,7 @@ public sealed class MovementNetworkMeasurementTests(ITestOutputHelper output)
     public async Task FiveClientsOnBeechReportSimulationCostAndSnapshotIntervals()
     {
         var reportPath = Environment.GetEnvironmentVariable("PROJECT_G_MOVEMENT_REPORT");
+        var lossy=Environment.GetEnvironmentVariable("PROJECT_G_MOVEMENT_LOSSY")=="1";
         var seconds = string.IsNullOrEmpty(reportPath) ? 2 : 10;
         var worlds = TerrainIntegrationTests.CurrentWorlds();
         var forest = worlds.Worlds.Single(w => w.RegionId == "linvel_beech");
@@ -51,7 +52,7 @@ public sealed class MovementNetworkMeasurementTests(ITestOutputHelper output)
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(60));
         try
         {
-            clients.AddRange(tokens.Select(token => new Client(port, token, lossy: false)));
+            clients.AddRange(tokens.Select(token => new Client(port, token, lossy: lossy)));
             while (clients.Any(c => !c.Active || c.Spawns.Count != 5))
             {
                 foreach (var client in clients) client.Poll();
@@ -85,7 +86,8 @@ public sealed class MovementNetworkMeasurementTests(ITestOutputHelper output)
             var costs = durations.Order().ToArray(); intervals.Sort();
             Assert.NotEmpty(costs);
             var report = new { CreatedUtc = DateTime.UtcNow, Runtime = Environment.Version.ToString(),
-                Scope = "Debug; five idle UDP clients on linvel_beech, all regional simulations; 20 Hz repeated intentions; no injected loss, render excluded; one observer's payload bytes include all message families, exclude transport headers/retransmits.",
+                Scope = "Debug; five idle UDP clients on linvel_beech, all regional simulations; 20 Hz repeated intentions; render excluded; one observer's payload bytes include all message families, exclude transport headers/retransmits.",
+                Impairment=lossy?"100-150 ms injected latency, 10% simulated loss":"none",LargestReceivedPacket=clients.Max(c=>c.LargestPacket),
                 Seconds = clock.Elapsed.TotalSeconds, SimulationTicks = costs.Length,
                 SimulationP50Ms = Percentile(costs, .5), SimulationP95Ms = Percentile(costs, .95), SimulationP99Ms = Percentile(costs, .99),
                 ObserverPacketsPerSecond = packets / clock.Elapsed.TotalSeconds, ObserverPayloadBytesPerSecond = bytes / clock.Elapsed.TotalSeconds,

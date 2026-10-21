@@ -29,7 +29,7 @@ public sealed class EchoRuntimeTests
         Assert.Equal(EchoAvailability.Summoning,Assert.Single(w.Echoes.Roster(owner.Id,w.Tick).Entries).Availability);
         Step(w);var slot=Assert.Single(w.Echoes.Loadout(owner.Id,w.Tick).Slots);var body=w.Combat.Get(slot.EntityId);
         Assert.Equal(mana-20,owner.Resources.Mana);Assert.Equal(CombatEntityKind.Echo,body.Kind);Assert.Equal(owner.Id,body.CompanionOwner);
-        Assert.Equal(110,body.Health,10);Assert.Equal(140,body.Resources.Mana);Assert.Equal(100,body.Resources.Stamina);
+        Assert.Equal(body.Stats.MaxHealth,body.Health,10);Assert.Equal(140,body.Resources.Mana);Assert.Equal(100,body.Resources.Stamina);
         Assert.Equal(EchoSummonOutcome.Completed,w.Echoes.SummonResults[owner.Id].Outcome);
         Assert.False(w.TryQueueEchoSummon(1,new(1,row.Handle)));Step(w);
         Assert.Empty(w.Echoes.SummonResults);Assert.Single(w.Echoes.Loadout(owner.Id,w.Tick).Slots);

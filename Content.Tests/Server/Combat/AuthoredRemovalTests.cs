@@ -61,7 +61,7 @@ public sealed class AuthoredRemovalTests
         Assert.Equal(hard,actor.Controls.Ledger.Snapshot(ControlCategory.Hard,combat.Time).Used);
         Assert.Contains(combat.CurrentJournal(target.EntityId),e=>e.Kind==CombatJournalKind.ControlRemoved && e.Control==CrowdControlKind.Freeze && e.Amount==1);
         Assert.Contains(combat.CurrentJournal(target.EntityId),e=>e.Kind==CombatJournalKind.EffectsCleansed && e.Amount==1);
-        Assert.Empty(world.Abilities!.Hits);Assert.Equal(132,world.Abilities.Mana(source.EntityId));
+        Assert.Empty(world.Abilities!.Hits);Assert.Equal(92,world.Abilities.Mana(source.EntityId));
         var saved=world.CaptureCharacter(target.ConnectionId);world.RemovePlayer(target.ConnectionId);
         var restored=world.AddPlayer(target.ConnectionId,new(2),saved);var reopened=combat.Get(restored.EntityId);
         Assert.False(reopened.Controls.Has(CrowdControlKind.Freeze));Assert.True(reopened.Controls.Has(CrowdControlKind.Root));

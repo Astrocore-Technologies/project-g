@@ -139,9 +139,9 @@ public sealed class OrdinaryInputTests
     {
         var f=new Fight(lockedCast:true);f.Skill();f.Step();var execution=f.Actor.Action!.ExecutionId;
         f.Skill(2);f.Step();Assert.Equal(AbilityOutcome.Buffered,f.SkillOutcome);Assert.Equal(execution,f.Actor.Action!.ExecutionId);
-        Assert.Equal(140,f.Skills.Mana(f.Id));f.Step();f.Step();f.Step();
+        Assert.Equal(100,f.Skills.Mana(f.Id));f.Step();f.Step();f.Step();
         Assert.Equal(AbilityOutcome.Accepted,f.SkillOutcome);Assert.Equal(2u,f.Actor.Action!.InputSequence);
-        Assert.Contains(f.Skills.ActiveStates,s=>s.AbilityId==1&&s.Phase==AbilityPhase.Flying);Assert.Equal(135,f.Skills.Mana(f.Id));
+        Assert.Contains(f.Skills.ActiveStates,s=>s.AbilityId==1&&s.Phase==AbilityPhase.Flying);Assert.Equal(95,f.Skills.Mana(f.Id));
     }
 
     [Theory][InlineData(false)][InlineData(true)]
@@ -184,7 +184,7 @@ public sealed class OrdinaryInputTests
     public void TransportRttNeverExtendsTheWaitingDeadline(int rtt)
     {
         var f=new Fight();f.Lock(.155);f.Skill(rtt:rtt);f.Step();f.Step(.11f);
-        Assert.Equal(AbilityOutcome.Busy,f.SkillOutcome);Assert.Empty(f.Skills.ActiveStates);Assert.Equal(140,f.Skills.Mana(f.Id));
+        Assert.Equal(AbilityOutcome.Busy,f.SkillOutcome);Assert.Empty(f.Skills.ActiveStates);Assert.Equal(100,f.Skills.Mana(f.Id));
     }
 
     [Theory][InlineData(false)][InlineData(true)]

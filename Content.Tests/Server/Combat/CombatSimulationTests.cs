@@ -115,12 +115,15 @@ public sealed class CombatSimulationTests
         var fixture = new Fixture(roll: () => 0);
         fixture.Attack(1, Vector2.UnitY);
         Assert.True(Assert.Single(fixture.Combat.Events).Critical);
-        for (uint sequence = 2; sequence <= 10; sequence++)
+        uint sequence = 2;
+        for (; sequence <= 32 && fixture.Target.Health > 0; sequence++)
         {
             fixture.AdvanceCooldown();
             fixture.Attack(sequence, Vector2.UnitY);
         }
         Assert.Equal(0, fixture.Target.Health);
+        fixture.AdvanceCooldown();
+        fixture.Attack(sequence, Vector2.UnitY);
         Assert.False(Assert.Single(fixture.Combat.Events).TargetId.IsValid);
     }
 

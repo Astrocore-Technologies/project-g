@@ -56,11 +56,11 @@ public sealed class CommonResourceTests
         var f=new Fight(CombatEntityKind.Player);f.Combat.SpendStamina(f.Id,20);f.Combat.DrainMana!(f.Id,30);
         var stamina=f.Actor.Resources.Stamina;var mana=f.Actor.Resources.Mana;
         Assert.True(f.Combat.ApplyEffect(f.Id,f.Id,"resource_capacity"));
-        Assert.Equal(stamina*2,f.Actor.Resources.Stamina);Assert.Equal(mana/140*240,f.Actor.Resources.Mana,10);
+        Assert.Equal(stamina*2,f.Actor.Resources.Stamina);Assert.Equal(mana/100*200,f.Actor.Resources.Mana,10);
         Assert.Equal(200,f.Combat.DefenseState(f.Id,1).MaxStamina);Assert.Equal(20,f.Actor.Stats.StaminaRecovery);
         f.Combat.RestoreStamina(f.Id,200);f.Combat.RestoreMana!(f.Id,500);
-        Assert.Equal(200,f.Actor.Resources.Stamina);Assert.Equal(240,f.Actor.Resources.Mana);
-        f.Step(2);Assert.Equal(100,f.Actor.Resources.Stamina);Assert.Equal(140,f.Actor.Resources.Mana);
+        Assert.Equal(200,f.Actor.Resources.Stamina);Assert.Equal(200,f.Actor.Resources.Mana);
+        f.Step(2);Assert.Equal(100,f.Actor.Resources.Stamina);Assert.Equal(100,f.Actor.Resources.Mana);
         f.Combat.ApplyEquipment(f.Id,(f.Actor.BaseDerivedStats with {MaxStamina=-1,MaxMana=-1,StaminaRecovery=-5,ManaRecovery=-5},f.Actor.Weapon,f.Actor.AttackInterval));
         Assert.Equal(0,f.Actor.Resources.Stamina);Assert.Equal(0,f.Actor.Resources.Mana);f.Step(10);
         Assert.Equal(0,f.Actor.Resources.Stamina);Assert.Equal(0,f.Actor.Resources.Mana);
@@ -97,10 +97,10 @@ public sealed class CommonResourceTests
         var world=World();var player=world.AddPlayer(42,new(1));var id=player.EntityId;
         Assert.True(world.Combat!.ApplyEffect(id,id,"resource_capacity"));world.Combat.SpendStamina(id,120);world.Combat.DrainMana!(id,144);
         var saved=world.CaptureCharacter(42) with {SavedAtUnixMilliseconds=DateTimeOffset.UtcNow.AddSeconds(-10).ToUnixTimeMilliseconds()};
-        Assert.Equal(80,saved.Defense!.Stamina);Assert.Equal(96,saved.Mana);
+        Assert.Equal(80,saved.Defense!.Stamina);Assert.Equal(56,saved.Mana);
         if(legacy)saved=saved with {ResourceMaxima=null};
         var next=World();var restored=next.AddPlayer(42,new(1),saved);var actor=next.Combat!.Get(restored.EntityId);
-        Assert.Equal(40,actor.Resources.Stamina);Assert.Equal(56,actor.Resources.Mana);Assert.Empty(actor.Effects);
+        Assert.Equal(40,actor.Resources.Stamina);Assert.Equal(28,actor.Resources.Mana,8);Assert.Empty(actor.Effects);
         Assert.Equal(actor.Resources.Mana,next.Abilities!.Mana(restored.EntityId));
     }
 

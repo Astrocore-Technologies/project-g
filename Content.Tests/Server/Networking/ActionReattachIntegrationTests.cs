@@ -40,7 +40,7 @@ public sealed class ActionReattachIntegrationTests
             await Poll(next,()=>next.Loadouts.Count==1 && next.Effects.Any(e=>e.EffectId==old.EffectId && e.Phase==AbilityPhase.Charging));
             var id=next.LocalSpawn.EntityId;Assert.Equal(old.ActorId,id);Assert.Equal(90u,next.Loadouts[id].LastInputSequence);
             next.Ability(1,2,target.Position);for(var i=0;i<15;i++){next.Poll();await Task.Delay(10);}
-            Assert.DoesNotContain(next.AbilityResults,r=>r.Sequence==1);Assert.Equal(140,next.Loadouts[id].Mana);
+            Assert.DoesNotContain(next.AbilityResults,r=>r.Sequence==1);Assert.Equal(100,next.Loadouts[id].Mana);
             next.SendGame(NetworkProtocol.Write(new ActionCancelCommand(1,90,ulong.MaxValue)),DeliveryMethod.ReliableOrdered);
             await Poll(next,()=>next.AbilityResults.Any(r=>r.Sequence==90 && r.Outcome==AbilityOutcome.CancelDenied));
             Assert.DoesNotContain(next.Effects,e=>e.EffectId==old.EffectId && e.Phase==AbilityPhase.Finished);
@@ -49,13 +49,13 @@ public sealed class ActionReattachIntegrationTests
             next.Ability(91,2,target.Position);await Poll(next,()=>next.Effects.Any(e=>e.Sequence==91 && e.Phase==AbilityPhase.Charging));
             var current=next.Effects.Last(e=>e.Sequence==91 && e.Phase==AbilityPhase.Charging);Assert.NotEqual(old.EffectId,current.EffectId);
             next.SendGame(NetworkProtocol.Write(new AbilityControlCommand(1,91,0,AbilityControlKind.Release,target.Position,ExecutionId:old.EffectId)),DeliveryMethod.ReliableOrdered);
-            for(var i=0;i<15;i++){next.Poll();await Task.Delay(10);}Assert.Equal(140,next.Loadouts[id].Mana);
+            for(var i=0;i<15;i++){next.Poll();await Task.Delay(10);}Assert.Equal(100,next.Loadouts[id].Mana);
             Assert.DoesNotContain(next.Effects,e=>e.Sequence==91 && e.Phase==AbilityPhase.Impact);
             next.SendGame(NetworkProtocol.Write(new AbilityControlCommand(2,91,0,AbilityControlKind.Release,target.Position,ExecutionId:current.EffectId)),DeliveryMethod.ReliableOrdered);
-            await Poll(next,()=>next.Effects.Any(e=>e.Sequence==91 && e.Phase==AbilityPhase.Impact) && next.Loadouts[id].Mana==138);
+            await Poll(next,()=>next.Effects.Any(e=>e.Sequence==91 && e.Phase==AbilityPhase.Impact) && next.Loadouts[id].Mana==98);
             Assert.Equal(91u,next.Loadouts[id].LastInputSequence);Assert.Single(next.AbilityHits);
         }
         finally{await server.StopAsync(default);}
-        await using var saved=await store.OpenAsync(credential,world.CreateInitialCharacter(),default);Assert.Equal(138,saved.State.Mana);
+        await using var saved=await store.OpenAsync(credential,world.CreateInitialCharacter(),default);Assert.Equal(98,saved.State.Mana);
     }
 }

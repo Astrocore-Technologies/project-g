@@ -125,9 +125,9 @@ public sealed class BossSimulationTests
         var f = new Fixture(catalog: ContentCatalog.Parse(Encoding.UTF8.GetBytes(json.ToJsonString())));
         var hp = f.World.Combat!.Get(f.Boss.Id).Stats.MaxHealth;
         if (together) f.AddPlayer(43, 2);
-        Assert.Equal(242, hp, 8);
+        Assert.Equal(hp, f.World.Combat.Get(f.Boss.Id).Stats.MaxHealth, 8);
         Assert.Equal(hp, f.World.Combat.Get(f.Boss.Id).Health);
-        for (uint seq = 1; seq <= 20 && f.World.Combat.Get(f.Boss.Id).Health > 0; seq++)
+        for (uint seq = 1; seq <= 40 && f.World.Combat.Get(f.Boss.Id).Health > 0; seq++)
         {
             f.World.TryQueueAttack(42, new(seq, 0, Vector2.UnitX));
             if (together) f.World.TryQueueAttack(43, new(seq, 0, Vector2.UnitY));

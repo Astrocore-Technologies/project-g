@@ -26,7 +26,7 @@ public sealed class AbilityBufferDeadlineTests
     [Fact]public void AnExpiredInputCannotExecuteJustBecauseItsLockEndsInTheSameStep()
     {
         var f=new Fight();f.World.Combat!.SetRecovery(f.Id,.155);f.Buffer();f.Step(.11f);
-        Assert.Equal(AbilityOutcome.Busy,f.Result);Assert.Empty(f.Abilities.ActiveStates);Assert.Equal(140,f.Abilities.Mana(f.Id));
+        Assert.Equal(AbilityOutcome.Busy,f.Result);Assert.Empty(f.Abilities.ActiveStates);Assert.Equal(100,f.Abilities.Mana(f.Id));
         f.Step();Assert.Empty(f.Abilities.ActiveStates);
     }
 
@@ -53,12 +53,12 @@ public sealed class AbilityBufferDeadlineTests
     [Fact]public void ManualCancellationClearsTheSingleSlotWithoutCostOrLaterExecution()
     {
         var f=new Fight();f.Buffer();Assert.True(f.World.TryQueueActionCancel(42,new(1,1)));f.Step();
-        Assert.Equal(AbilityOutcome.Cancelled,f.Result);f.Step(.2f);Assert.Empty(f.Abilities.ActiveStates);Assert.Equal(140,f.Abilities.Mana(f.Id));
+        Assert.Equal(AbilityOutcome.Cancelled,f.Result);f.Step(.2f);Assert.Empty(f.Abilities.ActiveStates);Assert.Equal(100,f.Abilities.Mana(f.Id));
     }
 
     [Fact]public void AStillValidBufferRechecksResourcesBeforeCreatingTheAction()
     {
-        var f=new Fight();f.Buffer();f.World.Combat!.DrainMana!(f.Id,140);f.Step(.1f);
+        var f=new Fight();f.Buffer();f.World.Combat!.DrainMana!(f.Id,100);f.Step(.1f);
         Assert.Equal(AbilityOutcome.NoMana,f.Result);Assert.Empty(f.Abilities.ActiveStates);Assert.Equal(0,f.Abilities.Loadout(f.Id,f.World.Tick).Abilities.Single(s=>s.Id==1).ReadyInSeconds);
     }
 }

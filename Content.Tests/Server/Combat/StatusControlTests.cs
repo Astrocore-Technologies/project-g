@@ -31,7 +31,7 @@ public sealed class StatusControlTests
         Assert.True(world.TryQueueAbility(42,new(1,0,1,Vector2.UnitX),0)); world.Simulate(.05f);
         combat.ApplyStatusControl(default,player.EntityId,1,1,CrowdControlKind.Silence,2);
         Assert.False(combat.Get(player.EntityId).IsCasting);
-        Assert.Equal(137.5,world.Abilities!.Loadout(player.EntityId,world.Tick).Mana);
+        Assert.Equal(97.5,world.Abilities!.Loadout(player.EntityId,world.Tick).Mana);
         combat.RemoveControl(player.EntityId,CrowdControlKind.Silence);
         combat.ApplyStatusControl(default,player.EntityId,2,2,CrowdControlKind.Disarm,2);
         Assert.True(world.TryQueueAttack(42,new(1,0,Vector2.UnitX))); world.Simulate(.05f);

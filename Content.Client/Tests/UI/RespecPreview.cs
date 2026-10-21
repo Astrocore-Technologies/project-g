@@ -13,10 +13,10 @@ public partial class RespecPreview:Node
             GetWindow().Size=new(1280,720);
             var shell=new UiWindow();AddChild(shell);shell.Build("Сброс характеристик",new(1080,650));
             var view=GD.Load<PackedScene>("res://UI/Screens/RespecView.tscn").Instantiate<RespecView>();shell.Body.AddChild(view);
-            var before=Enumerable.Repeat(10d,7).ToArray();before[2]=13;
-            var stats=new double[NetworkConstants.CharacterStatCount];stats[7]=113;stats[8]=140;stats[22]=100;
-            var after=(double[])stats.Clone();after[7]=110;
-            view.SetQuote(new(1,1,new(1),1,1,0,0,3,18,15,true,before,Enumerable.Repeat(10d,7).ToArray(),stats,after));
+            var before=new double[7];before[2]=3;
+            var stats=new double[NetworkConstants.CharacterStatCount];stats[7]=103;stats[8]=100;stats[22]=100;
+            var after=(double[])stats.Clone();after[7]=100;
+            view.SetQuote(new(1,1,new(1),1,1,0,0,3,20,15,true,before,new double[7],stats,after));
             view.Render(true,false,false,"Предпросмотр рабочего окна без сервера.");shell.Open();
             await ToSignal(GetTree(),SceneTree.SignalName.ProcessFrame);await ToSignal(GetTree(),SceneTree.SignalName.ProcessFrame);
             if(!view.GetNode<Button>("%Confirm").Disabled)throw new Exception("Preview skipped acknowledgement.");

@@ -21,6 +21,8 @@ public sealed class PeriodicContactIntegrationTests
     [Fact]public async Task AClientAppliedDotAndAClientBasicTradeInOneDurableCheckpoint()
     {
         var data=PeriodicContactTimelineTests.Document(.125,true);data["creatures"]![0]!["baseHealthRecovery"]=0;
+        // The contact-order fixture needs a damaging basic even with zero primary stats.
+        data["weapons"]!.AsArray().Single(w=>w!["id"]!.GetValue<string>()=="unarmed")!["attack"]=10;
         data["balance"]!["healthRecovery"]!["vitality"]=0;data["balance"]!["attackSpeed"]!["agility"]=0;data["balance"]!["attackSpeed"]!["dexterity"]=0;
         var skill=data["abilities"]![1]!;skill["action"]!["form"]="Instant";skill["action"]!["preparation"]=new JsonObject();
         skill["power"]=0;skill["magicAttackScale"]=0;skill["manaCost"]=2;skill["radius"]=.5;
@@ -48,7 +50,8 @@ public sealed class PeriodicContactIntegrationTests
         try
         {
             await Poll(()=>first.Loadouts.Count>0&&second.Loadouts.Count>0);var a=first.LocalSpawn.EntityId;var b=second.LocalSpawn.EntityId;
-            inputs=store.PauseSaves();first.Progression(new(1,ProgressionAction.AllocateStat,0,0,0));await Poll(()=>store.BlockedSave);
+            // Only checkpoint timing matters here: INT leaves the seeded 1 HP and zero-scaled spell unchanged.
+            inputs=store.PauseSaves();first.Progression(new(1,ProgressionAction.AllocateStat,3,0,0));await Poll(()=>store.BlockedSave);
             first.Attack(1,Vector2.UnitY);second.Ability(1,2,new(-7,0));await Observe(150);
             deaths=store.PauseSaves(condition:changes=>changes.Count(c=>c.State.Health==0)==2);inputs.TrySetResult();
             await Poll(()=>store.BlockedSave&&world.Combat.Get(a).Health==0&&world.Combat.Get(b).Health==0);await Observe(100);

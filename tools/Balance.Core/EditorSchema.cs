@@ -331,6 +331,7 @@ public static class EditorSchema
             "dummyResetSeconds" => "Через сколько секунд после разрушения манекен арены полностью восстанавливает здоровье. Это не регенерация во время боя.",
             _ => help
         };
+        if(page.RootPath=="balance/health")help="Доля базового HP за 1 характеристику: STR 0,05 = 5% базы, VIT 0,1 = 10% базы. При базовом HP=100 это +5 HP/STR и +10 HP/VIT. Формула общая для профилей существ.";
         return new(path, title, group, help, percent, integer, min, max);
     }
 }

@@ -140,7 +140,7 @@ public sealed class PeriodicEffectTests
         var steal=TimedEffectTests.Buff() with {Id="steal",DurationSeconds=5,Modifiers=new(),LifeSteal=new(){Fraction=.5,Direct=true},ManaSteal=new(){Fraction=1,Direct=true}};
         var world=World(false,steal,Shield("shield",15,5)); var attacker=world.AddPlayer(42,new(1)); var target=world.AddPlayer(43,new(2));
         ZeroDefense(world,attacker); ZeroDefense(world,target); var combat=world.Combat!;
-        combat.Get(attacker.EntityId).Health=50; combat.DrainMana!(attacker.EntityId,100000); combat.DrainMana!(target.EntityId,137);
+        combat.Get(attacker.EntityId).Health=50; combat.DrainMana!(attacker.EntityId,100000); combat.DrainMana!(target.EntityId,combat.Get(target.EntityId).Stats.MaxMana-3);
         combat.ApplyEffect(attacker.EntityId,attacker.EntityId,"steal"); combat.ApplyEffect(default,target.EntityId,"shield");
         Assert.Equal(10,combat.ApplyAbilityDamage(target.EntityId,25,attacker.EntityId));
         Assert.Equal(55,combat.Get(attacker.EntityId).Health); Assert.Equal(3,world.Abilities!.Mana(attacker.EntityId)); Assert.Equal(0,world.Abilities.Mana(target.EntityId));
@@ -154,8 +154,9 @@ public sealed class PeriodicEffectTests
         var world=World(false,steal,reflect); var attacker=world.AddPlayer(42,new(1)); var target=world.AddPlayer(43,new(2));
         ZeroDefense(world,attacker); ZeroDefense(world,target); var combat=world.Combat!;
         combat.ApplyEffect(attacker.EntityId,attacker.EntityId,"steal"); combat.ApplyEffect(target.EntityId,target.EntityId,"reflect");
-        combat.Get(attacker.EntityId).Health=109; combat.ApplyAbilityDamage(target.EntityId,10,attacker.EntityId);
-        Assert.Equal(105,combat.Get(attacker.EntityId).Health,8);
+        var maximum=combat.Get(attacker.EntityId).Stats.MaxHealth;
+        combat.Get(attacker.EntityId).Health=maximum-1; combat.ApplyAbilityDamage(target.EntityId,10,attacker.EntityId);
+        Assert.Equal(maximum-5,combat.Get(attacker.EntityId).Health,8);
         combat.RemoveEffect(combat.Get(attacker.EntityId).Effects.Values.Single().Id);
         combat.ApplyEffect(attacker.EntityId,attacker.EntityId,"reflect");
         combat.Get(attacker.EntityId).Health=1; combat.Get(target.EntityId).Health=4;

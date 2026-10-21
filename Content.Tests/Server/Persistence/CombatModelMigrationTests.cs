@@ -30,8 +30,8 @@ public sealed class CombatModelMigrationTests
         }
         var replacement=World().CreateInitialCharacter();
         session=await store.OpenAsync(credential,replacement,CancellationToken.None);
-        Assert.Equal(id,session.CharacterId); Assert.Equal(2,session.State.Version); Assert.Equal(10,session.State.Stats.Wisdom);
-        Assert.Equal(18,session.State.Progression!.StatPoints); Assert.Equal(replacement.Health,session.State.Health);
+        Assert.Equal(id,session.CharacterId); Assert.Equal(2,session.State.Version); Assert.Equal(0,session.State.Stats.Wisdom);
+        Assert.Equal(20,session.State.Progression!.StatPoints); Assert.Equal(replacement.Health,session.State.Health);
         Assert.Equal(replacement.Inventory!.Serialize(),session.State.Inventory!.Serialize());
         var changed=session.State with { Health=7,Progression=session.State.Progression with { StatPoints=3,Allocation=null } };
         await store.SaveAsync([new(session,changed)],CancellationToken.None); await session.DisposeAsync();

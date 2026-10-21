@@ -65,6 +65,12 @@ public sealed class HitResolutionTests
         var physical=combat.ResolveDirectHit(new(1),new(2),Vector2.UnitY,10,magic:false);
         var magic=combat.ResolveDirectHit(new(1),new(2),Vector2.UnitY,10,magic:true);
         Assert.True(physical.Critical); Assert.True(magic.Critical);
-        Assert.Equal(16,physical.Damage,10); Assert.Equal(physical.Damage,magic.Damage);
+        Assert.Equal(15,physical.Damage,10); Assert.Equal(physical.Damage,magic.Damage);
+        var catalog=ContentCatalogTests.Load();
+        combat.Get(new(1)).Stats=new Content.Server.Stats.StatCalculator(catalog.Balance)
+            .Calculate(catalog.Creatures["test_adventurer"] with {Stats=new(0,0,0,0,10,0,0)});
+        var dexPhysical=combat.ResolveDirectHit(new(1),new(2),Vector2.UnitY,10,magic:false);
+        var dexMagic=combat.ResolveDirectHit(new(1),new(2),Vector2.UnitY,10,magic:true);
+        Assert.Equal(16,dexPhysical.Damage,10);Assert.Equal(dexPhysical.Damage,dexMagic.Damage);
     }
 }

@@ -20,7 +20,7 @@ public sealed record BalancePreview(DerivedStats Stats, double Hit, double Inter
         var hit = calculator.ApplyDefense(power, target.PhysicalDefense);
         var interval = Math.Max(1d / tickRate, calculator.AttackInterval(weapon.AttackIntervalSeconds, stats));
         var expected = StatCalculator.HitProbability(stats.Accuracy,target.Evasion) * hit *
-            (1 + StatCalculator.CriticalProbability(stats) * (stats.CriticalDamage - 1)) / interval;
+            (1 + StatCalculator.CriticalProbability(stats) * (Math.Max(0,stats.CriticalDamage) - 1)) / interval;
         var baseStats = catalog.Creatures["test_adventurer"].Stats;
         double Sum(BaseStats s) => s.Strength + s.Agility + s.Vitality + s.Intelligence + s.Dexterity + s.Luck + s.Wisdom;
         var points = catalog.Progression.GrantedPoints(build.Level) - (Sum(build.Stats) - Sum(baseStats));

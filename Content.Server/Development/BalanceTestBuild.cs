@@ -10,7 +10,7 @@ public sealed record BalanceTestBuild
 {
     public int Level { get; init; } = 1;
     public int SkillLevel { get; init; } = 1;
-    public BaseStats Stats { get; init; } = new(1, 1, 1, 1, 1, 1);
+    public BaseStats Stats { get; init; }
     public string WeaponItemId { get; init; } = "arena_training_sword";
     public ushort ProfessionId { get; init; }
     public string TargetId { get; init; } = "arena_dummy";

@@ -122,7 +122,7 @@ public sealed class AuthoredControlTests
         var (world,source,target)=Setup(Document(CrowdControlKind.Silence));
         Assert.True(world.TryQueueAbility(target.ConnectionId,new(1,0,1,Vector2.UnitX),0));world.Simulate(.05f);
         Assert.True(world.Combat!.Get(target.EntityId).IsCasting);Cast(world,source,target.Position);
-        Assert.False(world.Combat.Get(target.EntityId).IsCasting);Assert.Equal(137.5,world.Abilities!.Mana(target.EntityId));
+        Assert.False(world.Combat.Get(target.EntityId).IsCasting);Assert.Equal(97.5,world.Abilities!.Mana(target.EntityId));
         Assert.True(world.Abilities.Loadout(target.EntityId,world.Tick).Abilities.Single(a=>a.Id==1).ReadyInSeconds>0);
         Assert.Single(world.Combat.CurrentJournal(target.EntityId),e=>e.Kind==CombatJournalKind.ActionInterrupted);
     }

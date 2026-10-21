@@ -53,17 +53,17 @@ public sealed class CharacterStatsProgressionTests
         Assert.Throws<ArgumentException>(() => new ExperienceCurve(new() { ExperienceCurve = new() { Scale = scale, Offset = offset } }));
 
     [Fact]
-    public void AlphaCapBudgetAllowsConcentrationWithoutLosingAchievementPoints()
+    public void LegacyBonusDocumentSurvivesConcentrationWithoutIssuingNewPoints()
     {
         var catalog = ContentCatalogTests.Load(); var world = World(catalog); var initial = world.CreateInitialCharacter();
         var basis = initial.Stats; var points = catalog.Progression.GrantedPoints(30);
-        Assert.Equal(163, points);
+        Assert.Equal(165, points);
         var progress = initial.Progression! with { Level = 30, StatPoints = points + 10,
             Allocation = initial.Progression!.Allocation! with { EarnedFromLevels = points, AchievementBonusPoints = 10 } };
         var player = world.AddPlayer(42, new(1), initial with { Progression = progress });
         world.TryQueueProgression(42, new(1, ProgressionAction.AllocateStats, 0, 0, 0, [points+10,0,0,0,0,0,0])); world.Simulate(.05f);
         var saved = world.CaptureCharacter(42);
-        Assert.Equal(183, saved.Stats.Strength); Assert.Equal(0, saved.Progression!.StatPoints);
+        Assert.Equal(175, saved.Stats.Strength); Assert.Equal(0, saved.Progression!.StatPoints);
         Assert.Equal(10, saved.Progression.Allocation!.AchievementBonusPoints);
         Assert.Equal(points+10, saved.Progression.Allocation.Invested.Strength);
         Assert.Equal(0, world.ProgressionState(player.EntityId, 0).NextExperience);
@@ -92,7 +92,7 @@ public sealed class CharacterStatsProgressionTests
         for (var i = 0; i < 30; i++) world.Simulate(.05f);
         var saved = world.CaptureCharacter(42);
         Assert.Equal(2, saved.Progression!.Level); Assert.Equal(323, saved.Progression.Experience);
-        Assert.Equal(23, saved.Progression.StatPoints); Assert.Equal(23, saved.Progression.Allocation!.EarnedFromLevels);
+        Assert.Equal(25, saved.Progression.StatPoints); Assert.Equal(25, saved.Progression.Allocation!.EarnedFromLevels);
         var restoredWorld = World(catalog); var restored = restoredWorld.AddPlayer(43, new(2), saved);
         restoredWorld.TryApplyMove(43, new(1, 0, new(-9, -6)));
         for (var i = 0; i < 30; i++) restoredWorld.Simulate(.05f);
@@ -104,15 +104,15 @@ public sealed class CharacterStatsProgressionTests
     public void AllPointsCanGoIntoWisdomAndLedgerIsDurableWithTheCharacter()
     {
         var world = World(); var player = world.AddPlayer(42, new(1));
-        int[] draft = [0, 0, 0, 0, 0, 0, 18];
+        int[] draft = [0, 0, 0, 0, 0, 0, 20];
         Assert.True(world.TryQueueProgression(42, new(1, ProgressionAction.PreviewStats, 0, 0, 0, draft)));
         world.Simulate(.05f); var preview = world.StatPreviews[player.EntityId];
         Assert.True(world.TryQueueProgression(42, new(2, ProgressionAction.AllocateStats, 0, 0, 0, draft, preview.Sequence)));
         world.Simulate(.05f);
         var saved = world.CaptureCharacter(42);
-        Assert.Equal(28, saved.Stats.Wisdom); Assert.Equal(10, saved.Stats.Luck); Assert.Equal(10, saved.Stats.Dexterity);
-        Assert.Equal(0, saved.Progression!.StatPoints); Assert.Equal(18, saved.Progression.Allocation!.Invested.Wisdom);
-        Assert.Equal(18, saved.Progression.Allocation.EarnedFromLevels);
+        Assert.Equal(20, saved.Stats.Wisdom); Assert.Equal(0, saved.Stats.Luck); Assert.Equal(0, saved.Stats.Dexterity);
+        Assert.Equal(0, saved.Progression!.StatPoints); Assert.Equal(20, saved.Progression.Allocation!.Invested.Wisdom);
+        Assert.Equal(20, saved.Progression.Allocation.EarnedFromLevels);
         Assert.False(world.TryQueueProgression(42, new(2, ProgressionAction.AllocateStats, 0, 0, 0, draft, preview.Sequence)));
         saved.Validate();
         var again = World(); again.AddPlayer(43, new(2), saved);
@@ -126,12 +126,12 @@ public sealed class CharacterStatsProgressionTests
         var store = new SqliteCharacterStore(); await store.InitializeAsync(default);
         var session = await store.OpenAsync("", initial, default); var token = session.IssuedToken;
         world.AddPlayer(42, new(1), session.State);
-        world.TryQueueProgression(42, new(1, ProgressionAction.AllocateStats, 0, 0, 0, [18,0,0,0,0,0,0]));
+        world.TryQueueProgression(42, new(1, ProgressionAction.AllocateStats, 0, 0, 0, [20,0,0,0,0,0,0]));
         world.Simulate(.05f); var saved = world.CaptureCharacter(42);
         await store.SaveAsync([new(session, saved)], default); await session.DisposeAsync();
         var reopenedStore = new SqliteCharacterStore(store.DatabasePath); await reopenedStore.InitializeAsync(default);
         await using var reopened = await reopenedStore.OpenAsync(token, initial, default);
-        Assert.Equal(28, reopened.State.Stats.Strength);
+        Assert.Equal(20, reopened.State.Stats.Strength);
         Assert.Equal(saved.Progression!.Allocation, reopened.State.Progression!.Allocation);
         Assert.Equal(catalog.ExperienceCurve.Key, reopened.State.Progression.ExperienceCurveKey);
         World(catalog).AddPlayer(43, new(2), reopened.State);
@@ -165,8 +165,8 @@ public sealed class CharacterStatsProgressionTests
         Assert.Equal(ProgressionOutcome.StalePreview, world.ProgressionResults[second.EntityId].Outcome);
         world.TryQueueProgression(42, new(2, ProgressionAction.AllocateStats, 0, 0, 0, [0,1,0,0,0,0,0], 1)); world.Simulate(.05f);
         Assert.Equal(ProgressionOutcome.StalePreview, world.ProgressionResults[first.EntityId].Outcome);
-        Assert.Equal(18, world.ProgressionState(first.EntityId, 0).StatPoints);
-        Assert.Equal(10, first.BaseStats.Agility);
+        Assert.Equal(20, world.ProgressionState(first.EntityId, 0).StatPoints);
+        Assert.Equal(0, first.BaseStats.Agility);
     }
 
     [Fact]
@@ -178,7 +178,7 @@ public sealed class CharacterStatsProgressionTests
         world.TryQueueProgression(42, new(3, ProgressionAction.AllocateStats, 0, 0, 0, draft, 1)); world.Simulate(.05f);
         Assert.Equal(ProgressionOutcome.StalePreview, world.ProgressionResults[player.EntityId].Outcome);
         var saved = world.CaptureCharacter(42);
-        Assert.Equal(17, saved.Progression!.StatPoints); Assert.Equal(0, saved.Progression.Allocation!.Invested.Strength);
+        Assert.Equal(19, saved.Progression!.StatPoints); Assert.Equal(0, saved.Progression.Allocation!.Invested.Strength);
         Assert.Equal(1, saved.Progression.Allocation.Invested.Agility);
     }
 }

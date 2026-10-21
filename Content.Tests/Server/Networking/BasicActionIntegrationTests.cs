@@ -101,7 +101,7 @@ public sealed class BasicActionIntegrationTests
             second.TrySetResult();await Poll(()=>client.Attacks.Count==1);
             var hit=Assert.Single(client.Attacks);Assert.Equal(preparation.ExecutionId,hit.ExecutionId);Assert.Equal(world.TrainingTargetId,hit.TargetId);Assert.True(hit.Damage>0);
             await Poll(()=>client.BasicActions.Any(s=>s.ExecutionId==hit.ExecutionId&&s.Phase==CombatActionPhase.Finished));
-            await Observe(200);Assert.Single(client.Attacks);Assert.Equal(140,client.Loadouts[id].Mana);
+            await Observe(200);Assert.Single(client.Attacks);Assert.Equal(100,client.Loadouts[id].Mana);
         }
         finally{first?.TrySetResult();second?.TrySetResult();await server.StopAsync(default);}
     }

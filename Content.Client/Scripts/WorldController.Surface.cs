@@ -35,8 +35,10 @@ public partial class WorldController
                 _surfaceTerrain.ProcessMode = ProcessModeEnum.Disabled;
             _surfaceRegion = scene; AddChild(scene);
             ProjectG.UI.UiMapLayers.IncludeScenery(scene);
-            GetNode<Node3D>("Ground").Hide(); GetNode<CollisionShape3D>("Ground/CollisionShape3D").Disabled = true;
-            GetNode<DirectionalLight3D>("DirectionalLight3D").Hide();
+            GetNodeOrNull<Node3D>("Ground")?.Hide();
+            if (GetNodeOrNull<CollisionShape3D>("Ground/CollisionShape3D") is { } fallbackGround)
+                fallbackGround.Disabled = true;
+            // Sun and environment belong to World and remain shared across locations.
             _contentReady = true;
         }
         catch (Exception error)

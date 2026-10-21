@@ -40,14 +40,14 @@ public sealed class OrdinaryInputIntegrationTests
             await Poll(()=>store.BlockedSave&&world.Combat!.DefenseState(id,world.Tick).Sequence==1);
             await Observe(100);
             Assert.Equal(90,world.Combat!.DefenseState(id,world.Tick).Stamina);Assert.Empty(client.Attacks);Assert.Empty(client.AbilityResults);
-            Assert.Equal(0u,client.Defenses[id].Sequence);Assert.Equal(140,client.Loadouts[id].Mana);
+            Assert.Equal(0u,client.Defenses[id].Sequence);Assert.Equal(100,client.Loadouts[id].Mana);
             second.TrySetResult();
             await Poll(()=>client.Defenses[id].Sequence==1&&client.Results.Count==1&&client.AbilityResults.Count==1);
             Assert.Equal(DefenseOutcome.Accepted,client.Defenses[id].Outcome);Assert.Equal(90,client.Defenses[id].Stamina);
             Assert.Equal(AttackOutcome.InvalidState,Assert.Single(client.Results).Outcome);
             Assert.Equal(AbilityOutcome.Busy,Assert.Single(client.AbilityResults).Outcome);
             Assert.Empty(client.Attacks);Assert.Empty(client.Effects);
-            Assert.Equal(90,store.SingleState.Defense!.Stamina);Assert.Equal(140,store.SingleState.Mana);
+            Assert.Equal(90,store.SingleState.Defense!.Stamina);Assert.Equal(100,store.SingleState.Mana);
             Assert.All(store.SingleState.Cooldowns,c=>Assert.Equal(0,c.Seconds));
         }
         finally{first?.TrySetResult();second?.TrySetResult();await server.StopAsync(default);}

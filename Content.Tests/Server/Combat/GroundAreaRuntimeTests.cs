@@ -112,6 +112,6 @@ public sealed class GroundAreaRuntimeTests
         var f=new ChannelingTests.Fight();f.Cast();var target=f.Combat.Get(f.World.TrainingTargetId);
         f.Combat.Move(target.Id,target.Position+new Vector2(.65f,0));
         // Its old broad-phase position remains inside this query; the current body must pass the narrow phase.
-        f.Finish();Assert.Equal(10,f.Hits.Count);Assert.Equal(135,f.Mana,8);
+        f.Finish();Assert.Equal(10,f.Hits.Count);Assert.Equal(95,f.Mana,8);
     }
 }

@@ -39,12 +39,12 @@ public sealed class EchoRecoveryTests
         Assert.Equal(EchoRestoreOutcome.Completed,w.Echoes.RestoreResults[owner].Outcome);
         var saved=w.CaptureCharacter(1);var ready=Assert.Single(saved.OwnedEchoes!);
         Assert.Equal(SavedEchoAvailability.Ready,ready.Availability);Assert.Equal(5ul,ready.DeathId);
-        Assert.Equal(110,ready.Health,8);Assert.Equal(140,ready.Mana);Assert.Equal(100,ready.Defense.Stamina);
+        Assert.Equal(250,ready.Health,8);Assert.Equal(140,ready.Mana);Assert.Equal(100,ready.Defense.Stamina);
         Assert.InRange(Assert.Single(ready.Cooldowns).Seconds,6.94,6.96);Assert.Empty(w.Echoes.Loadout(owner,w.Tick).Slots);
         Assert.Equal(items[1],Assert.Single(saved.Inventory!.Items));Assert.False(w.TryQueueEchoRestore(1,new(1,row.Handle,row.DeathId)));
         Assert.True(w.TryQueueEchoRestore(1,new(2,row.Handle,row.DeathId)));Step(w);
         Assert.Equal(EchoRestoreOutcome.InvalidState,w.Echoes.RestoreResults[owner].Outcome);Assert.Single(w.CaptureCharacter(1).Inventory!.Items);
-        var body=EchoTests.Summon(w,1,ready.InstanceId);Assert.Equal(110,w.Combat!.Get(body).Health,8);
+        var body=EchoTests.Summon(w,1,ready.InstanceId);Assert.Equal(ready.Health,w.Combat!.Get(body).Health,8);
     }
 
     [Theory][InlineData("seal",EchoRestoreOutcome.MissingSeal)][InlineData("owner",EchoRestoreOutcome.InvalidState)]
@@ -96,7 +96,7 @@ public sealed class EchoRecoveryTests
         for(var i=0;i<40;i++)Step(w);
         var row=Assert.Single(w.Echoes!.Roster(p.EntityId,w.Tick).Entries);Assert.True(w.TryQueueEchoRestore(1,new(1,row.Handle,row.DeathId)));Step(w);
         var saved=w.CaptureCharacter(1);var ready=Assert.Single(saved.OwnedEchoes!);
-        Assert.Equal(130,ready.Health,8);Assert.Equal(140,ready.Mana);Assert.Equal(100,ready.Defense.Stamina);
+        Assert.Equal(270,ready.Health,8);Assert.Equal(140,ready.Mana);Assert.Equal(100,ready.Defense.Stamina);
         Assert.InRange(Assert.Single(ready.Cooldowns).Seconds,4.94,4.96);
         var remaining=Assert.IsType<SavedTimedEffect>(Assert.Single(saved.Effects!));Assert.Equal("remaining_buff",remaining.DefinitionId);
         Assert.InRange(remaining.RemainingSeconds,7.94,7.96);Assert.InRange(remaining.NextTickSeconds!.Value,.44,.46);

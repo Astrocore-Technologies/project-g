@@ -38,12 +38,12 @@ public sealed class PassiveIntegrationTests
             gate=store.PauseSaves(condition:changes=>changes.Any(c=>c.State.Progression!.Skills.Any(s=>s.DefinitionId=="test_passive")));
             client.Progression(new(1,ProgressionAction.LearnSkill,0,610,0));await Poll(client,()=>store.BlockedSave);
             for(var i=0;i<12;i++){client.Poll();await Task.Delay(10);}
-            Assert.Empty(client.ProgressionResults);Assert.Equal(140,client.Loadouts[id].MaxMana);
+            Assert.Empty(client.ProgressionResults);Assert.Equal(100,client.Loadouts[id].MaxMana);
             Assert.Equal(0,client.Progressions[id].Skills.Single(s=>s.Id==610).Level);
             gate.TrySetResult();
-            await Poll(client,()=>client.ProgressionResults.Any(r=>r.Sequence==1 && r.Outcome==ProgressionOutcome.Accepted) && client.Loadouts[id].MaxMana==240);
+            await Poll(client,()=>client.ProgressionResults.Any(r=>r.Sequence==1 && r.Outcome==ProgressionOutcome.Accepted) && client.Loadouts[id].MaxMana==200);
             var passive=client.Progressions[id].Skills.Single(s=>s.Id==610);Assert.True(passive.IsPassive);Assert.Equal(1,passive.Level);Assert.Equal(0,passive.Slot);
-            Assert.Equal(240,client.Loadouts[id].Mana);Assert.DoesNotContain(client.Loadouts[id].Abilities,s=>s.Id==610);
+            Assert.Equal(200,client.Loadouts[id].Mana);Assert.DoesNotContain(client.Loadouts[id].Abilities,s=>s.Id==610);
             client.Ability(1,610,client.LocalSpawn.Position);
             await Poll(client,()=>client.AbilityResults.Any(r=>r.Sequence==1 && r.Outcome==AbilityOutcome.UnknownAbility));
             Assert.Empty(client.Effects);
@@ -51,7 +51,7 @@ public sealed class PassiveIntegrationTests
         finally{gate?.TrySetResult();await server.StopAsync(default);}
         await using var saved=await store.OpenAsync(credential,initial,default);
         Assert.Equal("test_passive",Assert.Single(saved.State.ActivePassiveModifiers!));Assert.Equal(0,saved.State.Progression!.Skills.Single(s=>s.DefinitionId=="test_passive").Slot);
-        var restored=world.AddPlayer(500,new(500),saved.State);Assert.Equal(240,world.Abilities!.Loadout(restored.EntityId,0).MaxMana);
+        var restored=world.AddPlayer(500,new(500),saved.State);Assert.Equal(200,world.Abilities!.Loadout(restored.EntityId,0).MaxMana);
         world.RemovePlayer(500);
     }
 }

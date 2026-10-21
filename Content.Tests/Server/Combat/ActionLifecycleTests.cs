@@ -18,12 +18,12 @@ public sealed class ActionLifecycleTests
     public void CastPaysOnlyOnActivationAndOrdinaryDamageDoesNotInterrupt()
     {
         var f=new Fight(); f.Cast();
-        Assert.Equal(140,f.Mana); Assert.Equal(0,f.Skill.ReadyInSeconds);
+        Assert.Equal(100,f.Mana); Assert.Equal(0,f.Skill.ReadyInSeconds);
         f.World.Combat!.DamagePermission=(_,_)=>true;
         f.World.Combat.ApplyAbilityDamage(f.Id,1,f.World.TrainingTargetId);
         Assert.True(f.Actor.IsCasting);
         f.StepUntilActivated();
-        Assert.Equal(135,f.Mana); Assert.True(f.Skill.ReadyInSeconds>0);
+        Assert.Equal(95,f.Mana); Assert.True(f.Skill.ReadyInSeconds>0);
         Assert.Contains(f.Abilities.ActiveStates,s=>s.Phase==AbilityPhase.Flying);
     }
 
@@ -33,7 +33,7 @@ public sealed class ActionLifecycleTests
         var f=new Fight(); f.Cast();
         Assert.True(f.World.TryQueueActionCancel(42,new(1,1))); f.Step();
         Assert.Equal(AbilityOutcome.Cancelled,f.Abilities.Results[f.Id].Outcome);
-        Assert.Equal(140,f.Mana); Assert.Equal(0,f.Skill.ReadyInSeconds); Assert.False(f.Actor.IsCasting);
+        Assert.Equal(100,f.Mana); Assert.Equal(0,f.Skill.ReadyInSeconds); Assert.False(f.Actor.IsCasting);
         Assert.Empty(f.Abilities.ActiveStates);
         Assert.False(f.World.TryQueueActionCancel(42,new(1,1)));
         f.Cast(2);
@@ -51,7 +51,7 @@ public sealed class ActionLifecycleTests
         var f=new Fight(); f.Cast();
         if(death) { f.Actor.Health=0; f.Abilities.StopDead(f.Id); f.Abilities.StopDead(f.Id); }
         else { f.Abilities.InterruptCast(f.Id); f.Abilities.InterruptCast(f.Id); }
-        Assert.Equal(137.5,f.Mana); Assert.True(f.Skill.ReadyInSeconds>0);
+        Assert.Equal(97.5,f.Mana); Assert.True(f.Skill.ReadyInSeconds>0);
         f.Step(); Assert.False(f.Actor.IsCasting); Assert.Empty(f.Abilities.ActiveStates); Assert.Empty(f.Abilities.Hits);
     }
 
@@ -73,10 +73,10 @@ public sealed class ActionLifecycleTests
         var f=new Fight(); f.Cast();
         Assert.True(f.World.TryQueueAbility(42,new(2,0,2,new(999,999)),0)); f.Step();
         Assert.Equal(AbilityOutcome.InvalidAim,f.Abilities.Results[f.Id].Outcome);
-        Assert.Equal(1u,f.Actor.Action!.InputSequence); Assert.Equal(140,f.Mana);
+        Assert.Equal(1u,f.Actor.Action!.InputSequence); Assert.Equal(100,f.Mana);
         Assert.True(f.World.TryQueueAbility(42,new(3,0,2,new(-7,3)),0)); f.Step();
         Assert.Equal(AbilityOutcome.Accepted,f.Abilities.Results[f.Id].Outcome);
-        Assert.Equal(3u,f.Actor.Action!.InputSequence); Assert.Equal(140,f.Mana);
+        Assert.Equal(3u,f.Actor.Action!.InputSequence); Assert.Equal(100,f.Mana);
         Assert.Equal(0,f.Skill.ReadyInSeconds);
     }
 
@@ -87,7 +87,7 @@ public sealed class ActionLifecycleTests
     {
         var f=new Fight(); f.Cast();
         Assert.True(f.World.TryQueueDefense(42,new(1,defense,Vector2.UnitY))); f.Step();
-        Assert.False(f.Actor.IsCasting); Assert.Equal(140,f.Mana); Assert.Equal(0,f.Skill.ReadyInSeconds);
+        Assert.False(f.Actor.IsCasting); Assert.Equal(100,f.Mana); Assert.Equal(0,f.Skill.ReadyInSeconds);
         Assert.Equal(DefenseOutcome.Accepted,f.World.Combat!.DefenseState(f.Id,f.World.Tick).Outcome);
     }
 
@@ -98,7 +98,7 @@ public sealed class ActionLifecycleTests
         var launched=Assert.Single(f.Abilities.ActiveStates);
         Assert.True(f.World.TryQueueActionCancel(42,new(1,1))); f.Step();
         Assert.Equal(AbilityOutcome.CancelDenied,f.Abilities.Results[f.Id].Outcome);
-        Assert.Equal(135,f.Mana); Assert.Equal(launched.EffectId,Assert.Single(f.Abilities.ActiveStates).EffectId);
+        Assert.Equal(95,f.Mana); Assert.Equal(launched.EffectId,Assert.Single(f.Abilities.ActiveStates).EffectId);
     }
 
     [Fact]

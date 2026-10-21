@@ -20,9 +20,11 @@ public sealed class RespecTests
     }
     internal static CharacterState Initial(ServerWorld w,int coins=250,int bonus=7)
     {
+        // Historical V1 fixture only: current gameplay no longer awards stat points for achievements.
         var s=PvpTests.Initial(w,-5,-4);var p=s.Progression!;
-        return s with {Stats=new(12,10,16,10,10,10,14),Progression=p with
-        {StatPoints=6+bonus,Allocation=p.Allocation! with {Invested=new(2,0,6,0,0,0,4),AchievementBonusPoints=bonus}},
+        var invested=new StatInvestment(2,0,6,0,0,0,4);
+        return s with {Stats=invested.Apply(p.Allocation!.StartingStats),Progression=p with
+        {StatPoints=p.StatPoints-12+bonus,Allocation=p.Allocation! with {Invested=invested,AchievementBonusPoints=bonus}},
             Inventory=s.Inventory! with {Economy=SavedEconomy.Empty with {Coins=coins}}};
     }
     internal static NetworkEntityId Inn(ServerWorld w)
@@ -43,11 +45,11 @@ public sealed class RespecTests
         var player=w.AddPlayer(42,new(1),initial);var id=player.EntityId;var actor=w.Combat!.Get(id);
         actor.Health=actor.Stats.MaxHealth*.4;actor.Resources.Mana=actor.Stats.MaxMana*.3;
         w.Combat.RestoreDefense(id,new(1,actor.Stats.MaxStamina*.5,0,1),0);
-        var before=w.CaptureCharacter(42);var q=Quote(w);Assert.True(q.FirstFree);Assert.Equal(0,q.Price);Assert.Equal(12,q.ReturnedPoints);Assert.Equal(25,q.AvailableAfter);
+        var before=w.CaptureCharacter(42);var q=Quote(w);Assert.True(q.FirstFree);Assert.Equal(0,q.Price);Assert.Equal(12,q.ReturnedPoints);Assert.Equal(27,q.AvailableAfter);
         Assert.Null(w.CaptureCharacter(42).Progression!.Respec);Assert.Equal(before.Stats,player.BaseStats);
         var result=Confirm(w,q);Assert.Equal(RespecOutcome.Accepted,result.Outcome);
         var after=w.CaptureCharacter(42);Assert.Equal(w.CreateInitialCharacter().Stats,after.Stats);
-        Assert.Equal(25,after.Progression!.StatPoints);Assert.Equal(7,after.Progression.Allocation!.AchievementBonusPoints);
+        Assert.Equal(27,after.Progression!.StatPoints);Assert.Equal(7,after.Progression.Allocation!.AchievementBonusPoints);
         Assert.Equal(0,after.Progression.Allocation.Invested.Total);Assert.Equal(1,after.Progression.Respec!.Completed);
         Assert.Equal(before.Progression!.Level,after.Progression.Level);Assert.Equal(before.Progression.Experience,after.Progression.Experience);
         Assert.Equal(before.Progression.Skills,after.Progression.Skills);Assert.Equal(before.Inventory!.Serialize(),after.Inventory!.Serialize());

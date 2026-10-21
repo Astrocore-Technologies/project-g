@@ -35,16 +35,16 @@ public sealed class CommonResourceIntegrationTests
         try
         {
             await Poll(()=>first.Defenses.Count>0&&observer.Defenses.Count>0);var id=first.LocalSpawn.EntityId;
-            Assert.Equal(120,first.Defenses[id].MaxStamina);Assert.Equal(70,first.Defenses[id].Stamina);
+            Assert.Equal(100,first.Defenses[id].MaxStamina);Assert.Equal(70,first.Defenses[id].Stamina);
             first.Progression(new(1,ProgressionAction.PreviewStats,0,0,0,[0,0,2,0,0,0,2]));
             await Poll(()=>first.StatPreviews.Count==1);var preview=first.StatPreviews[0];
-            Assert.Equal(24,preview.Current.Length);Assert.Equal(120,preview.Current[(int)CharacterStat.MaxStamina]);
-            Assert.Equal(124,preview.Projected[(int)CharacterStat.MaxStamina]);Assert.Equal(18,preview.Projected[(int)CharacterStat.StaminaRecovery]);
+            Assert.Equal(24,preview.Current.Length);Assert.Equal(100,preview.Current[(int)CharacterStat.MaxStamina]);
+            Assert.Equal(104,preview.Projected[(int)CharacterStat.MaxStamina]);Assert.Equal(15.5,preview.Projected[(int)CharacterStat.StaminaRecovery]);
             gate=store.PauseSaves();first.Progression(new(2,ProgressionAction.AllocateStats,0,0,0,[0,0,2,0,0,0,2]));
-            await Poll(()=>store.BlockedSave);await Observe();Assert.Equal(120,first.Defenses[id].MaxStamina);
+            await Poll(()=>store.BlockedSave);await Observe();Assert.Equal(100,first.Defenses[id].MaxStamina);
             Assert.DoesNotContain(first.ProgressionResults,r=>r.Sequence==2);
-            gate.TrySetResult();await Poll(()=>first.Defenses[id].MaxStamina==124&&first.ProgressionResults.Any(r=>r.Sequence==2));
-            Assert.Equal(70d/120*124,first.Defenses[id].Stamina,8);Assert.Empty(observer.StatPreviews);
+            gate.TrySetResult();await Poll(()=>first.Defenses[id].MaxStamina==104&&first.ProgressionResults.Any(r=>r.Sequence==2));
+            Assert.Equal(70d/100*104,first.Defenses[id].Stamina,8);Assert.Empty(observer.StatPreviews);
             Assert.All(observer.Defenses.Keys,key=>Assert.Equal(observer.LocalSpawn.EntityId,key));
         }
         finally{gate?.TrySetResult();await server.StopAsync(default);}

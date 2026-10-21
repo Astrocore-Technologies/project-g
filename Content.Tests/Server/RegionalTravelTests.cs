@@ -100,7 +100,7 @@ public sealed class RegionalTravelTests
         {
             var state = PvpTests.Initial(Source, x, z) with
             {
-                Mana = 140, AttackCooldownSeconds = 4,
+                Mana = 100, AttackCooldownSeconds = 4,
                 Echoes = new() { Active = Enumerable.Range(1, 3).Select(i => new SavedEcho(
                     Guid.NewGuid(), "test_guardian_echo", (byte)i, x, z + i * .2f, 2, 6)).ToArray() }
             };

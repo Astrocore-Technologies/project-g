@@ -7,6 +7,7 @@ public partial class Main
 {
     private async Task RunSmoke()
     {
+        if(OS.GetCmdlineUserArgs().Contains("--character-audit-smoke")){await RunCharacterAuditHostSmoke();return;}
         if (OS.GetCmdlineUserArgs().Contains("--session-smoke"))
         {
             _document.Set("abilities/6/cooldownSeconds", 3);

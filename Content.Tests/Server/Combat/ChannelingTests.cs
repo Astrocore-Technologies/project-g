@@ -67,10 +67,10 @@ public sealed class ChannelingTests
     [Theory][InlineData(.05f)][InlineData(.1f)][InlineData(.25f)]
     public void ChannelPaysFractionalRatesAndCreatesTheSameTenPulsesAcrossTickRates(float delta)
     {
-        var f=new Fight(delta:delta);f.Cast();Assert.Equal(138,f.Mana);Assert.Equal(1,f.Skill.PendingEndCharges);
+        var f=new Fight(delta:delta);f.Cast();Assert.Equal(98,f.Mana);Assert.Equal(1,f.Skill.PendingEndCharges);
         Assert.Equal(AbilityPhase.Channeling,Assert.Single(f.Abilities.ActiveStates).Phase);Assert.Empty(f.Hits);
         f.Finish();Assert.Equal(10,f.Hits.Count);Assert.Equal(10,f.Hits.Select(h=>h.EffectId).Distinct().Count());
-        Assert.Equal(100,f.Hits.Sum(h=>h.Damage),8);Assert.Equal(135,f.Mana,8);
+        Assert.Equal(100,f.Hits.Sum(h=>h.Damage),8);Assert.Equal(95,f.Mana,8);
         Assert.Equal(97,f.Combat.DefenseState(f.Id,f.World.Tick).Stamina,7);Assert.Equal(0,f.Skill.PendingEndCharges);
         Assert.InRange(f.Skill.ReadyInSeconds,4.99,5);
     }
@@ -79,7 +79,7 @@ public sealed class ChannelingTests
     public void ResourceExhaustionStopsAtFundedTimeWithoutAnUnpaidPulseOrHalfPenalty(bool stamina)
     {
         var f=stamina?new Fight(delta:.1f,stamina:1.6):new Fight(delta:.1f,mana:2.75);f.Cast();f.Finish();
-        Assert.Equal(stamina?3:2,f.Hits.Count);Assert.Equal(stamina?137.1:0,f.Mana,8);
+        Assert.Equal(stamina?3:2,f.Hits.Count);Assert.Equal(stamina?97.1:0,f.Mana,8);
         Assert.Equal(stamina?0:98.5,f.Combat.DefenseState(f.Id,f.World.Tick).Stamina,7);
         Assert.Equal(stamina?AbilityOutcome.NoStamina:AbilityOutcome.NoMana,f.Abilities.Results[f.Id].Outcome);
         Assert.InRange(f.Skill.ReadyInSeconds,4.89,5);Assert.Empty(f.Abilities.ActiveStates);
@@ -107,9 +107,9 @@ public sealed class ChannelingTests
     public void ChannelPreparationUsesNoHalfPenaltyButStillConsumesTheApprovedInterruptedCharge(bool voluntary)
     {
         var data=Document();data["abilities"]![1]!["action"]!["preparation"]!["seconds"]=.5;
-        var f=new Fight(data);f.Cast();Assert.Equal(140,f.Mana);
+        var f=new Fight(data);f.Cast();Assert.Equal(100,f.Mana);
         if(voluntary){Assert.True(f.World.TryQueueActionCancel(42,new(1,1)));f.Step();}else f.Abilities.InterruptCast(f.Id);
-        Assert.Equal(140,f.Mana);Assert.Equal(voluntary?1:0,f.Skill.Charges);Assert.Equal(0,f.Skill.PendingEndCharges);
+        Assert.Equal(100,f.Mana);Assert.Equal(voluntary?1:0,f.Skill.Charges);Assert.Equal(0,f.Skill.PendingEndCharges);
         Assert.Equal(voluntary?0:5,f.Skill.ReadyInSeconds,7);f.Step();Assert.Empty(f.Abilities.ActiveStates);
     }
 
@@ -122,7 +122,7 @@ public sealed class ChannelingTests
     [Fact]public void ResourceLostDuringPreparationConsumesAChargeAndMarksTheZeroPenaltyChangeDirty()
     {
         var data=Document();data["abilities"]![1]!["action"]!["preparation"]!["seconds"]=.15;
-        var f=new Fight(data);f.Cast();f.Combat.DrainMana!(f.Id,140);f.Abilities.ClearResults();f.Finish();
+        var f=new Fight(data);f.Cast();f.Combat.DrainMana!(f.Id,100);f.Abilities.ClearResults();f.Finish();
         Assert.Equal(0,f.Mana);Assert.Equal(0,f.Skill.Charges);Assert.Equal(0,f.Skill.PendingEndCharges);
         Assert.True(f.Abilities.IsDirty(f.Id));Assert.Equal(AbilityOutcome.NoMana,f.Abilities.Results[f.Id].Outcome);Assert.InRange(f.Skill.ReadyInSeconds,4.99,5);
     }
@@ -148,7 +148,7 @@ public sealed class ChannelingTests
         var data=Document();data["effects"]!.AsArray().Add(JsonNode.Parse("""{"id":"channel_reflect","durationSeconds":5,"reflection":{"fraction":1,"direct":true}}"""));
         var f=new Fight(data,delta:.25f);f.Actor.Health=1;
         Assert.True(f.Combat.ApplyEffect(f.World.TrainingTargetId,f.World.TrainingTargetId,"channel_reflect"));f.Cast();f.Step();
-        Assert.Equal(0,f.Actor.Health);Assert.Single(f.Hits);Assert.Equal(137.7,f.Mana,8);Assert.Empty(f.Abilities.ActiveStates);
+        Assert.Equal(0,f.Actor.Health);Assert.Single(f.Hits);Assert.Equal(97.7,f.Mana,8);Assert.Empty(f.Abilities.ActiveStates);
     }
 
     [Fact]public void WeaponChannelWearsOnceForAllPulsesAndBreaksAfterItsActionEnds()
@@ -195,7 +195,7 @@ public sealed class ChannelingTests
     {
         var data=Document();data["abilities"]![1]!["channel"]!["maximumSeconds"]=.2;data["abilities"]![1]!["channel"]!["intervalSpeed"]=speed;
         var f=new Fight(data);f.Combat.ApplyEquipment(f.Id,(f.Actor.Stats with {CastSpeedMultiplier=2,AttackSpeedMultiplier=2},f.Actor.Weapon,f.Actor.AttackInterval));
-        f.Cast();f.Finish();Assert.Equal(pulses,f.Hits.Count);Assert.Equal(137.4,f.Mana,8);
+        f.Cast();f.Finish();Assert.Equal(pulses,f.Hits.Count);Assert.Equal(97.4,f.Mana,8);
     }
 
     [Theory][InlineData("Snapshot",20)][InlineData("Dynamic",40)]

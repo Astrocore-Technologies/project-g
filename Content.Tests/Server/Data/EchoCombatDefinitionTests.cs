@@ -19,7 +19,7 @@ public sealed class EchoCombatDefinitionTests
         var catalog=ContentCatalogTests.Load();var echo=catalog.Echoes["test_guardian_echo"];
         var profile=catalog.Creatures[echo.ProfileId];var stats=new StatCalculator(catalog.Balance).Calculate(profile);
         Assert.Equal(new BaseStats(10,10,10,10,10,10,10),profile.Stats);
-        Assert.Equal(110,stats.MaxHealth,8);Assert.Equal(140,stats.MaxMana);Assert.Equal(100,stats.MaxStamina);
+        Assert.Equal(250,stats.MaxHealth,8);Assert.Equal(140,stats.MaxMana);Assert.Equal(100,stats.MaxStamina);
         Assert.Equal(34,stats.MagicAttack);Assert.Equal("training_sword",profile.WeaponId);
         Assert.Equal(5.5f,echo.Speed);Assert.Equal(1.5f,echo.FollowDistance);Assert.Equal(30,echo.TeleportDistance);
         Assert.Equal(3,echo.UnreachableSeconds);Assert.Equal(2,echo.ArrivalRadius);

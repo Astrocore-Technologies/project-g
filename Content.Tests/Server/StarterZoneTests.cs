@@ -62,7 +62,7 @@ public sealed class StarterZoneTests
         ProfessionTests.Step(w,40); w.TryQueueAttack(42,new(2,0,Vector2.UnitY)); w.Simulate(0.05f);
         Content.Tests.Server.Combat.CombatTestSteps.Contact(w,p.EntityId);Assert.Equal(2,w.ExplorationState(p.EntityId).Tutorial&2);
         w.TryQueueAbility(42,new(1,w.Tick,65535,Vector2.UnitY),0); w.Simulate(0.05f); Assert.Equal(0,w.ExplorationState(p.EntityId).Tutorial&4);
-        w.TryQueueAbility(42,new(2,w.Tick,1,Vector2.UnitY),0); ProfessionTests.Step(w,20); Assert.Equal(4,w.ExplorationState(p.EntityId).Tutorial&4);
+        w.TryQueueAbility(42,new(2,w.Tick,1,Vector2.UnitY),0); ProfessionTests.Step(w,60); Assert.Equal(4,w.ExplorationState(p.EntityId).Tutorial&4);
         global::Content.Tests.Server.EchoTests.Signature(w,42,new(1,w.Tick,3,new(-9,1))); w.Simulate(0.05f); Assert.Equal(0,w.ExplorationState(p.EntityId).Tutorial&8);
         global::Content.Tests.Server.EchoTests.Signature(w,42,new(2,w.Tick,1,new(-9,1))); w.Simulate(0.05f); Assert.Equal(8,w.ExplorationState(p.EntityId).Tutorial&8);
         Assert.Single(w.CaptureCharacter(42).OwnedEchoes!,e=>e.Availability==Content.Server.Persistence.SavedEchoAvailability.Active);

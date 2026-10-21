@@ -26,7 +26,7 @@ public sealed class CombatTestSetupTests
         Assert.Empty(first.Echoes.Active.Select(e => e.InstanceId).Intersect(second.Echoes!.Active.Select(e => e.InstanceId)));
         Assert.All(Enum.GetValues<CombatActionForm>(), form => Assert.Contains(first.Progression.Skills, s => catalog.Abilities[s.DefinitionId].Action.Form == form));
         Assert.Equal(8, first.Progression.Skills.Count(s => s.Slot != 0));
-        Assert.Equal(18, first.Progression.StatPoints);
+        Assert.Equal(20, first.Progression.StatPoints);
         var player = world.AddPlayer(1, new(1), first);
         for (var i = 0; i < 20; i++) world.Simulate(.05f);
         Assert.Equal(0, world.Combat!.CombatRemaining(player.EntityId));

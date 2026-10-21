@@ -19,13 +19,13 @@ public sealed class StatAllocationTests
         int[] draft=[1,0,1,2,1,0,0];
         Assert.True(w.TryQueueProgression(42,new(1,ProgressionAction.PreviewStats,0,0,0,draft))); w.Simulate(.05f);
         var preview=w.StatPreviews[id]; Assert.False(w.IsProgressionDirty(id));
-        Assert.Equal(18,w.ProgressionState(id,w.Tick).StatPoints); Assert.Equal(10,player.BaseStats.Intelligence);
+        Assert.Equal(20,w.ProgressionState(id,w.Tick).StatPoints); Assert.Equal(0,player.BaseStats.Intelligence);
         Assert.Equal(7+original.ManaRecovery*.05,w.Abilities!.Loadout(id,w.Tick).Mana,6);
         Assert.Equal(12+original.HealthRecovery*.05,w.Combat!.Get(id).Health,6);
         w.ClearProgressionResults();
         Assert.True(w.TryQueueProgression(42,new(2,ProgressionAction.AllocateStats,0,0,0,draft,preview.Sequence))); w.Simulate(.05f);
         Assert.Equal(ProgressionOutcome.Accepted,w.ProgressionResults[id].Outcome);
-        Assert.Equal(13,w.ProgressionState(id,w.Tick).StatPoints); Assert.Equal(12,player.BaseStats.Intelligence);
+        Assert.Equal(15,w.ProgressionState(id,w.Tick).StatPoints); Assert.Equal(2,player.BaseStats.Intelligence);
         var stats=w.Combat.Get(id).Stats;
         Assert.Equal(preview.Projected[(int)CharacterStat.MaxHealth],stats.MaxHealth);
         Assert.Equal(preview.Projected[(int)CharacterStat.MagicAttack],stats.MagicAttack);
@@ -35,7 +35,7 @@ public sealed class StatAllocationTests
         Assert.True(w.CaptureCharacter(42).AttackCooldownSeconds>19);
         Assert.False(w.TryQueueProgression(42,new(2,ProgressionAction.AllocateStats,0,0,0,draft)));
         var restored=World(); var again=restored.AddPlayer(43,new(2),w.CaptureCharacter(42));
-        Assert.Equal(player.BaseStats,again.BaseStats); Assert.Equal(13,restored.ProgressionState(again.EntityId,0).StatPoints);
+        Assert.Equal(player.BaseStats,again.BaseStats); Assert.Equal(15,restored.ProgressionState(again.EntityId,0).StatPoints);
     }
     [Fact]
     public void OverspendMalformedAndDeadBatchesCannotPartiallyAllocate()
@@ -43,11 +43,11 @@ public sealed class StatAllocationTests
         var w=World(); var p=w.AddPlayer(42,new(1)); var before=p.BaseStats;
         Assert.False(w.TryQueueProgression(99,new(1,ProgressionAction.AllocateStats,0,0,0,[1,0,0,0,0,0,0])));
         Assert.False(w.TryQueueProgression(42,new(1,ProgressionAction.AllocateStats,0,0,0,[-1,0,0,0,0,0,0])));
-        Assert.True(w.TryQueueProgression(42,new(1,ProgressionAction.AllocateStats,0,0,0,[10,0,0,10,0,0,0]))); w.Simulate(.05f);
+        Assert.True(w.TryQueueProgression(42,new(1,ProgressionAction.AllocateStats,0,0,0,[11,0,0,10,0,0,0]))); w.Simulate(.05f);
         Assert.Equal(ProgressionOutcome.NoPoints,w.ProgressionResults[p.EntityId].Outcome); Assert.Equal(before,p.BaseStats);
         w.Combat!.Get(p.EntityId).Health=0;
         Assert.True(w.TryQueueProgression(42,new(2,ProgressionAction.AllocateStats,0,0,0,[1,0,0,0,0,0,0]))); w.Simulate(.05f);
         Assert.Equal(ProgressionOutcome.InvalidState,w.ProgressionResults[p.EntityId].Outcome); Assert.Equal(before,p.BaseStats);
-        Assert.Equal(18,w.ProgressionState(p.EntityId,0).StatPoints);
+        Assert.Equal(20,w.ProgressionState(p.EntityId,0).StatPoints);
     }
 }

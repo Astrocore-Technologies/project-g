@@ -71,7 +71,7 @@ public partial class Main : Control
     {
         if (_busy || !CommitInputs()) return;
         _busy = true; UpdateCommandState(); Status("Подготовка тестовой площадки…");
-        try { await _session.StartAsync(_repository, _godotPath, _document, _build); Status("Тест запущен. Следующий запуск использует новый снимок черновика."); }
+        try { _characterAudit?.ApplyRewards(); await _session.StartAsync(_repository, _godotPath, _document, _build,rewards:_characterAudit?.RewardDraft.Value); Status("Тест запущен. Следующий запуск использует новый снимок черновика."); }
         catch (Exception error) { if (IsInsideTree()) { _log.Show(); Status(error.Message, true); } }
         finally { _busy = false; if (IsInsideTree()) UpdateCommandState(); }
     }
@@ -100,7 +100,7 @@ public partial class Main : Control
     {
         if (what != NotificationWMCloseRequest) return;
         CommitInputs();
-        if (_document.Dirty || _invalidInputs.Count > 0) _close.PopupCentered(); else GetTree().Quit();
+        if (_document.Dirty || _invalidInputs.Count > 0 || _characterAudit?.HasUnsavedChanges==true) _close.PopupCentered(); else GetTree().Quit();
     }
     public override void _ExitTree()
     {

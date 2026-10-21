@@ -58,8 +58,9 @@ public partial class WorldController
         _surfaceTerrain = null;
         DetachPresentation(_surfaceRegion); _surfaceRegion = null;
         DetachPresentation(_authoredRegion); _authoredRegion = null; _authoredBase = null;
-        GetNode<Node3D>("Ground").Show();
-        GetNode<CollisionShape3D>("Ground/CollisionShape3D").Disabled = false;
+        GetNodeOrNull<Node3D>("Ground")?.Show();
+        if (GetNodeOrNull<CollisionShape3D>("Ground/CollisionShape3D") is { } fallbackGround)
+            fallbackGround.Disabled = false;
         GetNode<DirectionalLight3D>("DirectionalLight3D").Show();
     }
 }

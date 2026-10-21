@@ -1,0 +1,2181 @@
+[gd_scene format=4 uid="uid://dosqc2xtqe56e"]
+
+[ext_resource type="PackedScene" uid="uid://cjs2bdkqaiibx" path="res://Scenes/Props/Linvel/Production/low_city_wall_8m.tscn" id="1_pymxj"]
+[ext_resource type="Script" uid="uid://dtso77p3854yr" path="res://Tools/Linvel/LinvelDecorBatchEditor.gd" id="2_5pjni"]
+[ext_resource type="Material" path="res://Assets/World/Linvel/City/Production/Limestone.tres" id="3_k6fca"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_pymxj"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_5pjni"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_k6fca"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ljm6m"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_s6y67"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_tka7t"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_qk84b"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_gvvr7"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_e3wyk"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_0dtc8"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_m73y5"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_oqgjv"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_psvhr"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_rrwfi"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_qhngv"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_avgud"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_0ump1"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_vi2b0"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_bmsjs"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_vu3fw"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ela7f"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_37g48"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ra2ya"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_oku4q"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_r68qf"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_2q86h"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_7nteu"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_016d6"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_0j8dw"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_g6yy0"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_pnfgd"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_u07ek"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_s5d6x"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_x5npp"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_krhw3"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_f3p82"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_raxeu"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_v54mj"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_avil6"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_p7lqw"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_t7gf6"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_dpyg6"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_xplbw"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_fcfh0"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_r2epb"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_2rkms"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_nnwdt"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_8vusd"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_pt17t"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_bo4wm"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_xtcxn"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_bgisw"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_jrsqq"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_y3ms4"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_58ke2"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_fvhyi"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_5oef8"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_n3i8r"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_xce8w"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_76c85"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_oefvf"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_rp1h0"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_kbesj"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_hlc00"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_qv200"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_jbfgy"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_755ro"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_77vcu"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_6rxbr"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_lx6m3"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_8rvv4"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_8hw5x"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_y4kol"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_7u7uw"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_keic3"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_8u8h6"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_3vu18"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_gejcd"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_emtm1"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_qq3m6"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_g3mm6"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_qyhqr"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_orpdq"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_qw5q4"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_cevqr"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_6qsec"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_2qthx"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_gi3fc"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_cngxf"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_k4www"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_e1h0i"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_w6xwl"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_hunnn"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_d6tu6"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_kwy7i"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_penhw"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_xixom"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_noojo"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_gobvq"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_mc4rd"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_6g57q"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_g582l"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_hj2wb"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ehaeh"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_anweo"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1qd22"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_30lcv"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_jd1gs"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_f3bwm"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_p5616"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ra2bo"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_6hypk"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ryk7p"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ik413"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_8bg1v"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_qlt1i"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_oije2"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_0reih"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_t4lxm"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_6cjy8"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_jdqny"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_0ljwq"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_m5iv1"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_578o8"]
+size = Vector3(8, 11.8, 2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_48wr4"]
+resource_name = "Linvel_WarmLimestone"
+cull_mode = 2
+albedo_color = Color(0.86504203, 0.83228356, 0.7287319, 1)
+roughness = 0.94
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_e0rtw"]
+_surfaces = [{
+"aabb": AABB(-4, -2.6, -1.2, 8, 12.4, 2.4),
+"format": 34896613377,
+"index_count": 924,
+"index_data": PackedByteArray("AAABAAIAAAACAAMAAgABAAQAAgAEAAUAAwACAAUAAQAGAAQABQAEAAcABwAEAAYAAQAIAAYACQAFAAcACgABAAAACgAIAAEAAAADAAsACgAAAAsAAwAFAAwACQAMAAUACwADAA0ADAANAAMACQAOAAwADAAOAA0ADwAOAAkADwAJAAcAEAANAA4ACwANABAADwARAA4AEAAOABEADwAHABIABwAGABIADwATABEAEgATAA8AEgAGABQAEgAUABMAFAAGAAgAFAAIABUAFQATABQACgAVAAgAEQATABYAFQAWABMAEQAWABAAFwAVAAoAFwAWABUAFwAQABYACgALABcACwAQABcAGAAZABoAGAAaABsAGgAZABwAGgAcAB0AGwAaAB0AGQAeABwAHQAcAB8AHwAcAB4AGQAgAB4AIQAdAB8AIgAZABgAIgAgABkAGAAbACMAIgAYACMAGwAdACQAIQAkAB0AIwAbACUAJAAlABsAIQAmACQAJAAmACUAJwAmACEAJwAhAB8AKAAlACYAIwAlACgAJwApACYAKAAmACkAJwAfACoAHwAeACoAJwArACkAKgArACcAKgAeACwAKgAsACsALAAeACAALAAgAC0ALQArACwAIgAtACAAKQArAC4ALQAuACsAKQAuACgALwAtACIALwAuAC0ALwAoAC4AIgAjAC8AIwAoAC8AMAAxADIAMAAyADMAMgAxADQAMgA0ADUAMwAyADUAMQA2ADQANQA0ADcANwA0ADYAMQA4ADYAOQA1ADcAOgAxADAAOgA4ADEAMAAzADsAOgAwADsAMwA1ADwAOQA8ADUAOwAzAD0APAA9ADMAOQA+ADwAPAA+AD0APwA+ADkAPwA5ADcAQAA9AD4AOwA9AEAAPwBBAD4AQAA+AEEAPwA3AEIANwA2AEIAPwBDAEEAQgBDAD8AQgA2AEQAQgBEAEMARAA2ADgARAA4AEUARQBDAEQAOgBFADgAQQBDAEYARQBGAEMAQQBGAEAARwBFADoARwBGAEUARwBAAEYAOgA7AEcAOwBAAEcASABJAEoASABKAEsASgBJAEwASgBMAE0ASwBKAE0ASQBOAEwATQBMAE8ATwBMAE4ASQBQAE4AUQBNAE8AUgBJAEgAUgBQAEkASABLAFMAUgBIAFMASwBNAFQAUQBUAE0AUwBLAFUAVABVAEsAUQBWAFQAVABWAFUAVwBWAFEAVwBRAE8AWABVAFYAUwBVAFgAVwBZAFYAWABWAFkAVwBPAFoATwBOAFoAVwBbAFkAWgBbAFcAWgBOAFwAWgBcAFsAXABOAFAAXABQAF0AXQBbAFwAUgBdAFAAWQBbAF4AXQBeAFsAWQBeAFgAXwBdAFIAXwBeAF0AXwBYAF4AUgBTAF8AUwBYAF8AYABhAGIAYABiAGMAYgBhAGQAYgBkAGUAYwBiAGUAYQBmAGQAZQBkAGcAZwBkAGYAYQBoAGYAaQBlAGcAagBhAGAAagBoAGEAYABjAGsAagBgAGsAYwBlAGwAaQBsAGUAawBjAG0AbABtAGMAaQBuAGwAbABuAG0AbwBuAGkAbwBpAGcAcABtAG4AawBtAHAAbwBxAG4AcABuAHEAbwBnAHIAZwBmAHIAbwBzAHEAcgBzAG8AcgBmAHQAcgB0AHMAdABmAGgAdABoAHUAdQBzAHQAagB1AGgAcQBzAHYAdQB2AHMAcQB2AHAAdwB1AGoAdwB2AHUAdwBwAHYAagBrAHcAawBwAHcAeAB5AHoAeAB6AHsAegB5AHwAegB8AH0AewB6AH0AeQB+AHwAfQB8AH8AfwB8AH4AeQCAAH4AgQB9AH8AggB5AHgAggCAAHkAeAB7AIMAggB4AIMAewB9AIQAgQCEAH0AgwB7AIUAhACFAHsAgQCGAIQAhACGAIUAhwCGAIEAhwCBAH8AiACFAIYAgwCFAIgAhwCJAIYAiACGAIkAhwB/AIoAfwB+AIoAhwCLAIkAigCLAIcAigB+AIwAigCMAIsAjAB+AIAAjACAAI0AjQCLAIwAggCNAIAAiQCLAI4AjQCOAIsAiQCOAIgAjwCNAIIAjwCOAI0AjwCIAI4AggCDAI8AgwCIAI8AkACRAJIAkACSAJMAkgCRAJQAkgCUAJUAkwCSAJUAkQCWAJQAlQCUAJcAlwCUAJYAkQCYAJYAmQCVAJcAmgCRAJAAmgCYAJEAkACTAJsAmgCQAJsAkwCVAJwAmQCcAJUAmwCTAJ0AnACdAJMAmQCeAJwAnACeAJ0AnwCeAJkAnwCZAJcAoACdAJ4AmwCdAKAAnwChAJ4AoACeAKEAnwCXAKIAlwCWAKIAnwCjAKEAogCjAJ8AogCWAKQAogCkAKMApACWAJgApACYAKUApQCjAKQAmgClAJgAoQCjAKYApQCmAKMAoQCmAKAApwClAJoApwCmAKUApwCgAKYAmgCbAKcAmwCgAKcA"),
+"lods": [1.2198999, PackedByteArray("AAABAAIAAAACAAMAAgABAAQAAgAEAAUAAwACAAUAAQAGAAQABQAEAAcABwAEAAYAAQAIAAYACQAFAAcACgABAAAACgAIAAEAAAADAAsACgAAAAsAAwAFAAwACQAMAAUACwADAA0ADAANAAMACQAOAAwADAAOAA0ADwAOAAkADwAJAAcAEAANAA4ACwANABAADwARAA4AEAAOABEADwAHABIABwAGABIADwATABEAEgATAA8AEgAGABQAEgAUABMAFAAGAAgAFAAIABUAFQATABQACgAVAAgAEQATABYAFQAWABMAEQAWABAAFwAVAAoAFwAWABUAFwAQABYACgALABcACwAQABcAGAAZABoAGAAaABsAGgAZABwAGgAcAB0AGwAaAB0AGQAeABwAHQAcAB8AHwAcAB4AGQAgAB4AIQAdAB8AIgAZABgAIgAgABkAGAAbACMAIgAYACMAGwAdACQAIQAkAB0AIwAbACUAJAAlABsAIQAmACQAJAAmACUAJwAmACEAJwAhAB8AKAAlACYAIwAlACgAJwApACYAKAAmACkAJwAfACoAHwAeACoAJwArACkAKgArACcAKgAeACwAKgAsACsALAAeACAALAAgAC0ALQArACwAIgAtACAAKQArAC4ALQAuACsAKQAuACgALwAtACIALwAuAC0ALwAoAC4AIgAjAC8AIwAoAC8AMAAxADIAMAAyADMAMgAxADQAMgA0ADUAMwAyADUAMQA2ADQANQA0ADcANwA0ADYAMQA4ADYAOQA1ADcAOgAxADAAOgA4ADEAMAAzADsAOgAwADsAMwA1ADwAOQA8ADUAOwAzAD0APAA9ADMAOQA+ADwAPAA+AD0APwA+ADkAPwA5ADcAQAA9AD4AOwA9AEAAPwBBAD4AQAA+AEEAPwA3AEIANwA2AEIAPwBDAEEAQgBDAD8AQgA2AEQAQgBEAEMARAA2ADgARAA4AEUARQBDAEQAOgBFADgAQQBDAEYARQBGAEMAQQBGAEAARwBFADoARwBGAEUARwBAAEYAOgA7AEcAOwBAAEcA"), 4.7306857, PackedByteArray("AAABAAIAAAACAAMAAgABAAQAAgAEAAUAAwACAAUAAQAGAAQABQAEAAcABwAEAAYAAQAIAAYACQAFAAcACgABAAAACgAIAAEAAAADAAsACgAAAAsAAwAFAAwACQAMAAUACwADAA0ADAANAAMACQAOAAwADAAOAA0ADwAOAAkADwAJAAcAEAANAA4ACwANABAADwARAA4AEAAOABEADwAHABIABwAGABIADwATABEAEgATAA8AEgAGABQAEgAUABMAFAAGAAgAFAAIABUAFQATABQACgAVAAgAEQATABYAFQAWABMAEQAWABAAFwAVAAoAFwAWABUAFwAQABYACgALABcACwAQABcA")],
+"name": "Linvel_WarmLimestone",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 168,
+"vertex_data": PackedByteArray("HgEQAu7mAAAAAMkC7uYAAB4ByQKp6gAA4P7JAqnqAAAAAJDo7uYAAB4BkOip6gAAAACQ6BAZAAAeAUnp7uYAAAAAyQIQGQAA4P5J6e7mAAAeARACEBkAAOD+EALu5gAA4P6Q6KnqAAD//8kC7uYAAP//kOju5gAA4P5J6RAZAAD//8kCEBkAAP//kOgQGQAAHgFJ6RAZAADg/pDoVRUAAB4BkOhVFQAAHgHJAlUVAADg/skCVRUAAOD+EAIQGQAAHgEAAEP8AAAAALgAQ/wAAB4BuAD//wAA4P64AP//AAAAAEY/Q/wAAB4BRj///wAAAABGP7sDAAAeAf8/Q/wAAAAAuAC7AwAA4P7/P0P8AAAeAQAAuwMAAOD+AABD/AAA4P5GP///AAD//7gAQ/wAAP//Rj9D/AAA4P7/P7sDAAD//7gAuwMAAP//Rj+7AwAAHgH/P7sDAADg/kY/AAAAAB4BRj8AAAAAHgG4AAAAAADg/rgAAAAAAOD+AAC7AwAAHgF26BD5AAAAAC7pEPkAAB4BLunL/AAA4P4u6cv8AAAAACvvEPkAAB4BK+/L/AAAAAAr7+4GAAAeAeTvEPkAAAAALunuBgAA4P7k7xD5AAAeAXbo7gYAAOD+dugQ+QAA4P4r78v8AAD//y7pEPkAAP//K+8Q+QAA4P7k7+4GAAD//y7p7gYAAP//K+/uBgAAHgHk7+4GAADg/ivvMwMAAB4BK+8zAwAAHgEu6TMDAADg/i7pMwMAAOD+dujuBgAAKBAR70PsAAAKD8rvQ+wAACgQyu//7wAA1i/K7//vAAAKD0b/Q+wAACgQRv//7wAACg9G/7sTAAAoEP//Q+wAAAoPyu+7EwAA1i///0PsAAAoEBHvuxMAANYvEe9D7AAA1i9G///vAAD1MMrvQ+wAAPUwRv9D7AAA1i///7sTAAD1MMrvuxMAAPUwRv+7EwAAKBD//7sTAADWL0b//w8AACgQRv//DwAAKBDK7/8PAADWL8rv/w8AANYvEe+7EwAAKFAR70PsAAAJT8rvQ+wAAChQyu//7wAA1m/K7//vAAAJT0b/Q+wAAChQRv//7wAACU9G/7sTAAAoUP//Q+wAAAlPyu+7EwAA1m///0PsAAAoUBHvuxMAANZvEe9D7AAA1m9G///vAAD1cMrvQ+wAAPVwRv9D7AAA1m///7sTAAD1cMrvuxMAAPVwRv+7EwAAKFD//7sTAADWb0b//w8AAChQRv//DwAAKFDK7/8PAADWb8rv/w8AANZvEe+7EwAAKJAR70PsAAAJj8rvQ+wAACiQyu//7wAA1q/K7//vAAAJj0b/Q+wAACiQRv//7wAACY9G/7sTAAAokP//Q+wAAAmPyu+7EwAA1q///0PsAAAokBHvuxMAANavEe9D7AAA1q9G///vAAD1sMrvQ+wAAPWwRv9D7AAA1q///7sTAAD1sMrvuxMAAPWwRv+7EwAAKJD//7sTAADWr0b//w8AACiQRv//DwAAKJDK7/8PAADWr8rv/w8AANavEe+7EwAAKNAR70PsAAAJz8rvQ+wAACjQyu//7wAA1u/K7//vAAAJz0b/Q+wAACjQRv//7wAACc9G/7sTAAAo0P//Q+wAAAnPyu+7EwAA1u///0PsAAAo0BHvuxMAANbvEe9D7AAA1u9G///vAAD08MrvQ+wAAPTwRv9D7AAA1u///7sTAAD08MrvuxMAAPTwRv+7EwAAKND//7sTAADW70b//w8AACjQRv//DwAAKNDK7/8PAADW78rv/w8AANbvEe+7EwAA")
+}]
+blend_shape_mode = 0
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_0wn5t"]
+resource_name = "Linvel_SurfaceAssets_Cube_018"
+_surfaces = [{
+"aabb": AABB(-4, -2.6, -1.2, 8, 12.4, 2.4),
+"attribute_data": PackedByteArray("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"),
+"format": 34896613399,
+"index_count": 924,
+"index_data": PackedByteArray("AAABAAIAAwAEAAUABgAHAAgACQAKAAsADAANAA4ADwAQABEAEgATABQAFQAWABcAYABhAGIAYwBkAGUAZgBnAGgAaQBqAGsAbABtAG4AbwBwAHEAcgBzAHQAdQB2AHcAeAB5AHoAewB8AH0AfgB/AIAAgQCCAIMAhACFAIYAhwCIAIkAigCLAIwAjQCOAI8AIAEhASIBIwEkASUBJgEnASgBKQEqASsBLAEtAS4BLwEwATEBMgEzATQBNQE2ATcBOAE5AToBOwE8AT0BPgE/AUABQQFCAUMBRAFFAUYBRwFIAUkBSgFLAUwBTQFOAU8BUAFRAVIBUwFUAVUBVgFXAVgBWQFaAVsBXAFdAV4BXwFgAWEBYgFjAWQBZQFmAWcBaAFpAWoBawFsAW0BbgFvAXABcQFyAXMBdAF1AXYBdwF4AXkBegF7AXwBfQF+AX8BGAAZABoAGAAbABkAHAAdAB4AHAAfAB0AIAAhACIAIAAjACEAJAAlACYAJAAnACUAKAApACoAKAArACkALAAtAC4ALAAvAC0AMAAxADIAMAAzADEANAA1ADYANAA3ADUAOAA5ADoAOAA7ADkAPAA9AD4APAA/AD0AQABBAEIAQABDAEEARABFAEYARABHAEUAkACRAJIAkACTAJEAlACVAJYAlACXAJUAmACZAJoAmACbAJkAnACdAJ4AnACfAJ0AoAChAKIAoACjAKEApAClAKYApACnAKUAqACpAKoAqACrAKkArACtAK4ArACvAK0AsACxALIAsACzALEAtAC1ALYAtAC3ALUAuAC5ALoAuAC7ALkAvAC9AL4AvAC/AL0AwADBAMIAwADDAMEAxADFAMYAxADHAMUAyADJAMoAyADLAMkAzADNAM4AzADPAM0A0ADRANIA0ADTANEA1ADVANYA1ADXANUA2ADZANoA2ADbANkA3ADdAN4A3ADfAN0A4ADhAOIA4ADjAOEA5ADlAOYA5ADnAOUA6ADpAOoA6ADrAOkA7ADtAO4A7ADvAO0AgAGBAYIBgAGDAYEBhAGFAYYBhAGHAYUBiAGJAYoBiAGLAYkBjAGNAY4BjAGPAY0BkAGRAZIBkAGTAZEBlAGVAZYBlAGXAZUBmAGZAZoBmAGbAZkBnAGdAZ4BnAGfAZ0BoAGhAaIBoAGjAaEBpAGlAaYBpAGnAaUBqAGpAaoBqAGrAakBrAGtAa4BrAGvAa0BsAGxAbIBsAGzAbEBtAG1AbYBtAG3AbUBuAG5AboBuAG7AbkBvAG9Ab4BvAG/Ab0BwAHBAcIBwAHDAcEBxAHFAcYBxAHHAcUByAHJAcoByAHLAckBzAHNAc4BzAHPAc0B0AHRAdIB0AHTAdEB1AHVAdYB1AHXAdUB2AHZAdoB2AHbAdkB3AHdAd4B3AHfAd0B4AHhAeIB4AHjAeEB5AHlAeYB5AHnAeUB6AHpAeoB6AHrAekB7AHtAe4B7AHvAe0B8AHxAfIB8AHzAfEB9AH1AfYB9AH3AfUB+AH5AfoB+AH7AfkB/AH9Af4B/AH/Af0BAAIBAgICAAIDAgECBAIFAgYCBAIHAgUCCAIJAgoCCAILAgkCDAINAg4CDAIPAg0CEAIRAhICEAITAhECFAIVAhYCFAIXAhUCGAIZAhoCGAIbAhkCHAIdAh4CHAIfAh0CIAIhAiICIAIjAiECJAIlAiYCJAInAiUCKAIpAioCKAIrAikCLAItAi4CLAIvAi0CMAIxAjICMAIzAjECNAI1AjYCNAI3AjUCOAI5AjoCOAI7AjkCPAI9Aj4CPAI/Aj0CSABJAEoASABLAEkATABNAE4ATABPAE0AUABRAFIAUABTAFEAVABVAFYAVABXAFUAWABZAFoAWABbAFkAXABdAF4AXABfAF0A8ADxAPIA8ADzAPEA9AD1APYA9AD3APUA+AD5APoA+AD7APkA/AD9AP4A/AD/AP0AAAEBAQIBAAEDAQEBBAEFAQYBBAEHAQUBCAEJAQoBCAELAQkBDAENAQ4BDAEPAQ0BEAERARIBEAETAREBFAEVARYBFAEXARUBGAEZARoBGAEbARkBHAEdAR4BHAEfAR0BQAJBAkICQAJDAkECRAJFAkYCRAJHAkUCSAJJAkoCSAJLAkkCTAJNAk4CTAJPAk0CUAJRAlICUAJTAlECVAJVAlYCVAJXAlUCWAJZAloCWAJbAlkCXAJdAl4CXAJfAl0CYAJhAmICYAJjAmECZAJlAmYCZAJnAmUCaAJpAmoCaAJrAmkCbAJtAm4CbAJvAm0CcAJxAnICcAJzAnECdAJ1AnYCdAJ3AnUCeAJ5AnoCeAJ7AnkCfAJ9An4CfAJ/An0CgAKBAoICgAKDAoEChAKFAoYChAKHAoUCiAKJAooCiAKLAokCjAKNAo4CjAKPAo0CkAKRApICkAKTApEClAKVApYClAKXApUCmAKZApoCmAKbApkCnAKdAp4CnAKfAp0C"),
+"lods": [1.2198999, PackedByteArray("AAABAAIAAwAEAAUABgAHAAgACQAKAAsADAANAA4ADwAQABEAEgATABQAFQAWABcAYABhAGIAYwBkAGUAZgBnAGgAaQBqAGsAbABtAG4AbwBwAHEAcgBzAHQAdQB2AHcAeAB5AHoAewB8AH0AfgB/AIAAgQCCAIMAhACFAIYAhwCIAIkAigCLAIwAjQCOAI8AGAAZABoAGAAbABkAHAAdAB4AHAAfAB0AIAAhACIAIAAjACEAJAAlACYAJAAnACUAKAApACoAKAArACkALAAtAC4ALAAvAC0AMAAxADIAMAAzADEANAA1ADYANAA3ADUAOAA5ADoAOAA7ADkAPAA9AD4APAA/AD0AQABBAEIAQABDAEEARABFAEYARABHAEUAkACRAJIAkACTAJEAlACVAJYAlACXAJUAmACZAJoAmACbAJkAnACdAJ4AnACfAJ0AoAChAKIAoACjAKEApAClAKYApACnAKUAqACpAKoAqACrAKkArACtAK4ArACvAK0AsACxALIAsACzALEAtAC1ALYAtAC3ALUAuAC5ALoAuAC7ALkAvAC9AL4AvAC/AL0AwADBAMIAwADDAMEAxADFAMYAxADHAMUAyADJAMoAyADLAMkAzADNAM4AzADPAM0A0ADRANIA0ADTANEA1ADVANYA1ADXANUA2ADZANoA2ADbANkA3ADdAN4A3ADfAN0A4ADhAOIA4ADjAOEA5ADlAOYA5ADnAOUA6ADpAOoA6ADrAOkA7ADtAO4A7ADvAO0ASABJAEoASABLAEkATABNAE4ATABPAE0AUABRAFIAUABTAFEAVABVAFYAVABXAFUAWABZAFoAWABbAFkAXABdAF4AXABfAF0A8ADxAPIA8ADzAPEA9AD1APYA9AD3APUA+AD5APoA+AD7APkA/AD9AP4A/AD/AP0AAAEBAQIBAAEDAQEBBAEFAQYBBAEHAQUBCAEJAQoBCAELAQkBDAENAQ4BDAEPAQ0BEAERARIBEAETAREBFAEVARYBFAEXARUBGAEZARoBGAEbARkBHAEdAR4BHAEfAR0B"), 4.7306857, PackedByteArray("AAABAAIAAwAEAAUABgAHAAgACQAKAAsADAANAA4ADwAQABEAEgATABQAFQAWABcAGAAZABoAGAAbABkAHAAdAB4AHAAfAB0AIAAhACIAIAAjACEAJAAlACYAJAAnACUAKAApACoAKAArACkALAAtAC4ALAAvAC0AMAAxADIAMAAzADEANAA1ADYANAA3ADUAOAA5ADoAOAA7ADkAPAA9AD4APAA/AD0AQABBAEIAQABDAEEARABFAEYARABHAEUASABJAEoASABLAEkATABNAE4ATABPAE0AUABRAFIAUABTAFEAVABVAFYAVABXAFUAWABZAFoAWABbAFkAXABdAF4AXABfAF0A")],
+"material": SubResource("StandardMaterial3D_48wr4"),
+"name": "Linvel_WarmLimestone",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 672,
+"vertex_data": PackedByteArray("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")
+}]
+blend_shape_mode = 0
+shadow_mesh = SubResource("ArrayMesh_e0rtw")
+
+[sub_resource type="MultiMesh" id="MultiMesh_6ej8r"]
+transform_format = 1
+instance_count = 124
+mesh = SubResource("ArrayMesh_0wn5t")
+buffer = PackedFloat32Array(-0.2215619, 0, 0.9701425, -173.85715, 0, 1, 0, 4.5714283, -0.88624746, 0, -0.24253567, 92.57143, -0.22156179, 0, 0.9701425, -175.57143, 0, 1, 0, 8.489286, -0.886247, 0, -0.24253567, 85.71428, -0.22156167, 0, 0.9701425, -177.2857, 0, 1, 0, 9.072143, -0.8862465, 0, -0.24253567, 78.85715, -0.22156201, 0, 0.9701425, -179, 0, 1, 0, 9.655001, -0.8862479, 0, -0.24253567, 72, -0.22156167, 0, 0.9701425, -180.7143, 0, 1, 0, 10.237858, -0.8862465, 0, -0.24253567, 65.14285, -0.2215619, 0, 0.9701425, -182.42857, 0, 1, 0, 10.820716, -0.88624746, 0, -0.24253567, 58.285713, -0.22156179, 0, 0.9701425, -184.14285, 0, 1, 0, 11.428572, -0.886247, 0, -0.24253567, 51.428574, -0.0518714, 0, 0.9980526, -185.2, 0, 1, 0, 12.6, -0.8299417, 0, -0.06237834, 44.8, -0.051871378, 0, 0.9980526, -185.6, 0, 1, 0, 13.799999, -0.82994133, 0, -0.06237834, 38.4, -0.0518714, 0, 0.9980526, -186, 0, 1, 0, 15, -0.8299417, 0, -0.06237834, 32, -0.051871393, 0, 0.9980526, -186.4, 0, 1, 0, 16.2, -0.8299416, 0, -0.06237834, 25.599998, -0.051871385, 0, 0.9980526, -186.8, 0, 1, 0, 17.4, -0.82994145, 0, -0.06237834, 19.2, 0.16152373, 0, 0.9844276, -186.375, 0, 1, 0, 18, -0.9045328, 0, 0.17579067, 12.5, 0.16152373, 0, 0.9844276, -185.125, 0, 1, 0, 18, -0.9045328, 0, 0.17579067, 5.5, 0.16152373, 0, 0.9844276, -183.875, 0, 1, 0, 18, -0.9045328, 0, 0.17579067, -1.5, 0.16152373, 0, 0.9844276, -182.625, 0, 1, 0, 18, -0.9045328, 0, 0.17579067, -8.5, 0.16152373, 0, 0.9844276, -181.375, 0, 1, 0, 18, -0.9045328, 0, 0.17579067, -15.5, 0.16152373, 0, 0.9844276, -180.125, 0, 1, 0, 18, -0.9045328, 0, 0.17579067, -22.5, 0.16152373, 0, 0.9844276, -178.875, 0, 1, 0, 18, -0.9045328, 0, 0.17579067, -29.5, 0.16152373, 0, 0.9844276, -177.625, 0, 1, 0, 18.591095, -0.9045328, 0, 0.17579067, -36.5, 0.28647804, 0, 0.9570244, -175.88889, 0, 1, 0, 19.05393, -0.94537747, 0, 0.2900074, -43.666664, 0.286478, 0, 0.9570244, -173.66666, 0, 1, 0, 20.11, -0.94537735, 0, 0.2900074, -51, 0.28647804, 0, 0.9570244, -171.44444, 0, 1, 0, 21.055555, -0.94537747, 0, 0.2900074, -58.333336, 0.286478, 0, 0.9570244, -169.22223, 0, 1, 0, 22.277779, -0.94537735, 0, 0.2900074, -65.66667, 0.28647816, 0, 0.9570244, -167, 0, 1, 0, 23.5, -0.9453779, 0, 0.2900074, -73, 0.28647774, 0, 0.9570244, -164.77777, 0, 1, 0, 24.722221, -0.94537646, 0, 0.2900074, -80.333336, 0.28647816, 0, 0.9570244, -162.55556, 0, 1, 0, 25.944445, -0.9453779, 0, 0.2900074, -87.66667, 0.286478, 0, 0.9570244, -160.33334, 0, 1, 0, 27.166668, -0.94537735, 0, 0.2900074, -95, 0.2864779, 0, 0.9570244, -158.11111, 0, 1, 0, 28.38889, -0.945377, 0, 0.2900074, -102.333336, 0.7385736, 0, 0.5869676, -154.14285, 0, 1, 0, 29, -0.5354659, 0, 0.8096104, -108.07143, 0.73857445, 0, 0.5869676, -148.42857, 0, 1, 0, 29, -0.5354665, 0, 0.8096104, -112.21429, 0.7385736, 0, 0.5869676, -142.7143, 0, 1, 0, 29, -0.5354659, 0, 0.8096104, -116.35715, 0.73857445, 0, 0.5869676, -137, 0, 1, 0, 29, -0.5354665, 0, 0.8096104, -120.5, 0.7385736, 0, 0.5869676, -131.2857, 0, 1, 0, 29, -0.5354659, 0, 0.8096104, -124.64285, 0.73857427, 0, 0.5869676, -125.57143, 0, 1, 0, 29, -0.5354664, 0, 0.8096104, -128.78572, 0.7385738, 0, 0.5869676, -119.85715, 0, 1, 0, 29, -0.535466, 0, 0.8096104, -132.92857, 0.8743166, 0, 0.4293588, -113.611115, 0, 1, 0, 29.166668, -0.41565874, 0, 0.903134, -136.61111, 0.8743159, 0, 0.4293588, -106.83333, 0, 1, 0, 29.5, -0.4156584, 0, 0.903134, -139.83334, 0.8743166, 0, 0.4293588, -100.05556, 0, 1, 0, 29.833332, -0.41565874, 0, 0.903134, -143.05556, 0.8743159, 0, 0.4293588, -93.27777, 0, 1, 0, 30.166668, -0.4156584, 0, 0.903134, -146.27777, 0.87431586, 0, 0.4293588, -86.5, 0, 1, 0, 30.5, -0.41565838, 0, 0.903134, -149.5, 0.87431663, 0, 0.4293588, -79.72222, 0, 1, 0, 30.833332, -0.41565877, 0, 0.903134, -152.72223, 0.87431586, 0, 0.4293588, -72.94444, 0, 1, 0, 31.166668, -0.41565838, 0, 0.903134, -155.94444, 0.8743159, 0, 0.4293588, -66.16667, 0, 1, 0, 31.5, -0.4156584, 0, 0.903134, -159.16666, 0.8743166, 0, 0.4293588, -59.38889, 0, 1, 0, 31.833332, -0.41565874, 0, 0.903134, -162.38889, 0.9504545, 0, 0, -52.318184, 0, 1, 0, 32, 0, 0, 1, -164, 0.9504545, 0, 0, -44.954544, 0, 1, 0, 32, 0, 0, 1, -164, 0.95045495, 0, 0, -37.590908, 0, 1, 0, 32, 0, 0, 1, -164, 0.95045424, 0, 0, -30.227272, 0, 1, 0, 32, 0, 0, 1, -164, 0.9504547, 0, 0, -22.863636, 0, 1, 0, 32, 0, 0, 1, -164, 0.9504545, 0, 0, -15.499998, 0, 1, 0, 32, 0, 0, 1, -164, 0.950454, 0, 0, -8.136364, 0, 1, 0, 32, 0, 0, 1, -164, 0.95045495, 0, 0, -0.77272797, 0, 1, 0, 32, 0, 0, 1, -164, 0.9504545, 0, 0, 6.59091, 0, 1, 0, 32, 0, 0, 1, -164, 0.95045495, 0, 0, 13.954548, 0, 1, 0, 32, 0, 0, 1, -164, 0.950454, 0, 0, 21.318184, 0, 1, 0, 32, 0, 0, 1, -164, 0.7138369, 0, -0.47885215, 27.75, 0, 1, 0, 32, 0.38936558, 0, 0.8778956, -162.5, 0.7138369, 0, -0.47885215, 33.25, 0, 1, 0, 32, 0.38936558, 0, 0.8778956, -159.5, 0.8796807, 0, 0.145494, 59.4, 0, 1, 0, 32.4, -0.12936482, 0, 0.98935914, -158.5, 0.8796807, 0, 0.145494, 66.2, 0, 1, 0, 33.199997, -0.12936482, 0, 0.98935914, -159.5, 0.8796811, 0, 0.145494, 73, 0, 1, 0, 34, -0.12936488, 0, 0.98935914, -160.5, 0.8796802, 0, 0.145494, 79.8, 0, 1, 0, 34.800003, -0.12936474, 0, 0.98935914, -161.5, 0.8796811, 0, 0.145494, 86.6, 0, 1, 0, 35.6, -0.12936488, 0, 0.98935914, -162.5, 0.9206204, 0, -0.01754116, 93.5625, 0, 1, 0, 36, 0.016151235, 0, 0.99984616, -162.9375, 0.9206204, 0, -0.01754116, 100.6875, 0, 1, 0, 36, 0.016151235, 0, 0.99984616, -162.8125, 0.9206204, 0, -0.01754116, 107.8125, 0, 1, 0, 36, 0.016151235, 0, 0.99984616, -162.6875, 0.9206204, 0, -0.01754116, 114.9375, 0, 1, 0, 36, 0.016151235, 0, 0.99984616, -162.5625, 0.9206204, 0, -0.01754116, 122.0625, 0, 1, 0, 36, 0.016151235, 0, 0.99984616, -162.4375, 0.9206204, 0, -0.01754116, 129.1875, 0, 1, 0, 36, 0.016151235, 0, 0.99984616, -162.3125, 0.9206204, 0, -0.01754116, 136.3125, 0, 1, 0, 36, 0.016151235, 0, 0.99984616, -162.1875, 0.9206204, 0, -0.01754116, 143.4375, 0, 1, 0, 36, 0.016151235, 0, 0.99984616, -162.0625, 0.7914423, 0, -0.50932086, 150.0625, 0, 1, 0, 36, 0.4684046, 0, 0.8605767, -160.1875, 0.7914423, 0, -0.50932086, 156.1875, 0, 1, 0, 36, 0.4684046, 0, 0.8605767, -156.5625, 0.7914423, 0, -0.50932086, 162.3125, 0, 1, 0, 36, 0.4684046, 0, 0.8605767, -152.9375, 0.7914423, 0, -0.50932086, 168.4375, 0, 1, 0, 36, 0.4684046, 0, 0.8605767, -149.3125, 0.7914423, 0, -0.50932086, 174.5625, 0, 1, 0, 36, 0.4684046, 0, 0.8605767, -145.6875, 0.7914423, 0, -0.50932086, 180.6875, 0, 1, 0, 36, 0.4684046, 0, 0.8605767, -142.0625, 0.7914423, 0, -0.50932086, 186.8125, 0, 1, 0, 36, 0.4684046, 0, 0.8605767, -138.4375, 0.7914423, 0, -0.50932086, 192.9375, 0, 1, 0, 36, 0.4684046, 0, 0.8605767, -134.8125, -0.032283824, 0, -0.999406, 195.875, 0, 1, 0, 36, 0.93623215, 0, -0.03446223, -129.375, -0.032283824, 0, -0.999406, 195.625, 0, 1, 0, 36, 0.93623215, 0, -0.03446223, -122.125, -0.032283824, 0, -0.999406, 195.375, 0, 1, 0, 36, 0.93623215, 0, -0.03446223, -114.875, -0.032283824, 0, -0.999406, 195.125, 0, 1, 0, 36, 0.93623215, 0, -0.03446223, -107.625, -0.032283824, 0, -0.999406, 194.875, 0, 1, 0, 36, 0.93623215, 0, -0.03446223, -100.375, -0.032283824, 0, -0.999406, 194.625, 0, 1, 0, 36, 0.93623215, 0, -0.03446223, -93.125, -0.032283824, 0, -0.999406, 194.375, 0, 1, 0, 36, 0.93623215, 0, -0.03446223, -85.875, -0.032283824, 0, -0.999406, 194.125, 0, 1, 0, 36, 0.93623215, 0, -0.03446223, -78.625, -0.30136105, 0, -0.94634986, 192.83334, 0, 1, 0, 34.666664, 0.8825572, 0, -0.3231439, -71.58333, -0.3013611, 0, -0.94634986, 190.5, 0, 1, 0, 32, 0.8825574, 0, -0.3231439, -64.75, -0.3013609, 0, -0.94634986, 188.16666, 0, 1, 0, 29.333332, 0.8825568, 0, -0.3231439, -57.916664, -0.30136105, 0, -0.94634986, 185.83334, 0, 1, 0, 26.666666, 0.8825572, 0, -0.3231439, -51.083332, -0.30136093, 0, -0.94634986, 183.5, 0, 1, 0, 24, 0.8825569, 0, -0.3231439, -44.25, -0.30136105, 0, -0.94634986, 181.16666, 0, 1, 0, 21.333334, 0.8825572, 0, -0.3231439, -37.416668, -0.1503466, 0, -0.98861885, 179.41666, 0, 1, 0, 20, 0.9879921, 0, -0.15044197, -30.166666, -0.15034653, 0, -0.98861885, 178.25, 0, 1, 0, 20, 0.98799163, 0, -0.15044197, -22.5, -0.15034656, 0, -0.98861885, 177.08334, 0, 1, 0, 20, 0.98799187, 0, -0.15044197, -14.833333, -0.1503466, 0, -0.98861885, 175.91666, 0, 1, 0, 20, 0.9879921, 0, -0.15044197, -7.166666, -0.15034649, 0, -0.98861885, 174.75, 0, 1, 0, 20, 0.9879914, 0, -0.15044197, 0.5, -0.1503466, 0, -0.98861885, 173.58334, 0, 1, 0, 20, 0.9879921, 0, -0.15044197, 8.166666, -0.3015771, 0, -0.9438583, 171.83334, 0, 1, 0, 20, 0.86164874, 0, -0.33035046, 15.333333, -0.30157733, 0, -0.9438583, 169.5, 0, 1, 0, 20, 0.86164933, 0, -0.33035046, 22, -0.30157718, 0, -0.9438583, 167.16666, 0, 1, 0, 20, 0.861649, 0, -0.33035046, 28.666666, -0.30157703, 0, -0.9438583, 164.83334, 0, 1, 0, 20, 0.86164856, 0, -0.33035046, 35.333332, -0.30157754, 0, -0.9438583, 162.5, 0, 1, 0, 20, 0.86165, 0, -0.33035046, 42, -0.30157703, 0, -0.9438583, 160.16666, 0, 1, 0, 20, 0.86164856, 0, -0.33035046, 48.666668, -0.30157718, 0, -0.9438583, 157.83334, 0, 1, 0, 20, 0.861649, 0, -0.33035046, 55.333336, -0.3015771, 0, -0.9438583, 155.5, 0, 1, 0, 20, 0.8616487, 0, -0.33035046, 62, -0.30157733, 0, -0.9438583, 153.16666, 0, 1, 0, 20, 0.86164933, 0, -0.33035046, 68.666664, -0.7492982, 0, -0.5865099, 149.1, 0, 1, 0, 19.2, 0.5425954, 0, -0.80994207, 74.1, -0.7492987, 0, -0.5865099, 143.29999, 0, 1, 0, 17.599998, 0.5425957, 0, -0.80994207, 78.3, -0.74929696, 0, -0.5865099, 137.5, 0, 1, 0, 16, 0.5425945, 0, -0.80994207, 82.5, -0.7492987, 0, -0.5865099, 131.70001, 0, 1, 0, 14.4, 0.5425957, 0, -0.80994207, 86.7, -0.7492982, 0, -0.5865099, 125.9, 0, 1, 0, 12.8, 0.5425954, 0, -0.80994207, 90.9, -0.7492982, 0, -0.5865099, 120.1, 0, 1, 0, 11.2, 0.5425954, 0, -0.80994207, 95.1, -0.7492981, 0, -0.5865099, 114.3, 0, 1, 0, 9.6, 0.54259527, 0, -0.80994207, 99.3, -0.7492987, 0, -0.5865099, 108.5, 0, 1, 0, 8, 0.5425957, 0, -0.80994207, 103.5, -0.7492977, 0, -0.5865099, 102.7, 0, 1, 0, 6.4, 0.54259497, 0, -0.80994207, 107.700005, -0.7492982, 0, -0.5865099, 96.9, 0, 1, 0, 5.8567567, 0.5425954, 0, -0.80994207, 111.9, -0.35624963, 0, 0.9090648, -163.375, 0, 1, 0, 4, -0.7772719, 0, -0.4166547, 117, -0.35624963, 0, 0.9090648, -166.125, 0, 1, 0, 4, -0.7772719, 0, -0.4166547, 111, -0.35624963, 0, 0.9090648, -168.875, 0, 1, 0, 4, -0.7772719, 0, -0.4166547, 105, -0.35624963, 0, 0.9090648, -171.625, 0, 1, 0, 4, -0.7772719, 0, -0.4166547, 99, 0.12924263, 0, -0.9899495, 94.5, 0, 1, 0, 4, 0.9046985, 0, 0.14142135, 117.5, 0.12924263, 0, -0.9899495, 95.5, 0, 1, 0, 4, 0.9046985, 0, 0.14142135, 124.5)
+
+[node name="OuterDefenses" type="Node3D" unique_id=231124295]
+metadata/public_function = "Невысокая сухопутная стена; гавань открыта"
+metadata/module_count = 124
+metadata/wall_probe_points = [[-173.85715, 5.5714283, 92.57143, 0.97014254, -0.24253568], [-175.57143, 9.489286, 85.71428, 0.97014254, -0.24253568], [-177.2857, 10.072143, 78.85715, 0.97014254, -0.24253568], [-179.0, 10.655001, 72.0, 0.97014254, -0.24253568], [-180.7143, 11.237858, 65.14285, 0.97014254, -0.24253568], [-182.42857, 11.820715999999999, 58.285713, 0.97014254, -0.24253568], [-184.14285, 12.428572, 51.428574, 0.97014254, -0.24253568], [-185.2, 13.6, 44.8, 0.9980526, -0.06237834], [-185.6, 14.799999, 38.4, 0.9980526, -0.06237834], [-186.0, 16.0, 32.0, 0.9980526, -0.06237834], [-186.4, 17.2, 25.599998, 0.9980526, -0.06237834], [-186.8, 18.4, 19.2, 0.9980526, -0.06237834], [-186.375, 19.0, 12.5, 0.9844276, 0.17579067], [-185.125, 19.0, 5.5, 0.9844276, 0.17579067], [-183.875, 19.0, -1.5, 0.9844276, 0.17579067], [-182.625, 19.0, -8.5, 0.9844276, 0.17579067], [-181.375, 19.0, -15.5, 0.9844276, 0.17579067], [-180.125, 19.0, -22.5, 0.9844276, 0.17579067], [-178.875, 19.0, -29.5, 0.9844276, 0.17579067], [-177.625, 19.591095, -36.5, 0.9844276, 0.17579067], [-175.88889, 20.05393, -43.666664, 0.9570244, 0.2900074], [-173.66666, 21.11, -51.0, 0.9570244, 0.2900074], [-171.44444, 22.055555, -58.333336, 0.9570244, 0.2900074], [-169.22223, 23.277779, -65.66667, 0.9570244, 0.2900074], [-167.0, 24.5, -73.0, 0.9570244, 0.2900074], [-164.77777, 25.722221, -80.333336, 0.9570244, 0.2900074], [-162.55556, 26.944445, -87.66667, 0.9570244, 0.2900074], [-160.33334, 28.166668, -95.0, 0.9570244, 0.2900074], [-158.11111, 29.38889, -102.333336, 0.9570244, 0.2900074], [-154.14285, 30.0, -108.07143, 0.5869676, 0.8096104], [-148.42857, 30.0, -112.21429, 0.5869676, 0.8096104], [-142.7143, 30.0, -116.35715, 0.5869676, 0.8096104], [-137.0, 30.0, -120.5, 0.5869676, 0.8096104], [-131.2857, 30.0, -124.64285, 0.5869676, 0.8096104], [-125.57143, 30.0, -128.78572, 0.5869676, 0.8096104], [-119.85715, 30.0, -132.92857, 0.5869676, 0.8096104], [-113.611115, 30.166668, -136.61111, 0.4293588, 0.903134], [-106.83333, 30.5, -139.83334, 0.4293588, 0.903134], [-100.05556, 30.833332, -143.05556, 0.4293588, 0.903134], [-93.27777, 31.166668, -146.27777, 0.4293588, 0.903134], [-86.5, 31.5, -149.5, 0.4293588, 0.903134], [-79.72222, 31.833332, -152.72223, 0.4293588, 0.903134], [-72.94444, 32.166668, -155.94444, 0.4293588, 0.903134], [-66.16667, 32.5, -159.16666, 0.4293588, 0.903134], [-59.38889, 32.833332, -162.38889, 0.4293588, 0.903134], [-52.318184, 33.0, -164.0, 0.0, 1.0], [-44.954544, 33.0, -164.0, 0.0, 1.0], [-37.590908, 33.0, -164.0, 0.0, 1.0], [-30.227272, 33.0, -164.0, 0.0, 1.0], [-22.863636, 33.0, -164.0, 0.0, 1.0], [-15.499998, 33.0, -164.0, 0.0, 1.0], [-8.136364, 33.0, -164.0, 0.0, 1.0], [-0.77272797, 33.0, -164.0, 0.0, 1.0], [6.59091, 33.0, -164.0, 0.0, 1.0], [13.954548, 33.0, -164.0, 0.0, 1.0], [21.318184, 33.0, -164.0, 0.0, 1.0], [27.75, 33.0, -162.5, -0.47885215, 0.8778956], [33.25, 33.0, -159.5, -0.47885215, 0.8778956], [59.4, 33.4, -158.5, 0.145494, 0.98935914], [66.2, 34.199997, -159.5, 0.145494, 0.98935914], [73.0, 35.0, -160.5, 0.145494, 0.98935914], [79.8, 35.800003, -161.5, 0.145494, 0.98935914], [86.6, 36.6, -162.5, 0.145494, 0.98935914], [93.5625, 37.0, -162.9375, -0.01754116, 0.99984616], [100.6875, 37.0, -162.8125, -0.01754116, 0.99984616], [107.8125, 37.0, -162.6875, -0.01754116, 0.99984616], [114.9375, 37.0, -162.5625, -0.01754116, 0.99984616], [122.0625, 37.0, -162.4375, -0.01754116, 0.99984616], [129.1875, 37.0, -162.3125, -0.01754116, 0.99984616], [136.3125, 37.0, -162.1875, -0.01754116, 0.99984616], [143.4375, 37.0, -162.0625, -0.01754116, 0.99984616], [150.0625, 37.0, -160.1875, -0.50932086, 0.8605767], [156.1875, 37.0, -156.5625, -0.50932086, 0.8605767], [162.3125, 37.0, -152.9375, -0.50932086, 0.8605767], [168.4375, 37.0, -149.3125, -0.50932086, 0.8605767], [174.5625, 37.0, -145.6875, -0.50932086, 0.8605767], [180.6875, 37.0, -142.0625, -0.50932086, 0.8605767], [186.8125, 37.0, -138.4375, -0.50932086, 0.8605767], [192.9375, 37.0, -134.8125, -0.50932086, 0.8605767], [195.875, 37.0, -129.375, -0.99940604, -0.034462232], [195.625, 37.0, -122.125, -0.99940604, -0.034462232], [195.375, 37.0, -114.875, -0.99940604, -0.034462232], [195.125, 37.0, -107.625, -0.99940604, -0.034462232], [194.875, 37.0, -100.375, -0.99940604, -0.034462232], [194.625, 37.0, -93.125, -0.99940604, -0.034462232], [194.375, 37.0, -85.875, -0.99940604, -0.034462232], [194.125, 37.0, -78.625, -0.99940604, -0.034462232], [192.83334, 35.666664, -71.58333, -0.94634986, -0.3231439], [190.5, 33.0, -64.75, -0.94634986, -0.3231439], [188.16666, 30.333332, -57.916664, -0.94634986, -0.3231439], [185.83334, 27.666666, -51.083332, -0.94634986, -0.3231439], [183.5, 25.0, -44.25, -0.94634986, -0.3231439], [181.16666, 22.333334, -37.416668, -0.94634986, -0.3231439], [179.41666, 21.0, -30.166666, -0.98861885, -0.15044197], [178.25, 21.0, -22.5, -0.98861885, -0.15044197], [177.08334, 21.0, -14.833333, -0.98861885, -0.15044197], [175.91666, 21.0, -7.166666, -0.98861885, -0.15044197], [174.75, 21.0, 0.5, -0.98861885, -0.15044197], [173.58334, 21.0, 8.166666, -0.98861885, -0.15044197], [171.83334, 21.0, 15.333333, -0.9438583, -0.33035046], [169.5, 21.0, 22.0, -0.9438583, -0.33035046], [167.16666, 21.0, 28.666666, -0.9438583, -0.33035046], [164.83334, 21.0, 35.333332, -0.9438583, -0.33035046], [162.5, 21.0, 42.0, -0.9438583, -0.33035046], [160.16666, 21.0, 48.666668, -0.9438583, -0.33035046], [157.83334, 21.0, 55.333336, -0.9438583, -0.33035046], [155.5, 21.0, 62.0, -0.9438583, -0.33035046], [153.16666, 21.0, 68.666664, -0.9438583, -0.33035046], [149.1, 20.2, 74.1, -0.5865099, -0.80994207], [143.29999, 18.599998, 78.3, -0.5865099, -0.80994207], [137.5, 17.0, 82.5, -0.5865099, -0.80994207], [131.70001, 15.4, 86.7, -0.5865099, -0.80994207], [125.9, 13.8, 90.9, -0.5865099, -0.80994207], [120.1, 12.2, 95.1, -0.5865099, -0.80994207], [114.3, 10.6, 99.3, -0.5865099, -0.80994207], [108.5, 9.0, 103.5, -0.5865099, -0.80994207], [102.7, 7.4, 107.700005, -0.5865099, -0.80994207], [96.9, 6.8567567, 111.9, -0.5865099, -0.80994207], [-163.375, 5.0, 117.0, 0.9090648, -0.4166547], [-166.125, 5.0, 111.0, 0.9090648, -0.4166547], [-168.875, 5.0, 105.0, 0.9090648, -0.4166547], [-171.625, 5.0, 99.0, 0.9090648, -0.4166547], [94.5, 5.0, 117.5, -0.9899495, 0.14142135], [95.5, 5.0, 124.5, -0.9899495, 0.14142135]]
+metadata/wall_height_m = 9.8
+
+[node name="WestCurtain" type="Node3D" parent="." unique_id=1410343313]
+
+[node name="Curtain_000" type="Node3D" parent="WestCurtain" unique_id=1708593817 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.2215619, 0, 0.9701425, 0, 1, 0, -0.88624746, 0, -0.24253567, -173.85715, 4.5714283, 92.57143)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.308183898925781
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_000" unique_id=436240741]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_000/WallSolid" unique_id=1587011652]
+shape = SubResource("BoxShape3D_pymxj")
+
+[node name="Curtain_001" type="Node3D" parent="WestCurtain" unique_id=1135151303 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.22156179, 0, 0.9701425, 0, 1, 0, -0.886247, 0, -0.24253567, -175.57143, 8.489286, 85.71428)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.308180084228516
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_001" unique_id=787070766]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_001/WallSolid" unique_id=1924876793]
+shape = SubResource("BoxShape3D_5pjni")
+
+[node name="Curtain_002" type="Node3D" parent="WestCurtain" unique_id=330644033 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.22156167, 0, 0.9701425, 0, 1, 0, -0.8862465, 0, -0.24253567, -177.2857, 9.072143, 78.85715)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.30817626953125
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_002" unique_id=487931354]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_002/WallSolid" unique_id=386517868]
+shape = SubResource("BoxShape3D_k6fca")
+
+[node name="Curtain_003" type="Node3D" parent="WestCurtain" unique_id=256762907 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.22156201, 0, 0.9701425, 0, 1, 0, -0.8862479, 0, -0.24253567, -179, 9.655001, 72)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.308187713623047
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_003" unique_id=57028218]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_003/WallSolid" unique_id=262801402]
+shape = SubResource("BoxShape3D_ljm6m")
+
+[node name="Curtain_004" type="Node3D" parent="WestCurtain" unique_id=1238055494 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.22156167, 0, 0.9701425, 0, 1, 0, -0.8862465, 0, -0.24253567, -180.7143, 10.237858, 65.14285)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.30817626953125
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_004" unique_id=1902853198]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_004/WallSolid" unique_id=37845050]
+shape = SubResource("BoxShape3D_s6y67")
+
+[node name="Curtain_005" type="Node3D" parent="WestCurtain" unique_id=1225927397 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.2215619, 0, 0.9701425, 0, 1, 0, -0.88624746, 0, -0.24253567, -182.42857, 10.820716, 58.285713)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.308183898925781
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_005" unique_id=930011770]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_005/WallSolid" unique_id=721040386]
+shape = SubResource("BoxShape3D_tka7t")
+
+[node name="Curtain_006" type="Node3D" parent="WestCurtain" unique_id=459846707 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.22156179, 0, 0.9701425, 0, 1, 0, -0.886247, 0, -0.24253567, -184.14285, 11.428572, 51.428574)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.308180084228516
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_006" unique_id=1674386615]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_006/WallSolid" unique_id=200855626]
+shape = SubResource("BoxShape3D_qk84b")
+
+[node name="Curtain_007" type="Node3D" parent="WestCurtain" unique_id=448437141 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.0518714, 0, 0.9980526, 0, 1, 0, -0.8299417, 0, -0.06237834, -185.2, 12.6, 44.8)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 6.65248893737793
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_007" unique_id=737408578]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_007/WallSolid" unique_id=775068132]
+shape = SubResource("BoxShape3D_gvvr7")
+
+[node name="Curtain_008" type="Node3D" parent="WestCurtain" unique_id=1903885934 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.051871378, 0, 0.9980526, 0, 1, 0, -0.82994133, 0, -0.06237834, -185.6, 13.799999, 38.4)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 6.652486076354981
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_008" unique_id=1971007002]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_008/WallSolid" unique_id=854595869]
+shape = SubResource("BoxShape3D_e3wyk")
+
+[node name="Curtain_009" type="Node3D" parent="WestCurtain" unique_id=693419962 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.0518714, 0, 0.9980526, 0, 1, 0, -0.8299417, 0, -0.06237834, -186, 15, 32)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 6.65248893737793
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_009" unique_id=1697013432]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_009/WallSolid" unique_id=129216436]
+shape = SubResource("BoxShape3D_0dtc8")
+
+[node name="Curtain_010" type="Node3D" parent="WestCurtain" unique_id=481896088 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.051871393, 0, 0.9980526, 0, 1, 0, -0.8299416, 0, -0.06237834, -186.4, 16.2, 25.599998)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 6.6524879837036135
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_010" unique_id=393975908]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_010/WallSolid" unique_id=964852786]
+shape = SubResource("BoxShape3D_m73y5")
+
+[node name="Curtain_011" type="Node3D" parent="WestCurtain" unique_id=1711186004 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.051871385, 0, 0.9980526, 0, 1, 0, -0.82994145, 0, -0.06237834, -186.8, 17.4, 19.2)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 6.652487030029297
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_011" unique_id=487211656]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_011/WallSolid" unique_id=556217598]
+shape = SubResource("BoxShape3D_oqgjv")
+
+[node name="Curtain_012" type="Node3D" parent="WestCurtain" unique_id=901110722 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.16152373, 0, 0.9844276, 0, 1, 0, -0.9045328, 0, 0.17579067, -186.375, 18, 12.5)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.35073112487793
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_012" unique_id=669513803]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_012/WallSolid" unique_id=1400326687]
+shape = SubResource("BoxShape3D_psvhr")
+
+[node name="Curtain_013" type="Node3D" parent="WestCurtain" unique_id=463266678 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.16152373, 0, 0.9844276, 0, 1, 0, -0.9045328, 0, 0.17579067, -185.125, 18, 5.5)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.35073112487793
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_013" unique_id=1792804309]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_013/WallSolid" unique_id=1134265678]
+shape = SubResource("BoxShape3D_rrwfi")
+
+[node name="Curtain_014" type="Node3D" parent="WestCurtain" unique_id=408909452 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.16152373, 0, 0.9844276, 0, 1, 0, -0.9045328, 0, 0.17579067, -183.875, 18, -1.5)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.35073112487793
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_014" unique_id=1968704124]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_014/WallSolid" unique_id=2097204624]
+shape = SubResource("BoxShape3D_qhngv")
+
+[node name="Curtain_015" type="Node3D" parent="WestCurtain" unique_id=1225579109 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.16152373, 0, 0.9844276, 0, 1, 0, -0.9045328, 0, 0.17579067, -182.625, 18, -8.5)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.35073112487793
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_015" unique_id=437421970]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_015/WallSolid" unique_id=1214902030]
+shape = SubResource("BoxShape3D_avgud")
+
+[node name="Curtain_016" type="Node3D" parent="WestCurtain" unique_id=891458282 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.16152373, 0, 0.9844276, 0, 1, 0, -0.9045328, 0, 0.17579067, -181.375, 18, -15.5)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.35073112487793
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_016" unique_id=2076603207]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_016/WallSolid" unique_id=1470290814]
+shape = SubResource("BoxShape3D_0ump1")
+
+[node name="Curtain_017" type="Node3D" parent="WestCurtain" unique_id=287845153 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.16152373, 0, 0.9844276, 0, 1, 0, -0.9045328, 0, 0.17579067, -180.125, 18, -22.5)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.35073112487793
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_017" unique_id=31399090]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_017/WallSolid" unique_id=453654202]
+shape = SubResource("BoxShape3D_vi2b0")
+
+[node name="Curtain_018" type="Node3D" parent="WestCurtain" unique_id=1536398617 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.16152373, 0, 0.9844276, 0, 1, 0, -0.9045328, 0, 0.17579067, -178.875, 18, -29.5)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.35073112487793
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_018" unique_id=215789108]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_018/WallSolid" unique_id=507781476]
+shape = SubResource("BoxShape3D_bmsjs")
+
+[node name="Curtain_019" type="Node3D" parent="WestCurtain" unique_id=246155859 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.16152373, 0, 0.9844276, 0, 1, 0, -0.9045328, 0, 0.17579067, -177.625, 18.591095, -36.5)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.35073112487793
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_019" unique_id=401416845]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_019/WallSolid" unique_id=285948848]
+shape = SubResource("BoxShape3D_vu3fw")
+
+[node name="Curtain_020" type="Node3D" parent="WestCurtain" unique_id=1069841011 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.28647804, 0, 0.9570244, 0, 1, 0, -0.94537747, 0, 0.2900074, -175.88889, 19.05393, -43.666664)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.9026405715942385
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_020" unique_id=1958146131]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_020/WallSolid" unique_id=2000585882]
+shape = SubResource("BoxShape3D_ela7f")
+
+[node name="Curtain_021" type="Node3D" parent="WestCurtain" unique_id=1704319111 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.286478, 0, 0.9570244, 0, 1, 0, -0.94537735, 0, 0.2900074, -173.66666, 20.11, -51)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.902639617919922
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_021" unique_id=1414050401]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_021/WallSolid" unique_id=321673726]
+shape = SubResource("BoxShape3D_37g48")
+
+[node name="Curtain_022" type="Node3D" parent="WestCurtain" unique_id=1938642673 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.28647804, 0, 0.9570244, 0, 1, 0, -0.94537747, 0, 0.2900074, -171.44444, 21.055555, -58.333336)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.9026405715942385
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_022" unique_id=1087098773]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_022/WallSolid" unique_id=781887458]
+shape = SubResource("BoxShape3D_ra2ya")
+
+[node name="Curtain_023" type="Node3D" parent="WestCurtain" unique_id=1677158360 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.286478, 0, 0.9570244, 0, 1, 0, -0.94537735, 0, 0.2900074, -169.22223, 22.277779, -65.66667)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.902639617919922
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_023" unique_id=487023]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_023/WallSolid" unique_id=960315568]
+shape = SubResource("BoxShape3D_oku4q")
+
+[node name="Curtain_024" type="Node3D" parent="WestCurtain" unique_id=693532488 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.28647816, 0, 0.9570244, 0, 1, 0, -0.9453779, 0, 0.2900074, -167, 23.5, -73)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.902644386291504
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_024" unique_id=109120093]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_024/WallSolid" unique_id=2044548682]
+shape = SubResource("BoxShape3D_r68qf")
+
+[node name="Curtain_025" type="Node3D" parent="WestCurtain" unique_id=351515621 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.28647774, 0, 0.9570244, 0, 1, 0, -0.94537646, 0, 0.2900074, -164.77777, 24.722221, -80.333336)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.902632465362549
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_025" unique_id=1527072144]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_025/WallSolid" unique_id=1509120425]
+shape = SubResource("BoxShape3D_2q86h")
+
+[node name="Curtain_026" type="Node3D" parent="WestCurtain" unique_id=1079518946 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.28647816, 0, 0.9570244, 0, 1, 0, -0.9453779, 0, 0.2900074, -162.55556, 25.944445, -87.66667)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.902644386291504
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_026" unique_id=107165564]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_026/WallSolid" unique_id=1799472301]
+shape = SubResource("BoxShape3D_7nteu")
+
+[node name="Curtain_027" type="Node3D" parent="WestCurtain" unique_id=102852791 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.286478, 0, 0.9570244, 0, 1, 0, -0.94537735, 0, 0.2900074, -160.33334, 27.166668, -95)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.902639617919922
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_027" unique_id=32456269]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_027/WallSolid" unique_id=905974302]
+shape = SubResource("BoxShape3D_016d6")
+
+[node name="Curtain_028" type="Node3D" parent="WestCurtain" unique_id=56553922 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.2864779, 0, 0.9570244, 0, 1, 0, -0.945377, 0, 0.2900074, -158.11111, 28.38889, -102.333336)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.902636756896973
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_028" unique_id=2011123308]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_028/WallSolid" unique_id=1357572452]
+shape = SubResource("BoxShape3D_0j8dw")
+
+[node name="Curtain_029" type="Node3D" parent="WestCurtain" unique_id=544820351 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.7385736, 0, 0.5869676, 0, 1, 0, -0.5354659, 0, 0.8096104, -154.14285, 29, -108.07143)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.298064460754395
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_029" unique_id=204018193]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_029/WallSolid" unique_id=468600991]
+shape = SubResource("BoxShape3D_g6yy0")
+
+[node name="Curtain_030" type="Node3D" parent="WestCurtain" unique_id=1073749837 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.73857445, 0, 0.5869676, 0, 1, 0, -0.5354665, 0, 0.8096104, -148.42857, 29, -112.21429)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.298072566986084
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_030" unique_id=1017706655]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_030/WallSolid" unique_id=1035803788]
+shape = SubResource("BoxShape3D_pnfgd")
+
+[node name="Curtain_031" type="Node3D" parent="WestCurtain" unique_id=1174032921 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.7385736, 0, 0.5869676, 0, 1, 0, -0.5354659, 0, 0.8096104, -142.7143, 29, -116.35715)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.298064460754395
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_031" unique_id=752932507]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_031/WallSolid" unique_id=1691374450]
+shape = SubResource("BoxShape3D_u07ek")
+
+[node name="Curtain_032" type="Node3D" parent="WestCurtain" unique_id=502530069 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.73857445, 0, 0.5869676, 0, 1, 0, -0.5354665, 0, 0.8096104, -137, 29, -120.5)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.298072566986084
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_032" unique_id=620279677]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_032/WallSolid" unique_id=231673263]
+shape = SubResource("BoxShape3D_s5d6x")
+
+[node name="Curtain_033" type="Node3D" parent="WestCurtain" unique_id=848892708 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.7385736, 0, 0.5869676, 0, 1, 0, -0.5354659, 0, 0.8096104, -131.2857, 29, -124.64285)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.298064460754395
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_033" unique_id=1545072620]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_033/WallSolid" unique_id=516098749]
+shape = SubResource("BoxShape3D_x5npp")
+
+[node name="Curtain_034" type="Node3D" parent="WestCurtain" unique_id=783897280 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.73857427, 0, 0.5869676, 0, 1, 0, -0.5354664, 0, 0.8096104, -125.57143, 29, -128.78572)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.298070659637451
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_034" unique_id=1243767527]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_034/WallSolid" unique_id=688926197]
+shape = SubResource("BoxShape3D_krhw3")
+
+[node name="Curtain_035" type="Node3D" parent="WestCurtain" unique_id=34324309 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.7385738, 0, 0.5869676, 0, 1, 0, -0.535466, 0, 0.8096104, -119.85715, 29, -132.92857)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.298066368103028
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_035" unique_id=1001236768]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_035/WallSolid" unique_id=1736881334]
+shape = SubResource("BoxShape3D_f3p82")
+
+[node name="Curtain_036" type="Node3D" parent="WestCurtain" unique_id=690458832 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.8743166, 0, 0.4293588, 0, 1, 0, -0.41565874, 0, 0.903134, -113.611115, 29.166668, -136.61111)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.744734516143799
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_036" unique_id=2007454500]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_036/WallSolid" unique_id=478282031]
+shape = SubResource("BoxShape3D_raxeu")
+
+[node name="Curtain_037" type="Node3D" parent="WestCurtain" unique_id=293509082 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.8743159, 0, 0.4293588, 0, 1, 0, -0.4156584, 0, 0.903134, -106.83333, 29.5, -139.83334)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.744728317260742
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_037" unique_id=1735401606]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_037/WallSolid" unique_id=1023558289]
+shape = SubResource("BoxShape3D_v54mj")
+
+[node name="Curtain_038" type="Node3D" parent="WestCurtain" unique_id=1474232332 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.8743166, 0, 0.4293588, 0, 1, 0, -0.41565874, 0, 0.903134, -100.05556, 29.833332, -143.05556)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.744734516143799
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_038" unique_id=2098888628]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_038/WallSolid" unique_id=741297884]
+shape = SubResource("BoxShape3D_avil6")
+
+[node name="Curtain_039" type="Node3D" parent="WestCurtain" unique_id=1420032534 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.8743159, 0, 0.4293588, 0, 1, 0, -0.4156584, 0, 0.903134, -93.27777, 30.166668, -146.27777)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.744728317260742
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_039" unique_id=549645133]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_039/WallSolid" unique_id=366748115]
+shape = SubResource("BoxShape3D_p7lqw")
+
+[node name="Curtain_040" type="Node3D" parent="WestCurtain" unique_id=543440555 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.87431586, 0, 0.4293588, 0, 1, 0, -0.41565838, 0, 0.903134, -86.5, 30.5, -149.5)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.744727840423584
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_040" unique_id=105834653]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_040/WallSolid" unique_id=1970599150]
+shape = SubResource("BoxShape3D_t7gf6")
+
+[node name="Curtain_041" type="Node3D" parent="WestCurtain" unique_id=204876349 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.87431663, 0, 0.4293588, 0, 1, 0, -0.41565877, 0, 0.903134, -79.72222, 30.833332, -152.72223)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.744734992980957
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_041" unique_id=82037872]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_041/WallSolid" unique_id=2048969365]
+shape = SubResource("BoxShape3D_dpyg6")
+
+[node name="Curtain_042" type="Node3D" parent="WestCurtain" unique_id=1067814244 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.87431586, 0, 0.4293588, 0, 1, 0, -0.41565838, 0, 0.903134, -72.94444, 31.166668, -155.94444)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.744727840423584
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_042" unique_id=200284012]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_042/WallSolid" unique_id=1435014139]
+shape = SubResource("BoxShape3D_xplbw")
+
+[node name="Curtain_043" type="Node3D" parent="WestCurtain" unique_id=1684231910 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.8743159, 0, 0.4293588, 0, 1, 0, -0.4156584, 0, 0.903134, -66.16667, 31.5, -159.16666)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.744728317260742
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_043" unique_id=1115488498]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_043/WallSolid" unique_id=616233995]
+shape = SubResource("BoxShape3D_fcfh0")
+
+[node name="Curtain_044" type="Node3D" parent="WestCurtain" unique_id=1860280232 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.8743166, 0, 0.4293588, 0, 1, 0, -0.41565874, 0, 0.903134, -59.38889, 31.833332, -162.38889)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.744734516143799
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_044" unique_id=238004842]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_044/WallSolid" unique_id=393193178]
+shape = SubResource("BoxShape3D_r2epb")
+
+[node name="Curtain_045" type="Node3D" parent="WestCurtain" unique_id=2028192007 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.9504545, 0, 0, 0, 1, 0, 0, 0, 1, -52.318184, 32, -164)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.603636016845703
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_045" unique_id=1358964982]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_045/WallSolid" unique_id=1034592956]
+shape = SubResource("BoxShape3D_2rkms")
+
+[node name="Curtain_046" type="Node3D" parent="WestCurtain" unique_id=185774866 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.9504545, 0, 0, 0, 1, 0, 0, 0, 1, -44.954544, 32, -164)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.603636016845703
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_046" unique_id=1881643771]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_046/WallSolid" unique_id=1401497522]
+shape = SubResource("BoxShape3D_nnwdt")
+
+[node name="Curtain_047" type="Node3D" parent="WestCurtain" unique_id=14653145 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.95045495, 0, 0, 0, 1, 0, 0, 0, 1, -37.590908, 32, -164)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.603639831542969
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_047" unique_id=140712933]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_047/WallSolid" unique_id=726886639]
+shape = SubResource("BoxShape3D_8vusd")
+
+[node name="Curtain_048" type="Node3D" parent="WestCurtain" unique_id=1735245464 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.95045424, 0, 0, 0, 1, 0, 0, 0, 1, -30.227272, 32, -164)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.6036341094970705
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_048" unique_id=1845552727]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_048/WallSolid" unique_id=1501094266]
+shape = SubResource("BoxShape3D_pt17t")
+
+[node name="Curtain_049" type="Node3D" parent="WestCurtain" unique_id=679385839 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.9504547, 0, 0, 0, 1, 0, 0, 0, 1, -22.863636, 32, -164)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.603637924194336
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_049" unique_id=409834100]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_049/WallSolid" unique_id=885834921]
+shape = SubResource("BoxShape3D_bo4wm")
+
+[node name="Curtain_050" type="Node3D" parent="WestCurtain" unique_id=586043497 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.9504545, 0, 0, 0, 1, 0, 0, 0, 1, -15.499998, 32, -164)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.603636016845703
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_050" unique_id=1887792175]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_050/WallSolid" unique_id=923933953]
+shape = SubResource("BoxShape3D_xtcxn")
+
+[node name="Curtain_051" type="Node3D" parent="WestCurtain" unique_id=1611068618 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.950454, 0, 0, 0, 1, 0, 0, 0, 1, -8.136364, 32, -164)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.603632202148438
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_051" unique_id=128930415]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_051/WallSolid" unique_id=2066087215]
+shape = SubResource("BoxShape3D_bgisw")
+
+[node name="Curtain_052" type="Node3D" parent="WestCurtain" unique_id=1307563179 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.95045495, 0, 0, 0, 1, 0, 0, 0, 1, -0.77272797, 32, -164)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.603639831542969
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_052" unique_id=795417923]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_052/WallSolid" unique_id=1236793703]
+shape = SubResource("BoxShape3D_jrsqq")
+
+[node name="Curtain_053" type="Node3D" parent="WestCurtain" unique_id=1334396056 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.9504545, 0, 0, 0, 1, 0, 0, 0, 1, 6.59091, 32, -164)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.603636016845703
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_053" unique_id=1400310577]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_053/WallSolid" unique_id=1216487704]
+shape = SubResource("BoxShape3D_y3ms4")
+
+[node name="Curtain_054" type="Node3D" parent="WestCurtain" unique_id=1446559783 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.95045495, 0, 0, 0, 1, 0, 0, 0, 1, 13.954548, 32, -164)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.603639831542969
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_054" unique_id=941996173]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_054/WallSolid" unique_id=98859884]
+shape = SubResource("BoxShape3D_58ke2")
+
+[node name="Curtain_055" type="Node3D" parent="WestCurtain" unique_id=1049047845 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.950454, 0, 0, 0, 1, 0, 0, 0, 1, 21.318184, 32, -164)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.603632202148438
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_055" unique_id=1618006431]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_055/WallSolid" unique_id=1676397460]
+shape = SubResource("BoxShape3D_fvhyi")
+
+[node name="Curtain_056" type="Node3D" parent="WestCurtain" unique_id=371728685 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.7138369, 0, -0.47885215, 0, 1, 0, 0.38936558, 0, 0.8778956, 27.75, 32, -162.5)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 6.504982223510742
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_056" unique_id=1970406581]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_056/WallSolid" unique_id=1338179863]
+shape = SubResource("BoxShape3D_5oef8")
+
+[node name="Curtain_057" type="Node3D" parent="WestCurtain" unique_id=1283571722 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.7138369, 0, -0.47885215, 0, 1, 0, 0.38936558, 0, 0.8778956, 33.25, 32, -159.5)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 6.504982223510742
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCurtain/Curtain_057" unique_id=633655924]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCurtain/Curtain_057/WallSolid" unique_id=1605858335]
+shape = SubResource("BoxShape3D_n3i8r")
+
+[node name="EastCurtain" type="Node3D" parent="." unique_id=787310899]
+
+[node name="Curtain_058" type="Node3D" parent="EastCurtain" unique_id=178504210 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.8796807, 0, 0.145494, 0, 1, 0, -0.12936482, 0, 0.98935914, 59.4, 32.4, -158.5)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.113135566711426
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_058" unique_id=27307434]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_058/WallSolid" unique_id=715304813]
+shape = SubResource("BoxShape3D_xce8w")
+
+[node name="Curtain_059" type="Node3D" parent="EastCurtain" unique_id=924810056 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.8796807, 0, 0.145494, 0, 1, 0, -0.12936482, 0, 0.98935914, 66.2, 33.199997, -159.5)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.113135566711426
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_059" unique_id=1756550132]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_059/WallSolid" unique_id=1317179254]
+shape = SubResource("BoxShape3D_76c85")
+
+[node name="Curtain_060" type="Node3D" parent="EastCurtain" unique_id=357336168 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.8796811, 0, 0.145494, 0, 1, 0, -0.12936488, 0, 0.98935914, 73, 34, -160.5)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.113138904571533
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_060" unique_id=142466051]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_060/WallSolid" unique_id=623999925]
+shape = SubResource("BoxShape3D_oefvf")
+
+[node name="Curtain_061" type="Node3D" parent="EastCurtain" unique_id=812588106 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.8796802, 0, 0.145494, 0, 1, 0, -0.12936474, 0, 0.98935914, 79.8, 34.800003, -161.5)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.11313175201416
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_061" unique_id=1264941665]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_061/WallSolid" unique_id=226697102]
+shape = SubResource("BoxShape3D_rp1h0")
+
+[node name="Curtain_062" type="Node3D" parent="EastCurtain" unique_id=1476594396 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.8796811, 0, 0.145494, 0, 1, 0, -0.12936488, 0, 0.98935914, 86.6, 35.6, -162.5)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.113138904571533
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_062" unique_id=328627160]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_062/WallSolid" unique_id=1379075255]
+shape = SubResource("BoxShape3D_kbesj")
+
+[node name="Curtain_063" type="Node3D" parent="EastCurtain" unique_id=1265093927 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.9206204, 0, -0.01754116, 0, 1, 0, 0.016151235, 0, 0.99984616, 93.5625, 36, -162.9375)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.366096248626709
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_063" unique_id=1554451202]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_063/WallSolid" unique_id=231984017]
+shape = SubResource("BoxShape3D_hlc00")
+
+[node name="Curtain_064" type="Node3D" parent="EastCurtain" unique_id=302745633 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.9206204, 0, -0.01754116, 0, 1, 0, 0.016151235, 0, 0.99984616, 100.6875, 36, -162.8125)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.366096248626709
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_064" unique_id=437746326]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_064/WallSolid" unique_id=1991892397]
+shape = SubResource("BoxShape3D_qv200")
+
+[node name="Curtain_065" type="Node3D" parent="EastCurtain" unique_id=34707113 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.9206204, 0, -0.01754116, 0, 1, 0, 0.016151235, 0, 0.99984616, 107.8125, 36, -162.6875)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.366096248626709
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_065" unique_id=358608393]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_065/WallSolid" unique_id=744170153]
+shape = SubResource("BoxShape3D_jbfgy")
+
+[node name="Curtain_066" type="Node3D" parent="EastCurtain" unique_id=2038942331 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.9206204, 0, -0.01754116, 0, 1, 0, 0.016151235, 0, 0.99984616, 114.9375, 36, -162.5625)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.366096248626709
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_066" unique_id=1540296160]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_066/WallSolid" unique_id=324393929]
+shape = SubResource("BoxShape3D_755ro")
+
+[node name="Curtain_067" type="Node3D" parent="EastCurtain" unique_id=2110077888 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.9206204, 0, -0.01754116, 0, 1, 0, 0.016151235, 0, 0.99984616, 122.0625, 36, -162.4375)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.366096248626709
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_067" unique_id=1958252543]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_067/WallSolid" unique_id=677343011]
+shape = SubResource("BoxShape3D_77vcu")
+
+[node name="Curtain_068" type="Node3D" parent="EastCurtain" unique_id=877050300 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.9206204, 0, -0.01754116, 0, 1, 0, 0.016151235, 0, 0.99984616, 129.1875, 36, -162.3125)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.366096248626709
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_068" unique_id=1636900882]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_068/WallSolid" unique_id=1556475416]
+shape = SubResource("BoxShape3D_6rxbr")
+
+[node name="Curtain_069" type="Node3D" parent="EastCurtain" unique_id=5798976 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.9206204, 0, -0.01754116, 0, 1, 0, 0.016151235, 0, 0.99984616, 136.3125, 36, -162.1875)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.366096248626709
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_069" unique_id=1313928430]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_069/WallSolid" unique_id=1131617916]
+shape = SubResource("BoxShape3D_lx6m3")
+
+[node name="Curtain_070" type="Node3D" parent="EastCurtain" unique_id=617189808 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.9206204, 0, -0.01754116, 0, 1, 0, 0.016151235, 0, 0.99984616, 143.4375, 36, -162.0625)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.366096248626709
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_070" unique_id=266588177]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_070/WallSolid" unique_id=1334674527]
+shape = SubResource("BoxShape3D_8rvv4")
+
+[node name="Curtain_071" type="Node3D" parent="EastCurtain" unique_id=377736139 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.7914423, 0, -0.50932086, 0, 1, 0, 0.4684046, 0, 0.8605767, 150.0625, 36, -160.1875)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.357320537567139
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_071" unique_id=827884066]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_071/WallSolid" unique_id=1194650795]
+shape = SubResource("BoxShape3D_8hw5x")
+
+[node name="Curtain_072" type="Node3D" parent="EastCurtain" unique_id=1324905039 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.7914423, 0, -0.50932086, 0, 1, 0, 0.4684046, 0, 0.8605767, 156.1875, 36, -156.5625)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.357320537567139
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_072" unique_id=1204733963]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_072/WallSolid" unique_id=384681548]
+shape = SubResource("BoxShape3D_y4kol")
+
+[node name="Curtain_073" type="Node3D" parent="EastCurtain" unique_id=677276690 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.7914423, 0, -0.50932086, 0, 1, 0, 0.4684046, 0, 0.8605767, 162.3125, 36, -152.9375)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.357320537567139
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_073" unique_id=291971511]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_073/WallSolid" unique_id=1292941516]
+shape = SubResource("BoxShape3D_7u7uw")
+
+[node name="Curtain_074" type="Node3D" parent="EastCurtain" unique_id=537182263 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.7914423, 0, -0.50932086, 0, 1, 0, 0.4684046, 0, 0.8605767, 168.4375, 36, -149.3125)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.357320537567139
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_074" unique_id=1984840426]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_074/WallSolid" unique_id=960522167]
+shape = SubResource("BoxShape3D_keic3")
+
+[node name="Curtain_075" type="Node3D" parent="EastCurtain" unique_id=767034533 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.7914423, 0, -0.50932086, 0, 1, 0, 0.4684046, 0, 0.8605767, 174.5625, 36, -145.6875)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.357320537567139
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_075" unique_id=1238053526]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_075/WallSolid" unique_id=1459508652]
+shape = SubResource("BoxShape3D_8u8h6")
+
+[node name="Curtain_076" type="Node3D" parent="EastCurtain" unique_id=1179315067 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.7914423, 0, -0.50932086, 0, 1, 0, 0.4684046, 0, 0.8605767, 180.6875, 36, -142.0625)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.357320537567139
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_076" unique_id=1874405693]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_076/WallSolid" unique_id=944159086]
+shape = SubResource("BoxShape3D_3vu18")
+
+[node name="Curtain_077" type="Node3D" parent="EastCurtain" unique_id=1747913125 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.7914423, 0, -0.50932086, 0, 1, 0, 0.4684046, 0, 0.8605767, 186.8125, 36, -138.4375)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.357320537567139
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_077" unique_id=1254651707]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_077/WallSolid" unique_id=197351294]
+shape = SubResource("BoxShape3D_gejcd")
+
+[node name="Curtain_078" type="Node3D" parent="EastCurtain" unique_id=1914199274 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.7914423, 0, -0.50932086, 0, 1, 0, 0.4684046, 0, 0.8605767, 192.9375, 36, -134.8125)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.357320537567139
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_078" unique_id=10522370]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_078/WallSolid" unique_id=2117635302]
+shape = SubResource("BoxShape3D_emtm1")
+
+[node name="Curtain_079" type="Node3D" parent="EastCurtain" unique_id=1190372038 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.032283824, 0, -0.999406, 0, 1, 0, 0.93623215, 0, -0.03446223, 195.875, 36, -129.375)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.494309177398682
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_079" unique_id=843980316]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_079/WallSolid" unique_id=104553992]
+shape = SubResource("BoxShape3D_qq3m6")
+
+[node name="Curtain_080" type="Node3D" parent="EastCurtain" unique_id=95092844 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.032283824, 0, -0.999406, 0, 1, 0, 0.93623215, 0, -0.03446223, 195.625, 36, -122.125)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.494309177398682
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_080" unique_id=2003307145]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_080/WallSolid" unique_id=406305758]
+shape = SubResource("BoxShape3D_g3mm6")
+
+[node name="Curtain_081" type="Node3D" parent="EastCurtain" unique_id=705638551 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.032283824, 0, -0.999406, 0, 1, 0, 0.93623215, 0, -0.03446223, 195.375, 36, -114.875)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.494309177398682
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_081" unique_id=83466609]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_081/WallSolid" unique_id=896732989]
+shape = SubResource("BoxShape3D_qyhqr")
+
+[node name="Curtain_082" type="Node3D" parent="EastCurtain" unique_id=1863105893 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.032283824, 0, -0.999406, 0, 1, 0, 0.93623215, 0, -0.03446223, 195.125, 36, -107.625)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.494309177398682
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_082" unique_id=69052985]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_082/WallSolid" unique_id=701779071]
+shape = SubResource("BoxShape3D_orpdq")
+
+[node name="Curtain_083" type="Node3D" parent="EastCurtain" unique_id=977426797 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.032283824, 0, -0.999406, 0, 1, 0, 0.93623215, 0, -0.03446223, 194.875, 36, -100.375)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.494309177398682
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_083" unique_id=716273328]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_083/WallSolid" unique_id=765981388]
+shape = SubResource("BoxShape3D_qw5q4")
+
+[node name="Curtain_084" type="Node3D" parent="EastCurtain" unique_id=832588716 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.032283824, 0, -0.999406, 0, 1, 0, 0.93623215, 0, -0.03446223, 194.625, 36, -93.125)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.494309177398682
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_084" unique_id=301496303]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_084/WallSolid" unique_id=1686834866]
+shape = SubResource("BoxShape3D_cevqr")
+
+[node name="Curtain_085" type="Node3D" parent="EastCurtain" unique_id=117857707 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.032283824, 0, -0.999406, 0, 1, 0, 0.93623215, 0, -0.03446223, 194.375, 36, -85.875)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.494309177398682
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_085" unique_id=527252705]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_085/WallSolid" unique_id=1601737799]
+shape = SubResource("BoxShape3D_6qsec")
+
+[node name="Curtain_086" type="Node3D" parent="EastCurtain" unique_id=1898204740 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.032283824, 0, -0.999406, 0, 1, 0, 0.93623215, 0, -0.03446223, 194.125, 36, -78.625)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.494309177398682
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_086" unique_id=1476381014]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_086/WallSolid" unique_id=654044503]
+shape = SubResource("BoxShape3D_2qthx")
+
+[node name="Curtain_087" type="Node3D" parent="EastCurtain" unique_id=2093776541 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.30136105, 0, -0.94634986, 0, 1, 0, 0.8825572, 0, -0.3231439, 192.83334, 34.666664, -71.58333)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.46072696685791
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_087" unique_id=1614331239]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_087/WallSolid" unique_id=280700318]
+shape = SubResource("BoxShape3D_gi3fc")
+
+[node name="Curtain_088" type="Node3D" parent="EastCurtain" unique_id=361264669 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.3013611, 0, -0.94634986, 0, 1, 0, 0.8825574, 0, -0.3231439, 190.5, 32, -64.75)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.460728397369385
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_088" unique_id=2062125610]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_088/WallSolid" unique_id=1995913354]
+shape = SubResource("BoxShape3D_cngxf")
+
+[node name="Curtain_089" type="Node3D" parent="EastCurtain" unique_id=964638349 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.3013609, 0, -0.94634986, 0, 1, 0, 0.8825568, 0, -0.3231439, 188.16666, 29.333332, -57.916664)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.460723628997803
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_089" unique_id=2136601792]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_089/WallSolid" unique_id=904192895]
+shape = SubResource("BoxShape3D_k4www")
+
+[node name="Curtain_090" type="Node3D" parent="EastCurtain" unique_id=948424423 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.30136105, 0, -0.94634986, 0, 1, 0, 0.8825572, 0, -0.3231439, 185.83334, 26.666666, -51.083332)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.46072696685791
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_090" unique_id=1817302714]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_090/WallSolid" unique_id=1301197950]
+shape = SubResource("BoxShape3D_e1h0i")
+
+[node name="Curtain_091" type="Node3D" parent="EastCurtain" unique_id=472809049 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.30136093, 0, -0.94634986, 0, 1, 0, 0.8825569, 0, -0.3231439, 183.5, 24, -44.25)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.460724582672119
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_091" unique_id=491160255]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_091/WallSolid" unique_id=42709215]
+shape = SubResource("BoxShape3D_w6xwl")
+
+[node name="Curtain_092" type="Node3D" parent="EastCurtain" unique_id=602023541 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.30136105, 0, -0.94634986, 0, 1, 0, 0.8825572, 0, -0.3231439, 181.16666, 21.333334, -37.416668)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.46072696685791
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_092" unique_id=1530482568]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_092/WallSolid" unique_id=1034412363]
+shape = SubResource("BoxShape3D_hunnn")
+
+[node name="Curtain_093" type="Node3D" parent="EastCurtain" unique_id=982352300 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.1503466, 0, -0.98861885, 0, 1, 0, 0.9879921, 0, -0.15044197, 179.41666, 20, -30.166666)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.994928588867188
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_093" unique_id=671134192]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_093/WallSolid" unique_id=1113103314]
+shape = SubResource("BoxShape3D_d6tu6")
+
+[node name="Curtain_094" type="Node3D" parent="EastCurtain" unique_id=190694227 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.15034653, 0, -0.98861885, 0, 1, 0, 0.98799163, 0, -0.15044197, 178.25, 20, -22.5)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.994924774169922
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_094" unique_id=1350981088]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_094/WallSolid" unique_id=1609899707]
+shape = SubResource("BoxShape3D_kwy7i")
+
+[node name="Curtain_095" type="Node3D" parent="EastCurtain" unique_id=216481251 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.15034656, 0, -0.98861885, 0, 1, 0, 0.98799187, 0, -0.15044197, 177.08334, 20, -14.833333)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.994926681518555
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_095" unique_id=450940557]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_095/WallSolid" unique_id=578066098]
+shape = SubResource("BoxShape3D_penhw")
+
+[node name="Curtain_096" type="Node3D" parent="EastCurtain" unique_id=888214304 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.1503466, 0, -0.98861885, 0, 1, 0, 0.9879921, 0, -0.15044197, 175.91666, 20, -7.166666)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.994928588867188
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_096" unique_id=1088327510]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_096/WallSolid" unique_id=272469436]
+shape = SubResource("BoxShape3D_xixom")
+
+[node name="Curtain_097" type="Node3D" parent="EastCurtain" unique_id=9212153 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.15034649, 0, -0.98861885, 0, 1, 0, 0.9879914, 0, -0.15044197, 174.75, 20, 0.5)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.994922866821289
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_097" unique_id=453136724]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_097/WallSolid" unique_id=556376313]
+shape = SubResource("BoxShape3D_noojo")
+
+[node name="Curtain_098" type="Node3D" parent="EastCurtain" unique_id=1248268715 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.1503466, 0, -0.98861885, 0, 1, 0, 0.9879921, 0, -0.15044197, 173.58334, 20, 8.166666)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.994928588867188
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_098" unique_id=1727457474]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_098/WallSolid" unique_id=30290481]
+shape = SubResource("BoxShape3D_gobvq")
+
+[node name="Curtain_099" type="Node3D" parent="EastCurtain" unique_id=1891892155 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.3015771, 0, -0.9438583, 0, 1, 0, 0.86164874, 0, -0.33035046, 171.83334, 20, 15.333333)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.303204288482666
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_099" unique_id=29075893]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_099/WallSolid" unique_id=662266487]
+shape = SubResource("BoxShape3D_mc4rd")
+
+[node name="Curtain_100" type="Node3D" parent="EastCurtain" unique_id=1302913809 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.30157733, 0, -0.9438583, 0, 1, 0, 0.86164933, 0, -0.33035046, 169.5, 20, 22)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.3032095336914065
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_100" unique_id=1668842154]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_100/WallSolid" unique_id=1022182662]
+shape = SubResource("BoxShape3D_6g57q")
+
+[node name="Curtain_101" type="Node3D" parent="EastCurtain" unique_id=2062055713 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.30157718, 0, -0.9438583, 0, 1, 0, 0.861649, 0, -0.33035046, 167.16666, 20, 28.666666)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.303206195831299
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_101" unique_id=1038939521]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_101/WallSolid" unique_id=385045806]
+shape = SubResource("BoxShape3D_g582l")
+
+[node name="Curtain_102" type="Node3D" parent="EastCurtain" unique_id=1657285041 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.30157703, 0, -0.9438583, 0, 1, 0, 0.86164856, 0, -0.33035046, 164.83334, 20, 35.333332)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.303202857971192
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_102" unique_id=36871975]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_102/WallSolid" unique_id=656731262]
+shape = SubResource("BoxShape3D_hj2wb")
+
+[node name="Curtain_103" type="Node3D" parent="EastCurtain" unique_id=184126788 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.30157754, 0, -0.9438583, 0, 1, 0, 0.86165, 0, -0.33035046, 162.5, 20, 42)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.303214778900147
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_103" unique_id=2006940135]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_103/WallSolid" unique_id=235019643]
+shape = SubResource("BoxShape3D_ehaeh")
+
+[node name="Curtain_104" type="Node3D" parent="EastCurtain" unique_id=790718903 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.30157703, 0, -0.9438583, 0, 1, 0, 0.86164856, 0, -0.33035046, 160.16666, 20, 48.666668)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.303202857971192
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_104" unique_id=878770420]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_104/WallSolid" unique_id=284165394]
+shape = SubResource("BoxShape3D_anweo")
+
+[node name="Curtain_105" type="Node3D" parent="EastCurtain" unique_id=521757865 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.30157718, 0, -0.9438583, 0, 1, 0, 0.861649, 0, -0.33035046, 157.83334, 20, 55.333336)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.303206195831299
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_105" unique_id=1539551663]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_105/WallSolid" unique_id=1852452865]
+shape = SubResource("BoxShape3D_1qd22")
+
+[node name="Curtain_106" type="Node3D" parent="EastCurtain" unique_id=1216277193 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.3015771, 0, -0.9438583, 0, 1, 0, 0.8616487, 0, -0.33035046, 155.5, 20, 62)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.303203811645508
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_106" unique_id=1855288731]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_106/WallSolid" unique_id=1248116443]
+shape = SubResource("BoxShape3D_30lcv")
+
+[node name="Curtain_107" type="Node3D" parent="EastCurtain" unique_id=1946780653 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.30157733, 0, -0.9438583, 0, 1, 0, 0.86164933, 0, -0.33035046, 153.16666, 20, 68.666664)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.3032095336914065
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_107" unique_id=2035091517]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_107/WallSolid" unique_id=171062922]
+shape = SubResource("BoxShape3D_jd1gs")
+
+[node name="Curtain_108" type="Node3D" parent="EastCurtain" unique_id=169496986 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.7492982, 0, -0.5865099, 0, 1, 0, 0.5425954, 0, -0.80994207, 149.1, 19.2, 74.1)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.401005973815918
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_108" unique_id=2122455267]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_108/WallSolid" unique_id=882679489]
+shape = SubResource("BoxShape3D_f3bwm")
+
+[node name="Curtain_109" type="Node3D" parent="EastCurtain" unique_id=1823027253 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.7492987, 0, -0.5865099, 0, 1, 0, 0.5425957, 0, -0.80994207, 143.29999, 17.599998, 78.3)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.401010265350342
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_109" unique_id=523004524]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_109/WallSolid" unique_id=1376779637]
+shape = SubResource("BoxShape3D_p5616")
+
+[node name="Curtain_110" type="Node3D" parent="EastCurtain" unique_id=844416706 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.74929696, 0, -0.5865099, 0, 1, 0, 0.5425945, 0, -0.80994207, 137.5, 16, 82.5)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.400993576049805
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_110" unique_id=446053288]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_110/WallSolid" unique_id=779186290]
+shape = SubResource("BoxShape3D_ra2bo")
+
+[node name="Curtain_111" type="Node3D" parent="EastCurtain" unique_id=794362308 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.7492987, 0, -0.5865099, 0, 1, 0, 0.5425957, 0, -0.80994207, 131.70001, 14.4, 86.7)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.401010265350342
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_111" unique_id=1815676450]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_111/WallSolid" unique_id=1183961003]
+shape = SubResource("BoxShape3D_6hypk")
+
+[node name="Curtain_112" type="Node3D" parent="EastCurtain" unique_id=1794728442 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.7492982, 0, -0.5865099, 0, 1, 0, 0.5425954, 0, -0.80994207, 125.9, 12.8, 90.9)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.401005973815918
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_112" unique_id=172689520]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_112/WallSolid" unique_id=24132110]
+shape = SubResource("BoxShape3D_ryk7p")
+
+[node name="Curtain_113" type="Node3D" parent="EastCurtain" unique_id=1527006396 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.7492982, 0, -0.5865099, 0, 1, 0, 0.5425954, 0, -0.80994207, 120.1, 11.2, 95.1)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.401005973815918
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_113" unique_id=624784908]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_113/WallSolid" unique_id=662862945]
+shape = SubResource("BoxShape3D_ik413")
+
+[node name="Curtain_114" type="Node3D" parent="EastCurtain" unique_id=1959407060 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.7492981, 0, -0.5865099, 0, 1, 0, 0.54259527, 0, -0.80994207, 114.3, 9.6, 99.3)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.401004543304444
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_114" unique_id=1120229342]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_114/WallSolid" unique_id=1199187791]
+shape = SubResource("BoxShape3D_8bg1v")
+
+[node name="Curtain_115" type="Node3D" parent="EastCurtain" unique_id=927226388 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.7492987, 0, -0.5865099, 0, 1, 0, 0.5425957, 0, -0.80994207, 108.5, 8, 103.5)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.401010265350342
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_115" unique_id=1522337244]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_115/WallSolid" unique_id=802274436]
+shape = SubResource("BoxShape3D_qlt1i")
+
+[node name="Curtain_116" type="Node3D" parent="EastCurtain" unique_id=969157286 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.7492977, 0, -0.5865099, 0, 1, 0, 0.54259497, 0, -0.80994207, 102.7, 6.4, 107.700005)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.40100025177002
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_116" unique_id=124845543]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_116/WallSolid" unique_id=998516909]
+shape = SubResource("BoxShape3D_oije2")
+
+[node name="Curtain_117" type="Node3D" parent="EastCurtain" unique_id=743452697 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.7492982, 0, -0.5865099, 0, 1, 0, 0.5425954, 0, -0.80994207, 96.9, 5.8567567, 111.9)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.401005973815918
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCurtain/Curtain_117" unique_id=662058790]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCurtain/Curtain_117/WallSolid" unique_id=1738345970]
+shape = SubResource("BoxShape3D_0reih")
+
+[node name="WestCoastalEnd" type="Node3D" parent="." unique_id=256244606]
+
+[node name="Curtain_118" type="Node3D" parent="WestCoastalEnd" unique_id=1047768412 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.35624963, 0, 0.9090648, 0, 1, 0, -0.7772719, 0, -0.4166547, -163.375, 4, 117)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 6.840189208984375
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCoastalEnd/Curtain_118" unique_id=1687695021]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCoastalEnd/Curtain_118/WallSolid" unique_id=930333309]
+shape = SubResource("BoxShape3D_t4lxm")
+
+[node name="Curtain_119" type="Node3D" parent="WestCoastalEnd" unique_id=850599024 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.35624963, 0, 0.9090648, 0, 1, 0, -0.7772719, 0, -0.4166547, -166.125, 4, 111)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 6.840189208984375
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCoastalEnd/Curtain_119" unique_id=1105868535]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCoastalEnd/Curtain_119/WallSolid" unique_id=466824698]
+shape = SubResource("BoxShape3D_6cjy8")
+
+[node name="Curtain_120" type="Node3D" parent="WestCoastalEnd" unique_id=42302520 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.35624963, 0, 0.9090648, 0, 1, 0, -0.7772719, 0, -0.4166547, -168.875, 4, 105)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 6.840189208984375
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCoastalEnd/Curtain_120" unique_id=1434179252]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCoastalEnd/Curtain_120/WallSolid" unique_id=2080920417]
+shape = SubResource("BoxShape3D_jdqny")
+
+[node name="Curtain_121" type="Node3D" parent="WestCoastalEnd" unique_id=1013307856 instance=ExtResource("1_pymxj")]
+transform = Transform3D(-0.35624963, 0, 0.9090648, 0, 1, 0, -0.7772719, 0, -0.4166547, -171.625, 4, 99)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 6.840189208984375
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="WestCoastalEnd/Curtain_121" unique_id=835831149]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="WestCoastalEnd/Curtain_121/WallSolid" unique_id=2039097227]
+shape = SubResource("BoxShape3D_0ljwq")
+
+[node name="EastCoastalEnd" type="Node3D" parent="." unique_id=1887220042]
+
+[node name="Curtain_122" type="Node3D" parent="EastCoastalEnd" unique_id=2132137810 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.12924263, 0, -0.9899495, 0, 1, 0, 0.9046985, 0, 0.14142135, 94.5, 4, 117.5)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.311067810058594
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCoastalEnd/Curtain_122" unique_id=1743169518]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCoastalEnd/Curtain_122/WallSolid" unique_id=1319772543]
+shape = SubResource("BoxShape3D_m5iv1")
+
+[node name="Curtain_123" type="Node3D" parent="EastCoastalEnd" unique_id=817466047 instance=ExtResource("1_pymxj")]
+transform = Transform3D(0.12924263, 0, -0.9899495, 0, 1, 0, 0.9046985, 0, 0.14142135, 95.5, 4, 124.5)
+metadata/original_asset = "low_city_wall_8m"
+metadata/wall_module_length_m = 7.311067810058594
+metadata/above_ground_height_m = 9.8
+
+[node name="WallSolid" type="StaticBody3D" parent="EastCoastalEnd/Curtain_123" unique_id=145007025]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.3, 0)
+collision_layer = 4
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="EastCoastalEnd/Curtain_123/WallSolid" unique_id=1059185042]
+shape = SubResource("BoxShape3D_578o8")
+
+[node name="WallRenderBatches" type="Node3D" parent="." unique_id=1984371864]
+script = ExtResource("2_5pjni")
+
+[node name="CityWall_0" type="MultiMeshInstance3D" parent="WallRenderBatches" unique_id=1358097298]
+material_override = ExtResource("3_k6fca")
+multimesh = SubResource("MultiMesh_6ej8r")
+metadata/source_mesh_paths = PackedStringArray("WestCurtain/Curtain_000/low_city_wall_8m", "WestCurtain/Curtain_001/low_city_wall_8m", "WestCurtain/Curtain_002/low_city_wall_8m", "WestCurtain/Curtain_003/low_city_wall_8m", "WestCurtain/Curtain_004/low_city_wall_8m", "WestCurtain/Curtain_005/low_city_wall_8m", "WestCurtain/Curtain_006/low_city_wall_8m", "WestCurtain/Curtain_007/low_city_wall_8m", "WestCurtain/Curtain_008/low_city_wall_8m", "WestCurtain/Curtain_009/low_city_wall_8m", "WestCurtain/Curtain_010/low_city_wall_8m", "WestCurtain/Curtain_011/low_city_wall_8m", "WestCurtain/Curtain_012/low_city_wall_8m", "WestCurtain/Curtain_013/low_city_wall_8m", "WestCurtain/Curtain_014/low_city_wall_8m", "WestCurtain/Curtain_015/low_city_wall_8m", "WestCurtain/Curtain_016/low_city_wall_8m", "WestCurtain/Curtain_017/low_city_wall_8m", "WestCurtain/Curtain_018/low_city_wall_8m", "WestCurtain/Curtain_019/low_city_wall_8m", "WestCurtain/Curtain_020/low_city_wall_8m", "WestCurtain/Curtain_021/low_city_wall_8m", "WestCurtain/Curtain_022/low_city_wall_8m", "WestCurtain/Curtain_023/low_city_wall_8m", "WestCurtain/Curtain_024/low_city_wall_8m", "WestCurtain/Curtain_025/low_city_wall_8m", "WestCurtain/Curtain_026/low_city_wall_8m", "WestCurtain/Curtain_027/low_city_wall_8m", "WestCurtain/Curtain_028/low_city_wall_8m", "WestCurtain/Curtain_029/low_city_wall_8m", "WestCurtain/Curtain_030/low_city_wall_8m", "WestCurtain/Curtain_031/low_city_wall_8m", "WestCurtain/Curtain_032/low_city_wall_8m", "WestCurtain/Curtain_033/low_city_wall_8m", "WestCurtain/Curtain_034/low_city_wall_8m", "WestCurtain/Curtain_035/low_city_wall_8m", "WestCurtain/Curtain_036/low_city_wall_8m", "WestCurtain/Curtain_037/low_city_wall_8m", "WestCurtain/Curtain_038/low_city_wall_8m", "WestCurtain/Curtain_039/low_city_wall_8m", "WestCurtain/Curtain_040/low_city_wall_8m", "WestCurtain/Curtain_041/low_city_wall_8m", "WestCurtain/Curtain_042/low_city_wall_8m", "WestCurtain/Curtain_043/low_city_wall_8m", "WestCurtain/Curtain_044/low_city_wall_8m", "WestCurtain/Curtain_045/low_city_wall_8m", "WestCurtain/Curtain_046/low_city_wall_8m", "WestCurtain/Curtain_047/low_city_wall_8m", "WestCurtain/Curtain_048/low_city_wall_8m", "WestCurtain/Curtain_049/low_city_wall_8m", "WestCurtain/Curtain_050/low_city_wall_8m", "WestCurtain/Curtain_051/low_city_wall_8m", "WestCurtain/Curtain_052/low_city_wall_8m", "WestCurtain/Curtain_053/low_city_wall_8m", "WestCurtain/Curtain_054/low_city_wall_8m", "WestCurtain/Curtain_055/low_city_wall_8m", "WestCurtain/Curtain_056/low_city_wall_8m", "WestCurtain/Curtain_057/low_city_wall_8m", "EastCurtain/Curtain_058/low_city_wall_8m", "EastCurtain/Curtain_059/low_city_wall_8m", "EastCurtain/Curtain_060/low_city_wall_8m", "EastCurtain/Curtain_061/low_city_wall_8m", "EastCurtain/Curtain_062/low_city_wall_8m", "EastCurtain/Curtain_063/low_city_wall_8m", "EastCurtain/Curtain_064/low_city_wall_8m", "EastCurtain/Curtain_065/low_city_wall_8m", "EastCurtain/Curtain_066/low_city_wall_8m", "EastCurtain/Curtain_067/low_city_wall_8m", "EastCurtain/Curtain_068/low_city_wall_8m", "EastCurtain/Curtain_069/low_city_wall_8m", "EastCurtain/Curtain_070/low_city_wall_8m", "EastCurtain/Curtain_071/low_city_wall_8m", "EastCurtain/Curtain_072/low_city_wall_8m", "EastCurtain/Curtain_073/low_city_wall_8m", "EastCurtain/Curtain_074/low_city_wall_8m", "EastCurtain/Curtain_075/low_city_wall_8m", "EastCurtain/Curtain_076/low_city_wall_8m", "EastCurtain/Curtain_077/low_city_wall_8m", "EastCurtain/Curtain_078/low_city_wall_8m", "EastCurtain/Curtain_079/low_city_wall_8m", "EastCurtain/Curtain_080/low_city_wall_8m", "EastCurtain/Curtain_081/low_city_wall_8m", "EastCurtain/Curtain_082/low_city_wall_8m", "EastCurtain/Curtain_083/low_city_wall_8m", "EastCurtain/Curtain_084/low_city_wall_8m", "EastCurtain/Curtain_085/low_city_wall_8m", "EastCurtain/Curtain_086/low_city_wall_8m", "EastCurtain/Curtain_087/low_city_wall_8m", "EastCurtain/Curtain_088/low_city_wall_8m", "EastCurtain/Curtain_089/low_city_wall_8m", "EastCurtain/Curtain_090/low_city_wall_8m", "EastCurtain/Curtain_091/low_city_wall_8m", "EastCurtain/Curtain_092/low_city_wall_8m", "EastCurtain/Curtain_093/low_city_wall_8m", "EastCurtain/Curtain_094/low_city_wall_8m", "EastCurtain/Curtain_095/low_city_wall_8m", "EastCurtain/Curtain_096/low_city_wall_8m", "EastCurtain/Curtain_097/low_city_wall_8m", "EastCurtain/Curtain_098/low_city_wall_8m", "EastCurtain/Curtain_099/low_city_wall_8m", "EastCurtain/Curtain_100/low_city_wall_8m", "EastCurtain/Curtain_101/low_city_wall_8m", "EastCurtain/Curtain_102/low_city_wall_8m", "EastCurtain/Curtain_103/low_city_wall_8m", "EastCurtain/Curtain_104/low_city_wall_8m", "EastCurtain/Curtain_105/low_city_wall_8m", "EastCurtain/Curtain_106/low_city_wall_8m", "EastCurtain/Curtain_107/low_city_wall_8m", "EastCurtain/Curtain_108/low_city_wall_8m", "EastCurtain/Curtain_109/low_city_wall_8m", "EastCurtain/Curtain_110/low_city_wall_8m", "EastCurtain/Curtain_111/low_city_wall_8m", "EastCurtain/Curtain_112/low_city_wall_8m", "EastCurtain/Curtain_113/low_city_wall_8m", "EastCurtain/Curtain_114/low_city_wall_8m", "EastCurtain/Curtain_115/low_city_wall_8m", "EastCurtain/Curtain_116/low_city_wall_8m", "EastCurtain/Curtain_117/low_city_wall_8m", "WestCoastalEnd/Curtain_118/low_city_wall_8m", "WestCoastalEnd/Curtain_119/low_city_wall_8m", "WestCoastalEnd/Curtain_120/low_city_wall_8m", "WestCoastalEnd/Curtain_121/low_city_wall_8m", "EastCoastalEnd/Curtain_122/low_city_wall_8m", "EastCoastalEnd/Curtain_123/low_city_wall_8m")

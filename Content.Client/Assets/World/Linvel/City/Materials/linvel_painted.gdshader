@@ -1,5 +1,6 @@
 shader_type spatial;
-render_mode diffuse_toon, specular_disabled, cull_disabled;
+render_mode specular_disabled, cull_disabled;
+#include "res://Assets/World/Linvel/City/Materials/painted_light.gdshaderinc"
 
 // Existing Linvel atlas shared by the first city part; source GLBs stay unchanged.
 uniform sampler2D albedo_texture : source_color, filter_linear_mipmap, repeat_disable;
@@ -9,4 +10,9 @@ uniform float roughness : hint_range(0.0, 1.0) = 0.85;
 void fragment() {
     ALBEDO = texture(albedo_texture, UV).rgb * tint.rgb;
     ROUGHNESS = roughness;
+    SPECULAR = 0.0;
+}
+
+void light() {
+    DIFFUSE_LIGHT += painted_diffuse(NORMAL, LIGHT) * LIGHT_COLOR * ATTENUATION / PI;
 }

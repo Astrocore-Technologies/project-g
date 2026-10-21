@@ -30,13 +30,13 @@ public sealed class HoldAbilityTests
     [Fact]public void ReleaseBeforeActivationCancelsPreparationWithoutAChargeOrResourcePrice()
     {
         var f=new ChannelingTests.Fight(Document(true));f.Cast();Control(f);f.Step();
-        Assert.Equal(140,f.Mana);Assert.Equal(1,f.Skill.Charges);Assert.Equal(0,f.Skill.ReadyInSeconds);Assert.Empty(f.Hits);Assert.Null(f.Actor.Action);
+        Assert.Equal(100,f.Mana);Assert.Equal(1,f.Skill.Charges);Assert.Equal(0,f.Skill.ReadyInSeconds);Assert.Empty(f.Hits);Assert.Null(f.Actor.Action);
     }
 
     [Fact]public void APressAndReleaseWithinOneTickPaysOnlyActivationAndCreatesNoUnpaidPulse()
     {
         var f=new ChannelingTests.Fight(Document());Assert.True(f.World.TryQueueAbility(42,new(1,0,2,f.Combat.Get(f.World.TrainingTargetId).Position),0));
-        Control(f);f.Step();Assert.Equal(138,f.Mana);Assert.Empty(f.Hits);Assert.Equal(0,f.Skill.PendingEndCharges);Assert.Equal(5,f.Skill.ReadyInSeconds);Assert.Null(f.Actor.Action);
+        Control(f);f.Step();Assert.Equal(98,f.Mana);Assert.Empty(f.Hits);Assert.Equal(0,f.Skill.PendingEndCharges);Assert.Equal(5,f.Skill.ReadyInSeconds);Assert.Null(f.Actor.Action);
     }
 
     [Theory][InlineData(true,0)][InlineData(false,1)]

@@ -1,0 +1,19 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://Assets/World/Linvel/City/Production/CoastalSeabed.gdshader" id="1_rgnn0"]
+[ext_resource type="Texture2D" path="res://Assets/World/Linvel/Beech/Revision2/StylePass/GroundRock.res" id="2_x4o4d"]
+[ext_resource type="Texture2D" path="res://Assets/World/Linvel/Beech/Revision2/StylePass/GroundPath.res" id="3_cksxx"]
+[ext_resource type="Texture2D" path="res://Assets/World/Linvel/Beech/Revision2/StylePass/WaterColour.res" id="4_h5p66"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_rgnn0")
+shader_parameter/shadow_tint = Color(0.68, 0.76, 0.88, 1)
+shader_parameter/light_softness = 0.48
+shader_parameter/wrap_light = 0.12
+shader_parameter/shade_floor = 0.18
+shader_parameter/sand_paint = ExtResource("3_cksxx")
+shader_parameter/rock_paint = ExtResource("2_x4o4d")
+shader_parameter/water_paint = ExtResource("4_h5p66")
+shader_parameter/sand_tint = Color(0.74, 0.82, 0.68, 1)
+shader_parameter/caustic_strength = 0.08

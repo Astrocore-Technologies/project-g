@@ -15,13 +15,16 @@ public sealed class ContentCatalogTests
     public void ShippedContentLoadsAndReferencesResolve()
     {
         var catalog = Load();
-        Assert.Equal(19, catalog.BalanceVersion);
+        Assert.Equal(22, catalog.BalanceVersion);
         Assert.Equal(8, catalog.Weapons.Count);
         Assert.Equal(18, catalog.Abilities.Count);
         var actor = catalog.Creatures["test_adventurer"];
         Assert.True(catalog.Weapons.ContainsKey(actor.WeaponId));
         Assert.All(actor.AbilityIds, id => Assert.True(catalog.Abilities.ContainsKey(id)));
-        Assert.Equal(110, new StatCalculator(catalog.Balance).Calculate(actor).MaxHealth, 8);
+        Assert.Equal(default, actor.Stats);
+        var derived = new StatCalculator(catalog.Balance).Calculate(actor);
+        Assert.Equal(100, derived.MaxHealth, 8); Assert.Equal(100, derived.MaxMana, 8);
+        Assert.Equal(20, catalog.Progression.InitialStatPoints); Assert.Equal(5, catalog.Progression.StatPointsPerLevel);
     }
 
     [Theory]

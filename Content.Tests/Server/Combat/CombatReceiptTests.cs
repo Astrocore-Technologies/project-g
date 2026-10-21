@@ -16,7 +16,7 @@ public sealed class CombatReceiptTests
             SkillControl:new(1,1,0,AbilityControlKind.Release,aim)),at));
         Assert.True(f.Combat.ScheduleInput(f.Id,new(CombatInputKind.SkillControl,
             SkillControl:new(2,1,0,AbilityControlKind.Aim,aim+new Vector2(3,0))),at));
-        f.Step();Assert.Single(f.Hits);Assert.Equal(138,f.Mana);Assert.Equal(0,f.Skill.Charges);
+        f.Step();Assert.Single(f.Hits);Assert.Equal(98,f.Mana);Assert.Equal(0,f.Skill.Charges);
     }
     [Fact]public void AReceivedBasicCancelSurvivesALaterAimForTheSameAction()
     {

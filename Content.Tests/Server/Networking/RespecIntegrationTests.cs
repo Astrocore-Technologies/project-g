@@ -34,13 +34,13 @@ public sealed class RespecIntegrationTests
             client.Respec(new(2,RespecAction.Confirm,npc.EntityId,quote.QuoteId,quote.Operation));await Poll(()=>store.BlockedSave,client);
             gate.TrySetException(new IOException("Injected reset checkpoint failure."));await Poll(()=>server.ExecuteTask!.IsCompleted,client);
             await Assert.ThrowsAnyAsync<Exception>(()=>server.ExecuteTask!);
-            Assert.Empty(client.RespecResults);Assert.Equal(13,client.Progressions[client.LocalSpawn.EntityId].StatPoints);
+            Assert.Empty(client.RespecResults);Assert.Equal(15,client.Progressions[client.LocalSpawn.EntityId].StatPoints);
             Assert.Equal(initial.Stats,store.SingleState.Stats);
         }
         finally{gate?.TrySetResult();await server.StopAsync(default);}
         await using var reopened=await store.OpenAsync(credential,initial,default);
         Assert.Equal(initial.Stats,reopened.State.Stats);Assert.Equal(250,reopened.State.Inventory!.Economy!.Coins);
-        Assert.Equal(initial.Progression!.Respec,reopened.State.Progression!.Respec);Assert.Equal(13,reopened.State.Progression.StatPoints);
+        Assert.Equal(initial.Progression!.Respec,reopened.State.Progression!.Respec);Assert.Equal(15,reopened.State.Progression.StatPoints);
     }
 
     [Theory][InlineData(false)][InlineData(true)]
@@ -60,12 +60,12 @@ public sealed class RespecIntegrationTests
             var npc=owner.QuestNpcs.Values.Single(n=>n.Name=="Лесная таверна");var id=owner.LocalSpawn.EntityId;
             owner.Respec(new(1,RespecAction.Quote,npc.EntityId));await Poll(()=>owner.RespecQuotes.Count==1,owner,observer);quote=owner.RespecQuotes[0];
             Assert.Equal(paid?100:0,quote.Price);Assert.Equal(paid?2UL:1UL,quote.Operation);
-            Assert.Equal(initial.Stats,store.SingleState.Stats);Assert.Equal(13,owner.Progressions[id].StatPoints);Assert.Empty(observer.RespecQuotes);
+            Assert.Equal(initial.Stats,store.SingleState.Stats);Assert.Equal(15,owner.Progressions[id].StatPoints);Assert.Empty(observer.RespecQuotes);
             gate=store.PauseSaves(condition:changes=>changes.Any(c=>c.State.Progression?.Respec?.Completed==(paid?2:1)));
             owner.Respec(new(2,RespecAction.Confirm,npc.EntityId,quote.QuoteId,quote.Operation));await Poll(()=>store.BlockedSave,owner,observer);
             for(var i=0;i<15;i++){owner.Poll();observer.Poll();await Task.Delay(10);}
-            Assert.Equal(initial.Stats,store.SingleState.Stats);Assert.Equal(13,owner.Progressions[id].StatPoints);Assert.Empty(owner.RespecResults);
-            gate.TrySetResult();await Poll(()=>owner.RespecResults.Count==1&&owner.Progressions[id].StatPoints==25,owner,observer);
+            Assert.Equal(initial.Stats,store.SingleState.Stats);Assert.Equal(15,owner.Progressions[id].StatPoints);Assert.Empty(owner.RespecResults);
+            gate.TrySetResult();await Poll(()=>owner.RespecResults.Count==1&&owner.Progressions[id].StatPoints==27,owner,observer);
             Assert.Equal(RespecOutcome.Accepted,owner.RespecResults[0].Outcome);Assert.Equal(paid?100:0,owner.RespecResults[0].PaidCoins);
             owner.Respec(new(2,RespecAction.Confirm,npc.EntityId,quote.QuoteId,quote.Operation));await Poll(()=>owner.RespecResults.Count==2,owner,observer);
             Assert.Equal(RespecOutcome.AlreadyProcessed,owner.RespecResults[1].Outcome);Assert.Empty(observer.RespecResults);
@@ -73,7 +73,7 @@ public sealed class RespecIntegrationTests
         finally{gate?.TrySetResult();await server.StopAsync(default);}
         await using var reopened=await store.OpenAsync(credential,initial,default);
         Assert.Equal(quote.Operation,(ulong)reopened.State.Progression!.Respec!.Completed);Assert.Equal(quote.QuoteId,reopened.State.Progression.Respec.QuoteId);
-        Assert.Equal(paid?150:250,reopened.State.Inventory!.Economy!.Coins);Assert.Equal(25,reopened.State.Progression.StatPoints);
+        Assert.Equal(paid?150:250,reopened.State.Inventory!.Economy!.Coins);Assert.Equal(27,reopened.State.Progression.StatPoints);
         Assert.Equal(world.CreateInitialCharacter().Stats,reopened.State.Stats);
     }
 }

@@ -28,9 +28,9 @@ public sealed class BlockPressureTests
         var a=normal.ResolveDirectHit(new(2),new(1),-Vector2.UnitY,30,magic:false,blockable:true);
         var b=strong.ResolveDirectHit(new(2),new(1),-Vector2.UnitY,30,magic:false,blockable:true);
         Assert.Equal(GuardImpact.Blocked,a.Guard); Assert.Equal(a.Damage,b.Damage);
-        Assert.Equal(90,normal.DefenseState(new(1),1).Stamina); Assert.Equal(95,strong.DefenseState(new(1),1).Stamina);
+        Assert.Equal(70,normal.DefenseState(new(1),1).Stamina); Assert.Equal(95,strong.DefenseState(new(1),1).Stamina);
         var heavy=Create(); heavy.ResolveDirectHit(new(2),new(1),-Vector2.UnitY,30,magic:false,blockable:true,pressureScale:2);
-        Assert.Equal(80,heavy.DefenseState(new(1),1).Stamina);
+        Assert.Equal(40,heavy.DefenseState(new(1),1).Stamina);
     }
 
     [Theory]

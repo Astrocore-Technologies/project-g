@@ -23,7 +23,7 @@ public sealed class DefenseSimulationTests
             // These contact-math fixtures inject an instantaneous weapon, independently of NPC AI phases.
             foreach(var id in new[]{new NetworkEntityId(1),new NetworkEntityId(2),new NetworkEntityId(3)})
                 Combat.Get(id).Weapon=Combat.Get(id).Weapon with {BasicAttack=null};
-            // 30 pressure against the player's 30 strength costs exactly 10 on impact.
+            // 30 pressure against the zero-stat player's baseline block strength 10 costs 30.
             Combat.Get(new(2)).Stats=Combat.Get(new(2)).Stats with {MeleeAttack=20,MeleeWeaponMultiplier=1};
             Combat.Get(new(3)).Stats=Combat.Get(new(3)).Stats with {MeleeAttack=20,MeleeWeaponMultiplier=1};
             spatial.Add(new(1),Vector2.Zero); spatial.Add(new(2),Vector2.UnitY); spatial.Add(new(3),Vector2.UnitY);
@@ -41,7 +41,7 @@ public sealed class DefenseSimulationTests
         var baseline=new Fixture().Hit().Damage;
         var f=new Fixture(); f.Guard(1,DefenseAction.Block);
         Assert.Equal(100,f.State.Stamina); Assert.Equal(.5f,f.State.MovementMultiplier);
-        Assert.Equal(baseline*.7,f.Hit().Damage,8); Assert.Equal(90,f.State.Stamina);
+        Assert.Equal(baseline*.7,f.Hit().Damage,8); Assert.Equal(70,f.State.Stamina);
         var back=new Fixture(); back.Guard(1,DefenseAction.Block,-Vector2.UnitY);
         Assert.Equal(baseline,back.Hit().Damage); Assert.Equal(100,back.State.Stamina);
     }

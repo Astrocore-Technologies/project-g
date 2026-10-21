@@ -3,7 +3,7 @@ namespace Content.Server.Progression;
 public sealed record ProgressionBalance
 {
     public int LevelCap { get; init; } = 30;
-    public int InitialStatPoints { get; init; } = 18; // GDD 01 model B, granted once on creation.
+    public int InitialStatPoints { get; init; } = 20; // Direct user decision: zero starting stats, granted once on creation.
     public int ExperiencePerLevel { get; init; } = 100;
     // Absent preserves the existing prototype curve. Experimental parameters must be supplied explicitly.
     public PowerExperienceCurveDefinition? ExperienceCurve { get; init; }

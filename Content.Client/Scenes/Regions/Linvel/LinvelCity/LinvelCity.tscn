@@ -1,0 +1,119 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://Scenes/Regions/Linvel/LinvelCity/Parts/CityCenter.tscn" id="1_kac4d"]
+[ext_resource type="PackedScene" path="res://Scenes/Regions/Linvel/LinvelCity/Parts/ResidentialTerraces.tscn" id="2_arl85"]
+[ext_resource type="PackedScene" path="res://Scenes/Regions/Linvel/LinvelCity/Parts/CraftsQuarter.tscn" id="3_0gkfj"]
+[ext_resource type="PackedScene" path="res://Scenes/Regions/Linvel/LinvelCity/Parts/UpperTown.tscn" id="4_v5tkl"]
+[ext_resource type="PackedScene" path="res://Scenes/Regions/Linvel/LinvelCity/Parts/TrainingQuarter.tscn" id="5_wdfo5"]
+[ext_resource type="PackedScene" path="res://Scenes/Regions/Linvel/LinvelCity/Parts/SanctuaryQuarter.tscn" id="6_4a1uo"]
+[ext_resource type="PackedScene" path="res://Scenes/Regions/Linvel/LinvelCity/Parts/GateQuarter.tscn" id="7_ajwvm"]
+[ext_resource type="PackedScene" path="res://Scenes/Regions/Linvel/LinvelCity/Parts/GardensQuarter.tscn" id="8_mdk5w"]
+[ext_resource type="PackedScene" path="res://Scenes/Regions/Linvel/LinvelCity/Parts/HarborQuarter.tscn" id="9_ihxxr"]
+[ext_resource type="PackedScene" path="res://Scenes/Regions/Linvel/LinvelCity/Parts/CoastAndBackdrop.tscn" id="10_bk3fb"]
+[ext_resource type="PackedScene" path="res://Scenes/Regions/Linvel/LinvelCity/Parts/OuterDefenses.tscn" id="11_arl85"]
+[ext_resource type="Terrain3DMaterial" path="res://Assets/World/Linvel/City/Production/CityTerrainMaterial.tres" id="12_0gkfj"]
+[ext_resource type="Terrain3DAssets" path="res://Assets/World/Linvel/City/Production/TerrainAssets.tres" id="12_arl85"]
+[ext_resource type="Terrain3DRegion" path="res://Assets/World/Linvel/City/Production/TerrainData/terrain3d-01-01.res" id="13_0gkfj"]
+[ext_resource type="Terrain3DRegion" path="res://Assets/World/Linvel/City/Production/TerrainData/terrain3d-01-02.res" id="14_v5tkl"]
+[ext_resource type="Terrain3DRegion" path="res://Assets/World/Linvel/City/Production/TerrainData/terrain3d-01-03.res" id="15_wdfo5"]
+[ext_resource type="Terrain3DRegion" path="res://Assets/World/Linvel/City/Production/TerrainData/terrain3d-01_00.res" id="16_4a1uo"]
+[ext_resource type="Terrain3DRegion" path="res://Assets/World/Linvel/City/Production/TerrainData/terrain3d-02-01.res" id="17_ajwvm"]
+[ext_resource type="Terrain3DRegion" path="res://Assets/World/Linvel/City/Production/TerrainData/terrain3d-02-02.res" id="18_mdk5w"]
+[ext_resource type="Terrain3DRegion" path="res://Assets/World/Linvel/City/Production/TerrainData/terrain3d-02-03.res" id="19_ihxxr"]
+[ext_resource type="Terrain3DRegion" path="res://Assets/World/Linvel/City/Production/TerrainData/terrain3d-02_00.res" id="20_bk3fb"]
+[ext_resource type="Terrain3DRegion" path="res://Assets/World/Linvel/City/Production/TerrainData/terrain3d_00-01.res" id="21_f2gms"]
+[ext_resource type="Terrain3DRegion" path="res://Assets/World/Linvel/City/Production/TerrainData/terrain3d_00-02.res" id="22_tejtu"]
+[ext_resource type="Terrain3DRegion" path="res://Assets/World/Linvel/City/Production/TerrainData/terrain3d_00-03.res" id="23_dw23r"]
+[ext_resource type="Terrain3DRegion" path="res://Assets/World/Linvel/City/Production/TerrainData/terrain3d_00_00.res" id="24_ott7o"]
+[ext_resource type="Terrain3DRegion" path="res://Assets/World/Linvel/City/Production/TerrainData/terrain3d_01-01.res" id="25_n78pm"]
+[ext_resource type="Terrain3DRegion" path="res://Assets/World/Linvel/City/Production/TerrainData/terrain3d_01-02.res" id="26_fc20f"]
+[ext_resource type="Terrain3DRegion" path="res://Assets/World/Linvel/City/Production/TerrainData/terrain3d_01-03.res" id="27_qwgq6"]
+[ext_resource type="Terrain3DRegion" path="res://Assets/World/Linvel/City/Production/TerrainData/terrain3d_01_00.res" id="28_pexau"]
+
+[node name="LinvelCity" type="Node3D" unique_id=1660705708]
+metadata/masterplan_revision = 1
+metadata/linvel_city_stage = "whole-city-art-pass-01"
+metadata/art_direction = "Stylized Hand-Painted Anime 3D"
+metadata/human_playtest_approved = false
+metadata/server_integration = false
+metadata/legacy_scene = "res://Scenes/Regions/Linvel/Legacy/LinvelCity_Review03.tscn"
+metadata/paper_plan = "art-source/linvel/masterplan/linvel-paper-plan.png"
+metadata/blockout_surface_fix = true
+metadata/connections_reviewed = true
+metadata/exact_blockout_floors = true
+metadata/final_blockout_review = true
+metadata/continuous_route_landings_v2 = true
+metadata/connected_civic_terrace_v3 = true
+metadata/mainland_extended = true
+metadata/layout_approved_by_user = "2026-10-20; art production authorized"
+metadata/whole_city_art_revision = 1
+metadata/source_blockout_scene = "res://Scenes/Regions/Linvel/LinvelCity.tscn"
+metadata/art_visual_finish = true
+metadata/tree_style = "Exact Beech Valley VisualStyle native meshes and materials"
+metadata/dry_city_landfill_revision = 1.0
+metadata/dry_urban_underlay = true
+metadata/entry_revision = 1
+metadata/entry_design = "art-source/linvel/gate-revision/design.md"
+metadata/wall_coastal_ends = true
+metadata/wall_foundations_settled = true
+metadata/entry_sightline_reviewed = true
+metadata/entry_paving_capped = true
+metadata/surface_repair_revision = 1
+metadata/surface_foundation_mask = true
+metadata/lighthouse_landing_trimmed = true
+metadata/surface_enclosure_CityCenter = true
+metadata/surface_enclosure_ResidentialTerraces = true
+metadata/surface_enclosure_CraftsQuarter = true
+metadata/surface_enclosure_UpperTown = true
+metadata/surface_enclosure_TrainingQuarter = true
+metadata/surface_enclosure_SanctuaryQuarter = true
+metadata/surface_enclosure_HarborQuarter = true
+metadata/physical_landings_finished = true
+metadata/upper_floor_legacy_cut_removed = true
+metadata/courtyard_infill = true
+metadata/training_verge_finished = true
+metadata/arena_stair_open_sky = true
+metadata/harbor_surface_revision = 1
+
+[node name="CityParts" type="Node3D" parent="." unique_id=125575545]
+
+[node name="CoastAndBackdrop" parent="CityParts" unique_id=840179684 instance=ExtResource("10_bk3fb")]
+
+[node name="GardensQuarter" parent="CityParts" unique_id=1518701752 instance=ExtResource("8_mdk5w")]
+
+[node name="CityCenter" parent="CityParts" unique_id=1690115928 instance=ExtResource("1_kac4d")]
+
+[node name="ResidentialTerraces" parent="CityParts" unique_id=322162250 instance=ExtResource("2_arl85")]
+
+[node name="CraftsQuarter" parent="CityParts" unique_id=2112335679 instance=ExtResource("3_0gkfj")]
+
+[node name="UpperTown" parent="CityParts" unique_id=191669960 instance=ExtResource("4_v5tkl")]
+
+[node name="TrainingQuarter" parent="CityParts" unique_id=1517974386 instance=ExtResource("5_wdfo5")]
+
+[node name="SanctuaryQuarter" parent="CityParts" unique_id=839356638 instance=ExtResource("6_4a1uo")]
+
+[node name="OuterDefenses" parent="CityParts" unique_id=231124295 instance=ExtResource("11_arl85")]
+
+[node name="HarborQuarter" type="Node3D" parent="CityParts" unique_id=1824201659 instance=ExtResource("9_ihxxr")]
+metadata/review_stage = "Whole-city art pass 01; user review pending"
+metadata/art_revision = 1
+metadata/harbor_joints_revision = 1
+metadata/pier_road_joints_finished = true
+
+[node name="GateQuarter" type="Node3D" parent="CityParts" unique_id=1524931762 instance=ExtResource("7_ajwvm")]
+metadata/review_stage = "Whole-city art pass 01; user review pending"
+metadata/art_revision = 1
+
+[node name="Terrain3D" type="Terrain3D" parent="." unique_id=1106117879 groups=["surface_terrain"]]
+data_directory = "res://Assets/World/Linvel/City/Production/TerrainData"
+material = ExtResource("12_0gkfj")
+assets = ExtResource("12_arl85")
+collision_mode = 3
+mesh_lods = 6
+vertex_spacing = 2.0
+top_level = true
+metadata/_edit_lock_ = true
+metadata/terrain_region_resources = Array[Resource]([ExtResource("13_0gkfj"), ExtResource("14_v5tkl"), ExtResource("15_wdfo5"), ExtResource("16_4a1uo"), ExtResource("17_ajwvm"), ExtResource("18_mdk5w"), ExtResource("19_ihxxr"), ExtResource("20_bk3fb"), ExtResource("21_f2gms"), ExtResource("22_tejtu"), ExtResource("23_dw23r"), ExtResource("24_ott7o"), ExtResource("25_n78pm"), ExtResource("26_fc20f"), ExtResource("27_qwgq6"), ExtResource("28_pexau")])
+metadata/masterplan_01 = true
+metadata/art_native_landscape = true

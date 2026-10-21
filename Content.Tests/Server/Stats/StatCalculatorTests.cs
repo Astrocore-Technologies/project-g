@@ -37,7 +37,7 @@ public sealed class StatCalculatorTests
         Assert.Equal(1.05, result.MeleeWeaponMultiplier, 10);
         Assert.Equal(7, result.PhysicalDefense, 10);
         Assert.Equal(15, result.MagicDefense, 10);
-        Assert.Equal(110, result.MaxHealth, 10);
+        Assert.Equal(250, result.MaxHealth, 10);
         Assert.Equal(130, result.MaxMana, 10);
         Assert.Equal(1 + 10d / 30, result.HealthRecovery, 10);
         Assert.Equal(3, result.ManaRecovery, 10);

@@ -207,7 +207,7 @@ public sealed class WeaponWearTests
         f.Until(()=>f.Condition.PendingWear>0);
         Assert.Equal(2u,f.Actor.Action!.InputSequence);Assert.True(f.Actor.IsCasting);Assert.Equal(1,f.Condition.Current);Assert.Equal("training_sword",f.Actor.Weapon.Id);
         f.Until(()=>f.Actor.Action is null);Assert.Equal(0,f.Condition.Current);Assert.Equal("unarmed",f.Actor.Weapon.Id);
-        Assert.Equal(125,f.World.Abilities!.Mana(f.Player.EntityId));
+        Assert.Equal(85,f.World.Abilities!.Mana(f.Player.EntityId));
     }
 
     [Fact]public void LethalReflectionSettlesWearBeforeTheUsedItemBecomesDeathLoot()

@@ -23,6 +23,7 @@ public partial class RespecSmoke:Node
             network.ProgressionReceived+=state=>_state=state;network.RespecResultReceived+=result=>_result=result;
             AddChild(world);network.ConnectToServerAt(port);await Wait(()=>_state.Stats is not null&&network.RegionActive&&network.QuestNpcs.Values.Any(n=>n.Name=="Лесная таверна"));await Frames(12);
             var character=world.GetChildren().OfType<ProgressionPresentation>().Single();
+            var startingPoints=_state.StatPoints;var startingStats=_state.Stats.ToArray();
             await Invest(character,3); // Actual character window and authoritative preview/apply.
             var reset=await OpenReset(world);var confirm=reset.GetNode<Button>("%Confirm");
             if(!confirm.Disabled||!reset.GetNode<Label>("%Summary").Text.Contains("бесплатно"))throw new Exception("First free quote/confirmation gate missing.");
@@ -32,12 +33,19 @@ public partial class RespecSmoke:Node
             for(var i=0;i<12;i++){Input.ParseInputEvent(new InputEventMouseButton{ButtonIndex=MouseButton.WheelDown,Pressed=true,Position=point,GlobalPosition=point});await Frames(1);}
             if(scroll.ScrollVertical==0)throw new Exception("Derived stat comparison does not scroll with the wheel.");
             await Capture("respec-derived-1280");await Click(reset.GetNode<Button>("%Close"));await Frames(3);
-            if(_state.StatPoints!=15)throw new Exception("Cancel mutated the build.");
-            reset=await OpenReset(world);await Click(reset.GetNode<CheckBox>("%Acknowledge"));
-            await Click(reset.GetNode<Button>("%Confirm"));await Wait(()=>_result?.Outcome==RespecOutcome.Accepted&&_state.StatPoints==18);
-            if(_result?.PaidCoins!=0||_state.Stats.Any(v=>v!=10))throw new Exception("Free reset failed.");
+            if(_state.StatPoints!=startingPoints-3)throw new Exception("Cancel mutated the build.");
+            reset=await OpenReset(world);
+            var acknowledgement=reset.GetNode<CheckBox>("%Acknowledge");
+            await Wait(()=>!acknowledgement.Disabled);acknowledgement.GrabFocus();
+            Input.ParseInputEvent(new InputEventKey{Keycode=Key.Space,PhysicalKeycode=Key.Space,Pressed=true});await Frames(1);
+            Input.ParseInputEvent(new InputEventKey{Keycode=Key.Space,PhysicalKeycode=Key.Space,Pressed=false});await Frames(2);
+            if(reset.GetNode<Button>("%Confirm").Disabled)
+                throw new Exception("Confirmation remains disabled: "+reset.GetNode<Label>("%Status").Text);
+            await Capture("respec-confirm-1280");
+            await ActivateWithKeyboard(reset.GetNode<Button>("%Confirm"));await Wait(()=>_result?.Outcome==RespecOutcome.Accepted&&_state.StatPoints==startingPoints);
+            if(_result?.PaidCoins!=0||!_state.Stats.SequenceEqual(startingStats))throw new Exception("Free reset failed.");
             await Frames(3);await Capture("respec-completed-1280");
-            await Click(reset.GetNode<Button>("%Allocate"));await Frames(3);
+            await ActivateWithKeyboard(reset.GetNode<Button>("%Allocate"));await Frames(3);
             if(!character.FindChildren("*","TabContainer",true,false).OfType<TabContainer>().Single().IsVisibleInTree())throw new Exception("Allocate route did not open the character.");
             character.Toggle();await Frames(3);await Invest(character,2);
             reset=await OpenReset(world);GetWindow().Size=new(1920,1080);await Frames(5);
@@ -50,7 +58,7 @@ public partial class RespecSmoke:Node
             GD.Print("RESPEC_SMOKE_OK: real allocation, F2/service, quote/cancel, explicit acknowledgement, first free reset, redistribution, paid price/insufficient coins, resize, Escape.");
             world.QueueFree();await Frames(2);GetTree().Quit();
         }
-        catch(Exception error){GD.PushError(error.ToString());GetTree().Quit(1);}
+        catch(Exception error){await Capture("respec-failure");GD.PushError($"{error}; result={_result}, points={_state.StatPoints}");GetTree().Quit(1);}
     }
     private async Task Invest(ProgressionPresentation character,int points)
     {
@@ -75,9 +83,17 @@ public partial class RespecSmoke:Node
     private async Task Wait(Func<bool> done)
     {var end=Time.GetTicksMsec()+20000;while(!done()&&Time.GetTicksMsec()<end)await Frames(1);if(!done())throw new TimeoutException("Respec smoke deadline.");}
     private async Task Frames(int n){for(var i=0;i<n;i++)await ToSignal(GetTree(),SceneTree.SignalName.ProcessFrame);}
+    private async Task ActivateWithKeyboard(Button button)
+    {
+        button.GrabFocus();
+        Input.ParseInputEvent(new InputEventKey{Keycode=Key.Space,PhysicalKeycode=Key.Space,Pressed=true});await Frames(1);
+        Input.ParseInputEvent(new InputEventKey{Keycode=Key.Space,PhysicalKeycode=Key.Space,Pressed=false});await Frames(2);
+    }
     private async Task Click(Button button)
     {
-        var p=button.GetGlobalRect().GetCenter();Input.ParseInputEvent(new InputEventMouseMotion{Position=p,GlobalPosition=p});await Frames(2);
+        var rect=button.GetGlobalRect();
+        var p=button is CheckBox?rect.Position+new Vector2(16,rect.Size.Y/2):rect.GetCenter();
+        Input.ParseInputEvent(new InputEventMouseMotion{Position=p,GlobalPosition=p});await Frames(2);
         Input.ParseInputEvent(new InputEventMouseButton{ButtonIndex=MouseButton.Left,Pressed=true,Position=p,GlobalPosition=p});await Frames(1);
         Input.ParseInputEvent(new InputEventMouseButton{ButtonIndex=MouseButton.Left,Pressed=false,Position=p,GlobalPosition=p});await Frames(2);
     }

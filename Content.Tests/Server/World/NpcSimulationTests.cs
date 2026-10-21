@@ -153,9 +153,12 @@ public sealed class NpcSimulationTests
     public void SameFixedHealthMonsterCanBeDefeatedSoloOrTogether(bool together)
     {
         var world = Create(new NpcOptions { Enabled = true, X = -3, Z = 0, AggroRadius = 0.1f });
-        var first = world.AddPlayer(42, new(1));
+        var first = world.AddPlayer(42, new(1),world.CreateInitialCharacter() with {X=-3.75f,Z=0});
+        Assert.True(world.TryQueueProgression(42,new(1,ProgressionAction.AllocateStats,0,0,0,[20,0,0,0,0,0,0])));
+        world.Simulate(.05f);
+        Assert.Equal(ProgressionOutcome.Accepted,world.ProgressionResults[first.EntityId].Outcome);
         var startingHealth = world.Combat!.Get(world.Npc!.Id).Health;
-        if (together) world.AddPlayer(43, new(2));
+        if (together) world.AddPlayer(43, new(2),world.CreateInitialCharacter() with {X=-3,Z=-1.5f});
         Assert.Equal(startingHealth, world.Combat.Get(world.Npc.Id).Health);
         for (uint seq = 1; seq <= 8 && world.Combat.Get(world.Npc.Id).Health > 0; seq++)
         {

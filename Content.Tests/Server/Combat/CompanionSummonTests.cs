@@ -118,7 +118,7 @@ public sealed class CompanionSummonTests
         Assert.True(f.Combat.QueueDefense(f.Owner,new(1,DefenseAction.Parry,Vector2.UnitX),f.Tick));f.Step();
         Assert.Null(f.Actor.Action);Assert.Equal(mana,f.Actor.Resources.Mana);Assert.True(f.Combat.DefenseState(f.Owner,f.Tick).ParryRemaining>0);
         var g=new Fight();g.Start();Assert.True(g.Abilities.Queue(g.Owner,new(1,0,1,Vector2.UnitX),g.Tick,0));g.Step();
-        Assert.Equal("test_projectile",g.Actor.Action!.DefinitionId);Assert.Equal(140,g.Actor.Resources.Mana);
+        Assert.Equal("test_projectile",g.Actor.Action!.DefinitionId);Assert.Equal(100,g.Actor.Resources.Mana);
         Assert.Empty(g.Spawned);
     }
 
@@ -138,7 +138,7 @@ public sealed class CompanionSummonTests
     {
         var f=new Fight();Assert.True(f.Combat.QueueSummon(f.Owner,new(1,Guid.NewGuid()),f.Tick));
         Assert.True(f.Combat.CancelSummon(f.Owner,1,0,f.Tick));f.Step(11);
-        Assert.Null(f.Actor.Action);Assert.Empty(f.Spawned);Assert.Equal(140,f.Actor.Resources.Mana);
+        Assert.Null(f.Actor.Action);Assert.Empty(f.Spawned);Assert.Equal(100,f.Actor.Resources.Mana);
         Assert.Equal(CompanionSummonOutcome.Cancelled,f.Combat.SummonResults[f.Owner].Outcome);
     }
 }

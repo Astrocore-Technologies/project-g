@@ -78,7 +78,7 @@ public sealed class CombatTimelineTests
         var f=new Pair(channel:true);f.Start();f.World.Simulate(.6f);
         Assert.Single(f.Abilities.Hits);Assert.Single(f.Combat.Events);
         Assert.True(f.Combat.Get(f.Caster.EntityId).LifeDead);Assert.True(f.Combat.Get(f.Striker.EntityId).LifeDead);
-        Assert.Equal(137.4,f.Abilities.Mana(f.Caster.EntityId),7);Assert.Empty(f.Abilities.ActiveStates);
+        Assert.Equal(97.4,f.Abilities.Mana(f.Caster.EntityId),7);Assert.Empty(f.Abilities.ActiveStates);
     }
 
     [Fact]public void AContactUsesTheMovingTargetsPositionAtItsBoundaryInsideALargeTick()
@@ -129,7 +129,7 @@ public sealed class CombatTimelineTests
         var f=new ChannelingTests.Fight();f.Cast();var time=f.Combat.Time;
         f.Abilities.Simulate(.05f,f.World.Tick);Assert.Equal(time,f.Combat.Time);
         f.Abilities.Simulate(.05f,f.World.Tick+1);Assert.Equal(time+.05f,f.Combat.Time,10);
-        Assert.Equal(137.85,f.Mana,7);
+        Assert.Equal(97.85,f.Mana,7);
     }
 
     [Fact]public void ARecoveryLockDoesNotCreditStaminaForTheLockedIntervalEndingAtThisBoundary()

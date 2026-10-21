@@ -40,13 +40,13 @@ public sealed class ToggleIntegrationTests
             client.Ability(1,2,client.LocalSpawn.Position);
             if(activationPaused)
             {
-                await Poll(client,()=>store.BlockedSave);Assert.Empty(client.Effects);Assert.Equal(140,client.Loadouts[id].Mana);
+                await Poll(client,()=>store.BlockedSave);Assert.Empty(client.Effects);Assert.Equal(100,client.Loadouts[id].Mana);
             }
             else
             {
                 await Poll(client,()=>client.Loadouts[id].Abilities.Single(p=>p.Id==2).ToggleState==ToggleState.Active);
                 gate=store.PauseSaves(condition:changes=>changes.Any(c=>c.State.Cooldowns.Any(s=>s.AbilityId=="test_ground_area" && s.PendingEnd==0)));
-                Assert.Equal(138,client.Loadouts[id].Mana);
+                Assert.Equal(98,client.Loadouts[id].Mana);
             }
             client.SendGame(NetworkProtocol.Write(new AbilityCommand(2,0,2,Vector2.Zero,Intent:AbilityIntent.Deactivate)),DeliveryMethod.ReliableOrdered);
             if(activationPaused)
@@ -64,13 +64,13 @@ public sealed class ToggleIntegrationTests
             gate!.TrySetResult();
             await Poll(client,()=>client.AbilityResults.Any(r=>r.Sequence==(activationPaused?4u:2u)&&r.Outcome==AbilityOutcome.Cancelled) &&
                 client.Loadouts[id].Abilities.Single(p=>p.Id==2).ToggleState==ToggleState.Off);
-            var skill=client.Loadouts[id].Abilities.Single(p=>p.Id==2);Assert.Equal(138,client.Loadouts[id].Mana);
+            var skill=client.Loadouts[id].Abilities.Single(p=>p.Id==2);Assert.Equal(98,client.Loadouts[id].Mana);
             Assert.Equal(0,skill.PendingEndCharges);Assert.Equal(0,skill.Charges);Assert.InRange(skill.ReadyInSeconds,4,5);
             Assert.Contains(client.Effects,e=>e.Phase==AbilityPhase.Finished);
         }
         finally{gate?.TrySetResult();await server.StopAsync(default);}
         await using var saved=await store.OpenAsync(credential,world.CreateInitialCharacter(),default);
         var cooldown=saved.State.Cooldowns.Single(c=>c.AbilityId=="test_ground_area");
-        Assert.Equal(138,saved.State.Mana);Assert.Equal(0,cooldown.PendingEnd);Assert.Equal((byte)0,cooldown.AvailableCharges!.Value);
+        Assert.Equal(98,saved.State.Mana);Assert.Equal(0,cooldown.PendingEnd);Assert.Equal((byte)0,cooldown.AvailableCharges!.Value);
     }
 }

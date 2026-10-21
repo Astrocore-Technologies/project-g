@@ -51,6 +51,8 @@ public sealed class CombatInteractionTests
     public void SingleBufferedSkillRevalidatesAndNewIntentReplacesIt()
     {
         var f=new Fight(selected:23); Equip(f,23,21,22); f.Cast(23); f.Step(17);
+        for(var i=0;i<20&&f.Combat.RecoveryRemaining(f.Player)>.15;i++)f.Step();
+        Assert.InRange(f.Combat.RecoveryRemaining(f.Player),.09,.15);
         Assert.Equal(AbilityOutcome.Buffered,f.Cast(21));
         Assert.Equal(AbilityOutcome.Buffered,f.Cast(22)); f.Step(6);
         Assert.Contains(f.Abilities.ActiveStates,e=>e.AbilityId==22);

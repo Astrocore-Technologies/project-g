@@ -1,6 +1,6 @@
 {
   "schemaVersion": 25,
-  "balanceVersion": 19,
+  "balanceVersion": 22,
   "unarmedWeaponId": "unarmed",
   "lifecycle": { "inCombatSeconds": 30, "disconnectBodySeconds": 60, "corpseSeconds": 60,
     "respawnSeconds": 60, "respawnHealthFraction": 0.5, "respawnManaFraction": 0.5, "respawnStaminaFraction": 1 },
@@ -133,7 +133,8 @@
       "wisdom": 1.5
     },
     "health": {
-      "vitality": 0.01
+      "strength": 0.05,
+      "vitality": 0.1
     },
     "mana": {
       "wisdom": 8
@@ -1497,16 +1498,16 @@
       "threat": { "damagePerHp": 1, "healingPerHp": 0.5 },
       "hurtbox": { "shape": "Capsule", "height": 2, "radius": 0.4 },
       "stats": {
-        "strength": 10,
-        "agility": 10,
-        "vitality": 10,
-        "intelligence": 10,
-        "dexterity": 10,
-        "luck": 10,
-        "wisdom": 10
+        "strength": 0,
+        "agility": 0,
+        "vitality": 0,
+        "intelligence": 0,
+        "dexterity": 0,
+        "luck": 0,
+        "wisdom": 0
       },
       "baseHealth": 100,
-      "baseMana": 60,
+      "baseMana": 100,
       "baseHealthRecovery": 1,
       "baseManaRecovery": 1,
       "weaponId": "training_sword",
@@ -1601,7 +1602,7 @@
   ],
   "progression": {
     "levelCap": 30,
-    "initialStatPoints": 18,
+    "initialStatPoints": 20,
     "experiencePerLevel": 100,
     "statPointsPerLevel": 5,
     "discoveryExperience": 60,

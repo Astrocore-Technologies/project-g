@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "levels": [1,10,20,30],
+  "stressLevels": [100,200],
+  "targetId": "test_creature",
+  "weaponId": "training_sword",
+  "rangedWeaponId": "training_bow",
+  "magicWeaponId": "training_staff",
+  "referenceHit": 100,
+  "experimentalCurve": {"scale":150,"offset":4},
+  "builds": [
+    {"id":"STR","weights":[1,0,0,0,0,0,0]},
+    {"id":"AGI","weights":[0,1,0,0,0,0,0]},
+    {"id":"VIT","weights":[0,0,1,0,0,0,0]},
+    {"id":"INT","weights":[0,0,0,1,0,0,0]},
+    {"id":"DEX","weights":[0,0,0,0,1,0,0]},
+    {"id":"LUCK","weights":[0,0,0,0,0,1,0]},
+    {"id":"WIS","weights":[0,0,0,0,0,0,1]},
+    {"id":"mixed_attack","weights":[3,2,1,0,1,1,0]},
+    {"id":"mixed_resources","weights":[0,1,2,1,0,0,4]},
+    {"id":"mixed_defense","weights":[1,1,4,0,0,0,2]},
+    {"id":"balanced","weights":[1,1,1,1,1,1,1]}
+  ],
+  "gear": [
+    {"id":"naked","items":[]},
+    {"id":"ordinary","items":["test_sword_item","test_armor_item"]},
+    {"id":"defensive","items":["test_armor_item","training_shield"]}
+  ],
+  "modifiers": [
+    {"id":"none","value":{}},
+    {"id":"positive_fixture","value":{"maxHealth":100,"physicalDefense":10,"magicDefense":10,"healthRecovery":2,"manaRecovery":2}},
+    {"id":"negative_fixture","value":{"physicalDefense":-50,"magicDefense":-50,"meleeAttack":-60,"healthRecovery":-20,"manaRecovery":-20,"staminaRecovery":-20,"criticalDamage":-3,"attackSpeedMultiplier":-0.5}}
+  ]
+}

@@ -92,7 +92,7 @@ public sealed class ExperienceRewardTests
         w.Combat!.BeginNpcReturn(w.Npc!.Id);w.Combat.NpcReturnedHome(w.Npc.Id);
         Hit(w,a.EntityId);Assert.Equal(0,w.Combat.Heal(idle.EntityId,a.EntityId,100,authorizedEffect:true));
         var initial=w.CreateInitialCharacter();var capped=Player(w,3,initial with {X=0,Z=0,Progression=initial.Progression! with
-            {Level=30,StatPoints=163,Allocation=initial.Progression.Allocation! with {EarnedFromLevels=163}}});
+            {Level=30,StatPoints=165,Allocation=initial.Progression.Allocation! with {EarnedFromLevels=165}}});
         Hit(w,capped.EntityId);Kill(w,a.EntityId);Assert.Equal(20,Xp(w,1));Assert.Equal(0,Xp(w,2));Assert.Equal(0,Xp(w,3));
     }
 
@@ -104,7 +104,7 @@ public sealed class ExperienceRewardTests
         Assert.Equal(50,total);Assert.Null(remainder); // 3*(20/3)+3*(20/6)+7*(20/7).
         Assert.InRange(new SavedExperienceFraction(1,new string('9',400),"1"+new string('9',400)).Display(),.499999,.5);
         var w=World();var initial=w.CreateInitialCharacter();var p=Player(w,1,initial with {X=0,Z=0,Progression=initial.Progression! with
-            {Level=29,Experience=2899,StatPoints=158,Allocation=initial.Progression.Allocation! with {EarnedFromLevels=158},ExperienceFraction=new(1,"2","3")}});
+            {Level=29,Experience=2899,StatPoints=160,Allocation=initial.Progression.Allocation! with {EarnedFromLevels=160},ExperienceFraction=new(1,"2","3")}});
         var b=Player(w,2);Hit(w,b.EntityId);Kill(w,p.EntityId);var saved=w.CaptureCharacter(1).Progression!;
         Assert.Equal(30,saved.Level);Assert.Equal(0,saved.Experience);Assert.Null(saved.ExperienceFraction);
     }

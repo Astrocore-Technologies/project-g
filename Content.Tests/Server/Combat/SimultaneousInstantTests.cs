@@ -67,7 +67,7 @@ public sealed class SimultaneousInstantTests
         var f=new Fight();f.Area(42,f.Target.Position);Assert.True(f.World.TryQueueAttack(43,new(1,0,-Vector2.UnitY)));f.Step();
         Assert.Equal(0,f.Actor.Health);Assert.Equal(0,f.Victim.Health);Assert.True(f.Actor.LifeDead);Assert.True(f.Victim.LifeDead);
         Assert.Equal(1,Assert.Single(f.Combat.Events).Damage);Assert.Equal(1,Assert.Single(f.Abilities.Hits).Damage);
-        Assert.Equal(138,f.Abilities.Mana(f.Source.EntityId));Assert.Equal(0,f.Abilities.Loadout(f.Source.EntityId,f.World.Tick).Abilities.Single(s=>s.Id==2).Charges);
+        Assert.Equal(98,f.Abilities.Mana(f.Source.EntityId));Assert.Equal(0,f.Abilities.Loadout(f.Source.EntityId,f.World.Tick).Abilities.Single(s=>s.Id==2).Charges);
     }
 
     [Theory][InlineData(false)][InlineData(true)]
@@ -76,7 +76,7 @@ public sealed class SimultaneousInstantTests
         var f=new Fight();
         if(reverse)f.Area(43,f.Source.Position);f.Area(42,f.Target.Position);if(!reverse)f.Area(43,f.Source.Position);f.Step();
         Assert.Equal(0,f.Actor.Health);Assert.Equal(0,f.Victim.Health);Assert.Equal(2,f.Abilities.Hits.Count);Assert.All(f.Abilities.Hits,h=>Assert.Equal(1,h.Damage));
-        Assert.Equal(138,f.Abilities.Mana(f.Source.EntityId));Assert.Equal(138,f.Abilities.Mana(f.Target.EntityId));Assert.Empty(f.Combat.Events);
+        Assert.Equal(98,f.Abilities.Mana(f.Source.EntityId));Assert.Equal(98,f.Abilities.Mana(f.Target.EntityId));Assert.Empty(f.Combat.Events);
     }
 
     [Theory][InlineData(0,.4)][InlineData(.999,.8)]

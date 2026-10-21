@@ -48,11 +48,11 @@ public sealed class ChargedAbilityTests
     [Fact]public void PressStartsAnUnpaidChargeAndHoldingFullPowerDoesNotRelease()
     {
         var f=new Fight();f.Begin();Assert.Equal(AbilityPhase.Charging,Assert.Single(f.Abilities.ActiveStates).Phase);
-        Assert.Equal(140,f.Abilities.Mana(f.Id));Assert.Equal(1,f.Skill.Charges);Assert.Equal(0,f.Skill.ReadyInSeconds);
+        Assert.Equal(100,f.Abilities.Mana(f.Id));Assert.Equal(1,f.Skill.Charges);Assert.Equal(0,f.Skill.ReadyInSeconds);
         for(var i=0;i<20;i++)f.Step();Assert.Empty(f.Hits);Assert.True(f.Actor.IsCasting);
         Assert.Equal(0,Assert.Single(f.Abilities.ActiveStates).RemainingSeconds);f.Control();f.Step();
-        Assert.Equal(30,Assert.Single(f.Hits).Damage);Assert.Equal(138,f.Abilities.Mana(f.Id));Assert.Equal(0,f.Skill.Charges);Assert.Equal(5,f.Skill.ReadyInSeconds);
-        f.Control();f.Step();Assert.Single(f.Hits);Assert.Equal(138,f.Abilities.Mana(f.Id));
+        Assert.Equal(30,Assert.Single(f.Hits).Damage);Assert.Equal(98,f.Abilities.Mana(f.Id));Assert.Equal(0,f.Skill.Charges);Assert.Equal(5,f.Skill.ReadyInSeconds);
+        f.Control();f.Step();Assert.Single(f.Hits);Assert.Equal(98,f.Abilities.Mana(f.Id));
     }
 
     [Theory][InlineData(0,12)][InlineData(4,20)][InlineData(20,30)]
@@ -67,7 +67,7 @@ public sealed class ChargedAbilityTests
         for(var i=0;i<10;i++)f.Step();Assert.Single(f.Hits);Assert.Null(f.Actor.Action);
     }
 
-    [Theory][InlineData("cancel",140,1)][InlineData("interrupt",139,0)][InlineData("death",139,0)]
+    [Theory][InlineData("cancel",100,1)][InlineData("interrupt",99,0)][InlineData("death",99,0)]
     public void PreReleaseCancellationAndInterruptionsUseTheApprovedCastPrice(string reason,double mana,int charges)
     {
         var f=new Fight();f.Begin();f.Step();
@@ -80,7 +80,7 @@ public sealed class ChargedAbilityTests
 
     [Fact]public void ResourceLostWhileHoldingIsRecheckedAtReleaseWithoutAnEffect()
     {
-        var f=new Fight();f.Begin();f.Combat.DrainMana!(f.Id,139.5);f.Control();f.Step();
+        var f=new Fight();f.Begin();f.Combat.DrainMana!(f.Id,99.5);f.Control();f.Step();
         Assert.Empty(f.Hits);Assert.Equal(0,f.Abilities.Mana(f.Id));Assert.Equal(0,f.Skill.Charges);Assert.Equal(5,f.Skill.ReadyInSeconds);
         Assert.Equal(AbilityOutcome.NoMana,f.Abilities.Results[f.Id].Outcome);
     }
@@ -103,7 +103,7 @@ public sealed class ChargedAbilityTests
     [Fact]public void AQuickPressAndReleaseInTheSameTickUsesTheStartOfTheCurve()
     {
         var f=new Fight();Assert.True(f.World.TryQueueAbility(42,new(1,0,2,f.Target),0));f.Control();f.Step();
-        Assert.Equal(10,Assert.Single(f.Hits).Damage);Assert.Equal(138,f.Abilities.Mana(f.Id));
+        Assert.Equal(10,Assert.Single(f.Hits).Damage);Assert.Equal(98,f.Abilities.Mana(f.Id));
     }
 
     [Fact]public void ReleaseSurvivesTheShortInputBufferUntilItsMatchingChargeBegins()

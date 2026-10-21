@@ -28,7 +28,7 @@ public sealed class ToggleAbilityTests
         var f=new ChannelingTests.Fight(data,weapon:true,delta:.25f);f.Cast();
         Assert.Single(f.Hits);Assert.Equal("unarmed",f.Actor.Weapon.Id);Assert.Equal(ToggleState.Off,f.Skill.ToggleState);
         Assert.Empty(f.Abilities.ActiveStates);Assert.Equal(0,f.Skill.PendingEndCharges);Assert.Equal(5,f.Skill.ReadyInSeconds);
-        Assert.Equal(138,f.Mana);f.Step();Assert.Single(f.Hits);Assert.Equal(138,f.Mana);
+        Assert.Equal(98,f.Mana);f.Step();Assert.Single(f.Hits);Assert.Equal(98,f.Mana);
     }
 
     [Fact]public void BackgroundWeaponToggleBreaksAfterItsCompletedPulseAndStopsBeforeAnyMorePaidWork()
@@ -38,7 +38,7 @@ public sealed class ToggleAbilityTests
         var f=new ChannelingTests.Fight(data,weapon:true,delta:.25f);f.Cast();
         for(var i=0;i<10 && f.Hits.Count==0;i++)f.Step();Assert.NotEmpty(f.Hits);
         Assert.Single(f.Hits);Assert.Equal("unarmed",f.Actor.Weapon.Id);Assert.Equal(ToggleState.Off,f.Skill.ToggleState);
-        Assert.Equal(137.7,f.Mana,8);Assert.Empty(f.Abilities.ActiveStates);Assert.Equal(0,f.Skill.PendingEndCharges);
+        Assert.Equal(97.7,f.Mana,8);Assert.Empty(f.Abilities.ActiveStates);Assert.Equal(0,f.Skill.PendingEndCharges);
         Assert.Equal(4.85,f.Skill.ReadyInSeconds,7);var mana=f.Mana;
         Assert.True(f.World.TryQueueAbility(42,new(2,f.World.Tick,20,Vector2.UnitY),0));f.Step();
         Assert.Equal(AbilityOutcome.NeedsSword,f.Abilities.Results[f.Id].Outcome);Assert.Null(f.Actor.Action);
@@ -52,7 +52,7 @@ public sealed class ToggleAbilityTests
         var data=Document();data["abilities"]![1]!["action"]!["capabilities"]="Weapon, Magical";
         var f=new ChannelingTests.Fight(data);f.Combat.ApplyEquipment(f.Id,f.Combat.PrepareEquipment(f.Player.BaseStats,[]));
         Assert.True(f.World.TryQueueAbility(42,new(1,f.World.Tick,2,f.Actor.Position),0));f.Step();
-        Assert.Equal(AbilityOutcome.NeedsWeapon,f.Abilities.Results[f.Id].Outcome);Assert.Equal(140,f.Mana);
+        Assert.Equal(AbilityOutcome.NeedsWeapon,f.Abilities.Results[f.Id].Outcome);Assert.Equal(100,f.Mana);
         Assert.Equal(ToggleState.Off,f.Skill.ToggleState);Assert.Equal(1,f.Skill.Charges);
     }
 
@@ -72,7 +72,7 @@ public sealed class ToggleAbilityTests
         var f=new ChannelingTests.Fight(Document());f.Cast();Assert.Equal(ToggleState.Active,f.Skill.ToggleState);Assert.Null(f.Actor.Action);
         Assert.Equal(AbilityPhase.Sustaining,Assert.Single(f.Abilities.ActiveStates).Phase);Assert.Equal(1,f.Skill.PendingEndCharges);
         Assert.True(f.World.TryQueueAbility(42,new(2,f.World.Tick,2,f.Actor.Position),0));f.Step();
-        Assert.Equal(AbilityOutcome.AlreadyActive,f.Abilities.Results[f.Id].Outcome);Assert.Equal(137.85,f.Mana,7);Assert.Single(f.Abilities.ActiveStates);
+        Assert.Equal(AbilityOutcome.AlreadyActive,f.Abilities.Results[f.Id].Outcome);Assert.Equal(97.85,f.Mana,7);Assert.Single(f.Abilities.ActiveStates);
         Off(f,3);Assert.Equal(ToggleState.Off,f.Skill.ToggleState);Assert.Equal(0,f.Skill.PendingEndCharges);Assert.Equal(5,f.Skill.ReadyInSeconds);
         var mana=f.Mana;Off(f,4);Assert.Equal(mana,f.Mana);Assert.Equal(ToggleState.Off,f.Skill.ToggleState);
     }
@@ -84,7 +84,7 @@ public sealed class ToggleAbilityTests
         Assert.True(f.World.TryQueueAbility(42,new(1,0,2,aim),0));
         Assert.True(f.World.TryQueueAbility(42,new(2,0,2,aim,Intent:AbilityIntent.Deactivate),0));
         if(enableLast)Assert.True(f.World.TryQueueAbility(42,new(3,0,2,aim),0));f.Step();
-        Assert.Equal(enableLast?ToggleState.Active:ToggleState.Off,f.Skill.ToggleState);Assert.Equal(enableLast?138:140,f.Mana);
+        Assert.Equal(enableLast?ToggleState.Active:ToggleState.Off,f.Skill.ToggleState);Assert.Equal(enableLast?98:100,f.Mana);
         Assert.Equal(enableLast?1:0,f.Skill.PendingEndCharges);
         Assert.Equal(enableLast?AbilityOutcome.Accepted:AbilityOutcome.Cancelled,f.Abilities.Results[f.Id].Outcome);
     }
@@ -160,9 +160,9 @@ public sealed class ToggleAbilityTests
     [Theory][InlineData(false)][InlineData(true)]
     public void PreparationCanBeCancelledOrInterruptedWithoutAHalfPrice(bool enemy)
     {
-        var f=new ChannelingTests.Fight(Document(preparing:true));f.Cast();Assert.Equal(ToggleState.Preparing,f.Skill.ToggleState);Assert.Equal(140,f.Mana);
+        var f=new ChannelingTests.Fight(Document(preparing:true));f.Cast();Assert.Equal(ToggleState.Preparing,f.Skill.ToggleState);Assert.Equal(100,f.Mana);
         if(enemy){f.Abilities.InterruptCast(f.Id);f.Step();}else Off(f);
-        Assert.Equal(140,f.Mana);Assert.Equal(enemy?0:1,f.Skill.Charges);Assert.Equal(ToggleState.Off,f.Skill.ToggleState);
+        Assert.Equal(100,f.Mana);Assert.Equal(enemy?0:1,f.Skill.Charges);Assert.Equal(ToggleState.Off,f.Skill.ToggleState);
         Assert.Equal(enemy?4.95:0,f.Skill.ReadyInSeconds,6);
     }
 

@@ -31,6 +31,8 @@ public sealed record SavedStatAllocation
     public required BaseStats StartingStats { get; init; }
     public required StatInvestment Invested { get; init; }
     public required int EarnedFromLevels { get; init; }
+    // V1 document compatibility only. Achievement stat-point rewards were cancelled on 2026-10-20.
+    // No runtime producer issues this value; existing documents are preserved without a destructive migration.
     public int AchievementBonusPoints { get; init; }
 
     public void Validate(int available)

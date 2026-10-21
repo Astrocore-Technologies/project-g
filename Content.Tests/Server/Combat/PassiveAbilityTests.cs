@@ -172,7 +172,7 @@ public sealed class PassiveAbilityTests
     {
         var data=Document();Passive(data)["conditions"]=new JsonObject{["inCombat"]=true};
         var f=new ChannelingTests.Fight(data,delta:.25f);f.Cast();f.Finish();
-        Assert.Equal(10,f.Hits.Count);Assert.True(f.Combat.InCombat(f.Id));Assert.Equal(135,f.Mana,8);
+        Assert.Equal(10,f.Hits.Count);Assert.True(f.Combat.InCombat(f.Id));Assert.Equal(95,f.Mana,8);
         Assert.Equal(0,f.Skill.PendingEndCharges);Assert.InRange(f.Skill.ReadyInSeconds,4.9,5);
     }
 

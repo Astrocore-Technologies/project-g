@@ -1,36 +1,26 @@
-[gd_scene load_steps=7 format=3 uid="uid://dmxklxo60o5gn"]
+[gd_scene format=3 uid="uid://dcs5d43jfip4c"]
 
-[ext_resource type="Script" path="res://Scripts/WorldController.cs" id="1_world"]
-[ext_resource type="PackedScene" path="res://Scenes/PlayerAvatar.tscn" id="2_player"]
+[ext_resource type="Script" uid="uid://cgl4y62t0ft82" path="res://Scripts/WorldController.cs" id="1_world"]
+[ext_resource type="PackedScene" uid="uid://cjm0qbhvx4xdh" path="res://Scenes/PlayerAvatar.tscn" id="2_player"]
 [ext_resource type="Script" uid="uid://bklqoyyb08nt8" path="res://Scripts/Network/NetworkClient.cs" id="3_network"]
+[ext_resource type="PackedScene" path="res://Scenes/Regions/Linvel/LinvelCity/LinvelCity.tscn" id="4_linvel"]
+[ext_resource type="Environment" path="res://Assets/World/Linvel/City/Production/LinvelDaylight.tres" id="5_daylight"]
 
-[sub_resource type="StandardMaterial3D" id="Material_ground"]
-albedo_color = Color(0.25, 0.34, 0.24, 1)
-roughness = 1.0
-
-[sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
-material = SubResource("Material_ground")
-size = Vector2(40, 36)
-
-[sub_resource type="BoxShape3D" id="BoxShape_ground"]
-size = Vector3(30, 0.2, 30)
-
-[node name="World" type="Node3D"]
+[node name="World" type="Node3D" unique_id=345959936]
 script = ExtResource("1_world")
 PlayerScene = ExtResource("2_player")
 
-[node name="Ground" type="StaticBody3D" parent="."]
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground"]
-mesh = SubResource("PlaneMesh_ground")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
-shape = SubResource("BoxShape_ground")
+[node name="LinvelCity" parent="." unique_id=519119534 instance=ExtResource("4_linvel")]
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(0.8660254, 0.43301272, -0.24999999, 0, 0.49999997, 0.86602545, 0.5, -0.75, 0.43301266, 0, 0, 0)
+transform = Transform3D(0.81915206, 0.45198438, -0.35312894, 0, 0.6156615, 0.7880107, 0.57357645, -0.6455006, 0.5043204, 0, 0, 0)
+light_color = Color(1, 0.92, 0.79, 1)
+light_energy = 0.95
+shadow_enabled = true
+directional_shadow_max_distance = 600.0
 
-[node name="NetworkClient" type="Node" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = ExtResource("5_daylight")
+[node name="NetworkClient" type="Node" parent="." unique_id=788756509]
 script = ExtResource("3_network")
 DevelopmentIdentityProfile = "combat01-beech"

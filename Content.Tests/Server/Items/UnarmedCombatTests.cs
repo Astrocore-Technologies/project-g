@@ -56,7 +56,7 @@ public sealed class UnarmedCombatTests
         Assert.Equal(baseline,actor.Stats);Assert.Equal("unarmed",actor.Weapon.Id);
         Assert.True(world.TryQueueAttack(1,new(1,0,Vector2.UnitX)));world.Simulate(.05f);
         Assert.Empty(combat.Events);CombatTestSteps.Contact(world,player.EntityId);
-        Assert.True(Assert.Single(combat.Events).Damage>0);Assert.Equal(AttackOutcome.Accepted,combat.Results[player.EntityId].Outcome);
+        Assert.Equal(0,Assert.Single(combat.Events).Damage);Assert.Equal(AttackOutcome.Accepted,combat.Results[player.EntityId].Outcome);
         var saved=world.CaptureCharacter(1);Assert.Equal(item,Assert.Single(saved.Inventory!.Items));world.RemovePlayer(1);
         var restored=world.AddPlayer(1,new(1),saved);Assert.Equal("unarmed",combat.Get(restored.EntityId).Weapon.Id);
         Assert.Equal(baseline,combat.Get(restored.EntityId).Stats);Assert.True(world.CaptureCharacter(1).AttackCooldownSeconds>0);

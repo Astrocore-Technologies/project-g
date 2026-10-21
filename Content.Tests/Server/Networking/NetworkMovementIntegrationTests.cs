@@ -289,13 +289,13 @@ public sealed class NetworkMovementIntegrationTests
             await PollUntilAsync(first, second, () => first.AbilityHits.Count == 1 && second.AbilityHits.Count == 1, timeout.Token);
             Assert.Equal(first.AbilityHits[0], second.AbilityHits[0]);
             Assert.Contains(caster.Effects, effect => effect.Phase == AbilityPhase.Telegraph);
-            Assert.InRange(caster.Loadouts[id].Mana, 135, 140); // NC: recovery can arrive during lossy polling.
+            Assert.InRange(caster.Loadouts[id].Mana, 95, 100); // NC: recovery can arrive during lossy polling.
             caster.Ability(2, 2, new(-7, 3));
             await PollUntilAsync(first, second, () => first.AbilityHits.Count == 2 && second.AbilityHits.Count == 2, timeout.Token);
             Assert.Equal(first.AbilityHits[1], second.AbilityHits[1]);
             caster.Ability(3, 3, Vector2.UnitX);
             await PollUntilAsync(first, second, () => first.IsAt(id, new(-4, 0)) && second.IsAt(id, new(-4, 0)), timeout.Token);
-            Assert.InRange(caster.Loadouts[id].Mana, 125, 140);
+            Assert.InRange(caster.Loadouts[id].Mana, 85, 100);
             Assert.Single(observer.Loadouts);
             Assert.DoesNotContain(id, observer.Loadouts.Keys);
             Assert.Empty(observer.AbilityResults);
@@ -366,7 +366,7 @@ public sealed class NetworkMovementIntegrationTests
             var telegraph = first.Effects.First(value => value.Phase == AbilityPhase.Telegraph && value.EffectId == impact.EffectId);
             Assert.Contains(second.Effects,value=>value.EffectId==telegraph.EffectId&&value.Phase==AbilityPhase.Telegraph&&value.Position==telegraph.Position);
             Assert.Equal(telegraph.Position, impact.Position);
-            Assert.Equal(242, first.CombatStates[world.Boss!.Id].MaxHealth, 8);
+            Assert.Equal(world.Combat!.Get(world.Boss!.Id).Stats.MaxHealth, first.CombatStates[world.Boss.Id].MaxHealth, 8);
             Assert.Empty(first.Results); Assert.Empty(second.Results);
             Assert.True(first.HasSnapshot(world.Boss.Id)); Assert.True(second.HasSnapshot(world.Boss.Id));
         }
